@@ -85,6 +85,7 @@ public class User extends BaseEntity {
             .birthDate(dto.getBirthDate())
             .heightCm(dto.getHeightCm())
             .weightKg(dto.getWeightKg())
+            .role("ROLE_USER")
             .build();
     }
 }

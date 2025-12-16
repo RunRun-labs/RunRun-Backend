@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -33,10 +34,12 @@ import org.springframework.stereotype.Component;
 public class TokenProvider {
 
 
-    private static final String AUTHORITIES_KEY = "auth";  // 클레임에서 권한정보담을키
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 10 * 10;     //3분
-    private static final long REFRESH_TOKEN_EXPIRE_TIME =
-        1000L * 60 * 60 * 24 * 30; //1000L * 60 * 60 * 24 * 1;  // 1일
+    private static final String AUTHORITIES_KEY = "auth";  // 클레임에서 권한정보담을키\
+    @Value("${jwt.access-token-expire-time}")
+    private long ACCESS_TOKEN_EXPIRE_TIME;
+
+    @Value("${jwt.refresh-token-expire-time}")
+    private long REFRESH_TOKEN_EXPIRE_TIME;
 
     private final JwtProvider jwtProvider;  // JwtProvider 의존성 추가
     private final Key SKEY;
@@ -52,8 +55,6 @@ public class TokenProvider {
         ISSUER = jwtProvider.getIssuer();
         this.redisTemplate = redisTemplate;
         this.userRepository = userRepository;
-        System.out.println("TokenProvider-------------" + SKEY);
-        System.out.println("   ISSUER     -------------" + ISSUER);
 
     }
 
@@ -80,7 +81,6 @@ public class TokenProvider {
             .signWith(SKEY, SignatureAlgorithm.HS512)
             .compact();
 
-        // ✅ 리프레시 토큰이면 Redis에 즉시 저장
         if ("R".equals(code)) {
             redisTemplate.opsForValue().set(
                 memberId,

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 public class TokenService {
+
+    @Value("${jwt.refresh-token-expire-time}")
+    private long REFRESH_TOKEN_EXPIRE_TIME;
 
     private final TokenProvider tokenProvider;
     private final RedisTemplate<String, String> redisTemplate;
@@ -65,7 +69,8 @@ public class TokenService {
             refreshToken = handleRefreshToken(LoginId);
 
             accessToken = createAccessToken(LoginId, roles, userId);
-            redisTemplate.opsForValue().set(LoginId, refreshToken, Duration.ofMinutes(5));
+            redisTemplate.opsForValue()
+                .set(LoginId, refreshToken, Duration.ofMinutes(REFRESH_TOKEN_EXPIRE_TIME));
 
             log.info("[TokenService] 리프레시 토큰 재발급 완료 - memberId: {}", LoginId);
         } else if (t instanceof Map) {
@@ -92,13 +97,13 @@ public class TokenService {
 
     @Transactional(noRollbackFor = RefreshTokenException.class)
     public String handleRefreshToken(String loginId) {
-        String key = "RT:" + loginId;
 
         redisTemplate.delete(loginId);
 
         String newRefreshToken = createRefreshToken(loginId, 0L);
 
-        redisTemplate.opsForValue().set(key, newRefreshToken, Duration.ofMinutes(5));
+        redisTemplate.opsForValue()
+            .set(loginId, newRefreshToken, Duration.ofMinutes(REFRESH_TOKEN_EXPIRE_TIME));
 
         return newRefreshToken;
     }
