@@ -10,8 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (backButton) {
     backButton.addEventListener("click", () => {
       window.history.length > 1
-        ? window.history.back()
-        : (window.location.href = "/");
+          ? window.history.back()
+          : (window.location.href = "/");
     });
   }
 
@@ -21,8 +21,8 @@ document.addEventListener("DOMContentLoaded", () => {
       isVisible = !isVisible;
       passwordInput.type = isVisible ? "text" : "password";
       togglePasswordBtn.setAttribute(
-        "aria-label",
-        isVisible ? "비밀번호 숨기기" : "비밀번호 표시"
+          "aria-label",
+          isVisible ? "비밀번호 숨기기" : "비밀번호 표시"
       );
     });
   }
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ loginId, loginPw }),
+          body: JSON.stringify({loginId, loginPw}),
         });
 
         const result = await response.json().catch(() => ({}));
@@ -80,16 +80,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Static fallback: use inline template when Thymeleaf include is not processed
   if (
-    bottomNavMount &&
-    bottomNavMount.childElementCount === 0 &&
-    bottomNavTemplate
+      bottomNavMount &&
+      bottomNavMount.childElementCount === 0 &&
+      bottomNavTemplate
   ) {
     const clone = bottomNavTemplate.content.firstElementChild.cloneNode(true);
     bottomNavMount.replaceWith(clone);
   }
 
   function setMessage(message) {
-    if (!messageBox) return;
+    if (!messageBox) {
+      return;
+    }
     messageBox.textContent = message;
     messageBox.hidden = !message;
   }
@@ -99,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return "아이디를 입력해 주세요.";
     }
     if (loginId.length < 4 || loginId.length > 10) {
-      return "아이디는 4자 이상 10자 이하로 입력해 주세요.";
+      return "아이디는 5자 이상 10자 이하로 입력해 주세요.";
     }
     if (!loginPw) {
       return "비밀번호를 입력해 주세요.";
