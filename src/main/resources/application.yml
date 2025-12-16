@@ -1,0 +1,43 @@
+spring:
+  profiles:
+    active: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:runrun}
+    username: ${POSTGRES_USER:runrun}
+    password: ${POSTGRES_PASSWORD:runrun123}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
+
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT:6379}
+      database: 0
+      timeout: 2000ms
+  mongodb:
+    uri: mongodb://${MONGO_USER:runrun}:${MONGO_PASSWORD:runrun123}@localhost:${MONGO_PORT:27017}/${MONGO_DB:runrun_chat}?authSource=admin
+springdoc:
+  group-configs:
+    - group: all
+      paths-to-match: /**
+
+jwt:
+  issuer: ${JWT_ISSUER}
+  secret: ${JWT_SECRET}
+  access-token-expire-time: ${ACCESS_TOKEN_EXPIRE_TIME_MS}
+  refresh-token-expire-time: ${REFRESH_TOKEN_EXPIRE_TIME_MS}
+server:
+  port: 8080
+file:
+  upload-path: ${FILE_UPLOAD_PATH}
