@@ -21,11 +21,11 @@ import lombok.NoArgsConstructor;
 public class UserSignUpDto {
 
     @NotBlank(message = "아이디는 필수 입력 사항입니다")
-    @Size(min = 5, max = 10, message = "아이디는 최대 15자여야 합니다.")
+    @Size(min = 5, max = 10, message = "아이디는 최소 5자 이상 최대 10자여야 합니다.")
     private String loginId;
 
     @NotBlank(message = "비밀번호는 필수 입력 사항입니다")
-    @Size(min= 8,max = 18, message = "비밀번호는 최대 18자여야 합니다.")
+    @Size(min = 8, max = 18, message = "비밀번호는 최소 8자 이상 최대 18자여야 합니다.")
     private String userPassword;
 
     @NotBlank(message = "이름은 필수 입력 사항입니다")
