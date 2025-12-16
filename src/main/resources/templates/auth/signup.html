@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | Sign Up</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/signup.css"
+      th:href="@{/css/signup.css}"
+    />
+  </head>
+  <body class="signup-body">
+    <main class="page signup-page">
+      <button class="back-button" type="button" aria-label="뒤로가기">
+        <img
+          src="http://localhost:3845/assets/5d8e7700a6d94e6f5d3b62853522a7c52a457010.svg"
+          alt="뒤로가기 아이콘"
+        />
+      </button>
+
+      <div class="brand">
+        <span class="brand-text">RUNRUN</span>
+      </div>
+
+      <section class="headline">
+        <h1>Sign Up</h1>
+      </section>
+
+      <form
+        class="signup-form"
+        th:action="@{/auth/signup}"
+        action="/auth/signup"
+        method="post"
+        data-form="signup"
+        novalidate
+      >
+        <label class="field">
+          <span class="field-label">Name</span>
+          <input
+            type="text"
+            name="userName"
+            placeholder="이름을 입력하세요"
+            required
+          />
+        </label>
+        <p class="field-feedback" data-feedback="userName" aria-live="polite"></p>
+
+        <label class="field">
+          <span class="field-label">Email</span>
+          <input
+            type="email"
+            name="userEmail"
+            placeholder="이메일 주소를 입력하세요"
+            required
+          />
+        </label>
+        <p class="field-feedback" data-feedback="userEmail" aria-live="polite"></p>
+
+        <label class="field">
+          <span class="field-label">Birth of date</span>
+          <div class="input-with-icon">
+            <input type="date" name="birthDate" required />
+            <img
+              src="http://localhost:3845/assets/7d90faa173dfd37c43fa6a959f219368483ea026.svg"
+              alt=""
+              aria-hidden="true"
+            />
+          </div>
+        </label>
+        <p class="field-feedback" data-feedback="birthDate" aria-live="polite"></p>
+
+        <div class="field">
+          <span class="field-label">gender</span>
+          <div class="gender-group" role="group" aria-label="성별 선택">
+            <button
+              class="gender-btn active"
+              type="button"
+              data-gender="M"
+              data-color="male"
+              aria-pressed="true"
+            >
+              남
+            </button>
+            <button
+              class="gender-btn"
+              type="button"
+              data-gender="F"
+              data-color="female"
+              aria-pressed="false"
+            >
+              여
+            </button>
+          </div>
+          <input type="hidden" name="gender" value="M" />
+        </div>
+        <p class="field-feedback" data-feedback="gender" aria-live="polite"></p>
+
+        <label class="field">
+          <span class="field-label">ID</span>
+          <input
+            type="text"
+            name="loginId"
+            placeholder="아이디를 입력하세요"
+            required
+          />
+        </label>
+        <p class="field-feedback" data-feedback="loginId" aria-live="polite"></p>
+
+        <label class="field">
+          <span class="field-label">Password</span>
+          <div class="input-with-icon">
+            <input
+              type="password"
+              name="userPassword"
+              placeholder="비밀번호를 입력하세요"
+              required
+            />
+            <button
+              class="toggle-password"
+              type="button"
+              aria-label="비밀번호 표시 전환"
+            >
+              <img
+                src="http://localhost:3845/assets/5f93ca4606eb15bb593adb21fdac43a04d2c7abd.svg"
+                alt=""
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        </label>
+        <p class="field-feedback" data-feedback="userPassword" aria-live="polite"></p>
+
+        <label class="field">
+          <span class="field-label">Set Password</span>
+          <div class="input-with-icon">
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder="비밀번호를 다시 입력하세요"
+              required
+            />
+            <button
+              class="toggle-password"
+              type="button"
+              aria-label="비밀번호 표시 전환"
+            >
+              <img
+                src="http://localhost:3845/assets/5f93ca4606eb15bb593adb21fdac43a04d2c7abd.svg"
+                alt=""
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        </label>
+        <p class="field-feedback" data-feedback="confirmPassword" aria-live="polite"></p>
+
+        <label class="field">
+          <span class="field-label">height</span>
+          <input
+            type="number"
+            name="heightCm"
+            placeholder="키 (cm)"
+            min="0"
+          />
+        </label>
+        <p class="field-feedback" data-feedback="heightCm" aria-live="polite"></p>
+
+        <label class="field">
+          <span class="field-label">weight</span>
+          <input
+            type="number"
+            name="weightKg"
+            placeholder="몸무게 (kg)"
+            min="0"
+          />
+        </label>
+        <p class="field-feedback" data-feedback="weightKg" aria-live="polite"></p>
+
+        <button class="primary-button" type="submit">Register</button>
+        <p class="form-message" data-role="signup-message" aria-live="polite"></p>
+
+        <div class="signup-switch">
+          <span>Already have an account?</span>
+          <a th:href="@{/login}" href="/login">Login</a>
+        </div>
+      </form>
+    </main>
+
+    <template id="bottomNavTemplate">
+      <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+          <img
+            src="http://localhost:3845/assets/3ca81eaa50aaf4304e5454034789cf398897e16f.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+          <img
+            src="http://localhost:3845/assets/a25ca98a797a195cf0014d33755d97160983a834.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>feed</span>
+        </a>
+        <a class="nav-item" th:href="@{/}" href="/">
+          <img
+            src="http://localhost:3845/assets/6d060744ca344e07264a3340d1ce76267f035268.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+          <img
+            src="http://localhost:3845/assets/a1c3341d0388b5ec41a25350c4e525c869160bdd.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>match</span>
+        </a>
+        <a class="nav-item" th:href="@{/my}" href="/my">
+          <img
+            src="http://localhost:3845/assets/1894082a888c5c07d733295ec6a54ed9b0711586.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>my</span>
+        </a>
+      </nav>
+    </template>
+
+    <div
+      id="bottomNavMount"
+      th:replace="~{common/bottom-nav :: bottomNav}"
+    ></div>
+
+    <script src="/js/signup.js" th:src="@{/js/signup.js}"></script>
+  </body>
+</html>
