@@ -1,4 +1,4 @@
-package com.multi.runrunbackend.common.entity;
+package com.multi.runrunbackend.common.entitiy;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
