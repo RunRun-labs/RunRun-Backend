@@ -63,6 +63,7 @@ public class AuthService {
         }
     }
 
+    @Transactional
     public TokenDto login(UserSignInDto userSignInDto) {
         UserDetails userDetails = customUserDetailService.loadUserByUsername(
             userSignInDto.getLoginId());
