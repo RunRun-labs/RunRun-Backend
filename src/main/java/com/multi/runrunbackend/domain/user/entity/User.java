@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,13 +19,24 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
+/**
+ * @author : kyungsoo
+ * @description : Please explain the class!!!
+ * @filename : CourseSiren
+ * @since : 2025. 12. 17. Wednesday
+ */
 @Entity
-@Table(name = "users")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(
+    name = "users",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = "login_id"),
+        @UniqueConstraint(columnNames = "email")
+    }
+)
 public class User extends BaseEntity {
 
     @Id
