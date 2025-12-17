@@ -24,10 +24,10 @@ public class CrewListPageResDto {
     @Schema(description = "크루 목록")
     private List<CrewListResDto> crews;
 
-    @Schema(description = "다음 커서 (다음 페이지 조회 시 사용)", example = "5")
+    @Schema(description = "다음 커서 (다음 페이지 조회 시 사용)")
     private Long nextCursor;
 
-    @Schema(description = "다음 페이지 존재 여부", example = "true")
+    @Schema(description = "다음 페이지 존재 여부")
     private Boolean hasMore;
 
     /**
