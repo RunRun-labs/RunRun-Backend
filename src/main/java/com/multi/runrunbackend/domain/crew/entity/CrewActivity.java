@@ -8,7 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,8 +44,6 @@ public class CrewActivity extends BaseEntity {
     @Column(name = "participation_cnt", nullable = false)
     private Integer participationCnt;
 
-    @Column(name = "activity_at")
-    private LocalDateTime activityAt;
 
     /**
      * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
@@ -61,7 +58,6 @@ public class CrewActivity extends BaseEntity {
             .region(region)
             .distance(distance)
             .participationCnt(participationCnt)
-            .activityAt(LocalDateTime.now())
             .build();
     }
 
