@@ -7,7 +7,7 @@ import com.multi.runrunbackend.domain.user.dto.res.ProfileResDto;
 /**
  *
  * @author : kimyongwon
- * @description : * 사용자 프로필 관련 비즈니스 로직을 담당한다.
+ * @description : 사용자 프로필 관련 비즈니스 로직을 담당한다.
  * - 프로필 조회
  * - 프로필 정보 수정 (키/몸무게)
  * - 프로필 이미지 변경
