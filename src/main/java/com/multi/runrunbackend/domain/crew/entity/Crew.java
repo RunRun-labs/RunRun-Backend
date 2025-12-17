@@ -63,8 +63,8 @@ public class Crew extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static Crew toEntity(String crewName, String crewDescription, String crewImageUrl,
-                                String region, String distance, String activityTime, User user) {
+    public static Crew create(String crewName, String crewDescription, String crewImageUrl,
+                              String region, String distance, String activityTime, User user) {
         return Crew.builder()
                 .crewName(crewName)
                 .crewDescription(crewDescription)
