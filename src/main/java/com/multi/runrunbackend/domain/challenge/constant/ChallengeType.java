@@ -10,5 +10,5 @@ package com.multi.runrunbackend.domain.challenge.constant;
 public enum ChallengeType {
     DISTANCE,
     TIME,
-    COUNT,
+    COUNT
 }

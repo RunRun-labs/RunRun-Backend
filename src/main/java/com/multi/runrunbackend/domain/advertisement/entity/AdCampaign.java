@@ -1,13 +1,5 @@
 package com.multi.runrunbackend.domain.advertisement.entity;
 
-/**
- * Please explain the class!!!
- *
- * @author : kyungsoo
- * @filename : AdCampaign
- * @since : 2025. 12. 17. Wednesday
- */
-
 import com.multi.runrunbackend.common.entitiy.BaseTimeEntity;
 import com.multi.runrunbackend.domain.advertisement.constant.AdStatus;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -33,7 +25,7 @@ import lombok.NoArgsConstructor;
  * @description :  광고 캠페인을 나타내는 엔티티 <p> 광고주는 캠페인을 생성하여 특정 기간(startDate ~ endDate) 동안 예산(budget)을
  * 기반으로 광고를 운영한다. 캠페인의 현재 상태는 {@link AdStatus}로 관리된다. </p>  <p> 이 엔티티는 광고 캠페인의 기본 정보와 생명주기를 관리하며, 광고
  * 슬롯 및 크리에이티브와의 연관 관계의 기준이 된다. </p>
- * @filename : CourseSiren
+ * @filename : AdCampaign
  * @since : 2025. 12. 17. Wednesday
  */
 @Getter

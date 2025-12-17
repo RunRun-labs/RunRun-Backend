@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import lombok.AccessLevel;
@@ -19,7 +20,7 @@ import lombok.NoArgsConstructor;
 /**
  * @author : kimyongwon
  * @description :  러닝 챌린지 정보를 관리하는 엔티티 - 기간 기반 챌린지 - 목표값(거리, 횟수 등) 관리 - 논리 삭제를 통해 이력 보존
- * @filename : UserSetting
+ * @filename : Challenge
  * @since : 25. 12. 17. 오전 10:16 수요일
  */
 @Entity
@@ -55,5 +56,13 @@ public class Challenge extends BaseEntity {
     @Column(nullable = false)
     private LocalDate endDate;
 
+
+    @PrePersist
+    public void prePersist() {
+        if (this.startDate != null && this.endDate != null
+            && this.startDate.isAfter(this.endDate)) {
+            throw new IllegalStateException("시작일은 종료일보다 이전이어야 합니다.");
+        }
+    }
 
 }

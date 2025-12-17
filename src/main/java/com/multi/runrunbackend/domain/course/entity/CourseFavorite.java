@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 /**
  * @author : kyungsoo
  * @description : 코스 즐겨찾기 엔티티
- * @filename : CourseSiren
+ * @filename : CourseFavorite
  * @since : 2025. 12. 17. Wednesday
  */
 @Entity
