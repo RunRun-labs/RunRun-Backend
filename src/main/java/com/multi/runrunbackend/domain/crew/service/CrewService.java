@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.crew.service;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
+import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
 import com.multi.runrunbackend.domain.crew.entity.CrewRole;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
@@ -61,6 +62,33 @@ public class CrewService {
         crewUserRepository.save(crewLeader);
 
         return crew.getId();
+    }
+
+    /**
+     * @param crewId 크루 ID
+     * @param userId 사용자 ID
+     * @param reqDto 크루 수정 요청 DTO
+     * @description : 크루 수정
+     */
+    @Transactional
+    public void updateCrew(Long crewId, Long userId, CrewUpdateReqDto reqDto) {
+        // 1. 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 2. 크루장 권한 검증
+        validateCrewLeader(crewId, userId);
+
+        // 3. 해체되지 않은 크루인지 검증
+        crew.validateNotDisbanded();
+
+        // 4. 크루 정보 수정
+        crew.updateCrew(
+                reqDto.getCrewDescription(),
+                reqDto.getCrewImageUrl(),
+                reqDto.getRegion(),
+                reqDto.getDistance(),
+                reqDto.getActivityTime()
+        );
     }
 
 /**
