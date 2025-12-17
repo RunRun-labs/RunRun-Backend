@@ -1,6 +1,5 @@
 package com.multi.runrunbackend.domain.crew.dto;
 
-import com.multi.runrunbackend.domain.crew.entity.CrewRecruitStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -43,6 +42,4 @@ public class CrewUpdateReqDto {
     @Size(max = 100, message = "정기모임일시는 100자 이내로 입력해주세요.")
     private String activityTime;
 
-    @Schema(description = "크루 모집 상태 (RECRUITING, CLOSED)")
-    private CrewRecruitStatus crewRecruitStatus;
 }
