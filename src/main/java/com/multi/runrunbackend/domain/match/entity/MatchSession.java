@@ -51,8 +51,9 @@ public class MatchSession extends BaseEntity {
     @JoinColumn(name = "course_id")
     private Course course;
 
-    @Column(name = "running_result_id")
-    private Long runningResultId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "running_result_id")
+    private RunningResult runningResult;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
