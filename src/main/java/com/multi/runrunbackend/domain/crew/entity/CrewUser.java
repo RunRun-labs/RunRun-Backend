@@ -1,6 +1,8 @@
 package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -61,6 +63,7 @@ public class CrewUser extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void updateRole(CrewRole role) {
+
         this.role = role;
     }
 
@@ -71,6 +74,21 @@ public class CrewUser extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void incrementParticipationCount() {
+
         this.participationCount++;
     }
+
+    /**
+     * @throws BusinessException 크루장이 아닌 경우
+     * @description : validateLeader - 크루장 권한 검증
+     * @filename : CrewMember
+     * @author : BoKyung
+     * @since : 25. 12. 17. 수요일
+     */
+    public void validateLeader() {
+        if (this.role != CrewRole.LEADER) {
+            throw new BusinessException(ErrorCode.NOT_CREW_LEADER);
+        }
+    }
+
 }

@@ -1,6 +1,8 @@
 package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -69,32 +71,52 @@ public class CrewJoinRequest extends BaseEntity {
     }
 
     /**
+     * @throws BusinessException PENDING 상태가 아닌 경우
      * @description : approve - 가입 신청 승인
      * @filename : CrewJoinRequest
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
     public void approve() {
+        validatePending();
         this.joinStatus = JoinStatus.APPROVED;
     }
 
     /**
+     * @throws BusinessException PENDING 상태가 아닌 경우
      * @description : reject - 가입 신청 거절
      * @filename : CrewJoinRequest
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
     public void reject() {
+        validatePending();
         this.joinStatus = JoinStatus.REJECTED;
     }
 
     /**
+     * @throws BusinessException PENDING 상태가 아닌 경우
      * @description : cancel - 가입 신청 취소 (Soft Delete)
      * @filename : CrewJoinRequest
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
     public void cancel() {
+        validatePending();
         this.joinStatus = JoinStatus.CANCELED;
+        this.delete();
+    }
+
+    /**
+     * @throws BusinessException PENDING 상태가 아닌 경우
+     * @description : validatePending - PENDING 상태인지 검증
+     * @filename : CrewJoinRequest
+     * @author : BoKyung
+     * @since : 25. 12. 17. 수요일
+     */
+    private void validatePending() {
+        if (this.joinStatus != JoinStatus.PENDING) {
+            throw new BusinessException(ErrorCode.JOIN_REQUEST_NOT_PENDING);
+        }
     }
 }

@@ -1,6 +1,8 @@
 package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -77,16 +79,17 @@ public class Crew extends BaseEntity {
     }
 
     /**
-     * @description : updateCrew - 크루 정보 수정
+     * @description : updateCrew - 크루 정보 수정 (크루명 제외)
      * @filename : Crew
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public void updateCrew(String crewName, String crewDescription, String crewImageUrl,
+    public void updateCrew(String crewDescription, String crewImageUrl,
                            String region, String distance, String activityTime) {
-        this.crewName = crewName;
         this.crewDescription = crewDescription;
-        this.crewImageUrl = crewImageUrl;
+        if (crewImageUrl != null) {
+            this.crewImageUrl = crewImageUrl;
+        }
         this.region = region;
         this.distance = distance;
         this.activityTime = activityTime;
@@ -103,22 +106,56 @@ public class Crew extends BaseEntity {
     }
 
     /**
+     * @throws BusinessException 이미 해체된 크루인 경우 (크루 상태 = DISBANDED)
      * @description : updateRecruitStatus - 모집 상태 변경
      * @filename : Crew
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
     public void updateRecruitStatus(CrewRecruitStatus crewRecruitStatus) {
+        if (this.crewStatus == CrewStatus.DISBANDED) {
+            throw new BusinessException(ErrorCode.CREW_ALREADY_DISBANDED);
+        }
         this.crewRecruitStatus = crewRecruitStatus;
     }
 
     /**
+     * @throws BusinessException 이미 해체된 크루인 경우 (크루 상태 = DISBANDED)
      * @description : softDelete - 크루 해체 (Soft Delete)
      * @filename : Crew
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
     public void softDelete() {
+        if (this.crewStatus == CrewStatus.DISBANDED) {
+            throw new BusinessException(ErrorCode.CREW_ALREADY_DISBANDED);
+        }
         this.crewStatus = CrewStatus.DISBANDED;
+        this.delete();
     }
+
+    /**
+     * @throws BusinessException 이미 해체된 크루인 경우
+     * @description : validateNotDisbanded - 해체되지 않은 크루인지 검증
+     * @filename : Crew
+     * @author : BoKyung
+     * @since : 25. 12. 17. 수요일
+     */
+    public void validateNotDisbanded() {
+        if (this.crewStatus == CrewStatus.DISBANDED) {
+            throw new BusinessException(ErrorCode.CREW_ALREADY_DISBANDED);
+        }
+    }
+
+    /**
+     * @description : isRecruiting - 모집중인지 확인
+     * @filename : Crew
+     * @author : BoKyung
+     * @since : 25. 12. 17. 수요일
+     */
+    public boolean isRecruiting() {
+        return this.crewRecruitStatus == CrewRecruitStatus.RECRUITING
+                && this.crewStatus == CrewStatus.ACTIVE;
+    }
+
 }
