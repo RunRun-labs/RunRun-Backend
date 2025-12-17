@@ -87,6 +87,11 @@ public class User extends BaseEntity {
         this.profileImageUrl = profileImageUrl;
     }
 
+    public void updateAccount(String email, String name) {
+        this.email = email;
+        this.name = name;
+    }
+
     public static User toEntity(UserSignUpDto dto) {
         return User.builder()
                 .loginId(dto.getLoginId())
