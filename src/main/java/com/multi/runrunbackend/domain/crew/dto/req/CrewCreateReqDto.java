@@ -1,4 +1,4 @@
-package com.multi.runrunbackend.domain.crew.dto;
+package com.multi.runrunbackend.domain.crew.dto.req;
 
 import com.multi.runrunbackend.domain.crew.entity.Crew;
 import com.multi.runrunbackend.domain.user.entity.User;

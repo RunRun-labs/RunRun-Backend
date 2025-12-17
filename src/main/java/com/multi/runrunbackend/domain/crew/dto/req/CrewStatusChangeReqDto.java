@@ -1,4 +1,4 @@
-package com.multi.runrunbackend.domain.crew.dto;
+package com.multi.runrunbackend.domain.crew.dto.req;
 
 import com.multi.runrunbackend.domain.crew.entity.CrewRecruitStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
