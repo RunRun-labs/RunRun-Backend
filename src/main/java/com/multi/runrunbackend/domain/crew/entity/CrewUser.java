@@ -31,8 +31,9 @@ public class CrewUser extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
-    private String role;  // LEADER, SUB_LEADER, MANAGER, MEMBER
+    private CrewRole role;  // LEADER, SUB_LEADER, STAFF, MEMBER
 
     @Column(name = "participation_count", nullable = false)
     private Integer participationCount;
@@ -44,7 +45,7 @@ public class CrewUser extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static CrewUser toEntity(Crew crew, User user, String role) {
+    public static CrewUser toEntity(Crew crew, User user, CrewRole role) {
         return CrewUser.builder()
                 .crew(crew)
                 .user(user)
@@ -59,7 +60,7 @@ public class CrewUser extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public void updateRole(String role) {
+    public void updateRole(CrewRole role) {
         this.role = role;
     }
 

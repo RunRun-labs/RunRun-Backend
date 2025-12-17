@@ -47,11 +47,13 @@ public class Crew extends BaseEntity {
     @Column(name = "activity_time", nullable = false, length = 100)
     private String activityTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "crew_status", length = 20)
-    private String crewStatus;  // ACTIVE, DISBANDED
+    private CrewStatus crewStatus;  // ACTIVE, DISBANDED
 
-    @Column(name = "recruit_status", length = 20)
-    private String recruitStatus;  // RECRUITING, CLOSED
+    @Enumerated(EnumType.STRING)
+    @Column(name = "crew_recruit_status", length = 20)
+    private CrewRecruitStatus crewRecruitStatus;  // RECRUITING, CLOSED
 
     /**
      * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
@@ -69,8 +71,8 @@ public class Crew extends BaseEntity {
                 .distance(distance)
                 .activityTime(activityTime)
                 .user(user)
-                .crewStatus("ACTIVE")
-                .recruitStatus("RECRUITING")
+                .crewStatus(CrewStatus.ACTIVE)
+                .crewRecruitStatus(CrewRecruitStatus.RECRUITING)
                 .build();
     }
 
@@ -96,7 +98,7 @@ public class Crew extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public void updateStatus(String crewStatus) {
+    public void updateStatus(CrewStatus crewStatus) {
         this.crewStatus = crewStatus;
     }
 
@@ -106,8 +108,8 @@ public class Crew extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public void updateRecruitStatus(String recruitStatus) {
-        this.recruitStatus = recruitStatus;
+    public void updateRecruitStatus(CrewRecruitStatus crewRecruitStatus) {
+        this.crewRecruitStatus = crewRecruitStatus;
     }
 
     /**
@@ -117,6 +119,6 @@ public class Crew extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void softDelete() {
-        this.crewStatus = "DISBANDED";
+        this.crewStatus = CrewStatus.DISBANDED;
     }
 }

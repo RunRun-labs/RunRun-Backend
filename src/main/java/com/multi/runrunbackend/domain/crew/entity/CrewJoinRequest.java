@@ -45,8 +45,9 @@ public class CrewJoinRequest extends BaseEntity {
     @Column(name = "region", nullable = false, length = 100)
     private String region;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "join_status", nullable = false, length = 20)
-    private String joinStatus;  // PENDING, APPROVED, REJECTED, CANCELED
+    private JoinStatus joinStatus;  // PENDING, APPROVED, REJECTED, CANCELED
 
     /**
      * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
@@ -63,7 +64,7 @@ public class CrewJoinRequest extends BaseEntity {
                 .distance(distance)
                 .pace(pace)
                 .region(region)
-                .joinStatus("PENDING")
+                .joinStatus(JoinStatus.PENDING)
                 .build();
     }
 
@@ -74,7 +75,7 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void approve() {
-        this.joinStatus = "APPROVED";
+        this.joinStatus = JoinStatus.APPROVED;
     }
 
     /**
@@ -84,7 +85,7 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void reject() {
-        this.joinStatus = "REJECTED";
+        this.joinStatus = JoinStatus.REJECTED;
     }
 
     /**
@@ -94,6 +95,6 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void cancel() {
-        this.joinStatus = "CANCELED";
+        this.joinStatus = JoinStatus.CANCELED;
     }
 }
