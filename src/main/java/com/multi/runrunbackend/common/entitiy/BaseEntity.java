@@ -5,23 +5,24 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
 import lombok.Getter;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * @author : kyungsoo
+ * @description : created_at, updated_at, isDeleted 만 있는 baseEntity
+ * @filename : BaseEntity
+ * @since : 2025. 12. 17. Wednesday
+ */
 @Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class BaseEntity {
+public abstract class BaseEntity extends BaseTimeEntity {
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    protected LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     protected LocalDateTime updatedAt;
 
-    @Column(name = "is_deleted", nullable = false)
-    protected boolean isDeleted = false;
+
 }
