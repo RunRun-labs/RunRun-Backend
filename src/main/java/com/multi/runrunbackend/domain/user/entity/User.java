@@ -3,21 +3,12 @@ package com.multi.runrunbackend.domain.user.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignUpDto;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import lombok.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * @author : kyungsoo
@@ -31,11 +22,11 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @Table(
-    name = "users",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = "login_id"),
-        @UniqueConstraint(columnNames = "email")
-    }
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "login_id"),
+                @UniqueConstraint(columnNames = "email")
+        }
 )
 public class User extends BaseEntity {
 
@@ -87,17 +78,26 @@ public class User extends BaseEntity {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public void updateProfile(Integer heightCm, Integer weightKg) {
+        this.heightCm = heightCm;
+        this.weightKg = weightKg;
+    }
+
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
     public static User toEntity(UserSignUpDto dto) {
         return User.builder()
-            .loginId(dto.getLoginId())
-            .password(dto.getUserPassword())
-            .email(dto.getUserEmail())
-            .name(dto.getUserName())
-            .gender(dto.getGender())
-            .birthDate(dto.getBirthDate())
-            .heightCm(dto.getHeightCm())
-            .weightKg(dto.getWeightKg())
-            .role("ROLE_USER")
-            .build();
+                .loginId(dto.getLoginId())
+                .password(dto.getUserPassword())
+                .email(dto.getUserEmail())
+                .name(dto.getUserName())
+                .gender(dto.getGender())
+                .birthDate(dto.getBirthDate())
+                .heightCm(dto.getHeightCm())
+                .weightKg(dto.getWeightKg())
+                .role("ROLE_USER")
+                .build();
     }
 }
