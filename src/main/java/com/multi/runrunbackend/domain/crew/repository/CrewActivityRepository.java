@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.crew.repository;
 import com.multi.runrunbackend.domain.crew.entity.CrewActivity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -15,7 +16,7 @@ import java.util.List;
  * @since : 25. 12. 18. 목요일
  */
 @Repository
-public interface CrewActivityRepository {
+public interface CrewActivityRepository extends CrudRepository<CrewActivity, Long> {
 
     /**
      * @param crewId   크루 ID
