@@ -2,18 +2,8 @@ package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
 /**
@@ -23,6 +13,7 @@ import org.hibernate.annotations.SQLRestriction;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
+@Table(name = "crew")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -69,18 +60,18 @@ public class Crew extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static Crew toEntity(String crewName, String crewDescription, String crewImageUrl,
-        String region, String distance, String activityTime, User user) {
+                                String region, String distance, String activityTime, User user) {
         return Crew.builder()
-            .crewName(crewName)
-            .crewDescription(crewDescription)
-            .crewImageUrl(crewImageUrl)
-            .region(region)
-            .distance(distance)
-            .activityTime(activityTime)
-            .user(user)
-            .crewStatus("ACTIVE")
-            .recruitStatus("RECRUITING")
-            .build();
+                .crewName(crewName)
+                .crewDescription(crewDescription)
+                .crewImageUrl(crewImageUrl)
+                .region(region)
+                .distance(distance)
+                .activityTime(activityTime)
+                .user(user)
+                .crewStatus("ACTIVE")
+                .recruitStatus("RECRUITING")
+                .build();
     }
 
     /**
@@ -90,7 +81,7 @@ public class Crew extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void updateCrew(String crewName, String crewDescription, String crewImageUrl,
-        String region, String distance, String activityTime) {
+                           String region, String distance, String activityTime) {
         this.crewName = crewName;
         this.crewDescription = crewDescription;
         this.crewImageUrl = crewImageUrl;

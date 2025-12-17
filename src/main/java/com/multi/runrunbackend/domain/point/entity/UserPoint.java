@@ -1,18 +1,8 @@
 package com.multi.runrunbackend.domain.point.entity;
 
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 /**
  * @author : BoKyung
@@ -21,6 +11,7 @@ import lombok.NoArgsConstructor;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
+@Table(name = "user_point")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -46,9 +37,9 @@ public class UserPoint {
      */
     public static UserPoint toEntity(User user) {
         return UserPoint.builder()
-            .user(user)
-            .totalPoint(0)
-            .build();
+                .user(user)
+                .totalPoint(0)
+                .build();
     }
 
     /**

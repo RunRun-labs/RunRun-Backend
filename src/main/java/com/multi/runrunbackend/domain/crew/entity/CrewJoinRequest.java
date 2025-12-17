@@ -2,18 +2,8 @@ package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
 /**
@@ -23,6 +13,7 @@ import org.hibernate.annotations.SQLRestriction;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
+@Table(name = "crew_join_request")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -64,16 +55,16 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static CrewJoinRequest toEntity(Crew crew, User user, String introduction,
-        Integer distance, Integer pace, String region) {
+                                           Integer distance, Integer pace, String region) {
         return CrewJoinRequest.builder()
-            .crew(crew)
-            .user(user)
-            .introduction(introduction)
-            .distance(distance)
-            .pace(pace)
-            .region(region)
-            .joinStatus("PENDING")
-            .build();
+                .crew(crew)
+                .user(user)
+                .introduction(introduction)
+                .distance(distance)
+                .pace(pace)
+                .region(region)
+                .joinStatus("PENDING")
+                .build();
     }
 
     /**
