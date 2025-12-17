@@ -1,11 +1,14 @@
 package com.multi.runrunbackend.domain.membership.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -30,8 +33,9 @@ public class Membership extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "membership_grade", nullable = false, length = 20)
     private String membershipGrade; // FREE, PREMIUM
@@ -54,10 +58,10 @@ public class Membership extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static Membership toEntity(Long userId) {
+    public static Membership toEntity(User user) {
         LocalDateTime now = LocalDateTime.now();
         return Membership.builder()
-            .userId(userId)
+            .user(user)
             .membershipGrade("FREE")
             .membershipStatus("ACTIVE")
             .startDate(now)
