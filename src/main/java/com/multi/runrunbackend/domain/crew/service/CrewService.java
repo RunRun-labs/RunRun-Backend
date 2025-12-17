@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * @author : BoKyung
  * @description : 크루 Service
@@ -89,6 +91,27 @@ public class CrewService {
                 reqDto.getDistance(),
                 reqDto.getActivityTime()
         );
+    }
+
+    /**
+     * @param crewId 크루 ID
+     * @param userId 사용자 ID
+     * @description : 크루 삭제 (해체)
+     */
+    @Transactional
+    public void deleteCrew(Long crewId, Long userId) {
+        // 1. 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 2. 크루장 권한 검증
+        validateCrewLeader(crewId, userId);
+
+        // 3. 크루 해체 (soft delete)
+        crew.softDelete();
+
+        // 4. 모든 크루원 soft delete
+        List<CrewUser> crewUsers = crewUserRepository.findAllByCrewIdAndIsDeletedFalse(crewId);
+        crewUsers.forEach(CrewUser::delete);
     }
 
 /**
