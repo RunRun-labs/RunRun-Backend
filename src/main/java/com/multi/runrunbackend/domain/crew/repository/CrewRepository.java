@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.crew.repository;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -35,7 +36,11 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
      * @param pageable 페이징 정보
      * @description : 크루 목록 조회 (커서 기반 페이징, 필터링 없음)
      */
-    List<Crew> findCrewsWithCursor(
+    @Query("SELECT c FROM Crew c " +
+            "WHERE (:cursor IS NULL OR c.id < :cursor) " +
+            "AND c.crewStatus = 'ACTIVE' " +
+            "ORDER BY c.id DESC")
+    List<Crew> findAllByIdLessThanOrderByIdDesc(
             @Param("cursor") Long cursor,
             Pageable pageable
     );
@@ -46,7 +51,12 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
      * @param pageable 페이징 정보
      * @description : 크루 목록 조회 (지역 필터링)
      */
-    List<Crew> findCrewsByRegionWithCursor(
+    @Query("SELECT c FROM Crew c " +
+            "WHERE (:cursor IS NULL OR c.id < :cursor) " +
+            "AND c.region = :region " +
+            "AND c.crewStatus = 'ACTIVE' " +
+            "ORDER BY c.id DESC")
+    List<Crew> findAllByRegionAndIdLessThanOrderByIdDesc(
             @Param("cursor") Long cursor,
             @Param("region") String region,
             Pageable pageable
@@ -58,7 +68,12 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
      * @param pageable 페이징 정보
      * @description : 크루 목록 조회 (러닝거리 필터링)
      */
-    List<Crew> findCrewsByDistanceWithCursor(
+    @Query("SELECT c FROM Crew c " +
+            "WHERE (:cursor IS NULL OR c.id < :cursor) " +
+            "AND c.distance = :distance " +
+            "AND c.crewStatus = 'ACTIVE' " +
+            "ORDER BY c.id DESC")
+    List<Crew> findAllByDistanceAndIdLessThanOrderByIdDesc(
             @Param("cursor") Long cursor,
             @Param("distance") String distance,
             Pageable pageable
@@ -71,7 +86,13 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
      * @param pageable 페이징 정보
      * @description : 크루 목록 조회 (지역 + 러닝거리 필터링)
      */
-    List<Crew> findCrewsByRegionAndDistanceWithCursor(
+    @Query("SELECT c FROM Crew c " +
+            "WHERE (:cursor IS NULL OR c.id < :cursor) " +
+            "AND c.region = :region " +
+            "AND c.distance = :distance " +
+            "AND c.crewStatus = 'ACTIVE' " +
+            "ORDER BY c.id DESC")
+    List<Crew> findAllByRegionAndDistanceAndIdLessThanOrderByIdDesc(
             @Param("cursor") Long cursor,
             @Param("region") String region,
             @Param("distance") String distance,
@@ -83,7 +104,11 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
      * @param pageable 페이징 정보
      * @description : 크루 목록 조회 (모집중 우선 정렬 - Recruiting)
      */
-    List<Crew> findCrewsByRecruitingWithCursor(
+    @Query("SELECT c FROM Crew c " +
+            "WHERE (:cursor IS NULL OR c.id < :cursor) " +
+            "AND c.crewStatus = 'ACTIVE' " +
+            "ORDER BY CASE WHEN c.crewRecruitStatus = 'RECRUITING' THEN 0 ELSE 1 END, c.id DESC")
+    List<Crew> findAllOrderByRecruitStatusDescIdDesc(
             @Param("cursor") Long cursor,
             Pageable pageable
     );
@@ -94,7 +119,12 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
      * @param pageable 페이징 정보
      * @description : 크루 목록 조회 (크루명 검색)
      */
-    List<Crew> findCrewsByNameWithCursor(
+    @Query("SELECT c FROM Crew c " +
+            "WHERE (:cursor IS NULL OR c.id < :cursor) " +
+            "AND c.crewName LIKE %:keyword% " +
+            "AND c.crewStatus = 'ACTIVE' " +
+            "ORDER BY c.id DESC")
+    List<Crew> findAllByCrewNameContainingAndIdLessThanOrderByIdDesc(
             @Param("keyword") String keyword,
             @Param("cursor") Long cursor,
             Pageable pageable
