@@ -33,7 +33,7 @@ public class CrewActivityUser extends BaseCreatedEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "crewActivity_id", nullable = false)
+    @JoinColumn(name = "crew_activity_id", nullable = false)
     private CrewActivity crewActivity;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -46,8 +46,7 @@ public class CrewActivityUser extends BaseCreatedEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static CrewActivityUser toEntity(CrewActivity crewActivity, User user,
-        String attendanceStatus) {
+    public static CrewActivityUser toEntity(CrewActivity crewActivity, User user) {
         return CrewActivityUser.builder()
             .crewActivity(crewActivity)
             .user(user)
