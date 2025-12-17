@@ -21,8 +21,8 @@ import lombok.Setter;
 
 /**
  * @author : kyungsoo
- * @description : Please explain the class!!!
- * @filename : CourseSiren
+ * @description : 사용자 엔티티
+ * @filename : User
  * @since : 2025. 12. 17. Wednesday
  */
 @Entity
@@ -44,14 +44,14 @@ public class User extends BaseEntity {
     @Column(name = "id")
     private Long id;  // 회원번호
 
-    @Column(name = "login_id", nullable = false, unique = true)
+    @Column(name = "login_id", nullable = false)
     private String loginId;
 
     @Column(nullable = false)
     private String password;  // 비밀번호(암호화)
 
     @Email(message = "이메일 형식이 올바르지 않습니다.")
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false)
     private String email;
 
     @Setter
