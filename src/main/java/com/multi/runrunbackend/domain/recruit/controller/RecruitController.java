@@ -10,7 +10,6 @@ import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,9 +59,8 @@ public class RecruitController {
   @GetMapping
   public ResponseEntity<ApiResponse> getRecruitList(
       @ModelAttribute RecruitListReqDto request,
-      @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable
+      @PageableDefault(size = 10) Pageable pageable
   ) {
-
     return ResponseEntity.ok(
         ApiResponse.success("모집글 목록 조회 성공", recruitService.getRecruitList(request, pageable)));
   }

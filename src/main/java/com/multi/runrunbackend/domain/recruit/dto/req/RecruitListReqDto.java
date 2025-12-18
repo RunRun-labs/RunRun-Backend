@@ -14,5 +14,6 @@ public class RecruitListReqDto {
   private Double latitude;
   private Double longitude;
   private Double radiusKm;
-
+  private String keyword;
+  private String sortBy;
 }

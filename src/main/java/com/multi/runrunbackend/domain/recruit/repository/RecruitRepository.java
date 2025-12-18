@@ -19,18 +19,26 @@ import org.springframework.stereotype.Repository;
 public interface RecruitRepository extends JpaRepository<Recruit, Long> {
 
   @Query(value = """
-      SELECT * FROM recruit r
+      SELECT *, 
+             (6371 * acos(cos(radians(:lat)) * cos(radians(r.latitude))
+             * cos(radians(r.longitude) - radians(:lon))
+             + sin(radians(:lat)) * sin(radians(r.latitude)))) AS distance
+      FROM recruit r
       WHERE r.is_deleted = false
-      AND (:radius IS NULL OR
+      AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))
+      AND (:radius IS NULL OR 
           (6371 * acos(cos(radians(:lat)) * cos(radians(r.latitude))
           * cos(radians(r.longitude) - radians(:lon))
           + sin(radians(:lat)) * sin(radians(r.latitude)))) <= :radius
       )
-      """, nativeQuery = true)
-  Slice<Recruit> findRecruitsByRadius(
+      """,
+      countQuery = "SELECT count(*) FROM recruit r WHERE r.is_deleted = false AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))",
+      nativeQuery = true)
+  Slice<Recruit> findRecruitsWithFilters(
       @Param("lat") Double myLat,
       @Param("lon") Double myLon,
       @Param("radius") Double radius,
+      @Param("keyword") String keyword,
       Pageable pageable
   );
 }

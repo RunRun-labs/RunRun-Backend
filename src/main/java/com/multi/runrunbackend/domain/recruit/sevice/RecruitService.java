@@ -11,8 +11,10 @@ import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,26 +52,31 @@ public class RecruitService {
   }
 
   public Slice<RecruitListResDto> getRecruitList(RecruitListReqDto req, Pageable pageable) {
+    Sort sort = switch (req.getSortBy()) {
+      case "distance" -> Sort.by(Sort.Direction.ASC, "distance"); // 가까운 순
+      case "meetingSoon" -> Sort.by(Sort.Direction.ASC, "meeting_at"); // 모임 날짜 빠른 순
+      default -> Sort.by(Sort.Direction.DESC, "created_at"); // 최신순 (기본)
+    };
 
-    Slice<Recruit> recruits = recruitRepository.findRecruitsByRadius(
+    Pageable dynamicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+        sort);
+
+    Slice<Recruit> recruits = recruitRepository.findRecruitsWithFilters(
         req.getLatitude(),
         req.getLongitude(),
         req.getRadiusKm(),
-        pageable
+        req.getKeyword(),
+        dynamicPageable
     );
 
     return recruits.map(recruit -> {
-      Double distance = null;
-      if (req.getLatitude() != null && req.getLongitude() != null) {
-        distance = calculateDistance(
-            req.getLatitude(), req.getLongitude(),
-            recruit.getLatitude(), recruit.getLongitude()
-        );
-      }
-      return RecruitListResDto.from(recruit, distance);
+      Double dist = (req.getLatitude() != null && req.getLongitude() != null)
+          ? calculateDistance(req.getLatitude(), req.getLongitude(), recruit.getLatitude(),
+          recruit.getLongitude())
+          : null;
+      return RecruitListResDto.from(recruit, dist);
     });
   }
-
 
   private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     double theta = lon1 - lon2;
