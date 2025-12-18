@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * @since : 25. 12. 17. 오후 11:25 수요일
  */
 @RestController
-@RequestMapping("/api/v1/profile")
+@RequestMapping("/profile")
 @RequiredArgsConstructor
 public class ProfileController {
 
