@@ -1,0 +1,395 @@
+:root {
+    --primary: #baff29;
+    --text-strong: #000000;
+    --text-muted: #6c7278;
+    --stroke: #e1e4e8;
+    --bg: #ffffff;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+}
+
+.mypage-body {
+    font-family: "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+    background: var(--bg);
+    color: var(--text-strong);
+}
+
+.page {
+    position: relative;
+    width: min(420px, 100vw);
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 0 20px 110px;
+    display: flex;
+    flex-direction: column;
+}
+
+.mypage-page {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 130px;
+}
+
+.mypage-header {
+    position: relative;
+    padding: 18px 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mypage-logo {
+    margin: 0;
+    font-family: "Fugaz One", "Inter", sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.icon-button {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.icon-button img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.profile-summary {
+    margin-top: 4px;
+    border-radius: 12px;
+    border: 1px solid var(--stroke);
+    background: #fdfdfd;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    padding: 12px 12px 10px;
+}
+
+.profile-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    border: 2px solid var(--primary);
+    display: grid;
+    place-items: center;
+}
+
+.avatar-initial {
+    font-family: "Fugaz One", "Inter", sans-serif;
+    font-size: 18px;
+}
+
+.profile-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-name {
+    margin: 0;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.profile-meta {
+    margin: 0;
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.profile-actions {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.action-pill {
+    height: 30px;
+    border-radius: 999px;
+    border: none;
+    background: var(--primary);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(186, 255, 41, 0.6);
+}
+
+.weekly-section {
+    margin-top: 16px;
+    padding: 8px 4px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--stroke);
+    background: #ffffff;
+}
+
+.weekly-chips {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.chip {
+    height: 28px;
+    border-radius: 999px;
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.chip-filled {
+    background: var(--primary);
+    border: none;
+}
+
+.chip-outline {
+    background: #fff;
+    border: 1px solid var(--primary);
+}
+
+.chip-icon {
+    font-size: 11px;
+}
+
+.weekly-chart {
+    margin-top: 4px;
+}
+
+.chart-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 80px;
+    padding: 0 8px;
+}
+
+.bar {
+    width: 10px;
+    border-radius: 8px 8px 0 0;
+    background: var(--primary);
+    height: calc(20px + 60px * var(--h));
+}
+
+.chart-days {
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 8px;
+    font-size: 9px;
+}
+
+.run-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.run-card {
+    display: flex;
+    gap: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--stroke);
+    background: #ffffff;
+    padding: 8px 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.run-thumb {
+    flex: 0 0 76px;
+    height: 76px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #eef2f4;
+}
+
+.run-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.run-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.run-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 9px;
+}
+
+.run-date {
+    font-weight: 600;
+}
+
+.run-note {
+    color: var(--text-muted);
+    text-align: right;
+}
+
+.run-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.run-stats {
+    display: flex;
+    gap: 10px;
+    font-size: 10px;
+}
+
+.run-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.run-icon {
+    font-size: 11px;
+}
+
+.run-share {
+    margin-top: 4px;
+    align-self: flex-end;
+    border: none;
+    background: none;
+    font-size: 9px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 420px;
+    margin: 0 auto;
+    height: 76px;
+    border-top: 1px solid var(--primary);
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+    padding: 8px 12px 6px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+.nav-item {
+    text-align: center;
+    text-decoration: none;
+    color: #000;
+    font-family: "Fugaz One", "Inter", sans-serif;
+    font-size: 10px;
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+}
+
+.nav-item img {
+    width: 28px;
+    height: 28px;
+}
+
+@media (max-width: 480px) {
+    .page {
+        padding: 0 16px 110px;
+    }
+
+    .mypage-page {
+        padding-bottom: 120px;
+    }
+}
+
+@media (max-width: 920px) and (max-height: 520px) {
+    .page {
+        width: min(420px, 100vw);
+        padding: 0 14px 100px;
+    }
+
+    .mypage-logo {
+        font-size: 26px;
+    }
+
+    .bottom-nav {
+        height: 68px;
+        padding: 6px 12px 6px;
+    }
+
+    .nav-item img {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+@media (min-width: 900px) {
+    .page {
+        max-width: 960px;
+        width: 100%;
+        padding: 0 32px 140px;
+    }
+
+    .mypage-page {
+        padding-bottom: 160px;
+    }
+
+    .bottom-nav {
+        max-width: 960px;
+        grid-template-columns: repeat(5, minmax(120px, 1fr));
+        height: 82px;
+        padding: 10px 24px 10px;
+    }
+
+    .nav-item {
+        font-size: 11px;
+    }
+
+    .nav-item img {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+

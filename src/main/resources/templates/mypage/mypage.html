@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | My Page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/mypage.css"
+            th:href="@{/css/mypage.css}"
+    />
+</head>
+<body class="mypage-body">
+<main class="page mypage-page">
+    <header class="mypage-header">
+        <h1 class="mypage-logo">MYPAGE</h1>
+        <button class="icon-button settings-button" type="button" aria-label="설정">
+            <img
+                    src="http://localhost:3845/assets/gear-icon.svg"
+                    alt="설정 아이콘"
+            />
+        </button>
+    </header>
+
+    <section class="profile-summary">
+        <div class="profile-row">
+
+            <!-- 좌측: 프로필 이미지 -->
+            <div class="profile-avatar">
+                <img
+                        th:if="${profileImageUrl != null}"
+                        th:src="${profileImageUrl}"
+                        alt="프로필 이미지"
+                        class="avatar-img"
+                />
+                <span
+                        th:if="${profileImageUrl == null}"
+                        class="avatar-initial"
+<!--                        th:text="${userInitials}"-->
+                ></span>
+            </div>
+
+            <!-- 중앙: 이름 + 신체 정보 -->
+            <div class="profile-text profile-center">
+
+
+                <p class="profile-meta profile-body">
+                    키:
+                    <span id="heightCm"
+                          th:text="${heightCm != null ? heightCm : '-'}">-</span>cm<br/>
+                    몸무게:
+                    <span id="weightKg"
+                          th:text="${weightKg != null ? weightKg : '-'}">-</span>kg<br/>
+                    BMI:
+                    <span id="bmiValue">-</span>
+                </p>
+            </div>
+
+            <!-- 우측: 누적 / 랭킹 / 포인트 -->
+<!--            <div class="profile-text profile-right">-->
+<!--                <p class="profile-meta">-->
+<!--                    누적:-->
+<!--                    <span th:text="${totalDistance != null ? totalDistance : '-'}">-</span><br/>-->
+<!--                    랭킹:-->
+<!--                    <span th:text="${rank != null ? rank : '-'}">-</span><br/>-->
+<!--                    포인트:-->
+<!--                    <span th:text="${pointBalance != null ? pointBalance : '-'}">-</span>-->
+<!--                </p>-->
+<!--            </div>-->
+
+        </div>
+
+
+        <div class="profile-actions">
+            <button class="action-pill" type="button">챌린지</button>
+            <button class="action-pill" type="button">친구</button>
+            <button class="action-pill" type="button">쿠폰함</button>
+            <button class="action-pill" type="button" data-role="profile-settings">프로필 설정</button>
+        </div>
+    </section>
+
+    <section class="weekly-section">
+        <div class="weekly-chips">
+            <button class="chip chip-filled" type="button">
+                <span class="chip-icon">🏃‍♂️</span>
+                <span th:text="${weekDistance}">21.4km</span>
+            </button>
+            <button class="chip chip-outline" type="button">
+                <span th:text="${weekLabel}">12월 둘째 주</span>
+            </button>
+            <button class="chip chip-filled" type="button">
+                <span class="chip-icon">⏱</span>
+                <span th:text="${weekTime}">3h 14m</span>
+            </button>
+        </div>
+
+        <div class="weekly-chart">
+            <div class="chart-bars">
+                <div class="bar" style="--h: 0.35"></div>
+                <div class="bar" style="--h: 0.9"></div>
+                <div class="bar" style="--h: 0.5"></div>
+                <div class="bar" style="--h: 0.4"></div>
+                <div class="bar" style="--h: 0.75"></div>
+                <div class="bar" style="--h: 0.6"></div>
+                <div class="bar" style="--h: 0.8"></div>
+            </div>
+            <div class="chart-days">
+                <span>Mo</span>
+                <span>Tu</span>
+                <span>We</span>
+                <span>Th</span>
+                <span>Fr</span>
+                <span>Sa</span>
+                <span>Su</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="run-list">
+        <article class="run-card">
+            <div class="run-thumb">
+                <img
+                        src="http://localhost:3845/assets/run-map-1.png"
+                        alt="러닝 코스 지도"
+                />
+            </div>
+            <div class="run-content">
+                <div class="run-header">
+                    <span class="run-date">12/9 화요일</span>
+                    <span class="run-note">"광진구실업선수" 닉과 함께</span>
+                </div>
+                <p class="run-title">정선군 여행런</p>
+                <div class="run-stats">
+          <span class="run-stat">
+            <span class="run-icon">🏃‍♂️</span>
+            <span>18km</span>
+          </span>
+                    <span class="run-stat">
+            <span class="run-icon">⏱</span>
+            <span>01:32:14</span>
+          </span>
+                </div>
+                <button class="run-share" type="button">피드에 공유</button>
+            </div>
+        </article>
+
+        <article class="run-card">
+            <div class="run-thumb">
+                <img
+                        src="http://localhost:3845/assets/run-map-2.png"
+                        alt="러닝 코스 지도"
+                />
+            </div>
+            <div class="run-content">
+                <div class="run-header">
+                    <span class="run-date">12/8 월요일</span>
+                    <span class="run-note">혼자</span>
+                </div>
+                <p class="run-title">분당구 운동</p>
+                <div class="run-stats">
+          <span class="run-stat">
+            <span class="run-icon">🏃‍♂️</span>
+            <span>5km</span>
+          </span>
+                    <span class="run-stat">
+            <span class="run-icon">⏱</span>
+            <span>00:20:30</span>
+          </span>
+                </div>
+                <button class="run-share" type="button">피드에 공유</button>
+            </div>
+        </article>
+    </section>
+</main>
+
+<template id="bottomNavTemplate">
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+            <img
+                    src="http://localhost:3845/assets/3ca81eaa50aaf4304e5454034789cf398897e16f.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+            <img
+                    src="http://localhost:3845/assets/a25ca98a797a195cf0014d33755d97160983a834.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>feed</span>
+        </a>
+        <a class="nav-item" th:href="@{/}" href="/">
+            <img
+                    src="http://localhost:3845/assets/6d060744ca344e07264a3340d1ce76267f035268.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+            <img
+                    src="http://localhost:3845/assets/a1c3341d0388b5ec41a25350c4e525c869160bdd.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>match</span>
+        </a>
+        <a class="nav-item" th:href="@{/my}" href="/my">
+            <img
+                    src="http://localhost:3845/assets/1894082a888c5c07d733295ec6a54ed9b0711586.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>my</span>
+        </a>
+    </nav>
+</template>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/mypage.js" th:src="@{/js/mypage.js}"></script>
+</body>
+</html>
+
+
