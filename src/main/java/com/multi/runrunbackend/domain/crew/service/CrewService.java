@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.jwt.provider.TokenProvider;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
+import com.multi.runrunbackend.domain.crew.dto.req.CrewStatusChangeReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewActivityResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
@@ -192,6 +193,27 @@ public class CrewService {
                 .collect(Collectors.toList());
 
         return CrewDetailResDto.toEntity(crew, memberCount, activityResDtos);
+    }
+
+    /**
+     * @param loginId 사용자 로그인 ID (이메일)
+     * @param crewId  크루 ID
+     * @param reqDto  모집 상태 변경 요청 DTO
+     * @description : 크루 모집 상태 변경
+     */
+    @Transactional
+    public void updateRecruitStatus(String loginId, Long crewId, CrewStatusChangeReqDto reqDto) {
+        // 1. 사용자 조회
+        User user = findUserByLoginId(loginId);
+
+        // 2. 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 3. 크루장 권한 검증
+        validateCrewLeader(crewId, user.getId());
+
+        // 4. 모집 상태 변경 (해체 여부 검증 포함)
+        crew.updateRecruitStatus(reqDto.getRecruitStatus());
     }
 
 /**

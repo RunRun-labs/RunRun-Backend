@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.crew.controller;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
+import com.multi.runrunbackend.domain.crew.dto.req.CrewStatusChangeReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
@@ -123,5 +124,24 @@ public class CrewController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("크루 상세 조회 성공", response));
+    }
+
+    /**
+     * @param customUser 인증된 사용자 정보
+     * @param crewId     크루 ID
+     * @param reqDto     모집 상태 변경 요청 DTO
+     * @description : 크루 모집 상태 변경
+     */
+    @PatchMapping("/{crewId}/status")
+    public ResponseEntity<ApiResponse<Void>> updateRecruitStatus(
+            @AuthenticationPrincipal CustomUser customUser,
+            @PathVariable Long crewId,
+            @Valid @RequestBody CrewStatusChangeReqDto reqDto
+    ) {
+        String loginId = customUser.getEmail();
+        crewService.updateRecruitStatus(loginId, crewId, reqDto);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("모집 상태 변경 성공", null));
     }
 }
