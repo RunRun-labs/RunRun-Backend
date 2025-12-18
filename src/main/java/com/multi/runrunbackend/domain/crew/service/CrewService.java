@@ -5,6 +5,8 @@ import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.jwt.provider.TokenProvider;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewListResDto;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
 import com.multi.runrunbackend.domain.crew.entity.CrewRole;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
@@ -14,10 +16,13 @@ import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author : BoKyung
@@ -119,6 +124,48 @@ public class CrewService {
         // 5. 모든 크루원 soft delete
         List<CrewUser> crewUsers = crewUserRepository.findAllByCrewIdAndIsDeletedFalse(crewId);
         crewUsers.forEach(CrewUser::delete);
+    }
+
+    /**
+     * @param cursor     마지막 조회 크루 ID
+     * @param size       페이지 크기 -> 5
+     * @param region     지역 필터
+     * @param distance   거리 필터
+     * @param recruiting 모집중 우선 정렬
+     * @param keyword    크루명 검색
+     * @description : 크루 목록 조회 (커서 기반 페이징)
+     */
+    public CrewListPageResDto getCrewList(Long cursor, int size, String region,
+                                          String distance, Boolean recruiting, String keyword) {
+        Pageable pageable = PageRequest.of(0, size);
+        List<Crew> crews;
+
+        if (keyword != null && !keyword.isBlank()) {
+            crews = crewRepository.findAllByCrewNameContainingAndIdLessThanOrderByIdDesc(
+                    keyword, cursor, pageable);
+        } else if (recruiting != null && recruiting) {
+            crews = crewRepository.findAllOrderByRecruitStatusDescIdDesc(cursor, pageable);
+        } else if (region != null && distance != null) {
+            crews = crewRepository.findAllByRegionAndDistanceAndIdLessThanOrderByIdDesc(
+                    cursor, region, distance, pageable);
+        } else if (region != null) {
+            crews = crewRepository.findAllByRegionAndIdLessThanOrderByIdDesc(
+                    cursor, region, pageable);
+        } else if (distance != null) {
+            crews = crewRepository.findAllByDistanceAndIdLessThanOrderByIdDesc(
+                    cursor, distance, pageable);
+        } else {
+            crews = crewRepository.findAllByIdLessThanOrderByIdDesc(cursor, pageable);
+        }
+
+        List<CrewListResDto> crewListResDtos = crews.stream()
+                .map(crew -> {
+                    Long memberCount = crewUserRepository.countByCrewIdAndIsDeletedFalse(crew.getId());
+                    return CrewListResDto.toDto(crew, memberCount);
+                })
+                .collect(Collectors.toList());
+
+        return CrewListPageResDto.toDtoPage(crewListResDtos, size);
     }
 
 /**
