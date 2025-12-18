@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * @author : KIMGWANGHO
- * @description : Please explain the class!!!
+ * @description : 클라이언트로부터 러닝 모집글 생성 요청 데이터를 전달받고 유효성을 검증하는 요청 DTO 클래스
  * @filename : RecruitCreateRequest
  * @since : 2025-12-17 수요일
  */
@@ -72,20 +72,20 @@ public class RecruitCreateReqDto {
   private Long courseId;
 
   public void validate() {
-    if (this.ageMin > this.ageMax) {
-      throw new IllegalArgumentException("최소 나이는 최대 나이보다 클 수 없습니다.");
-    }
-
-    LocalDateTime oneWeekLater = LocalDateTime.now().plusWeeks(2);
-    if (this.meetingAt.isAfter(oneWeekLater)) {
-      throw new IllegalArgumentException("모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다.");
-    }
+//    if (this.ageMin > this.ageMax) {
+//      throw new IllegalArgumentException("최소 나이는 최대 나이보다 클 수 없습니다.");
+//    }
+//
+//    LocalDateTime oneWeekLater = LocalDateTime.now().plusWeeks(2);
+//    if (this.meetingAt.isAfter(oneWeekLater)) {
+//      throw new IllegalArgumentException("모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다.");
+//    }
   }
 
   public Recruit toEntity(User user, Course course) {
     return Recruit.builder()
         .user(user)
-        .course(course) // null 가능
+        .course(course)
         .title(this.title)
         .content(this.content)
         .meetingPlace(this.meetingPlace)
