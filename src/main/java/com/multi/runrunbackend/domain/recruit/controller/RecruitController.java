@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.recruit.controller;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
+import com.multi.runrunbackend.domain.recruit.dto.req.RecruitUpdateReqDto;
 import com.multi.runrunbackend.domain.recruit.sevice.RecruitService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
@@ -18,7 +19,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -64,4 +67,24 @@ public class RecruitController {
   }
 
 
+  @GetMapping("/{recruitId}")
+  public ResponseEntity<ApiResponse> getRecruitDetail(@PathVariable Long recruitId) {
+    return ResponseEntity.ok(
+        ApiResponse.success("모집글 상세 조회 성공", recruitService.getRecruitDetail(recruitId)));
+  }
+
+  @PutMapping("/{recruitId}")
+  public ResponseEntity<ApiResponse> updateRecruit(
+      @AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable Long recruitId,
+      @Valid @RequestBody RecruitUpdateReqDto request
+  ) {
+    String loginId = userDetails.getUsername();
+    User user = userRepository.findByLoginId(loginId)
+        .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
+
+    recruitService.updateRecruit(recruitId, user, request);
+
+    return ResponseEntity.ok(ApiResponse.success("모집글 수정 성공", null));
+  }
 }

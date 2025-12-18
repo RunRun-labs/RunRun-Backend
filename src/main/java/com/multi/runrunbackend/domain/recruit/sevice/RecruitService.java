@@ -2,7 +2,9 @@ package com.multi.runrunbackend.domain.recruit.sevice;
 
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
+import com.multi.runrunbackend.domain.recruit.dto.req.RecruitUpdateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.res.RecruitCreateResDto;
+import com.multi.runrunbackend.domain.recruit.dto.res.RecruitDetailResDto;
 import com.multi.runrunbackend.domain.recruit.dto.res.RecruitListResDto;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
@@ -78,5 +80,33 @@ public class RecruitService {
     dist = Math.toDegrees(dist);
     dist = dist * 60 * 1.1515 * 1.609344; // Mile -> km 변환
     return dist;
+  }
+
+
+  public RecruitDetailResDto getRecruitDetail(Long recruitId) {
+    Recruit recruit = recruitRepository.findById(recruitId)
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 모집글입니다."));
+
+    if (recruit.getIsDeleted()) {
+      throw new IllegalArgumentException("삭제되거나 마감된 모집글입니다.");
+    }
+
+    return RecruitDetailResDto.from(recruit);
+  }
+
+  @Transactional
+  public void updateRecruit(Long recruitId, User user, RecruitUpdateReqDto req) {
+    Recruit recruit = recruitRepository.findById(recruitId)
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 모집글입니다."));
+
+    if (!recruit.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("수정 권한이 없습니다.");
+    }
+
+    if (recruit.getCurrentParticipants() > 1) {
+      throw new IllegalArgumentException("이미 참여한 유저가 있어 수정할 수 없습니다.");
+    }
+
+    recruit.update(req);
   }
 }
