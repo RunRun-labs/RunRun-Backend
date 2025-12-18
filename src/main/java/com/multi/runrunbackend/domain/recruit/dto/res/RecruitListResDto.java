@@ -7,7 +7,7 @@ import lombok.Getter;
 
 /**
  * @author : KIMGWANGHO
- * @description : Please explain the class!!!
+ * @description : 모집글 조회 응답 dto
  * @filename : RecruitListResDto
  * @since : 2025-12-18 목요일
  */

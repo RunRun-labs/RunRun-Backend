@@ -4,7 +4,7 @@ import lombok.Data;
 
 /**
  * @author : KIMGWANGHO
- * @description : Please explain the class!!!
+ * @description : 모집글 조회 요청 dto
  * @filename : RecruitListReqDto
  * @since : 2025-12-18 목요일
  */
