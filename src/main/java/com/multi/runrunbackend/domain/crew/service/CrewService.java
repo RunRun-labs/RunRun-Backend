@@ -78,16 +78,16 @@ public class CrewService {
         // 1. 사용자 조회
         User user = findUserByLoginId(loginId);
 
-        // 1. 크루 조회
+        // 2. 크루 조회
         Crew crew = findCrewById(crewId);
 
-        // 2. 크루장 권한 검증
+        // 3. 크루장 권한 검증
         validateCrewLeader(crewId, user.getId());
 
-        // 3. 해체되지 않은 크루인지 검증
+        // 4. 해체되지 않은 크루인지 검증
         crew.validateNotDisbanded();
 
-        // 4. 크루 정보 수정
+        // 5. 크루 정보 수정
         crew.updateCrew(
                 reqDto.getCrewDescription(),
                 reqDto.getCrewImageUrl(),
@@ -98,22 +98,25 @@ public class CrewService {
     }
 
     /**
-     * @param crewId 크루 ID
-     * @param userId 사용자 ID
+     * @param crewId  크루 ID
+     * @param loginId 사용자 로그인 ID (이메일)
      * @description : 크루 삭제 (해체)
      */
     @Transactional
-    public void deleteCrew(Long crewId, Long userId) {
-        // 1. 크루 조회
+    public void deleteCrew(Long crewId, String loginId) {
+        // 1. 사용자 조회
+        User user = findUserByLoginId(loginId);
+
+        // 2. 크루 조회
         Crew crew = findCrewById(crewId);
 
-        // 2. 크루장 권한 검증
-        validateCrewLeader(crewId, userId);
+        // 3. 크루장 권한 검증
+        validateCrewLeader(crewId, user.getId());
 
-        // 3. 크루 해체 (soft delete)
+        // 4. 크루 해체 (soft delete)
         crew.softDelete();
 
-        // 4. 모든 크루원 soft delete
+        // 5. 모든 크루원 soft delete
         List<CrewUser> crewUsers = crewUserRepository.findAllByCrewIdAndIsDeletedFalse(crewId);
         crewUsers.forEach(CrewUser::delete);
     }

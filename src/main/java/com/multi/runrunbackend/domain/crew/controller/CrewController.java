@@ -61,4 +61,22 @@ public class CrewController {
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("크루 정보 수정 성공", null));
     }
+
+    /**
+     * @param customUser 인증된 사용자 정보
+     * @param crewId     크루 ID
+     * @return 성공 메시지
+     * @description : 크루 삭제 (해체)
+     */
+    @DeleteMapping("/{crewId}")
+    public ResponseEntity<ApiResponse<Void>> deleteCrew(
+            @AuthenticationPrincipal CustomUser customUser,
+            @PathVariable Long crewId
+    ) {
+        String loginId = customUser.getEmail();
+        crewService.deleteCrew(crewId, loginId);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 해체 성공", null));
+    }
 }
