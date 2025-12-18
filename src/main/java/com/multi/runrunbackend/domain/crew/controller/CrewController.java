@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.crew.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
 import com.multi.runrunbackend.domain.crew.service.CrewService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,7 +9,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author : BoKyung
@@ -25,16 +30,16 @@ public class CrewController {
     private final CrewService crewService;
 
     /**
-     * @param accessToken 액세스 토큰 (Authorization 헤더)
-     * @param reqDto      크루 생성 요청 DTO
+     * @param reqDto 크루 생성 요청 DTO
      * @description : 크루 생성
      */
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createCrew(
-            @RequestHeader("Authorization") String accessToken,
+            @AuthenticationPrincipal CustomUser customUser,
             @Valid @RequestBody CrewCreateReqDto reqDto
     ) {
-        Long crewId = crewService.createCrew(accessToken, reqDto);
+        String loginId = customUser.getEmail();
+        Long crewId = crewService.createCrew(loginId, reqDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success("크루 생성 성공", crewId));

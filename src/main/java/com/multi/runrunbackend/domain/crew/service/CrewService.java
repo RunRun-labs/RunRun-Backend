@@ -38,33 +38,29 @@ public class CrewService {
     private final TokenProvider tokenProvider;
 
     /**
-     * @param accessToken 액세스 토큰
-     * @param reqDto      크루 생성 요청 DTO
+     * @param reqDto 크루 생성 요청 DTO
      * @description : 크루 생성
      */
     @Transactional
-    public Long createCrew(String accessToken, CrewCreateReqDto reqDto) {
+    public Long createCrew(String loginId, CrewCreateReqDto reqDto) {
 
-        // 1. 토큰에서 userId 추출
-        Long userId = Long.valueOf(tokenProvider.getUserId(accessToken));
+        // 1. 사용자 조회
+        User user = findUserById(loginId);
 
-        // 2. 사용자 조회
-        User user = findUserById(userId);
+        // 2. 프리미엄 멤버십인지 검증
+//       validatePremiumMembership(user.get);
 
-        // 3. 프리미엄 멤버십 검증
-//        validatePremiumMembership(userId);
+        // 3. 1인 1크루 생성 제한 검증
+        validateNotAlreadyLeader(user.getId());
 
-        // 4. 1인 1크루 생성 제한 검증
-        validateNotAlreadyLeader(userId);
-
-        // 5. 크루명 중복 확인
+        // 4. 크루명 중복 확인
         validateCrewNameNotDuplicate(reqDto.getCrewName());
 
-        // 6. 크루 생성
+        // 5. 크루 생성
         Crew crew = reqDto.toEntity(user);
         crewRepository.save(crew);
 
-        // 7. 크루장 자동 등록
+        // 6. 크루장 자동 등록
         CrewUser crewLeader = CrewUser.toEntity(crew, user, CrewRole.LEADER);
         crewUserRepository.save(crewLeader);
 
@@ -126,8 +122,8 @@ public class CrewService {
     /**
      * @description : 사용자 조회
      */
-    private User findUserById(Long userId) {
-        return userRepository.findById(userId)
+    private User findUserById(String loginId) {
+        return userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
