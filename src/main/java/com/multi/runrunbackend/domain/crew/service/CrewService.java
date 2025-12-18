@@ -45,7 +45,7 @@ public class CrewService {
     public Long createCrew(String loginId, CrewCreateReqDto reqDto) {
 
         // 1. 사용자 조회
-        User user = findUserById(loginId);
+        User user = findUserByLoginId(loginId);
 
         // 2. 프리미엄 멤버십인지 검증
 //       validatePremiumMembership(user.get);
@@ -68,18 +68,21 @@ public class CrewService {
     }
 
     /**
-     * @param crewId 크루 ID
-     * @param userId 사용자 ID
-     * @param reqDto 크루 수정 요청 DTO
+     * @param crewId  크루 ID
+     * @param loginId 사용자 ID
+     * @param reqDto  크루 수정 요청 DTO
      * @description : 크루 수정
      */
     @Transactional
-    public void updateCrew(Long crewId, Long userId, CrewUpdateReqDto reqDto) {
+    public void updateCrew(Long crewId, String loginId, CrewUpdateReqDto reqDto) {
+        // 1. 사용자 조회
+        User user = findUserByLoginId(loginId);
+
         // 1. 크루 조회
         Crew crew = findCrewById(crewId);
 
         // 2. 크루장 권한 검증
-        validateCrewLeader(crewId, userId);
+        validateCrewLeader(crewId, user.getId());
 
         // 3. 해체되지 않은 크루인지 검증
         crew.validateNotDisbanded();
@@ -122,7 +125,7 @@ public class CrewService {
     /**
      * @description : 사용자 조회
      */
-    private User findUserById(String loginId) {
+    private User findUserByLoginId(String loginId) {
         return userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
