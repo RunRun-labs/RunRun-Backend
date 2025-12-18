@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.crew.service;
 
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.jwt.provider.TokenProvider;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
@@ -33,33 +34,37 @@ public class CrewService {
     private final CrewUserRepository crewUserRepository;
     private final CrewActivityRepository crewActivityRepository;
     private final UserRepository userRepository;
-//    private final MembershipRepository membershipRepository;
+    //    private final MembershipRepository membershipRepository;
+    private final TokenProvider tokenProvider;
 
     /**
-     * @param userId 사용자 ID
-     * @param reqDto 크루 생성 요청 DTO
+     * @param accessToken 액세스 토큰
+     * @param reqDto      크루 생성 요청 DTO
      * @description : 크루 생성
      */
     @Transactional
-    public Long createCrew(Long userId, CrewCreateReqDto reqDto) {
+    public Long createCrew(String accessToken, CrewCreateReqDto reqDto) {
 
-        // 1. 사용자 조회
+        // 1. 토큰에서 userId 추출
+        Long userId = Long.valueOf(tokenProvider.getUserId(accessToken));
+
+        // 2. 사용자 조회
         User user = findUserById(userId);
 
-        // 2. 프리미엄 멤버십 검증
+        // 3. 프리미엄 멤버십 검증
 //        validatePremiumMembership(userId);
 
-        // 3. 1인 1크루 생성 제한 검증
+        // 4. 1인 1크루 생성 제한 검증
         validateNotAlreadyLeader(userId);
 
-        // 4. 크루명 중복 확인
+        // 5. 크루명 중복 확인
         validateCrewNameNotDuplicate(reqDto.getCrewName());
 
-        // 5. 크루 생성
+        // 6. 크루 생성
         Crew crew = reqDto.toEntity(user);
         crewRepository.save(crew);
 
-        // 6. 크루장 자동 등록
+        // 7. 크루장 자동 등록
         CrewUser crewLeader = CrewUser.toEntity(crew, user, CrewRole.LEADER);
         crewUserRepository.save(crewLeader);
 
