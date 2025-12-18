@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
 import com.multi.runrunbackend.domain.crew.service.CrewService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -108,5 +109,19 @@ public class CrewController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("크루 목록 조회 성공", response));
+    }
+
+    /**
+     * @param crewId 크루 ID
+     * @description : 크루 상세 조회
+     */
+    @GetMapping("/{crewId}")
+    public ResponseEntity<ApiResponse<CrewDetailResDto>> getCrewDetail(
+            @PathVariable Long crewId
+    ) {
+        CrewDetailResDto response = crewService.getCrewDetail(crewId);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 상세 조회 성공", response));
     }
 }

@@ -5,9 +5,12 @@ import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.jwt.provider.TokenProvider;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewActivityResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewListResDto;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
+import com.multi.runrunbackend.domain.crew.entity.CrewActivity;
 import com.multi.runrunbackend.domain.crew.entity.CrewRole;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import com.multi.runrunbackend.domain.crew.repository.CrewActivityRepository;
@@ -166,6 +169,29 @@ public class CrewService {
                 .collect(Collectors.toList());
 
         return CrewListPageResDto.toDtoPage(crewListResDtos, size);
+    }
+
+    /**
+     * @param crewId 크루 ID
+     * @description : 크루 상세 조회
+     */
+    public CrewDetailResDto getCrewDetail(Long crewId) {
+        // 1. 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 2. 크루원 수 조회
+        Long memberCount = crewUserRepository.countByCrewIdAndIsDeletedFalse(crewId);
+
+        // 3. 최근 활동 내역 조회 (최대 5개)
+        Pageable pageable = PageRequest.of(0, 5);
+        List<CrewActivity> recentActivities = crewActivityRepository
+                .findTop5ByCrewIdOrderByCreatedAtDesc(crewId, pageable);
+
+        List<CrewActivityResDto> activityResDtos = recentActivities.stream()
+                .map(CrewActivityResDto::toEntity)
+                .collect(Collectors.toList());
+
+        return CrewDetailResDto.toEntity(crew, memberCount, activityResDtos);
     }
 
 /**
