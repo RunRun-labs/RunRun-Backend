@@ -54,11 +54,11 @@ public class TokenProvider {
 
     }
 
-    public String generateToken(String memberId, List<String> roles, String code, Long memberNo) {
+    public String generateToken(String memberId, List<String> roles, String code, Long userId) {
         Claims claims = Jwts
                 .claims()
                 .setSubject(memberId);
-        claims.put("userId", memberNo);
+        claims.put("userId", userId);
         long now = (new Date()).getTime();
         Date tokenExpiresIn = new Date();
         if (code.equals("A")) {
