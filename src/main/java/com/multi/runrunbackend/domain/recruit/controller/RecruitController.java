@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -86,5 +87,21 @@ public class RecruitController {
     recruitService.updateRecruit(recruitId, user, request);
 
     return ResponseEntity.ok(ApiResponse.success("모집글 수정 성공", null));
+  }
+
+
+  @DeleteMapping("/{recruitId}")
+  public ResponseEntity<ApiResponse> deleteRecruit(
+      @AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable Long recruitId
+  ) {
+    User user = getUser(userDetails);
+    recruitService.deleteRecruit(recruitId, user);
+    return ResponseEntity.ok(ApiResponse.success("모집글 삭제 성공", null));
+  }
+
+  private User getUser(UserDetails userDetails) {
+    return userRepository.findByLoginId(userDetails.getUsername())
+        .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
   }
 }

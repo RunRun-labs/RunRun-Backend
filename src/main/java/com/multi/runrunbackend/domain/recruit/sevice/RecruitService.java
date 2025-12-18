@@ -109,4 +109,16 @@ public class RecruitService {
 
     recruit.update(req);
   }
+
+  @Transactional
+  public void deleteRecruit(Long recruitId, User user) {
+    Recruit recruit = recruitRepository.findById(recruitId)
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 모집글입니다."));
+
+    if (!recruit.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("삭제(마감) 권한이 없습니다.");
+    }
+
+    recruit.delete();
+  }
 }
