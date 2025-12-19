@@ -1,5 +1,7 @@
 package com.multi.runrunbackend.domain.recruit.controller;
 
+import com.multi.runrunbackend.common.exception.custom.NotFoundException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
@@ -15,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -46,10 +47,8 @@ public class RecruitController {
       @Valid @RequestBody RecruitCreateReqDto request
   ) {
     String loginId = userDetails.getUsername();
-
     User user = userRepository.findByLoginId(loginId)
-        .orElseThrow(() -> new UsernameNotFoundException(
-            "유저를 찾을 수 없습니다. ID: " + loginId));
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
     return ResponseEntity
         .status(HttpStatus.CREATED)
@@ -90,7 +89,7 @@ public class RecruitController {
   ) {
     String loginId = userDetails.getUsername();
     User user = userRepository.findByLoginId(loginId)
-        .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
     recruitService.updateRecruit(recruitId, user, request);
 
@@ -110,6 +109,6 @@ public class RecruitController {
 
   private User getUser(UserDetails userDetails) {
     return userRepository.findByLoginId(userDetails.getUsername())
-        .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
   }
 }
