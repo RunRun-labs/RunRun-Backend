@@ -46,6 +46,9 @@ public class Crew extends BaseEntity {
     @Column(name = "distance", nullable = false, length = 50)
     private String distance;
 
+    @Column(name = "pace", length = 50)
+    private String averagePace;
+
     @Column(name = "activity_time", nullable = false, length = 100)
     private String activityTime;
 
@@ -64,13 +67,14 @@ public class Crew extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static Crew create(String crewName, String crewDescription, String crewImageUrl,
-                              String region, String distance, String activityTime, User user) {
+                              String region, String distance, String averagePace, String activityTime, User user) {
         return Crew.builder()
                 .crewName(crewName)
                 .crewDescription(crewDescription)
                 .crewImageUrl(crewImageUrl)
                 .region(region)
                 .distance(distance)
+                .averagePace(averagePace)
                 .activityTime(activityTime)
                 .user(user)
                 .crewStatus(CrewStatus.ACTIVE)
@@ -85,13 +89,14 @@ public class Crew extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void updateCrew(String crewDescription, String crewImageUrl,
-                           String region, String distance, String activityTime) {
+                           String region, String distance, String averagePace, String activityTime) {
         this.crewDescription = crewDescription;
         if (crewImageUrl != null) {
             this.crewImageUrl = crewImageUrl;
         }
         this.region = region;
         this.distance = distance;
+        this.averagePace = averagePace;
         this.activityTime = activityTime;
     }
 

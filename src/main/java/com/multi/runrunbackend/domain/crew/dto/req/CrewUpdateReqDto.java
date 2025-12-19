@@ -37,6 +37,10 @@ public class CrewUpdateReqDto {
     @Size(max = 50, message = "러닝 거리는 50자 이내로 입력해주세요.")
     private String distance;
 
+    @Schema(description = "평균 페이스", required = true, example = "5~6분")
+    @NotBlank(message = "평균 페이스는 필수입니다.")
+    private String averagePace;
+
     @Schema(description = "정기모임일시", required = true)
     @NotBlank(message = "정기모임일시는 필수입니다.")
     @Size(max = 100, message = "정기모임일시는 100자 이내로 입력해주세요.")

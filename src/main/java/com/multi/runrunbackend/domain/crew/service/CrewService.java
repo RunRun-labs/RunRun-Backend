@@ -43,7 +43,6 @@ public class CrewService {
     private final CrewUserRepository crewUserRepository;
     private final CrewActivityRepository crewActivityRepository;
     private final UserRepository userRepository;
-    //    private final MembershipRepository membershipRepository;
     private final TokenProvider tokenProvider;
 
     /**
@@ -52,7 +51,6 @@ public class CrewService {
      */
     @Transactional
     public Long createCrew(String loginId, CrewCreateReqDto reqDto) {
-
         // 1. 사용자 조회
         User user = findUserByLoginId(loginId);
 
@@ -65,8 +63,24 @@ public class CrewService {
         // 4. 크루명 중복 확인
         validateCrewNameNotDuplicate(reqDto.getCrewName());
 
-        // 5. 크루 생성
-        Crew crew = reqDto.toEntity(user);
+        // 5. 이미지 URL이 없을 경우 기본값 설정
+        String imageUrl = reqDto.getCrewImageUrl();
+        if (imageUrl == null || imageUrl.trim().isEmpty()) {
+            // 기본 이미지 URL 설정 (SVG 데이터 URI 사용)
+            // 회색 배경에 "Crew Image" 텍스트가 있는 간단한 SVG
+            imageUrl = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI0Y1RjVGNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5DcmV3IEltYWdlPC90ZXh0Pjwvc3ZnPg==";
+        }
+
+        // 6. 크루 생성 (이미지 URL 포함)
+        CrewCreateReqDto reqDtoWithImage = CrewCreateReqDto.builder()
+                .crewName(reqDto.getCrewName())
+                .crewDescription(reqDto.getCrewDescription())
+                .crewImageUrl(imageUrl)
+                .region(reqDto.getRegion())
+                .distance(reqDto.getDistance())
+                .activityTime(reqDto.getActivityTime())
+                .build();
+        Crew crew = reqDtoWithImage.toEntity(user);
         crewRepository.save(crew);
 
         // 6. 크루장 자동 등록
@@ -102,6 +116,7 @@ public class CrewService {
                 reqDto.getCrewImageUrl(),
                 reqDto.getRegion(),
                 reqDto.getDistance(),
+                reqDto.getAveragePace(),
                 reqDto.getActivityTime()
         );
     }
@@ -144,21 +159,19 @@ public class CrewService {
         Pageable pageable = PageRequest.of(0, size);
         List<Crew> crews;
 
-        if (keyword != null && !keyword.isBlank()) {
-            crews = crewRepository.findAllByCrewNameContainingAndIdLessThanOrderByIdDesc(
-                    keyword, cursor, pageable);
-        } else if (recruiting != null && recruiting) {
-            crews = crewRepository.findAllOrderByRecruitStatusDescIdDesc(cursor, pageable);
-        } else if (region != null && distance != null) {
-            crews = crewRepository.findAllByRegionAndDistanceAndIdLessThanOrderByIdDesc(
-                    cursor, region, distance, pageable);
-        } else if (region != null) {
-            crews = crewRepository.findAllByRegionAndIdLessThanOrderByIdDesc(
-                    cursor, region, pageable);
-        } else if (distance != null) {
-            crews = crewRepository.findAllByDistanceAndIdLessThanOrderByIdDesc(
-                    cursor, distance, pageable);
+        // 여러 필터를 조합할 수 있도록 동적 쿼리 사용
+        // keyword, region, distance를 모두 조합 가능
+        boolean hasFilters = (keyword != null && !keyword.isBlank())
+                || (region != null && !region.isBlank())
+                || (distance != null && !distance.isBlank())
+                || (recruiting != null);
+
+        if (hasFilters) {
+            // 일반 필터 쿼리 사용
+            crews = crewRepository.findAllWithFilters(
+                    cursor, keyword, region, distance, recruiting, pageable);
         } else {
+            // 필터가 없는 경우
             crews = crewRepository.findAllByIdLessThanOrderByIdDesc(cursor, pageable);
         }
 

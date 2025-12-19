@@ -129,4 +129,59 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
             @Param("cursor") Long cursor,
             Pageable pageable
     );
+
+    /**
+     * @param cursor     마지막 조회한 크루 ID
+     * @param keyword    검색 키워드 (선택)
+     * @param region     지역 필터 (선택)
+     * @param distance   거리 필터 (선택)
+     * @param recruiting 모집 상태 필터 (true=모집중만, false=모집마감만, null=전체)
+     * @param pageable   페이징 정보
+     * @description : 크루 목록 조회 (동적 필터 조합, 모집 상태 필터 포함)
+     */
+    @Query("SELECT c FROM Crew c " +
+            "WHERE (:cursor IS NULL OR c.id < :cursor) " +
+            "AND c.crewStatus = 'ACTIVE' " +
+            "AND (:keyword IS NULL OR :keyword = '' OR c.crewName LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (:region IS NULL OR :region = '' OR c.region = :region) " +
+            "AND (:distance IS NULL OR :distance = '' OR c.distance = :distance) " +
+            "AND (:recruiting IS NULL OR " +
+            "     (:recruiting = true AND c.crewRecruitStatus = 'RECRUITING') OR " +
+            "     (:recruiting = false AND c.crewRecruitStatus = 'CLOSED')) " +
+            "ORDER BY c.id DESC")
+    List<Crew> findAllWithFilters(
+            @Param("cursor") Long cursor,
+            @Param("keyword") String keyword,
+            @Param("region") String region,
+            @Param("distance") String distance,
+            @Param("recruiting") Boolean recruiting,
+            Pageable pageable
+    );
+
+    /**
+     * @param cursor   마지막 조회한 크루 ID
+     * @param keyword  검색 키워드 (선택)
+     * @param region   지역 필터 (선택)
+     * @param distance 거리 필터 (선택)
+     * @param pageable 페이징 정보
+     * @description : 크루 목록 조회 (동적 필터 조합 + 모집중 우선 정렬)
+     */
+    @Query("SELECT c FROM Crew c " +
+            "WHERE (:cursor IS NULL OR c.id < :cursor) " +
+            "AND c.crewStatus = 'ACTIVE' " +
+            "AND (:keyword IS NULL OR :keyword = '' OR c.crewName LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (:region IS NULL OR :region = '' OR c.region = :region) " +
+            "AND (:distance IS NULL OR :distance = '' OR c.distance = :distance) " +
+            "AND (:recruiting IS NULL OR " +
+            "     (:recruiting = true AND c.crewRecruitStatus = 'RECRUITING') OR " +
+            "     (:recruiting = false AND c.crewRecruitStatus = 'CLOSED')) " +
+            "ORDER BY c.id DESC")
+    List<Crew> findAllWithFiltersOrderByRecruiting(
+            @Param("cursor") Long cursor,
+            @Param("keyword") String keyword,
+            @Param("region") String region,
+            @Param("distance") String distance,
+            @Param("recruiting") Boolean recruiting,
+            Pageable pageable
+    );
 }

@@ -101,6 +101,8 @@ public class CrewController {
 
             @RequestParam(required = false) String distance,
 
+            @RequestParam(required = false) String pace,
+
             @RequestParam(required = false) Boolean recruiting,
 
             @RequestParam(required = false) String keyword

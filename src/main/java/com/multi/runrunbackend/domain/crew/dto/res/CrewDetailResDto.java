@@ -30,6 +30,9 @@ public class CrewDetailResDto {
     @Schema(description = "크루명")
     private String crewName;
 
+    @Schema(description = "크루장 이름")
+    private String leaderNm;
+
     @Schema(description = "지역")
     private String region;
 
@@ -37,13 +40,13 @@ public class CrewDetailResDto {
     private Long memberCount;
 
     @Schema(description = "크루 소개글")
-    private String description;
+    private String crewDescription;
 
     @Schema(description = "정기모임일시")
     private String regularMeetingTime;
 
     @Schema(description = "모집 상태")
-    private CrewRecruitStatus recruitStatus;
+    private CrewRecruitStatus crewRecruitStatus;
 
     @Schema(description = "크루 상태")
     private CrewStatus crewStatus;
@@ -53,6 +56,9 @@ public class CrewDetailResDto {
 
     @Schema(description = "러닝 거리")
     private String distance;
+
+    @Schema(description = "평균 페이스")
+    private String averagePace;
 
     @Schema(description = "최근 활동 내역 (최대 5개)")
     private List<CrewActivityResDto> recentActivities;
@@ -71,14 +77,16 @@ public class CrewDetailResDto {
         return CrewDetailResDto.builder()
                 .crewId(crew.getId())
                 .crewName(crew.getCrewName())
+                .leaderNm(crew.getUser() != null ? crew.getUser().getName() : null)
                 .region(crew.getRegion())
                 .memberCount(memberCount)
-                .description(crew.getCrewDescription())
+                .crewDescription(crew.getCrewDescription())
                 .regularMeetingTime(crew.getActivityTime())
-                .recruitStatus(crew.getCrewRecruitStatus())
+                .crewRecruitStatus(crew.getCrewRecruitStatus())
                 .crewStatus(crew.getCrewStatus())
                 .crewImageUrl(crew.getCrewImageUrl())
                 .distance(crew.getDistance())
+                .averagePace(crew.getAveragePace())
                 .recentActivities(recentActivities)
                 .build();
     }

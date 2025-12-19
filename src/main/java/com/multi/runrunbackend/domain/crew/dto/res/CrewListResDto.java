@@ -46,6 +46,9 @@ public class CrewListResDto {
     @Schema(description = "러닝 거리")
     private String distance;
 
+    @Schema(description = "평균 페이스")
+    private String averagePace;
+
     /**
      * @param crew        크루 엔티티
      * @param memberCount 크루원 수
@@ -61,6 +64,7 @@ public class CrewListResDto {
                 .crewRecruitStatus(crew.getCrewRecruitStatus())
                 .crewStatus(crew.getCrewStatus())
                 .distance(crew.getDistance())
+                .averagePace(crew.getAveragePace())
                 .build();
     }
 }
