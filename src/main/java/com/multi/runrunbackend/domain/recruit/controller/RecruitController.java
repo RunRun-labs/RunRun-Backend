@@ -67,9 +67,19 @@ public class RecruitController {
 
 
   @GetMapping("/{recruitId}")
-  public ResponseEntity<ApiResponse> getRecruitDetail(@PathVariable Long recruitId) {
+  public ResponseEntity<ApiResponse> getRecruitDetail(
+      @AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable Long recruitId
+  ) {
+    User currentUser = null;
+    if (userDetails != null) {
+      currentUser = userRepository.findByLoginId(userDetails.getUsername())
+          .orElse(null);
+    }
+
     return ResponseEntity.ok(
-        ApiResponse.success("모집글 상세 조회 성공", recruitService.getRecruitDetail(recruitId)));
+        ApiResponse.success("모집글 상세 조회 성공",
+            recruitService.getRecruitDetail(recruitId, currentUser)));
   }
 
   @PutMapping("/{recruitId}")
