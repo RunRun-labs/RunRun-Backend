@@ -5,7 +5,6 @@ import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.user.entity.User;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,7 +25,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * @author : chang
@@ -71,7 +71,7 @@ public class RunningResult extends BaseEntity {
     @Column(name = "run_status", nullable = false, length = 20)
     private RunStatus runStatus;
 
-    @Type(JsonBinaryType.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "split_pace", nullable = false, columnDefinition = "jsonb")
     private List<Map<String, Object>> splitPace;
 
