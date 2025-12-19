@@ -11,6 +11,7 @@ import com.multi.runrunbackend.domain.course.dto.req.CourseListReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseCreateResDto;
+import com.multi.runrunbackend.domain.course.dto.res.CourseDetailResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseListResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.dto.res.TmapPedestrianResDto;
@@ -418,6 +419,19 @@ public class CourseService {
             sampled.add(coords.get(Math.min(index, coords.size() - 1)));
         }
         return sampled;
+    }
+
+    public CourseDetailResDto getCourse(CustomUser principal, Long courseId) {
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        return CourseDetailResDto.fromEntity(course);
+
     }
 
 
