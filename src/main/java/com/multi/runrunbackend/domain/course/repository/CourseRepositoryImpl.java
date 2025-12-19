@@ -144,6 +144,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
               c.thumbnail_url, c.image_url,
               c.like_count, c.favorite_count,
               c.register_type,
+              c.address,
               c.created_at
             """);
 
@@ -203,6 +204,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
               c.thumbnail_url, c.image_url,
               c.like_count, c.favorite_count,
               c.register_type,
+              c.address,
               c.created_at
             """);
 
@@ -266,6 +268,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
                 c.thumbnail_url, c.image_url,
                 c.like_count, c.favorite_count,
                 c.register_type,
+                c.address,
                 c.created_at,
             """);
         sql.append(" ST_Distance(").append(pointExpr).append(", ").append(centerExpr)
@@ -314,6 +317,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
             .id(rs.getLong("id"))
             .title(rs.getString("title"))
             .distanceM((Integer) rs.getObject("distance_m"))
+            .address(rs.getString("address"))
             .thumbnailUrl(rs.getString("thumbnail_url"))
             .likeCount(((Number) rs.getObject("like_count")).longValue())
             .favoriteCount(((Number) rs.getObject("favorite_count")).longValue())
