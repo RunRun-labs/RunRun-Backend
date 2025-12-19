@@ -19,26 +19,68 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CourseListReqDto {
 
-    // 검색
-    private String keyword; // title/description ILIKE
 
-    // 필터
-    private CourseRegisterType registerType; // AI/AUTO/MANUAL
-    private Boolean nearby; // 내 주변 코스(true면 lat/lng/radiusM 필요)
+    private String keyword;
+
+
+    private CourseRegisterType registerType;
+    private Boolean nearby;
     private Double lat;
     private Double lng;
-    private Integer radiusM; // 반경(m)
+    private Integer radiusM;
 
-    // 거리 구간 필터 (distanceM 기준)
-    // 예: "0_3", "3_5", "5_10", "10_PLUS"
     private String distanceBucket;
 
-    // 정렬
-    private CourseSortType sortType; // LATEST/LIKE/FAVORITE/DISTANCE
 
-    // 커서/사이즈
+    private CourseSortType sortType;
+
+
     private String cursor;
     private Integer size;
+
+
+    public static CourseListReqDto fromParams(
+        String keyword,
+        CourseRegisterType registerType,
+        Boolean nearby,
+        Double lat,
+        Double lng,
+        Integer radiusM,
+        String distanceBucket,
+        CourseSortType sortType,
+        String cursor,
+        Integer size
+    ) {
+        return CourseListReqDto.builder()
+            .keyword(normalizeBlank(keyword))
+            .registerType(registerType)
+            .nearby(nearby)
+            .lat(lat)
+            .lng(lng)
+            .radiusM(radiusM)
+            .distanceBucket(normalizeBlank(distanceBucket))
+            .sortType(sortType)
+            .cursor(normalizeBlank(cursor))
+            .size(normalizeSize(size))
+            .build();
+    }
+
+
+    private static String normalizeBlank(String v) {
+        if (v == null) {
+            return null;
+        }
+        String t = v.trim();
+        return t.isEmpty() ? null : t;
+    }
+
+    private static Integer normalizeSize(Integer size) {
+        if (size == null || size <= 0) {
+            return 10;
+        }
+        return Math.min(size, 50);
+    }
+
 }
 
 
