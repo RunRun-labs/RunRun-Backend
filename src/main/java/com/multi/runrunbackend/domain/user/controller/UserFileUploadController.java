@@ -1,5 +1,7 @@
 package com.multi.runrunbackend.domain.user.controller;
 
+import com.multi.runrunbackend.common.exception.custom.NotFoundException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
@@ -18,7 +20,10 @@ import java.util.Map;
 /**
  *
  * @author : kimyongwon
- * @description : Please explain the class!!!
+ * @description :
+ * 사용자 프로필 이미지 업로드를 처리하는 컨트롤러.
+ * 인증된 사용자의 요청을 받아 MultipartFile을 업로드하며,
+ * 파일 저장은 FileStorage 구현체(LocalFileStorage 등)에 위임한다
  * @filename : FileUploadController
  * @since : 25. 12. 19. 오전 11:48 금요일
  */
@@ -41,11 +46,11 @@ public class UserFileUploadController {
     ) {
 
         if (principal == null || principal.getLoginId() == null) {
-            throw new IllegalStateException("인증 사용자 정보가 없습니다.");
+            throw new NotFoundException(ErrorCode.USER_NOT_FOUND);
         }
 
         User user = userRepository.findByLoginId(principal.getLoginId())
-                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
 
         String fileUrl = fileStorage.upload(
