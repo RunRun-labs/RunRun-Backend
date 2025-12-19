@@ -19,7 +19,12 @@ import org.springframework.stereotype.Repository;
 public interface RecruitRepository extends JpaRepository<Recruit, Long> {
 
   @Query(value = """
-      SELECT * FROM recruit r
+      SELECT *,
+             ST_Distance(  
+                 ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)::geography, 
+                 ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography
+             ) / 1000 AS distance
+      FROM recruit r
       WHERE r.is_deleted = false
       AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))
       AND (:radius IS NULL OR 
