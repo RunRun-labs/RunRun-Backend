@@ -19,31 +19,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const fieldOrder = ["userEmail", "userName", "heightCm", "weightKg"];
     const optionalFields = new Set();
 
+    // heightCm와 weightKg는 DTO에 @Min/@Max만 있고 @NotBlank/@NotNull이 없으므로
+    // 프론트에서는 선택적 필드로 처리합니다 (빈값 허용). 이 셋업은 DTO 규칙과 일치합니다.
+    optionalFields.add("heightCm");
+    optionalFields.add("weightKg");
+
     const validators = {
         userEmail: (value) => {
-            if (!value) return "이메일을 입력해 주세요.";
+            // DTO: @NotBlank(message = "이메일은 필수 입력 사항입니다")
+            // DTO: @Email(message = "이메일 형식을 유지해야 합니다")
+            if (!value) return "이메일은 필수 입력 사항입니다";
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                return "올바른 이메일 형식을 입력해 주세요.";
+                return "이메일 형식을 유지해야 합니다";
             }
             return "";
         },
         userName: (value) => {
-            if (!value) return "이름을 입력해 주세요.";
-            if (value.length > 4) return "이름은 최대 4자까지 입력할 수 있습니다.";
+            // DTO: @NotBlank(message = "이름은 필수 입력 사항입니다")
+            // DTO: @Size(max = 4, message = "이름은 최대 4자여야 합니다.")
+            if (!value) return "이름은 필수 입력 사항입니다";
+            if (value.length > 4) return "이름은 최대 4자여야 합니다.";
             return "";
         },
         heightCm: (value) => {
-            if (!value) return "키를 입력해 주세요.";
+            // DTO에는 NotBlank가 없으므로 빈값 허용
+            if (!value) return "";
             const n = Number(value);
             if (!Number.isFinite(n)) return "키는 숫자만 입력할 수 있습니다.";
-            if (n < 50 || n > 300) return "키는 50cm 이상 300cm 이하로 입력해 주세요.";
+            if (n < 50) return "키는 50cm 이상이어야 합니다.";
+            if (n > 300) return "키는 300cm 이하이어야 합니다.";
             return "";
         },
         weightKg: (value) => {
-            if (!value) return "몸무게를 입력해 주세요.";
+            // DTO에는 NotBlank가 없으므로 빈값 허용
+            if (!value) return "";
             const n = Number(value);
             if (!Number.isFinite(n)) return "몸무게는 숫자만 입력할 수 있습니다.";
-            if (n < 10 || n > 500) return "몸무게는 10kg 이상 500kg 이하로 입력해 주세요.";
+            if (n < 10) return "몸무게는 10kg 이상이어야 합니다.";
+            if (n > 500) return "몸무게는 500kg 이하이어야 합니다.";
             return "";
         },
     };
@@ -100,8 +113,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const payload = {
                     userEmail: values.userEmail,
                     userName: values.userName,
-                    heightCm: Number(values.heightCm),
-                    weightKg: Number(values.weightKg),
+                    heightCm: values.heightCm === "" ? null : Number(values.heightCm),
+                    weightKg: values.weightKg === "" ? null : Number(values.weightKg),
                     profileImageUrl: profileImageUrlToSave ?? null,
                 };
 
