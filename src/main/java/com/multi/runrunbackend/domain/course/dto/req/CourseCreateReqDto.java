@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.course.dto.req;
 
 import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
+import com.multi.runrunbackend.domain.course.util.LineStringDeserializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
