@@ -35,19 +35,26 @@
         <div class="profile-row">
 
             <!-- 좌측: 프로필 이미지 -->
-            <div class="profile-avatar">
+            <div class="profile-avatar" data-role="avatar-click">
                 <img
-                        th:if="${profileImageUrl != null}"
-                        th:src="${profileImageUrl}"
-                        alt="프로필 이미지"
                         class="avatar-img"
+                        data-role="profile-preview"
+                        alt="프로필 이미지"
+                        hidden
                 />
                 <span
-                        th:if="${profileImageUrl == null}"
                         class="avatar-initial"
-<!--                        th:text="${userInitials}"-->
+                        data-role="profile-initial"
                 ></span>
             </div>
+
+            <input
+                    type="file"
+                    id="profileImageInput"
+                    accept="image/*"
+                    hidden
+            />
+
 
             <!-- 중앙: 이름 + 신체 정보 -->
             <div class="profile-text profile-center">
@@ -66,16 +73,16 @@
             </div>
 
             <!-- 우측: 누적 / 랭킹 / 포인트 -->
-<!--            <div class="profile-text profile-right">-->
-<!--                <p class="profile-meta">-->
-<!--                    누적:-->
-<!--                    <span th:text="${totalDistance != null ? totalDistance : '-'}">-</span><br/>-->
-<!--                    랭킹:-->
-<!--                    <span th:text="${rank != null ? rank : '-'}">-</span><br/>-->
-<!--                    포인트:-->
-<!--                    <span th:text="${pointBalance != null ? pointBalance : '-'}">-</span>-->
-<!--                </p>-->
-<!--            </div>-->
+            <!--            <div class="profile-text profile-right">-->
+            <!--                <p class="profile-meta">-->
+            <!--                    누적:-->
+            <!--                    <span th:text="${totalDistance != null ? totalDistance : '-'}">-</span><br/>-->
+            <!--                    랭킹:-->
+            <!--                    <span th:text="${rank != null ? rank : '-'}">-</span><br/>-->
+            <!--                    포인트:-->
+            <!--                    <span th:text="${pointBalance != null ? pointBalance : '-'}">-</span>-->
+            <!--                </p>-->
+            <!--            </div>-->
 
         </div>
 

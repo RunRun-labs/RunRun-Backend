@@ -12,7 +12,12 @@ import org.springframework.web.bind.annotation.*;
 /**
  *
  * @author : kimyongwon
- * @description : Please explain the class!!!
+ * @description :
+ * 인증된 사용자의 계정 및 프로필 정보를 조회/수정하기 위한 REST 컨트롤러.
+ * 사용자 정보 API를 제공한다.
+ * 주요 기능:
+ * - 내 정보 조회 (/users/me)
+ * - 내 정보 수정 (/users/me)
  * @filename : UserController
  * @since : 25. 12. 18. 오후 4:22 목요일
  */

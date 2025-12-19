@@ -16,7 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  *
  * @author : kimyongwon
- * @description : Please explain the class!!!
+ * @description :
+ * 사용자 도메인의 핵심 비즈니스 로직을 담당하는 서비스 클래스.
+ * 컨트롤러로부터 전달받은 요청을 도메인 규칙에 맞게 수행한다.
+ * 주요 책임:
+ * - 로그인 사용자 조회
+ * - 사용자 프로필/계정 정보 수정
+ * - 사용자 존재 여부 검증 및 예외 처리
  * @filename : UserService
  * @since : 25. 12. 18. 오후 4:23 목요일
  */
@@ -57,9 +63,6 @@ public class UserService {
     }
 
     private User getUserByPrincipal(CustomUser principal) {
-        System.out.println("===== DEBUG =====");
-        System.out.println("principal = " + principal);
-        System.out.println("principal.loginId = " + principal.getLoginId());
 
         if (principal == null) {
             throw new TokenException(ErrorCode.UNAUTHORIZED);

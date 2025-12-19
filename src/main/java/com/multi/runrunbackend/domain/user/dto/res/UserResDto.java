@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 /**
  *
  * @author : kimyongwon
- * @description : Please explain the class!!!
+ * @description :
+ * 사용자 정보를 클라이언트에 전달하기 위한 응답 DTO.
+ * 프로필 정보 조회 시 사용
  * @filename : UserMeResDto
  * @since : 25. 12. 18. 오후 4:26 목요일
  */

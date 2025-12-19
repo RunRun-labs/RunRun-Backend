@@ -6,7 +6,8 @@ import lombok.Getter;
 /**
  *
  * @author : kimyongwon
- * @description : Please explain the class!!!
+ * @description 사용자 프로필 및 계정 정보 수정을 위한 요청 DTO.
+ * 마이페이지 수정 화면에서 전달되는 입력 값을 담아 서버로 전달
  * @filename : UserUpdateReqDto
  * @since : 25. 12. 18. 오후 4:27 목요일
  */

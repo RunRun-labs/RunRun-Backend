@@ -1,172 +1,178 @@
 <!doctype html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8" />
-  <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1"
-  />
-  <title>RUNRUN | Edit Profile</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
-      rel="stylesheet"
-  />
-  <link
-      rel="stylesheet"
-      href="/css/mypage-edit.css"
-      th:href="@{/css/mypage-edit.css}"
-  />
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | Edit Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/mypage-edit.css"
+            th:href="@{/css/mypage-edit.css}"
+    />
 </head>
 <body class="mypage-edit-body">
 <main class="page mypage-edit-page">
-  <button class="back-button" type="button" aria-label="마이페이지로 돌아가기">
-    <img
-        th:src="@{/img/icons/back.png}"
-        src="/img/icons/back.png"
-        alt="뒤로가기 아이콘"
-    />
-  </button>
-
-  <div class="brand">
-    <span class="brand-text">RUNRUN</span>
-  </div>
-
-  <section class="headline">
-    <h1>My Profile</h1>
-    <p>내 정보를 수정할 수 있어요.</p>
-  </section>
-
-  <section class="profile-edit-card">
-    <div class="profile-visual">
-      <div class="profile-avatar">
+    <button class="back-button" type="button" aria-label="마이페이지로 돌아가기">
         <img
-            data-role="profile-preview"
-            src=""
-            alt="프로필 이미지 미리보기"
-            hidden
+                th:src="@{/img/icons/back.png}"
+                src="/img/icons/back.png"
+                alt="뒤로가기 아이콘"
         />
-        <span class="profile-initial" data-role="profile-initial">RR</span>
-      </div>
-      <div class="profile-visual-text">
-        <p>현재 프로필 이미지는 나중에 업로드 기능으로 변경할 수 있어요.</p>
-      </div>
+    </button>
+
+    <div class="brand">
+        <span class="brand-text">RUNRUN</span>
     </div>
 
-    <form
-        class="edit-form"
-        method="post"
-        novalidate
-        data-form="mypage-edit"
-    >
-      <div class="section-title">계정 정보</div>
+    <section class="headline">
+        <h1>My Profile</h1>
+        <p>내 정보를 수정할 수 있어요.</p>
+    </section>
 
-      <label class="field">
-        <span class="field-label">Email</span>
-        <input
-            type="email"
-            name="userEmail"
-            placeholder="이메일을 입력하세요"
-            required
-        />
-      </label>
-      <p class="field-feedback" data-feedback="userEmail" aria-live="polite"></p>
+    <section class="profile-edit-card">
+        <div class="profile-visual">
+            <div class="profile-avatar">
+                <img
+                        data-role="profile-preview"
+                        src=""
+                        alt="프로필 이미지 미리보기"
+                        hidden
+                />
+                <span class="profile-initial" data-role="profile-initial">RR</span>
+            </div>
+            <input
+                    type="file"
+                    id="profileImageInput"
+                    accept="image/*"
+                    hidden
+            />
+            <div class="profile-visual-text">
+                <p>현재 프로필 이미지는 나중에 업로드 기능으로 변경할 수 있어요.</p>
+            </div>
+        </div>
 
-      <label class="field">
-        <span class="field-label">Name</span>
-        <input
-            type="text"
-            name="userName"
-            placeholder="이름을 입력하세요"
-            maxlength="4"
-            required
-        />
-      </label>
-      <p class="field-feedback" data-feedback="userName" aria-live="polite"></p>
+        <form
+                class="edit-form"
+                method="post"
+                novalidate
+                data-form="mypage-edit"
+        >
+            <div class="section-title">계정 정보</div>
 
-      <div class="section-title">프로필</div>
+            <label class="field">
+                <span class="field-label">Email</span>
+                <input
+                        type="email"
+                        name="userEmail"
+                        placeholder="이메일을 입력하세요"
+                        required
+                />
+            </label>
+            <p class="field-feedback" data-feedback="userEmail" aria-live="polite"></p>
 
-      <label class="field">
-        <span class="field-label">Height (cm)</span>
-        <input
-            type="number"
-            name="heightCm"
-            placeholder="키 (cm)"
-            min="50"
-            max="300"
-            required
-        />
-      </label>
-      <p class="field-feedback" data-feedback="heightCm" aria-live="polite"></p>
+            <label class="field">
+                <span class="field-label">Name</span>
+                <input
+                        type="text"
+                        name="userName"
+                        placeholder="이름을 입력하세요"
+                        maxlength="4"
+                        required
+                />
+            </label>
+            <p class="field-feedback" data-feedback="userName" aria-live="polite"></p>
 
-      <label class="field">
-        <span class="field-label">Weight (kg)</span>
-        <input
-            type="number"
-            name="weightKg"
-            placeholder="몸무게 (kg)"
-            min="10"
-            max="500"
-            required
-        />
-      </label>
-      <p class="field-feedback" data-feedback="weightKg" aria-live="polite"></p>
+            <div class="section-title">프로필</div>
 
-      <button class="primary-button" type="submit">변경 사항 저장</button>
-      <p class="form-message" data-role="edit-message" aria-live="polite"></p>
-    </form>
-  </section>
+            <label class="field">
+                <span class="field-label">Height (cm)</span>
+                <input
+                        type="number"
+                        name="heightCm"
+                        placeholder="키 (cm)"
+                        min="50"
+                        max="300"
+                        required
+                />
+            </label>
+            <p class="field-feedback" data-feedback="heightCm" aria-live="polite"></p>
+
+            <label class="field">
+                <span class="field-label">Weight (kg)</span>
+                <input
+                        type="number"
+                        name="weightKg"
+                        placeholder="몸무게 (kg)"
+                        min="10"
+                        max="500"
+                        required
+                />
+            </label>
+            <p class="field-feedback" data-feedback="weightKg" aria-live="polite"></p>
+
+            <button class="primary-button" type="submit">변경 사항 저장</button>
+            <p class="form-message" data-role="edit-message" aria-live="polite"></p>
+        </form>
+    </section>
 </main>
 
 <template id="bottomNavTemplate">
-  <nav class="bottom-nav" aria-label="하단 메뉴">
-    <a class="nav-item" th:href="@{/chat}" href="/chat">
-      <img
-          src="/img/icons/chat.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>chat</span>
-    </a>
-    <a class="nav-item" th:href="@{/feed}" href="/feed">
-      <img
-          src="/img/icons/feed.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>feed</span>
-    </a>
-    <a class="nav-item" th:href="@{/}" href="/">
-      <img
-          src="/img/icons/home.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>home</span>
-    </a>
-    <a class="nav-item" th:href="@{/match}" href="/match">
-      <img
-          src="/img/icons/match.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>match</span>
-    </a>
-    <a class="nav-item" th:href="@{/my}" href="/my">
-      <img
-          src="/img/icons/my.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>my</span>
-    </a>
-  </nav>
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+            <img
+                    src="/img/icons/chat.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+            <img
+                    src="/img/icons/feed.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>feed</span>
+        </a>
+        <a class="nav-item" th:href="@{/}" href="/">
+            <img
+                    src="/img/icons/home.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+            <img
+                    src="/img/icons/match.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>match</span>
+        </a>
+        <a class="nav-item" th:href="@{/my}" href="/my">
+            <img
+                    src="/img/icons/my.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>my</span>
+        </a>
+    </nav>
 </template>
 
 <div
-    id="bottomNavMount"
-    th:replace="~{common/bottom-nav :: bottomNav}"
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
 <script src="/js/mypage-edit.js" th:src="@{/js/mypage-edit.js}"></script>
