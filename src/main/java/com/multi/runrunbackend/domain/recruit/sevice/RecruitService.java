@@ -8,6 +8,7 @@ import com.multi.runrunbackend.domain.recruit.dto.res.RecruitDetailResDto;
 import com.multi.runrunbackend.domain.recruit.dto.res.RecruitListResDto;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
+import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class RecruitService {
 
   private final RecruitRepository recruitRepository;
   private final UserRepository userRepository;
+  private final RecruitUserRepository recruitUserRepository;
 //  private final CourseRepository courseRepository;
 
 
@@ -52,10 +55,14 @@ public class RecruitService {
   }
 
   public Slice<RecruitListResDto> getRecruitList(RecruitListReqDto req, Pageable pageable) {
-    Sort sort = switch (req.getSortBy()) {
-      case "distance" -> Sort.by(Sort.Direction.ASC, "distance"); // 가까운 순
-      case "meetingSoon" -> Sort.by(Sort.Direction.ASC, "meeting_at"); // 모임 날짜 빠른 순
-      default -> Sort.by(Sort.Direction.DESC, "created_at"); // 최신순 (기본)
+    String sortBy = (req.getSortBy() != null && !req.getSortBy().isEmpty())
+        ? req.getSortBy()
+        : "latest";
+
+    Sort sort = switch (sortBy) {
+      case "distance" -> JpaSort.unsafe(Sort.Direction.ASC, "distance");
+      case "meetingSoon" -> Sort.by(Sort.Direction.ASC, "meeting_at");
+      default -> Sort.by(Sort.Direction.DESC, "created_at");
     };
 
     Pageable dynamicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
@@ -90,7 +97,7 @@ public class RecruitService {
   }
 
 
-  public RecruitDetailResDto getRecruitDetail(Long recruitId) {
+  public RecruitDetailResDto getRecruitDetail(Long recruitId, User currentUser) {
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 모집글입니다."));
 
@@ -98,7 +105,14 @@ public class RecruitService {
       throw new IllegalArgumentException("삭제되거나 마감된 모집글입니다.");
     }
 
-    return RecruitDetailResDto.from(recruit);
+    Long currentUserId = currentUser != null ? currentUser.getId() : null;
+
+    boolean isParticipant = false;
+    if (currentUser != null) {
+      isParticipant = recruitUserRepository.existsByRecruitAndUser(recruit, currentUser);
+    }
+
+    return RecruitDetailResDto.from(recruit, currentUserId, isParticipant);
   }
 
   @Transactional
