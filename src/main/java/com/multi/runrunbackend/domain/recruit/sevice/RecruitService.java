@@ -1,5 +1,8 @@
 package com.multi.runrunbackend.domain.recruit.sevice;
 
+import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
+import com.multi.runrunbackend.common.exception.custom.NotFoundException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitUpdateReqDto;
@@ -92,17 +95,17 @@ public class RecruitService {
             Math.toRadians(theta));
     dist = Math.acos(dist);
     dist = Math.toDegrees(dist);
-    dist = dist * 60 * 1.1515 * 1.609344; // Mile -> km 변환
+    dist = dist * 60 * 1.1515 * 1.609344;
     return dist;
   }
 
 
   public RecruitDetailResDto getRecruitDetail(Long recruitId, User currentUser) {
     Recruit recruit = recruitRepository.findById(recruitId)
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 모집글입니다."));
+        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
     if (recruit.getIsDeleted()) {
-      throw new IllegalArgumentException("삭제되거나 마감된 모집글입니다.");
+      throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
     }
 
     Long currentUserId = currentUser != null ? currentUser.getId() : null;
@@ -118,14 +121,13 @@ public class RecruitService {
   @Transactional
   public void updateRecruit(Long recruitId, User user, RecruitUpdateReqDto req) {
     Recruit recruit = recruitRepository.findById(recruitId)
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 모집글입니다."));
-
+        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
     if (!recruit.getUser().getId().equals(user.getId())) {
-      throw new IllegalArgumentException("수정 권한이 없습니다.");
+      throw new ForbiddenException(ErrorCode.RECRUIT_UPDATE_DENIED);
     }
 
     if (recruit.getCurrentParticipants() > 1) {
-      throw new IllegalArgumentException("이미 참여한 유저가 있어 수정할 수 없습니다.");
+      throw new ForbiddenException(ErrorCode.RECRUIT_HAS_PARTICIPANTS);
     }
 
     recruit.update(req);
@@ -134,10 +136,10 @@ public class RecruitService {
   @Transactional
   public void deleteRecruit(Long recruitId, User user) {
     Recruit recruit = recruitRepository.findById(recruitId)
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 모집글입니다."));
+        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
     if (!recruit.getUser().getId().equals(user.getId())) {
-      throw new IllegalArgumentException("삭제(마감) 권한이 없습니다.");
+      throw new ForbiddenException(ErrorCode.RECRUIT_DELETE_DENIED);
     }
 
     recruit.delete();
