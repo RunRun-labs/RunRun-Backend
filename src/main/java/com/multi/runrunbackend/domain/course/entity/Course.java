@@ -18,6 +18,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.locationtech.jts.geom.LineString;
 
 /**
  * @author : kyungsoo
@@ -50,7 +51,7 @@ public class Course extends BaseEntity {
 
 
     @Column(columnDefinition = "geometry(LineString,4326)", nullable = false)
-    private Object path;
+    private LineString path;
 
 
     @Column(name = "distance_m", nullable = false)

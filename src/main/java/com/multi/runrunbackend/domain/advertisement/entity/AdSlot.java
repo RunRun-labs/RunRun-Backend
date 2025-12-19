@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 /**
  * @author : kyungsoo
  * @description : Please explain the class!!!
- * @filename : CourseSiren
+ * @filename : AdSlot
  * @since : 2025. 12. 17. Wednesday
  */
 @Getter

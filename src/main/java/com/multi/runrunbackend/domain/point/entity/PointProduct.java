@@ -29,7 +29,7 @@ public class PointProduct extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "product_name", length = 100)
+    @Column(name = "product_name", nullable = false, length = 100)
     private String productName;
 
     @Column(name = "required_point", nullable = false)
