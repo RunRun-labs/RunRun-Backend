@@ -40,7 +40,7 @@ public class JwtConfig {
                 .sessionManagement(
                         sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 ).authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/files/upload").authenticated()
+                        .requestMatchers("/users/profile-image").authenticated()
                         .requestMatchers("/files/**").permitAll()
                         .requestMatchers(
                                 "/auth/**",

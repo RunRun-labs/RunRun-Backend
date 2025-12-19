@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     profileImageUrl: profileImageUrlToSave ?? null,
                 };
 
-                const response = await fetch("/users/me", {
+                const response = await fetch("/users", {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -256,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const response = await fetch("/users/me", {
+            const response = await fetch("/users", {
                 headers: {Authorization: `Bearer ${accessToken}`},
             });
 

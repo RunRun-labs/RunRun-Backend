@@ -12,7 +12,7 @@ async function loadMyBodyInfo() {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
 
-        const res = await fetch("/users/me", {
+        const res = await fetch("/users", {
             headers: {"Authorization": `Bearer ${token}`}
         });
 
@@ -68,7 +68,7 @@ function attachProfileImageClickHandler() {
 
     container.addEventListener("click", goEdit);
 
-  
+
 }
 
 function attachProfileEditHandler() {
