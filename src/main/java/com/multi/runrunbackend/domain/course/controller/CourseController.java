@@ -2,11 +2,14 @@ package com.multi.runrunbackend.domain.course.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
+import com.multi.runrunbackend.domain.course.constant.CourseSortType;
 import com.multi.runrunbackend.domain.course.dto.req.CourseCreateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseListReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseCreateResDto;
+import com.multi.runrunbackend.domain.course.dto.res.CourseDetailResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseListResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.service.CourseService;
@@ -18,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,57 +67,34 @@ public class CourseController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<CursorPage<CourseListResDto>>> getCourses(
+    public ResponseEntity<ApiResponse<CursorPage<CourseListResDto>>> getCourseList(
         @AuthenticationPrincipal CustomUser principal,
         @RequestParam(required = false) String keyword,
-        @RequestParam(required = false) String registerType,
+        @RequestParam(required = false) CourseRegisterType registerType,
         @RequestParam(required = false) Boolean nearby,
         @RequestParam(required = false) Double lat,
         @RequestParam(required = false) Double lng,
         @RequestParam(required = false) Integer radiusM,
         @RequestParam(required = false) String distanceBucket,
-        @RequestParam(required = false) String sortType,
+        @RequestParam(required = false) CourseSortType sortType,
         @RequestParam(required = false) String cursor,
         @RequestParam(required = false) @Min(1) @Max(50) Integer size
     ) {
-        CourseListReqDto req = CourseListReqDto.builder()
-            .keyword(keyword)
-            .registerType(parseRegisterType(registerType))
-            .nearby(nearby)
-            .lat(lat)
-            .lng(lng)
-            .radiusM(radiusM)
-            .distanceBucket(distanceBucket)
-            .sortType(parseSortType(sortType))
-            .cursor(cursor)
-            .size(size)
-            .build();
+        CourseListReqDto req = CourseListReqDto.fromParams(keyword, registerType, nearby, lat, lng,
+            radiusM,
+            distanceBucket, sortType, cursor, size);
 
-        return ResponseEntity.ok(ApiResponse.success(courseService.getCourses(principal, req)));
+        return ResponseEntity.ok(
+            ApiResponse.success("코스 목록 조회 성공", courseService.getCourseList(principal, req)));
     }
 
-    private com.multi.runrunbackend.domain.course.constant.CourseRegisterType parseRegisterType(
-        String v) {
-        if (v == null || v.isBlank()) {
-            return null;
-        }
-        try {
-            return com.multi.runrunbackend.domain.course.constant.CourseRegisterType.valueOf(
-                v.trim().toUpperCase());
-        } catch (Exception e) {
-            return null;
-        }
+    @GetMapping("/{course_id}")
+    public ResponseEntity<ApiResponse<CourseDetailResDto>> getCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        return ResponseEntity.ok(
+            ApiResponse.success("코스 상세 조회 성공", courseService.getCourse(principal, courseId)));
     }
 
-    private com.multi.runrunbackend.domain.course.constant.CourseSortType parseSortType(String v) {
-        if (v == null || v.isBlank()) {
-            return null;
-        }
-        try {
-            return com.multi.runrunbackend.domain.course.constant.CourseSortType.valueOf(
-                v.trim().toUpperCase());
-        } catch (Exception e) {
-            return null;
-        }
-    }
 }
