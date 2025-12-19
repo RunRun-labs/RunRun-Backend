@@ -14,6 +14,8 @@ import com.multi.runrunbackend.domain.course.dto.res.CourseListResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.service.CourseService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -69,16 +71,30 @@ public class CourseController {
     @GetMapping
     public ResponseEntity<ApiResponse<CursorPage<CourseListResDto>>> getCourseList(
         @AuthenticationPrincipal CustomUser principal,
+
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) CourseRegisterType registerType,
         @RequestParam(required = false) Boolean nearby,
-        @RequestParam(required = false) Double lat,
-        @RequestParam(required = false) Double lng,
-        @RequestParam(required = false) Integer radiusM,
+
+        @RequestParam(required = false)
+        @DecimalMin("-90.0") @DecimalMax("90.0")
+        Double lat,
+
+        @RequestParam(required = false)
+        @DecimalMin("-180.0") @DecimalMax("180.0")
+        Double lng,
+
+        @RequestParam(required = false)
+        @Min(100) @Max(50_000)
+        Integer radiusM,
+
         @RequestParam(required = false) String distanceBucket,
         @RequestParam(required = false) CourseSortType sortType,
         @RequestParam(required = false) String cursor,
-        @RequestParam(required = false) @Min(1) @Max(50) Integer size
+
+        @RequestParam(required = false)
+        @Min(1) @Max(50)
+        Integer size
     ) {
         CourseListReqDto req = CourseListReqDto.fromParams(keyword, registerType, nearby, lat, lng,
             radiusM,
