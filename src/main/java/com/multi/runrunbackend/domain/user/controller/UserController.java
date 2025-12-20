@@ -1,14 +1,15 @@
 package com.multi.runrunbackend.domain.user.controller;
 
 import com.multi.runrunbackend.common.file.storage.FileStorage;
+import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
-import com.multi.runrunbackend.domain.user.dto.res.UserProfileUploadResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
-import com.multi.runrunbackend.domain.user.service.UserProfileService;
+import com.multi.runrunbackend.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -29,39 +30,31 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
-public class UserProfileController {
+public class UserController {
 
-    private final UserProfileService userService;
+    private final UserService userService;
     private final FileStorage fileStorage;
     private final UserRepository userRepository;
 
-    private static final long MAX_PROFILE_IMAGE_SIZE = 1L * 1024 * 1024;
 
-    /**
-     * 내 정보 조회
-     */
     @GetMapping
-    public UserResDto getUser(@AuthenticationPrincipal CustomUser principal) {
-        return userService.getUser(principal);
+    public ResponseEntity<ApiResponse<UserResDto>> getUser(
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        UserResDto res = userService.getUser(principal);
+        return ResponseEntity.ok(ApiResponse.success("내 정보 조회 성공", res));
     }
 
-    /**
-     * 내 정보 수정
-     */
-    @PutMapping
-    public void updateUser(@RequestBody @Valid UserUpdateReqDto req, @AuthenticationPrincipal CustomUser principal) {
-        userService.updateUser(req, principal);
+    @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<ApiResponse<Void>> updateUser(
+
+            @RequestPart(value = "request") @Valid UserUpdateReqDto req,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+
+        userService.updateUser(req, file, principal);
+        return ResponseEntity.ok(ApiResponse.success("프로필 수정 성공", null));
     }
 
-    /**
-     * 프로필 이미지 업로드
-     */
-    @PostMapping("/profile-image")
-    public ResponseEntity<UserProfileUploadResDto> uploadProfileImage(
-            @RequestParam("file") MultipartFile file,
-            @AuthenticationPrincipal CustomUser principal) {
-
-        String url = userService.uploadProfileImage(file, principal);
-        return ResponseEntity.ok(new UserProfileUploadResDto(url));
-    }
 }

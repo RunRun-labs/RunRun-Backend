@@ -1,5 +1,3 @@
-// `src/main/resources/static/js/mypage.js`
-
 document.addEventListener("DOMContentLoaded", () => {
     console.log("mypage.js loaded");
     attachProfileEditHandler();
@@ -18,7 +16,8 @@ async function loadMyBodyInfo() {
 
         if (!res.ok) throw new Error("조회 실패");
 
-        const user = await res.json();
+        const payload = await res.json();
+        const user = payload?.data ?? null;
         renderBodyInfo(user);
         renderProfileImage(user);
     } catch (e) {
@@ -57,7 +56,7 @@ function attachProfileImageClickHandler() {
 
     if (!container) return;
 
-    // 접근성/커서 UX (선택)
+
     container.style.cursor = "pointer";
     container.setAttribute("role", "button");
     container.setAttribute("tabindex", "0");
@@ -80,14 +79,7 @@ function attachProfileEditHandler() {
     });
 }
 
-/**
- * 마크업 매칭:
- * \- 이미지: `img[data-role="profile-preview"]`
- * \- 이니셜: `span[data-role="profile-initial"]`
- * 요구사항:
- * \- profileImageUrl 있으면: 이미지 표시
- * \- 없으면: 아무것도 표시 안 함(빈 원/빈 영역)
- */
+
 function renderProfileImage(user) {
     const imgEl = document.querySelector('img[data-role="profile-preview"]');
     const initialEl = document.querySelector('span[data-role="profile-initial"]');
@@ -97,7 +89,7 @@ function renderProfileImage(user) {
     const url = user?.profileImageUrl;
 
     if (!url) {
-        // 아무것도 표시하지 않음: 이미지 숨기고, 이니셜도 숨김
+
         imgEl.removeAttribute("src");
         imgEl.hidden = true;
 
@@ -108,7 +100,7 @@ function renderProfileImage(user) {
         return;
     }
 
-    // url 있으면 이미지 표시, 이니셜은 숨김
+
     imgEl.src = url;
     imgEl.alt = "프로필 이미지";
     imgEl.decoding = "async";
@@ -120,7 +112,7 @@ function renderProfileImage(user) {
         initialEl.hidden = true;
     }
 
-    // 로드 실패 시에도 "아무것도 표시하지 않음"
+
     imgEl.addEventListener("error", () => {
         imgEl.removeAttribute("src");
         imgEl.hidden = true;

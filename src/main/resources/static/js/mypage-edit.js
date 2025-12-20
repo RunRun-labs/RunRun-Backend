@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const CLIENT_MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
 
     let currentProfileImageUrl = "";
+    let selectedFile = null;
 
     const validators = {
         userEmail: (value) => {
@@ -65,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 프로필 클릭 시 파일 선택창 열기
+
     function enableProfileClickToChoose() {
         const trigger = (e) => {
             e.preventDefault();
@@ -75,13 +76,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (profileInitial) profileInitial.addEventListener("click", trigger);
     }
 
-    // 파일 선택 시 업로드 처리
-    async function handleProfileFileChange(event) {
+
+    function handleProfileFileChange(event) {
         const files = event.target.files;
         if (!files || files.length === 0) return;
         const file = files[0];
 
-        // 클라이언트 측 검증
+
         if (!file.type || !file.type.startsWith("image/")) {
             setMessage("이미지 파일만 업로드할 수 있습니다.");
             profileImageInput.value = "";
@@ -93,7 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // 즉시 로컬 미리보기
+
+        selectedFile = file;
+
+
         try {
             const objectUrl = URL.createObjectURL(file);
             if (profilePreview) {
@@ -101,60 +105,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 profilePreview.hidden = false;
             }
             if (profileInitial) profileInitial.hidden = true;
+            setMessage("이미지가 선택되었습니다. 하단 저장 버튼을 눌러주세요.", "success");
         } catch (e) {
-            // ignore
-        }
 
-        // 서버 업로드
-        const accessToken = localStorage.getItem("accessToken");
-        if (!accessToken) {
-            setMessage("로그인이 필요합니다. 다시 로그인해 주세요.");
-            return;
-        }
-
-        setMessage("이미지를 업로드 중입니다...");
-        try {
-            const formData = new FormData();
-            formData.append("file", file);
-
-            const res = await fetch("/users/profile-image", {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-                body: formData,
-            });
-
-            if (!res.ok) {
-                let errMsg = "이미지 업로드에 실패했습니다.";
-                try {
-                    const data = await res.json();
-                    if (data?.message) errMsg = data.message;
-                } catch (e) {
-                }
-                throw new Error(errMsg);
-            }
-
-            const data = await res.json();
-            if (data?.url) {
-                currentProfileImageUrl = data.url;
-                if (profilePreview) profilePreview.src = data.url;
-                setMessage("이미지 업로드가 완료되었습니다.", "success");
-            } else {
-                throw new Error("업로드 응답이 올바르지 않습니다.");
-            }
-        } catch (err) {
-            setMessage(err.message || "이미지 업로드 중 오류가 발생했습니다.");
-            // 복구: 서버 업로드 실패 시 로컬 미리보기를 제거하거나 초기 표시 유지
-            if (!currentProfileImageUrl) {
-                if (profilePreview) profilePreview.hidden = true;
-                if (profileInitial) profileInitial.hidden = false;
-            } else {
-                if (profilePreview) profilePreview.src = currentProfileImageUrl;
-            }
-        } finally {
-            profileImageInput.value = "";
-            setTimeout(() => setMessage(""), 2000);
         }
     }
 
@@ -162,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
         enableRealtimeValidation(editForm);
         loadCurrentUser();
 
-        // 프로필 클릭 연결
+
         enableProfileClickToChoose();
         if (profileImageInput) {
             profileImageInput.addEventListener("change", handleProfileFileChange);
@@ -180,12 +133,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const payload = {
+
+            const payloadToSend = {
                 userEmail: values.userEmail,
                 userName: values.userName,
                 heightCm: Number(values.heightCm),
                 weightKg: Number(values.weightKg),
-                profileImageUrl: currentProfileImageUrl || null
+
+                profileImageUrl: selectedFile ? null : currentProfileImageUrl
             };
 
             const accessToken = localStorage.getItem("accessToken");
@@ -199,24 +154,37 @@ document.addEventListener("DOMContentLoaded", () => {
             setMessage("내 정보를 저장 중입니다...");
 
             try {
+
+                const submissionData = new FormData();
+
+                const jsonBlob = new Blob([JSON.stringify(payloadToSend)], {
+                    type: "application/json"
+                });
+                submissionData.append("request", jsonBlob);
+
+
+                if (selectedFile) {
+                    submissionData.append("file", selectedFile);
+                }
+
                 const response = await fetch("/users", {
                     method: "PUT",
                     headers: {
-                        "Content-Type": "application/json",
+
                         Authorization: `Bearer ${accessToken}`,
                     },
-                    body: JSON.stringify(payload),
+                    body: submissionData,
                 });
 
                 if (!response.ok) {
                     let errorMessage = "내 정보를 수정하는 중 오류가 발생했습니다.";
                     try {
-                        const data = await response.json();
-                        if (data?.message) {
-                            errorMessage = data.message;
+                        const payload = await response.json();
+                        if (payload?.message) {
+                            errorMessage = payload.message;
                         }
                     } catch (e) {
-                        // ignore parse error
+
                     }
                     throw new Error(errorMessage);
                 }
@@ -233,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Static fallback: use inline template when Thymeleaf include is not processed
+
     if (
         bottomNavMount &&
         bottomNavMount.childElementCount === 0 &&
@@ -261,8 +229,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error("내 정보를 불러오지 못했습니다.");
             }
 
-            const data = await response.json();
-            currentProfileImageUrl = data.profileImageUrl || "";
+            const payload = await response.json();
+            const data = payload?.data ?? null;
+            currentProfileImageUrl = data?.profileImageUrl || "";
             fillFormWithUserData(data);
         } catch (error) {
             setMessage(error.message || "내 정보를 불러오는 중 오류가 발생했습니다.");
@@ -277,12 +246,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const heightInput = editForm.querySelector('input[name="heightCm"]');
         const weightInput = editForm.querySelector('input[name="weightKg"]');
 
-        if (emailInput) emailInput.value = user.email ?? "";
-        if (nameInput) nameInput.value = user.name ?? "";
-        if (heightInput) heightInput.value = user.heightCm ?? "";
-        if (weightInput) weightInput.value = user.weightKg ?? "";
+        if (emailInput) emailInput.value = user?.email ?? "";
+        if (nameInput) nameInput.value = user?.name ?? "";
+        if (heightInput) heightInput.value = user?.heightCm ?? "";
+        if (weightInput) weightInput.value = user?.weightKg ?? "";
 
-        updateProfileVisual(user.name, user.profileImageUrl);
+        updateProfileVisual(user?.name, user?.profileImageUrl);
     }
 
     function updateProfileVisual(name, imageUrl) {

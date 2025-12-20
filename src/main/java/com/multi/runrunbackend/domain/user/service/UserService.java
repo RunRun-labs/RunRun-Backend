@@ -33,7 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserProfileService {
+public class UserService {
 
     private final UserRepository userRepository;
     private final FileStorage fileStorage;
@@ -45,61 +45,72 @@ public class UserProfileService {
         return UserResDto.from(user);
     }
 
-    public void updateUser(UserUpdateReqDto req, CustomUser principal) {
+    public void updateUser(UserUpdateReqDto req, MultipartFile file, CustomUser principal) {
         User user = getUserByPrincipal(principal);
 
-        // 이메일
+        updateEmailIfChanged(req, user);
+        updateNameIfChanged(req, user);
+        updateBodyInfo(req, user);
+        updateProfileImage(req, file, user);
+    }
+
+
+    private User getUserByPrincipal(CustomUser principal) {
+        if (principal == null) {
+            throw new TokenException(ErrorCode.UNAUTHORIZED);
+        }
+        String loginId = principal.getLoginId();
+
+        return userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+    }
+
+
+    private void updateEmailIfChanged(UserUpdateReqDto req, User user) {
         if (!req.getUserEmail().equals(user.getEmail())) {
             validateDuplicateEmail(req.getUserEmail());
             user.updateAccount(req.getUserEmail(), user.getName());
         }
+    }
 
-        // 이름
+    private void updateNameIfChanged(UserUpdateReqDto req, User user) {
         if (!req.getUserName().equals(user.getName())) {
             user.updateAccount(user.getEmail(), req.getUserName());
         }
+    }
 
-        // 키 / 몸무게 (PUT 정책이므로 null 허용 안 됨)
+    private void updateBodyInfo(UserUpdateReqDto req, User user) {
         user.updateProfile(req.getHeightCm(), req.getWeightKg());
-
-        // 프로필 이미지
-        if (req.getProfileImageUrl() != null) {
-            user.updateProfileImage(req.getProfileImageUrl());
-        }
     }
 
-    public String uploadProfileImage(MultipartFile file, CustomUser principal) {
-        if (file == null || file.isEmpty()) {
-            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
+    private void updateProfileImage(UserUpdateReqDto req, MultipartFile file, User user) {
+        String finalUrl = req.getProfileImageUrl();
+
+        if (file != null && !file.isEmpty()) {
+            validateProfileImage(file);
+            finalUrl = fileStorage.upload(file, FileDomainType.PROFILE, user.getId());
         }
 
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
-        }
-
-        if (file.getSize() > MAX_PROFILE_IMAGE_SIZE) {
-            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
-        }
-
-        User user = getUserByPrincipal(principal);
-
-        return fileStorage.upload(file, FileDomainType.PROFILE, user.getId());
-    }
-
-    private User getUserByPrincipal(CustomUser principal) {
-
-        if (principal == null) {
-            throw new TokenException(ErrorCode.UNAUTHORIZED);
-        }
-
-        return userRepository.findByLoginId(principal.getLoginId())
-                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+        user.updateProfileImage(finalUrl);
     }
 
     private void validateDuplicateEmail(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new DuplicateUsernameException(ErrorCode.DUPLICATE_EMAIL);
+        }
+    }
+
+    private void validateProfileImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new FileUploadException(ErrorCode.FILE_EMPTY);
+        }
+
+        if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
+            throw new FileUploadException(ErrorCode.FILE_NOT_IMAGE);
+        }
+
+        if (file.getSize() > MAX_PROFILE_IMAGE_SIZE) {
+            throw new FileUploadException(ErrorCode.FILE_SIZE_EXCEEDED);
         }
     }
 }
