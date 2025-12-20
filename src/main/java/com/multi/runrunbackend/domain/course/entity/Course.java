@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
 import com.multi.runrunbackend.domain.course.constant.CourseStatus;
 import com.multi.runrunbackend.domain.course.dto.req.CourseCreateReqDto;
+import com.multi.runrunbackend.domain.course.dto.req.CourseUpdateReqDto;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -116,6 +117,22 @@ public class Course extends BaseEntity {
         c.status = CourseStatus.ACTIVE;
         c.address = req.getAddress();
         return c;
+    }
+
+    public void update(User user, CourseUpdateReqDto req, String imageUrl,
+        String thumbnailUrl, CourseRegisterType type) {
+        this.user = user;
+        this.title = req.getTitle();
+        this.description = req.getDescription();
+        this.path = req.getPath();
+        this.distanceM = req.getDistanceM();
+        this.startLat = req.getStartLat();
+        this.startLng = req.getStartLng();
+        this.thumbnailUrl = thumbnailUrl;
+        this.imageUrl = imageUrl;
+        this.registerType = type;
+        this.address = req.getAddress();
+
     }
 
     public void block() {
