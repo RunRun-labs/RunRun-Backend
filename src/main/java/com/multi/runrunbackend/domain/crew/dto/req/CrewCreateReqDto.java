@@ -29,6 +29,7 @@ public class CrewCreateReqDto {
     private String crewName;
 
     @Schema(description = "크루 소개글")
+    @Size(max = 500, message = "크루 소개글은 500자 이내로 입력해주세요.")
     private String crewDescription;
 
     @Schema(description = "크루 이미지 URL")
