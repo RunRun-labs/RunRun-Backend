@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.course.service;
 
+import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
@@ -8,11 +9,13 @@ import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.course.dto.req.CourseCreateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseListReqDto;
+import com.multi.runrunbackend.domain.course.dto.req.CourseUpdateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseCreateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseDetailResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseListResDto;
+import com.multi.runrunbackend.domain.course.dto.res.CourseUpdateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.dto.res.TmapPedestrianResDto;
 import com.multi.runrunbackend.domain.course.entity.Course;
@@ -95,7 +98,39 @@ public class CourseService {
         return CourseCreateResDto.builder().id(saved.getId()).build();
     }
 
-    public CursorPage<CourseListResDto> getCourses(CustomUser principal, CourseListReqDto req) {
+
+    public CourseUpdateResDto updateCourse(CustomUser principal, Long courseId,
+        CourseUpdateReqDto req, MultipartFile imageFile) {
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.COURSE_NOT_FOUND));
+
+        if (!course.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException(ErrorCode.COURSE_FORBIDDEN);
+        }
+
+        String imageUrl = resolveImageUrl(
+            imageFile,
+            FileDomainType.COURSE_IMAGE,
+            user.getId()
+        );
+
+        String thumbnailUrl = generateThumbnailFromPath(req.getPath(), user.getId());
+        if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
+            thumbnailUrl = imageUrl != null ? imageUrl : "";
+        }
+
+        course.update(user, req, imageUrl, thumbnailUrl, req.getCourseRegisterType());
+
+        return CourseUpdateResDto.from(course);
+
+    }
+
+    public CursorPage<CourseListResDto> getCourseList(CustomUser principal, CourseListReqDto req) {
 
         String loginId = principal.getLoginId();
 
