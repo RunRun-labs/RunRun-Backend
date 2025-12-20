@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.user.controller;
 
+import com.multi.runrunbackend.common.exception.custom.FileUploadException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
@@ -39,6 +40,8 @@ public class UserController {
     private final FileStorage fileStorage;
     private final UserRepository userRepository;
 
+    private static final long MAX_PROFILE_IMAGE_SIZE = 1L * 1024 * 1024;
+
     /**
      * 내 정보 조회
      */
@@ -60,11 +63,23 @@ public class UserController {
         userService.updateUser(req, principal);
     }
 
+
+    /**
+     * 프로필 이미지 업로드
+     */
     @PostMapping("/profile-image")
     public Map<String, String> uploadProfileImage(
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal CustomUser principal
     ) {
+
+        if (file == null || file.isEmpty()) {
+            throw new NotFoundException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+
+        if (file.getSize() > MAX_PROFILE_IMAGE_SIZE) {
+            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
         User user = userRepository.findByLoginId(principal.getLoginId())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 

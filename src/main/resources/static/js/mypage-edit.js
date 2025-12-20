@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const avatarClickArea = document.querySelector(".profile-avatar");
     const profileImageInput = document.getElementById("profileImageInput");
 
+    // 프론트 파일 사이즈 제한 (1MB)
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+
     // STEP 1) 선택된 파일을 "기억"할 전역 변수(이 스코프에서 공유)
     let selectedProfileImageFile = null;
 
@@ -184,8 +187,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            // 타입 검사
             if (!file.type?.startsWith("image/")) {
                 setMessage("이미지 파일만 선택할 수 있습니다.");
+                profileImageInput.value = "";
+                selectedProfileImageFile = null;
+                return;
+            }
+
+            // 사이즈 검사 (1MB)
+            if (file.size > MAX_FILE_SIZE) {
+                setMessage("이미지는 최대 1MB까지 업로드할 수 있습니다.");
                 profileImageInput.value = "";
                 selectedProfileImageFile = null;
                 return;
