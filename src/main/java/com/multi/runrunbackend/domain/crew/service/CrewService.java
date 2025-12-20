@@ -78,6 +78,7 @@ public class CrewService {
                 .crewImageUrl(imageUrl)
                 .region(reqDto.getRegion())
                 .distance(reqDto.getDistance())
+                .averagePace(reqDto.getAveragePace())
                 .activityTime(reqDto.getActivityTime())
                 .build();
         Crew crew = reqDtoWithImage.toEntity(user);
@@ -146,30 +147,30 @@ public class CrewService {
     }
 
     /**
-     * @param cursor     마지막 조회 크루 ID
-     * @param size       페이지 크기 -> 5
-     * @param region     지역 필터
-     * @param distance   거리 필터
-     * @param recruiting 모집중 우선 정렬
-     * @param keyword    크루명 검색
+     * @param cursor      마지막 조회 크루 ID
+     * @param size        페이지 크기 -> 5
+     * @param distance    거리 필터
+     * @param averagePace 평균 페이스 필터
+     * @param recruiting  모집중 우선 정렬
+     * @param keyword     크루명 검색
      * @description : 크루 목록 조회 (커서 기반 페이징)
      */
-    public CrewListPageResDto getCrewList(Long cursor, int size, String region,
-                                          String distance, Boolean recruiting, String keyword) {
+    public CrewListPageResDto getCrewList(Long cursor, int size,
+                                          String distance, String averagePace, Boolean recruiting, String keyword) {
         Pageable pageable = PageRequest.of(0, size);
         List<Crew> crews;
 
         // 여러 필터를 조합할 수 있도록 동적 쿼리 사용
         // keyword, region, distance를 모두 조합 가능
         boolean hasFilters = (keyword != null && !keyword.isBlank())
-                || (region != null && !region.isBlank())
                 || (distance != null && !distance.isBlank())
+                || (averagePace != null && !averagePace.isBlank())
                 || (recruiting != null);
 
         if (hasFilters) {
             // 일반 필터 쿼리 사용
             crews = crewRepository.findAllWithFilters(
-                    cursor, keyword, region, distance, recruiting, pageable);
+                    cursor, keyword, distance, averagePace, recruiting, pageable);
         } else {
             // 필터가 없는 경우
             crews = crewRepository.findAllByIdLessThanOrderByIdDesc(cursor, pageable);
@@ -248,18 +249,6 @@ public class CrewService {
         return crewRepository.findById(crewId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CREW_NOT_FOUND));
     }
-
-    /**
-     * @description : 프리미엄 멤버십 검증
-     */
-//    private void validatePremiumMembership(Long userId) {
-//        Membership membership = membershipRepository.findByUserId(userId)
-//                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBERSHIP_NOT_FOUND));
-//
-//        if (!"PREMIUM".equals(membership.getMembershipGrade())) {
-//            throw new BusinessException(ErrorCode.NOT_PREMIUM_MEMBER);
-//        }
-//    }
 
     /**
      * @description : 1인 1크루 생성 제한 검증

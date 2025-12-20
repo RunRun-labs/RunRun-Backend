@@ -83,12 +83,12 @@ public class CrewController {
     }
 
     /**
-     * @param cursor     마지막 조회 크루 ID (다음 페이지 조회 시 사용)
-     * @param size       페이지 크기 (기본값: 5)
-     * @param region     지역 필터 (선택)
-     * @param distance   거리 필터 (선택)
-     * @param recruiting 모집중 우선 정렬 (선택)
-     * @param keyword    크루명 검색 (선택)
+     * @param cursor      마지막 조회 크루 ID (다음 페이지 조회 시 사용)
+     * @param size        페이지 크기 (기본값: 5)
+     * @param distance    거리 필터
+     * @param averagePace 평균 페이스 필터
+     * @param recruiting  모집중 우선 정렬
+     * @param keyword     크루명 검색
      * @description : 크루 목록 조회 (커서 기반 페이징)
      */
     @GetMapping
@@ -97,18 +97,16 @@ public class CrewController {
 
             @RequestParam(defaultValue = "5") int size,
 
-            @RequestParam(required = false) String region,
-
             @RequestParam(required = false) String distance,
 
-            @RequestParam(required = false) String pace,
+            @RequestParam(required = false) String averagePace,
 
             @RequestParam(required = false) Boolean recruiting,
 
             @RequestParam(required = false) String keyword
     ) {
         CrewListPageResDto response = crewService.getCrewList(
-                cursor, size, region, distance, recruiting, keyword);
+                cursor, size, distance, averagePace, recruiting, keyword);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("크루 목록 조회 성공", response));
