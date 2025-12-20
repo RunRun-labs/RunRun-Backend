@@ -16,4 +16,23 @@ public class PathController {
         return "auth/signup";
     }
 
+    @GetMapping("/crews")
+    public String crewListPage() {
+        return "crew/crewList";
+    }
+
+    @GetMapping("/crews/new")
+    public String crewCreatePage() {
+        return "crew/createCrew";
+    }
+
+    @GetMapping("/crews/{crewId}")
+    public String crewDetailPage() {
+        return "crew/crewDetailList";
+    }
+
+    @GetMapping("/crews/{crewId}/edit")
+    public String crewEditPage() {
+        return "crew/updateCrew";
+    }
 }
