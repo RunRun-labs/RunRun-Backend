@@ -43,9 +43,9 @@ public class CrewUserResDto {
 
     /**
      * @param crewUser 크루원 엔티티
-     * @description : toEntity : Entity → DTO 변환
+     * @description : toDto : Entity → DTO 변환
      */
-    public static CrewUserResDto toEntity(CrewUser crewUser) {
+    public static CrewUserResDto toDto(CrewUser crewUser) {
         return CrewUserResDto.builder()
                 .userId(crewUser.getUser().getId())
                 .userName(crewUser.getUser().getName())
