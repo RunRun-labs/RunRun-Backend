@@ -31,7 +31,7 @@ public class RecruitUpdateReqDto {
   private Double targetDistance;
   private String targetPace;
   private Integer maxParticipants;
-  private String genderLimit;
+  private GenderLimit genderLimit;
   private Long courseId; // 코스 변경 시 사용
 
 }
