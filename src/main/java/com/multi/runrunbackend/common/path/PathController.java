@@ -16,4 +16,14 @@ public class PathController {
         return "auth/signup";
     }
 
+    @GetMapping("/myPage")
+    public String myPageView() {
+        return "mypage/mypage";
+    }
+    
+    @GetMapping("/myPage/edit")
+    public String myPageEdit() {
+        return "mypage/mypage-edit";
+    }
+
 }

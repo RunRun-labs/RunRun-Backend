@@ -1,7 +1,15 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: ko-KR
+
 reviews:
   profile: assertive
+
+  auto_review:
+    enabled: true
+    branches:
+      - main
+      - dev
+
   high_level_summary_instructions: |-
     ### 주요 지침 요약
     - API 명세서 기준으로 요청/응답 구조, 필드명, 상태 코드가 정확히 반영되었는지 검토

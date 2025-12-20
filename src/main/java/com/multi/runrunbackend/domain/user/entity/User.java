@@ -3,28 +3,31 @@ package com.multi.runrunbackend.domain.user.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignUpDto;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import lombok.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-
+/**
+ * @author : kyungsoo
+ * @description : 사용자 엔티티
+ * @filename : User
+ * @since : 2025. 12. 17. Wednesday
+ */
 @Entity
-@Table(name = "users")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "login_id"),
+                @UniqueConstraint(columnNames = "email")
+        }
+)
 public class User extends BaseEntity {
 
     @Id
@@ -32,14 +35,14 @@ public class User extends BaseEntity {
     @Column(name = "id")
     private Long id;  // 회원번호
 
-    @Column(name = "login_id", nullable = false, unique = true)
+    @Column(name = "login_id", nullable = false)
     private String loginId;
 
     @Column(nullable = false)
     private String password;  // 비밀번호(암호화)
 
     @Email(message = "이메일 형식이 올바르지 않습니다.")
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false)
     private String email;
 
     @Setter
@@ -75,17 +78,31 @@ public class User extends BaseEntity {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public void updateProfile(Integer heightCm, Integer weightKg) {
+        this.heightCm = heightCm;
+        this.weightKg = weightKg;
+    }
+
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void updateAccount(String email, String name) {
+        this.email = email;
+        this.name = name;
+    }
+
     public static User toEntity(UserSignUpDto dto) {
         return User.builder()
-            .loginId(dto.getLoginId())
-            .password(dto.getUserPassword())
-            .email(dto.getUserEmail())
-            .name(dto.getUserName())
-            .gender(dto.getGender())
-            .birthDate(dto.getBirthDate())
-            .heightCm(dto.getHeightCm())
-            .weightKg(dto.getWeightKg())
-            .role("ROLE_USER")
-            .build();
+                .loginId(dto.getLoginId())
+                .password(dto.getUserPassword())
+                .email(dto.getUserEmail())
+                .name(dto.getUserName())
+                .gender(dto.getGender())
+                .birthDate(dto.getBirthDate())
+                .heightCm(dto.getHeightCm())
+                .weightKg(dto.getWeightKg())
+                .role("ROLE_USER")
+                .build();
     }
 }
