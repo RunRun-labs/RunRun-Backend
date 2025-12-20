@@ -1,9 +1,12 @@
 package com.multi.runrunbackend.domain.user.service;
 
 import com.multi.runrunbackend.common.exception.custom.DuplicateUsernameException;
+import com.multi.runrunbackend.common.exception.custom.FileUploadException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.file.FileDomainType;
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
@@ -12,6 +15,7 @@ import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  *
@@ -29,9 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserService {
+public class UserProfileService {
 
     private final UserRepository userRepository;
+    private final FileStorage fileStorage;
+    private static final long MAX_PROFILE_IMAGE_SIZE = 1L * 1024 * 1024;
 
     @Transactional(readOnly = true)
     public UserResDto getUser(CustomUser principal) {
@@ -60,6 +66,25 @@ public class UserService {
         if (req.getProfileImageUrl() != null) {
             user.updateProfileImage(req.getProfileImageUrl());
         }
+    }
+
+    public String uploadProfileImage(MultipartFile file, CustomUser principal) {
+        if (file == null || file.isEmpty()) {
+            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+
+        if (file.getSize() > MAX_PROFILE_IMAGE_SIZE) {
+            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+
+        User user = getUserByPrincipal(principal);
+
+        return fileStorage.upload(file, FileDomainType.PROFILE, user.getId());
     }
 
     private User getUserByPrincipal(CustomUser principal) {
