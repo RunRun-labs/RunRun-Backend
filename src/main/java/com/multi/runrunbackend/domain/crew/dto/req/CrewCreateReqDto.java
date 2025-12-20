@@ -41,7 +41,6 @@ public class CrewCreateReqDto {
 
     @Schema(description = "러닝 거리", required = true)
     @NotBlank(message = "러닝 거리는 필수입니다.")
-    @Size(max = 50, message = "러닝 거리는 50자 이내로 입력해주세요.")
     private String distance;
 
     @Schema(description = "평균 페이스", required = true)
