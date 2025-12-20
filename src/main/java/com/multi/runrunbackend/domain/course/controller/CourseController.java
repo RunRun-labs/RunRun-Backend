@@ -6,11 +6,13 @@ import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
 import com.multi.runrunbackend.domain.course.constant.CourseSortType;
 import com.multi.runrunbackend.domain.course.dto.req.CourseCreateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseListReqDto;
+import com.multi.runrunbackend.domain.course.dto.req.CourseUpdateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseCreateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseDetailResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseListResDto;
+import com.multi.runrunbackend.domain.course.dto.res.CourseUpdateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.service.CourseService;
 import jakarta.validation.Valid;
@@ -25,6 +27,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -113,4 +116,19 @@ public class CourseController {
             ApiResponse.success("코스 상세 조회 성공", courseService.getCourse(principal, courseId)));
     }
 
+    @PutMapping(
+        value = "/{course_id}",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<ApiResponse<CourseUpdateResDto>> updateCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId,
+        @Valid @RequestPart("dto") CourseUpdateReqDto dto,
+        @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
+        return ResponseEntity.ok(
+            ApiResponse.success("코스 수정 성공",
+                courseService.updateCourse(principal, courseId, dto, imageFile)));
+    }
 }
+
+
