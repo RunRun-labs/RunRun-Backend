@@ -122,4 +122,7 @@ public class Recruit extends BaseEntity {
     this.isDeleted = true;
   }
 
+  public void changeHost(User newHost) {
+    this.user = newHost;
+  }
 }
