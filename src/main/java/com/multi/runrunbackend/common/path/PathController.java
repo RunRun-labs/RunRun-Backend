@@ -20,10 +20,15 @@ public class PathController {
     public String myPageView() {
         return "mypage/mypage";
     }
-    
+
     @GetMapping("/myPage/edit")
     public String myPageEdit() {
         return "mypage/mypage-edit";
+    }
+
+    @GetMapping("/challenge")
+    public String challengeView() {
+        return "challenge/challenge";
     }
 
 }
