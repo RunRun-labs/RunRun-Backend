@@ -41,11 +41,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getAgeRangeText(ageMin, ageMax) {
-    if (!ageMin || !ageMax) {
+    if (ageMin === null || ageMin === undefined || ageMax === null || ageMax === undefined) {
       return "";
     }
+    
+    // 10대 이하 (0-19) 처리
+    if (ageMin === 0 && ageMax <= 19) {
+      return "10대 이하";
+    }
+    
     const ageMinDecade = Math.floor(ageMin / 10) * 10;
     const ageMaxDecade = Math.floor(ageMax / 10) * 10;
+
+    // 70대 이상 (70-100) 처리
+    if (ageMaxDecade >= 70) {
+      if (ageMinDecade === 70) {
+        return "70대 이상";
+      } else {
+        return `${ageMinDecade}대~70대 이상`;
+      }
+    }
 
     if (ageMinDecade === ageMaxDecade) {
       return `${ageMinDecade}대`;
