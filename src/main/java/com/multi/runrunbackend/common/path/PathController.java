@@ -41,4 +41,14 @@ public class PathController {
     return "recruit/recruit-update";
   }
 
+    @GetMapping("/myPage")
+    public String myPageView() {
+        return "mypage/mypage";
+    }
+    
+    @GetMapping("/myPage/edit")
+    public String myPageEdit() {
+        return "mypage/mypage-edit";
+    }
+
 }

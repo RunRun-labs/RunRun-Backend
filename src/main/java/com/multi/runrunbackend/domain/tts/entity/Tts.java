@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 /**
  * @author : kyungsoo
  * @description : 학습 시킨 tts 엔티티 목록 관리를 위해 존재한다(ElvenLabs API에서 받은 id를 넣어줘야한다)
- * @filename : CourseSiren
+ * @filename : Tts
  * @since : 2025. 12. 17. Wednesday
  */
 @Entity

@@ -4,15 +4,16 @@ import com.multi.runrunbackend.common.exception.custom.FileUploadException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.util.FileNameGenerator;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Component
 @Profile("local")
@@ -24,17 +25,17 @@ public class LocalFileStorage implements FileStorage {
 
     @Override
     public String upload(
-        MultipartFile file,
-        FileDomainType domainType,
-        Long refId
+            MultipartFile file,
+            FileDomainType domainType,
+            Long refId
     ) {
         try {
             String fileName = FileNameGenerator.generate(file.getOriginalFilename());
 
             Path dirPath = Paths.get(
-                uploadPath,
-                domainType.getDir(),
-                String.valueOf(refId)
+                    uploadPath,
+                    domainType.getDir(),
+                    String.valueOf(refId)
             );
 
             Files.createDirectories(dirPath);
@@ -43,10 +44,10 @@ public class LocalFileStorage implements FileStorage {
             file.transferTo(savePath.toFile());
 
             return String.format(
-                "/files/%s/%d/%s",
-                domainType.getDir(),
-                refId,
-                fileName
+                    "/files/%s/%d/%s",
+                    domainType.getDir(),
+                    refId,
+                    fileName
             );
 
         } catch (IOException e) {

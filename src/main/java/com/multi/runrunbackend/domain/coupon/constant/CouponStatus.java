@@ -3,7 +3,7 @@ package com.multi.runrunbackend.domain.coupon.constant;
 /**
  * @author : kyungsoo
  * @description : 쿠폰 상태  ACTIVE, EXPIRED, SOLD_OUT, DELETED,DRAFT
- * @filename : CourseSiren
+ * @filename : CouponStatus
  * @since : 2025. 12. 17. Wednesday
  */
 public enum CouponStatus {

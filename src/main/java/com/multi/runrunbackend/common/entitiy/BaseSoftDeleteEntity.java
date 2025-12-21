@@ -8,7 +8,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * @author : kyungsoo
- * @description : created_at, updated_at만 있는 baseEntity
+ * @description : created_at, isDeleted만 있는 baseEntity
  * @filename : BaseSoftDeleteEntity
  * @since : 2025. 12. 17. Wednesday
  */

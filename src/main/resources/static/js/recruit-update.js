@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // URL에서 recruitId 추출
   function extractRecruitIdFromUrl() {
     const path = window.location.pathname;
-    const match = path.match(/\/recruit\/(\d+)\/edit/);
+    const match = path.match(/\/recruit\/(\d+)\/update/);
     if (match && match[1]) {
       return parseInt(match[1], 10);
     }
@@ -512,7 +512,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const ageRange = calculateAgeRange();
-    if (!ageRange.ageMin || !ageRange.ageMax) {
+    if (ageRange.ageMin === null || ageRange.ageMin === undefined || 
+        ageRange.ageMax === null || ageRange.ageMax === undefined) {
       alert("나이대를 선택해주세요.");
       return;
     }

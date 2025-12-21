@@ -127,7 +127,15 @@ document.addEventListener("DOMContentLoaded", () => {
         c.classList.remove("selected");
       });
       chip.classList.add("selected");
-      selectedTags.pace = chip.textContent.trim();
+
+      const rawPace = chip.textContent.trim();
+      const paceMatch = rawPace.match(/\d{1,2}:\d{2}/); // "분:초" 부분만 찾아냄
+
+      if (paceMatch) {
+        selectedTags.pace = paceMatch[0];
+      } else {
+        selectedTags.pace = rawPace;
+      }
     });
   });
 
