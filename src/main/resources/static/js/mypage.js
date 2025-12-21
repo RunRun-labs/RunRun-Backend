@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("mypage.js loaded");
     attachProfileEditHandler();
     attachProfileImageClickHandler();
+    attachChallengeHandler();
     loadMyBodyInfo();
 });
 
@@ -76,6 +77,15 @@ function attachProfileEditHandler() {
 
     profileSettingsBtn.addEventListener("click", () => {
         window.location.href = "/myPage/edit";
+    });
+}
+
+function attachChallengeHandler() {
+    const challengeBtn = document.querySelector('.profile-actions .action-pill:first-child');
+    if (!challengeBtn) return;
+
+    challengeBtn.addEventListener("click", () => {
+        window.location.href = "/challenge";
     });
 }
 
