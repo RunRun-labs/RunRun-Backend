@@ -14,7 +14,7 @@ import java.time.LocalDate;
 /**
  *
  * @author : kimyongwon
- * @description : Please explain the class!!!
+ * @description : 챌린지 수정 요청 데이터를 담을 DTO
  * @filename : ChallengeUpdateReqDto
  * @since : 25. 12. 21. 오후 10:09 일요일
  */
