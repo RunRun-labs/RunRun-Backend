@@ -46,10 +46,7 @@ public class RecruitController {
       @AuthenticationPrincipal UserDetails userDetails,
       @Valid @RequestBody RecruitCreateReqDto request
   ) {
-    String loginId = userDetails.getUsername();
-    User user = userRepository.findByLoginId(loginId)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-
+    User user = getUser(userDetails);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(ApiResponse.success("모집글 생성 성공", recruitService.createRecruit(user, request)));
@@ -70,15 +67,11 @@ public class RecruitController {
       @AuthenticationPrincipal UserDetails userDetails,
       @PathVariable Long recruitId
   ) {
-    User currentUser = null;
-    if (userDetails != null) {
-      currentUser = userRepository.findByLoginId(userDetails.getUsername())
-          .orElse(null);
-    }
+    User user = getUser(userDetails);
 
     return ResponseEntity.ok(
         ApiResponse.success("모집글 상세 조회 성공",
-            recruitService.getRecruitDetail(recruitId, currentUser)));
+            recruitService.getRecruitDetail(recruitId, user)));
   }
 
   @PutMapping("/{recruitId}")
@@ -87,12 +80,8 @@ public class RecruitController {
       @PathVariable Long recruitId,
       @Valid @RequestBody RecruitUpdateReqDto request
   ) {
-    String loginId = userDetails.getUsername();
-    User user = userRepository.findByLoginId(loginId)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-
+    User user = getUser(userDetails);
     recruitService.updateRecruit(recruitId, user, request);
-
     return ResponseEntity.ok(ApiResponse.success("모집글 수정 성공", null));
   }
 
