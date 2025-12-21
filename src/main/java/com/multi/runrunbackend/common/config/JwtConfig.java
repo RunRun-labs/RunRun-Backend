@@ -48,7 +48,15 @@ public class JwtConfig {
                     "/v3/api-docs/**",
                     "/public/**",
                     "/error",
-                    "/img/**"
+                    "/img/**",
+                    "/test/**",
+                    "/api/routes/**",
+                    "/files/**",
+                    "/course",
+                    "/courseCreate",
+                    "/courseDetail/**",
+                    "/courseUpdate/**",
+                    "/test2/**"
                 ).permitAll()
                 .requestMatchers(
                     PathRequest.toStaticResources().atCommonLocations()
