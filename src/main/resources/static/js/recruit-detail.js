@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
       actionButton.textContent = "수정하기";
       actionButton.style.display = "block";
       actionButton.onclick = () => {
-        window.location.href = `/recruit/${recruitId}/edit`;
+        window.location.href = `/recruit/${recruitId}/update`;
       };
       return;
     }
