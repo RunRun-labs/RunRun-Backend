@@ -19,6 +19,8 @@ public interface RecruitUserRepository extends JpaRepository<RecruitUser, Long> 
   Optional<RecruitUser> findByRecruitAndUser(Recruit recruit, User user);
 
   boolean existsByRecruitAndUser(Recruit recruit, User user);
+
+  Optional<RecruitUser> findFirstByRecruitAndUserNotOrderByCreatedAtAsc(Recruit recruit, User user);
 }
 
 
