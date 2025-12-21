@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,7 +67,7 @@ public class CourseController {
         @RequestPart(value = "imageFile", required = false) MultipartFile imageFile
     ) {
 
-        CourseCreateResDto res = courseService.create(req, imageFile, principal);
+        CourseCreateResDto res = courseService.createCourse(req, imageFile, principal);
 
         return ResponseEntity.ok(ApiResponse.success(res));
     }
@@ -129,6 +130,20 @@ public class CourseController {
             ApiResponse.success("코스 수정 성공",
                 courseService.updateCourse(principal, courseId, dto, imageFile)));
     }
+
+    @DeleteMapping(
+        value = "/{course_id}"
+    )
+    public ResponseEntity<ApiResponse> deleteCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId) {
+
+        courseService.deleteCourse(principal, courseId);
+
+        return ResponseEntity.ok(
+            ApiResponse.success("코스 삭제 성공"));
+    }
+
 }
 
 
