@@ -24,6 +24,7 @@ import com.multi.runrunbackend.domain.course.dto.res.TmapPedestrianResDto;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.course.repository.CourseRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseRepositoryCustom;
+import com.multi.runrunbackend.domain.course.util.GeometryParser;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.awt.BasicStroke;
@@ -70,7 +71,7 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final FileStorage fileStorage;
     private final CourseRepositoryCustom courseRepositoryCustom;
-
+    private final GeometryParser geometryParser;
 
     @Value("${tmap.app-key}")
     private String tmapAppKey;
@@ -83,13 +84,12 @@ public class CourseService {
     ) {
         String loginId = principal.getLoginId();
 
-        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
-            ErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findByLoginId(loginId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
-        LineString cleanedPath = simplifyLineString(req.getPath());
-        if (cleanedPath != null) {
-            req.setPath(cleanedPath);
-        }
+        LineString parsedPath = geometryParser.parseLineString(req.getPath());
+
+        LineString cleanedPath = simplifyLineString(parsedPath);
 
         String imageUrl = resolveImageUrl(
             imageFile,
@@ -97,39 +97,52 @@ public class CourseService {
             user.getId()
         );
 
-        String thumbnailUrl = generateThumbnailFromPath(req.getPath(), user.getId());
+        String thumbnailUrl = generateThumbnailFromPath(cleanedPath, user.getId());
         if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
             thumbnailUrl = imageUrl != null ? imageUrl : "";
         }
 
-        Course course = Course.create(user, req, imageUrl, thumbnailUrl,
-            req.getCourseRegisterType());
+        Course course = Course.create(
+            user,
+            req,
+            cleanedPath,
+            imageUrl,
+            thumbnailUrl,
+            req.getCourseRegisterType()
+        );
 
         Course saved = courseRepository.save(course);
-        return CourseCreateResDto.builder().id(saved.getId()).build();
+        return CourseCreateResDto.builder()
+            .id(saved.getId())
+            .build();
     }
 
     @Transactional
-    public CourseUpdateResDto updateCourse(CustomUser principal, Long courseId,
-        CourseUpdateReqDto req, MultipartFile imageFile) {
+    public CourseUpdateResDto updateCourse(
+        CustomUser principal,
+        Long courseId,
+        CourseUpdateReqDto req,
+        MultipartFile imageFile
+    ) {
         String loginId = principal.getLoginId();
 
-        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
-            ErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findByLoginId(loginId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new NotFoundException(
-            ErrorCode.COURSE_NOT_FOUND));
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
         if (course.getStatus() != CourseStatus.ACTIVE) {
             throw new ForbiddenException(ErrorCode.COURSE_NOT_ACTIVE);
         }
+
         if (!course.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException(ErrorCode.COURSE_FORBIDDEN);
         }
+        
+        LineString parsedPath = geometryParser.parseLineString(req.getPath());
 
-        LineString cleanedPath = simplifyLineString(req.getPath());
-        if (cleanedPath != null) {
-            req.setPath(cleanedPath);
-        }
+        LineString cleanedPath = simplifyLineString(parsedPath);
 
         String imageUrl = resolveImageUrl(
             imageFile,
@@ -137,15 +150,21 @@ public class CourseService {
             user.getId()
         );
 
-        String thumbnailUrl = generateThumbnailFromPath(req.getPath(), user.getId());
+        String thumbnailUrl = generateThumbnailFromPath(cleanedPath, user.getId());
         if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
-            thumbnailUrl = imageUrl != null ? imageUrl : "";
+            thumbnailUrl = imageUrl != null ? imageUrl : course.getThumbnailUrl();
         }
 
-        course.update(user, req, imageUrl, thumbnailUrl, req.getCourseRegisterType());
+        course.update(
+            user,
+            req,
+            cleanedPath,
+            imageUrl,
+            thumbnailUrl,
+            req.getCourseRegisterType()
+        );
 
         return CourseUpdateResDto.from(course);
-
     }
 
     @Transactional

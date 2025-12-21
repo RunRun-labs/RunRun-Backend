@@ -101,13 +101,19 @@ public class Course extends BaseTimeEntity {
         }
     }
 
-    public static Course create(User user, CourseCreateReqDto req, String imageUrl,
-        String thumbnailUrl, CourseRegisterType type) {
+    public static Course create(
+        User user,
+        CourseCreateReqDto req,
+        LineString path,
+        String imageUrl,
+        String thumbnailUrl,
+        CourseRegisterType type
+    ) {
         Course c = new Course();
         c.user = user;
         c.title = req.getTitle();
         c.description = req.getDescription();
-        c.path = req.getPath();
+        c.path = path;
         c.distanceM = req.getDistanceM();
         c.startLat = req.getStartLat();
         c.startLng = req.getStartLng();
@@ -119,12 +125,18 @@ public class Course extends BaseTimeEntity {
         return c;
     }
 
-    public void update(User user, CourseUpdateReqDto req, String imageUrl,
-        String thumbnailUrl, CourseRegisterType type) {
+    public void update(
+        User user,
+        CourseUpdateReqDto req,
+        LineString path,
+        String imageUrl,
+        String thumbnailUrl,
+        CourseRegisterType type
+    ) {
         this.user = user;
         this.title = req.getTitle();
         this.description = req.getDescription();
-        this.path = req.getPath();
+        this.path = path;
         this.distanceM = req.getDistanceM();
         this.startLat = req.getStartLat();
         this.startLng = req.getStartLng();
@@ -132,7 +144,6 @@ public class Course extends BaseTimeEntity {
         this.imageUrl = imageUrl;
         this.registerType = type;
         this.address = req.getAddress();
-
     }
 
     public void block() {

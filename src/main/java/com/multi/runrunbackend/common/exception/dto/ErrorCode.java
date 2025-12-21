@@ -82,6 +82,11 @@ public enum ErrorCode {
         "ROUTE_005",
         "유효한 경로 구간을 생성할 수 없습니다."
     ),
+    INVALID_ROUTE_PATH(
+        HttpStatus.BAD_REQUEST,
+        "COURSE_400_001",
+        "코스 경로 형식이 올바르지 않습니다"
+    ),
 
 
     /*==== 경로 ====*/

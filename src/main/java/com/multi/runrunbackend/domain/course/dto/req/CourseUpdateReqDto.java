@@ -1,8 +1,6 @@
 package com.multi.runrunbackend.domain.course.dto.req;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
-import com.multi.runrunbackend.domain.course.util.LineStringDeserializer;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
@@ -14,7 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.locationtech.jts.geom.LineString;
 
 /**
  * @author : kyungsoo
@@ -36,8 +33,7 @@ public class CourseUpdateReqDto {
     private String description;
 
     @NotNull(message = "코스 경로는 필수입니다")
-    @JsonDeserialize(using = LineStringDeserializer.class)
-    private LineString path;
+    private String path;
 
     @NotNull(message = "코스 거리는 필수입니다")
     @Min(value = 100, message = "코스 거리는 최소 100m 이상이어야 합니다")
