@@ -88,8 +88,18 @@ public class Recruit extends BaseEntity {
   @Column(name = "meeting_at", nullable = false)
   private LocalDateTime meetingAt;
 
-  public int getCurrentParticipants() {
-    return 1;
+  @Column(name = "current_participants", nullable = false)
+  @Builder.Default
+  private Integer currentParticipants = 1;
+
+  public void increaseParticipants() {
+    this.currentParticipants++;
+  }
+
+  public void decreaseParticipants() {
+    if (this.currentParticipants > 0) {
+      this.currentParticipants--;
+    }
   }
 
   public void update(RecruitUpdateReqDto req) {
