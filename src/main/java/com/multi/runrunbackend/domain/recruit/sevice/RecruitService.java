@@ -103,12 +103,7 @@ public class RecruitService {
 
 
   public RecruitDetailResDto getRecruitDetail(Long recruitId, User user) {
-    Recruit recruit = recruitRepository.findById(recruitId)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
-
-    if (recruit.getIsDeleted()) {
-      throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
-    }
+    Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     Long userId = user.getId();
 
@@ -122,12 +117,7 @@ public class RecruitService {
 
   @Transactional
   public void updateRecruit(Long recruitId, User user, RecruitUpdateReqDto req) {
-    Recruit recruit = recruitRepository.findById(recruitId)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
-
-    if (recruit.getIsDeleted()) {
-      throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
-    }
+    Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     if (!recruit.getUser().getId().equals(user.getId())) {
       throw new ForbiddenException(ErrorCode.RECRUIT_UPDATE_DENIED);
@@ -142,8 +132,7 @@ public class RecruitService {
 
   @Transactional
   public void deleteRecruit(Long recruitId, User user) {
-    Recruit recruit = recruitRepository.findById(recruitId)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+    Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     if (!recruit.getUser().getId().equals(user.getId())) {
       throw new ForbiddenException(ErrorCode.RECRUIT_DELETE_DENIED);
@@ -154,13 +143,8 @@ public class RecruitService {
 
   @Transactional
   public void joinRecruit(Long recruitId, User user) {
-    Recruit recruit = recruitRepository.findById(recruitId)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+    Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
-    //오프라인 매칭 확정 시 삭제 처리 되었을테니까
-    if (recruit.getIsDeleted()) {
-      throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
-    }
     if (recruitUserRepository.existsByRecruitAndUser(recruit, user)) {
       throw new ForbiddenException(ErrorCode.ALREADY_PARTICIPATED);
     }
@@ -176,8 +160,7 @@ public class RecruitService {
 
   @Transactional
   public void leaveRecruit(Long recruitId, User user) {
-    Recruit recruit = recruitRepository.findById(recruitId)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+    Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
         .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_PARTICIPATED));
@@ -197,4 +180,15 @@ public class RecruitService {
     recruit.decreaseParticipants();
 
   }
+
+  private Recruit getActiveRecruitOrThrow(Long recruitId) {
+    Recruit recruit = recruitRepository.findById(recruitId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+
+    if (recruit.getIsDeleted()) {
+      throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
+    }
+    return recruit;
+  }
+
 }
