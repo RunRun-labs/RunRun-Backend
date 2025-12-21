@@ -1,5 +1,7 @@
 package com.multi.runrunbackend.domain.course.repository;
 
+import com.multi.runrunbackend.common.exception.custom.InvalidRequestException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
 import com.multi.runrunbackend.domain.course.constant.CourseSortType;
 import com.multi.runrunbackend.domain.course.dto.req.CourseListReqDto;
@@ -84,7 +86,9 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         String centerExpr = null;
         if (needGeo) {
             if (req.getLat() == null || req.getLng() == null) {
-                throw new IllegalArgumentException("nearby=true 또는 DISTANCE 정렬이면 lat/lng는 필수");
+                throw new InvalidRequestException(
+                    ErrorCode.COURSE_SEARCH_LAT_LNG_REQUIRED
+                );
             }
             params.put("lat", req.getLat());
             params.put("lng", req.getLng());
@@ -373,7 +377,9 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
             case "3_5" -> new Integer[]{3000, 5000};
             case "5_10" -> new Integer[]{5000, 10000};
             case "10_PLUS" -> new Integer[]{10000, null};
-            default -> null;
+            default -> throw new InvalidRequestException(
+                ErrorCode.COURSE_SEARCH_INVALID_DISTANCE_BUCKET
+            );
         };
     }
 }
