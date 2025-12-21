@@ -1,7 +1,9 @@
 package com.multi.runrunbackend.common.path;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class PathController {
@@ -29,6 +31,12 @@ public class PathController {
     @GetMapping("/challenge")
     public String challengeView() {
         return "challenge/challenge";
+    }
+
+    @GetMapping("/challenge/{id}")
+    public String challengeDetailView(@PathVariable Long id, Model model) {
+        model.addAttribute("challengeId", id);
+        return "challenge/challenge-detail";
     }
 
 }
