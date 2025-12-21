@@ -1,5 +1,7 @@
 package com.multi.runrunbackend.domain.recruit.dto.req;
 
+import com.multi.runrunbackend.common.exception.custom.ValidationException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.recruit.constant.GenderLimit;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
@@ -72,14 +74,14 @@ public class RecruitCreateReqDto {
   private Long courseId;
 
   public void validate() {
-//    if (this.ageMin > this.ageMax) {
-//      throw new IllegalArgumentException("최소 나이는 최대 나이보다 클 수 없습니다.");
-//    }
-//
-//    LocalDateTime oneWeekLater = LocalDateTime.now().plusWeeks(2);
-//    if (this.meetingAt.isAfter(oneWeekLater)) {
-//      throw new IllegalArgumentException("모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다.");
-//    }
+    if (this.ageMin > this.ageMax) {
+      throw new ValidationException(ErrorCode.INVALID_AGE_RANGE);
+    }
+
+    LocalDateTime oneWeekLater = LocalDateTime.now().plusWeeks(2);
+    if (this.meetingAt.isAfter(oneWeekLater)) {
+      throw new ValidationException(ErrorCode.INVALID_MEETING_TIME);
+    }
   }
 
   public Recruit toEntity(User user, Course course) {
