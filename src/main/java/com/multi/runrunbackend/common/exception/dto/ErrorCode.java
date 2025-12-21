@@ -40,7 +40,8 @@ public enum ErrorCode {
   INVALID_RECRUIT(HttpStatus.BAD_REQUEST, "R002", "삭제된 모집글입니다"),
   RECRUIT_UPDATE_DENIED(HttpStatus.FORBIDDEN, "R003", "모집글 수정 권한이 없습니다."),
   RECRUIT_DELETE_DENIED(HttpStatus.FORBIDDEN, "R004", "모집글 삭제 권한이 없습니다."),
-  RECRUIT_HAS_PARTICIPANTS(HttpStatus.BAD_REQUEST, "R005", "참여자가 있어 모집글을 수정할 수 없습니다.");
+  RECRUIT_HAS_PARTICIPANTS(HttpStatus.BAD_REQUEST, "R005", "참여자가 있어 모집글을 수정할 수 없습니다."),
+  ALREADY_PARTICIPATED(HttpStatus.BAD_REQUEST, "R006", "이미 참여 중입니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
