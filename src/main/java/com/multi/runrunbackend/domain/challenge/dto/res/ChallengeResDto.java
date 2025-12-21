@@ -33,6 +33,7 @@ public class ChallengeResDto {
 
 
     private UserChallengeStatus myStatus;
+    private Double progressValue;
 
     public static ChallengeResDto from(Challenge challenge) {
         return ChallengeResDto.builder()
