@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.course.dto.req;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
 import com.multi.runrunbackend.domain.course.util.LineStringDeserializer;
 import jakarta.validation.constraints.DecimalMax;
@@ -14,7 +15,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.LineString;
-import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * @author : kyungsoo
