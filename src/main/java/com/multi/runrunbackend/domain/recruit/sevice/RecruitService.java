@@ -100,7 +100,7 @@ public class RecruitService {
   }
 
 
-  public RecruitDetailResDto getRecruitDetail(Long recruitId, User currentUser) {
+  public RecruitDetailResDto getRecruitDetail(Long recruitId, User user) {
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
@@ -108,14 +108,14 @@ public class RecruitService {
       throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
     }
 
-    Long currentUserId = currentUser != null ? currentUser.getId() : null;
+    Long userId = user.getId();
 
     boolean isParticipant = false;
-    if (currentUser != null) {
-      isParticipant = recruitUserRepository.existsByRecruitAndUser(recruit, currentUser);
+    if (user != null) {
+      isParticipant = recruitUserRepository.existsByRecruitAndUser(recruit, user);
     }
 
-    return RecruitDetailResDto.from(recruit, currentUserId, isParticipant);
+    return RecruitDetailResDto.from(recruit, userId, isParticipant);
   }
 
   @Transactional
@@ -126,7 +126,7 @@ public class RecruitService {
     if (recruit.getIsDeleted()) {
       throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
     }
-    
+
     if (!recruit.getUser().getId().equals(user.getId())) {
       throw new ForbiddenException(ErrorCode.RECRUIT_UPDATE_DENIED);
     }
