@@ -9,6 +9,7 @@ import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.challenge.constant.UserChallengeStatus;
 import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeCreateReqDto;
+import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeUpdateReqDto;
 import com.multi.runrunbackend.domain.challenge.dto.res.ChallengeResDto;
 import com.multi.runrunbackend.domain.challenge.entity.Challenge;
 import com.multi.runrunbackend.domain.challenge.entity.UserChallenge;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
  *
  * @author : kimyongwon
  * @description : 챌린지 도메인의 핵심 비즈니스 로직을 담당하는 서비스 클래스.
- * 챌린지 생성, 목록 조회, 사용자별 참여 상태 매핑을 처리하며,
+ * 챌린지 생성,수정, 삭제, 목록 조회, 사용자별 참여 상태 매핑을 처리하며,
  * 사용자 인증 정보(CustomUser)를 기반으로
  * 챌린지와 사용자(UserChallenge) 간의 관계를 조합한다.
  * 또한 챌린지 이미지 업로드 및 파일 검증 로직을 포함하여
@@ -53,12 +54,54 @@ public class ChallengeService {
     public ChallengeResDto createChallenge(ChallengeCreateReqDto req, MultipartFile imageFile, CustomUser principal) {
         User user = getUserByPrincipal(principal);
         // TODO: 필요 시 user.getRole() 등을 통해 관리자 권한 추가 검증
+        // validateAdminRole(user); // 실제 권한 체크 필요 시 주석 해제
 
         Challenge savedChallenge = saveChallenge(req);
 
         uploadImageIfPresent(imageFile, savedChallenge);
 
         return ChallengeResDto.from(savedChallenge);
+    }
+
+    // 챌린지 수정 (ADMIN)
+    public void updateChallenge(Long challengeId, ChallengeUpdateReqDto req, MultipartFile imageFile, CustomUser principal) {
+        User user = getUserByPrincipal(principal);
+        // validateAdminRole(user);
+
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
+
+        // 정보 업데이트
+        challenge.update(
+                req.getTitle(),
+                req.getChallengeType(),
+                req.getTargetValue(),
+                req.getDescription(),
+                req.getStartDate(),
+                req.getEndDate()
+        );
+
+        // 이미지 파일이 새로 들어온 경우 교체
+        if (imageFile != null && !imageFile.isEmpty()) {
+            validateFile(imageFile);
+            // 기존 이미지가 있다면 스토리지에서 삭제
+            if (challenge.getImageUrl() != null) fileStorage.delete(challenge.getImageUrl());
+
+            String imageUrl = fileStorage.upload(imageFile, FileDomainType.CHALLENGE_IMAGE, challenge.getId());
+            challenge.updateImageUrl(imageUrl);
+        }
+    }
+
+    // 챌린지 삭제 (ADMIN)
+    public void deleteChallenge(Long challengeId, CustomUser principal) {
+        User user = getUserByPrincipal(principal);
+        // validateAdminRole(user);
+
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
+
+
+        challengeRepository.delete(challenge);
     }
 
     // 챌린지 목록 조회 (로그인 시 상태 포함)
