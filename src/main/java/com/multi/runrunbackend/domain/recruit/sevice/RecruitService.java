@@ -10,6 +10,7 @@ import com.multi.runrunbackend.domain.recruit.dto.res.RecruitCreateResDto;
 import com.multi.runrunbackend.domain.recruit.dto.res.RecruitDetailResDto;
 import com.multi.runrunbackend.domain.recruit.dto.res.RecruitListResDto;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
+import com.multi.runrunbackend.domain.recruit.entity.RecruitUser;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -148,5 +149,27 @@ public class RecruitService {
     }
 
     recruit.delete();
+  }
+
+  @Transactional
+  public void joinRecruit(Long recruitId, User user) {
+    Recruit recruit = recruitRepository.findById(recruitId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+
+    //오프라인 매칭 확정 시 삭제 처리 되었을테니까
+    if (recruit.getIsDeleted()) {
+      throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
+    }
+    if (recruitUserRepository.existsByRecruitAndUser(recruit, user)) {
+      throw new ForbiddenException(ErrorCode.ALREADY_PARTICIPATED);
+    }
+
+    RecruitUser recruitUser = RecruitUser.builder()
+        .recruit(recruit)
+        .user(user)
+        .build();
+    recruitUserRepository.save(recruitUser);
+
+    recruit.increaseParticipants();
   }
 }
