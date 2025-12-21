@@ -61,6 +61,16 @@ public class Challenge extends BaseEntity {
         this.endDate = endDate;
     }
 
+    public void update(String title, ChallengeType challengeType, Double targetValue,
+                       String description, LocalDate startDate, LocalDate endDate) {
+        this.title = title;
+        this.challengeType = challengeType;
+        this.targetValue = targetValue;
+        this.description = description;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
     public void updateImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
