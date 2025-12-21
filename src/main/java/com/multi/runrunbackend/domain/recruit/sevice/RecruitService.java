@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.recruit.sevice;
 
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
+import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
@@ -146,7 +147,11 @@ public class RecruitService {
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     if (recruitUserRepository.existsByRecruitAndUser(recruit, user)) {
-      throw new ForbiddenException(ErrorCode.ALREADY_PARTICIPATED);
+      throw new ValidationException(ErrorCode.ALREADY_PARTICIPATED);
+    }
+
+    if (recruit.getCurrentParticipants() >= recruit.getMaxParticipants()) {
+      throw new ValidationException(ErrorCode.RECRUIT_FULL);
     }
 
     RecruitUser recruitUser = RecruitUser.builder()
