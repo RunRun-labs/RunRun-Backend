@@ -104,11 +104,7 @@ public class Recruit extends BaseEntity {
     this.maxParticipants = req.getMaxParticipants();
 
     if (req.getGenderLimit() != null) {
-      try {
-        this.genderLimit = GenderLimit.valueOf(req.getGenderLimit().toUpperCase());
-      } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException("잘못된 성별 제한 값입니다.");
-      }
+      this.genderLimit = req.getGenderLimit();
     }
   }
 
