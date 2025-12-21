@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.challenge.controller;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeCreateReqDto;
+import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeUpdateReqDto;
 import com.multi.runrunbackend.domain.challenge.dto.res.ChallengeResDto;
 import com.multi.runrunbackend.domain.challenge.service.ChallengeService;
 import jakarta.validation.Valid;
@@ -37,6 +38,27 @@ public class ChallengeController {
     ) {
         ChallengeResDto res = challengeService.createChallenge(req, file, principal);
         return ResponseEntity.ok(ApiResponse.success("챌린지 생성 성공", res));
+    }
+
+    
+    @PutMapping(value = "/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<ApiResponse<Void>> updateChallenge(
+            @PathVariable Long id,
+            @RequestPart("request") @Valid ChallengeUpdateReqDto req,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        challengeService.updateChallenge(id, req, file, principal);
+        return ResponseEntity.ok(ApiResponse.success("챌린지 수정 성공", null));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteChallenge(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        challengeService.deleteChallenge(id, principal);
+        return ResponseEntity.ok(ApiResponse.success("챌린지 삭제 성공", null));
     }
 
     @GetMapping
