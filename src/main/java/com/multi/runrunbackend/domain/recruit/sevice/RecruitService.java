@@ -15,6 +15,7 @@ import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -171,5 +172,29 @@ public class RecruitService {
     recruitUserRepository.save(recruitUser);
 
     recruit.increaseParticipants();
+  }
+
+  @Transactional
+  public void leaveRecruit(Long recruitId, User user) {
+    Recruit recruit = recruitRepository.findById(recruitId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+
+    RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_PARTICIPATED));
+
+    if (recruit.getUser().getId().equals(user.getId())) {
+      Optional<RecruitUser> nextLeader = recruitUserRepository
+          .findFirstByRecruitAndUserNotOrderByCreatedAtAsc(recruit, user);
+
+      if (nextLeader.isPresent()) {
+        recruit.changeHost(nextLeader.get().getUser());
+      } else {
+        recruit.delete();
+      }
+    }
+
+    recruitUserRepository.delete(recruitUser);
+    recruit.decreaseParticipants();
+
   }
 }
