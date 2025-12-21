@@ -16,7 +16,12 @@ import org.springframework.context.annotation.Configuration;
 public class JacksonJtsConfig {
 
     @Bean
-    public Module jtsModule() {
+    public JtsModule jtsModule() {
         return new JtsModule();
+    }
+
+    @Bean
+    public Module jtsModuleAsModule(JtsModule jtsModule) {
+        return jtsModule;
     }
 }
