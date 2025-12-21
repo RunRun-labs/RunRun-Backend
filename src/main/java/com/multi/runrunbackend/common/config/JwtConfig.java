@@ -50,7 +50,8 @@ public class JwtConfig {
                                 "/public/**",
                                 "/error",
                                 "/img/**",
-                                "/myPage/**"
+                                "/myPage/**",
+                                "/challenge/**"
                         ).permitAll()
                         .requestMatchers(
                                 PathRequest.toStaticResources().atCommonLocations()
