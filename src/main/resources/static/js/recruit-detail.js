@@ -167,10 +167,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!isAuthor && isParticipant) {
       actionButton.textContent = "참가 취소";
       actionButton.style.display = "block";
-      actionButton.onclick = async () => {
-        if (confirm("정말 참여를 취소하시겠습니까?")) {
-          alert("참가 취소 기능은 아직 구현되지 않았습니다.");
-        }
+      actionButton.onclick = () => {
+        leaveRecruit();
       };
       return;
     }
@@ -216,6 +214,51 @@ document.addEventListener("DOMContentLoaded", () => {
       actionDisabledText.textContent = "수정 불가";
       actionDisabledText.style.display = "block";
     }
+  }
+
+  // 참여 취소 함수
+  async function leaveRecruit() {
+    try {
+      const token = localStorage.getItem("accessToken") || getCookie(
+          "accessToken");
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        window.location.href = "/login";
+        return;
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      };
+
+      const response = await fetch(`/api/recruit/${recruitId}/join`, {
+        method: "DELETE",
+        headers: headers,
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert("참여가 취소되었습니다.");
+        location.reload();
+      } else {
+        alert(result.message || "참여 취소 처리 중 오류가 발생했습니다.");
+      }
+    } catch (error) {
+      console.error("참여 취소 처리 중 오류:", error);
+      alert("참여 취소 처리 중 오류가 발생했습니다.");
+    }
+  }
+
+  // Cookie에서 토큰 가져오기
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop().split(";").shift();
+    }
+    return null;
   }
 
   async function loadRecruitDetail() {
