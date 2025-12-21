@@ -122,6 +122,11 @@ public class RecruitService {
   public void updateRecruit(Long recruitId, User user, RecruitUpdateReqDto req) {
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+
+    if (recruit.getIsDeleted()) {
+      throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
+    }
+    
     if (!recruit.getUser().getId().equals(user.getId())) {
       throw new ForbiddenException(ErrorCode.RECRUIT_UPDATE_DENIED);
     }
