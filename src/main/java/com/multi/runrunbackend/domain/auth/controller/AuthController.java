@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.auth.controller;
 import com.multi.runrunbackend.common.jwt.dto.TokenDto;
 import com.multi.runrunbackend.common.jwt.service.TokenService;
 import com.multi.runrunbackend.common.response.ApiResponse;
+import com.multi.runrunbackend.domain.auth.dto.AuthSignInResDto;
 import com.multi.runrunbackend.domain.auth.service.AuthService;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignInDto;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignUpDto;
@@ -40,10 +41,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(@RequestBody UserSignInDto userSignInDto) {
 
-        TokenDto token = authService.login(userSignInDto);
+        AuthSignInResDto res = authService.login(userSignInDto);
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(ApiResponse.success("로그인 성공", token));
+            .body(ApiResponse.success("로그인 성공", res));
 
     }
 
