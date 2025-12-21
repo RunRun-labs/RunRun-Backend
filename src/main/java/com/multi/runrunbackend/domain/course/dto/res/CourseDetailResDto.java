@@ -3,6 +3,8 @@ package com.multi.runrunbackend.domain.course.dto.res;
 import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.course.util.GeoJsonConverter;
+import com.multi.runrunbackend.domain.user.entity.User;
+import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,12 +36,16 @@ public class CourseDetailResDto {
     private String address;
     private long likeCount;
     private long favoriteCount;
-    private Long userId;
+    private String userName;
+    private LocalDateTime createdAt;
+    private Boolean isOwner;
 
-    public static CourseDetailResDto fromEntity(Course course) {
+    public static CourseDetailResDto fromEntity(Course course, User user) {
         if (course == null) {
             return null;
         }
+        boolean isOwner = user.getId() != null &&
+            course.getUser().getId().equals(user.getId());
 
         return CourseDetailResDto.builder()
             .title(course.getTitle())
@@ -53,7 +59,9 @@ public class CourseDetailResDto {
             .address(course.getAddress())
             .likeCount(course.getLikeCount())
             .favoriteCount(course.getFavoriteCount())
-            .userId(course.getUser().getId())
+            .isOwner(isOwner)
+            .userName(user.getName())
+            .createdAt(course.getCreatedAt())
             .build();
     }
 }
