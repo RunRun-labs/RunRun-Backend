@@ -1,15 +1,16 @@
 package com.multi.runrunbackend.domain.course.util;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.PrecisionModel;
-import tools.jackson.core.JsonParser;
-import tools.jackson.databind.DeserializationContext;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.deser.std.StdDeserializer;
 
 /**
  * Custom deserializer that converts a GeoJSON-like object into a JTS LineString.
@@ -28,7 +29,11 @@ public class LineStringDeserializer extends StdDeserializer<LineString> {
     public LineString deserialize(JsonParser parser, DeserializationContext ctxt) {
 
         JsonNode node;
-        node = ctxt.readTree(parser);
+        try {
+            node = ctxt.readTree(parser);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         if (node == null || !node.has("coordinates")) {
             return null;
