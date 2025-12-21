@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.recruit.dto.req;
 
+import com.multi.runrunbackend.domain.recruit.constant.GenderLimit;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
