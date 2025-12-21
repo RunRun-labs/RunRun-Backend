@@ -96,6 +96,16 @@ public class RecruitController {
     return ResponseEntity.ok(ApiResponse.success("모집글 삭제 성공", null));
   }
 
+  @PostMapping("/{recruitId}/join")
+  public ResponseEntity<ApiResponse> joinRecruit(
+      @AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable Long recruitId
+  ) {
+    User user = getUser(userDetails);
+    recruitService.joinRecruit(recruitId, user);
+    return ResponseEntity.ok(ApiResponse.success("모집글 참가 성공", null));
+  }
+
   private User getUser(UserDetails userDetails) {
     return userRepository.findByLoginId(userDetails.getUsername())
         .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
