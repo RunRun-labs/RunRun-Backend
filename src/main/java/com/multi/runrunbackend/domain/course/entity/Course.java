@@ -1,6 +1,6 @@
 package com.multi.runrunbackend.domain.course.entity;
 
-import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.common.entitiy.BaseTimeEntity;
 import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
 import com.multi.runrunbackend.domain.course.constant.CourseStatus;
 import com.multi.runrunbackend.domain.course.dto.req.CourseCreateReqDto;
@@ -36,7 +36,7 @@ import org.locationtech.jts.geom.LineString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @SQLRestriction("status = 'ACTIVE'")
-public class Course extends BaseEntity {
+public class Course extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
