@@ -30,10 +30,122 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_102", "유효하지 않은 리프레시 토큰입니다."),
     FILE_UPLOAD_FAILED(
 
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "F001",
+            "파일 업로드에 실패했습니다."
+    ),
+    FILE_EMPTY(
+            HttpStatus.BAD_REQUEST,
+            "F002",
+            "업로드할 파일이 비어 있습니다."
+    ),
+    FILE_NOT_IMAGE(
+            HttpStatus.BAD_REQUEST,
+            "F003",
+            "이미지 파일만 업로드할 수 있습니다."
+    ),
+    FILE_SIZE_EXCEEDED(
+            HttpStatus.BAD_REQUEST,
+            "F004",
+            "파일 크기가 제한을 초과했습니다."
+    ),
+    /*==== 코스 ====*/
+    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS_001", "코스를 찾을 수 없습니다"),
+
+    COURSE_FORBIDDEN(
+        HttpStatus.FORBIDDEN,
+        "CRS_002",
+        "해당 코스에 대한 권한이 없습니다."
+    ),
+
+    COURSE_IMAGE_TOO_LARGE(
+        HttpStatus.BAD_REQUEST,
+        "CRS_003",
+        "이미지 파일 용량이 너무 큽니다."
+    ),
+    COURSE_NOT_ACTIVE(HttpStatus.FORBIDDEN, "CRS_004", "코스가 ACTIVE 상태가 아닙니다"),
+
+    /*==== TMAP====*/
+
+    ROUTE_DISTANCE_EXCEEDED(
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_001",
+        "요청한 경로 거리가 허용 범위를 초과했습니다."
+    ),
+
+    ROUTE_END_POINT_REQUIRED(
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_002",
+        "도착 좌표(endLat, endLng)는 필수입니다."
+    ),
+
+    ROUTE_DISTANCE_INVALID(
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_003",
+        "요청 거리 값이 올바르지 않습니다."
+    ),
+
+    ROUTE_INVALID_POINTS(
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_004",
+        "경로 포인트는 최소 2개 이상 필요합니다."
+    ),
+
+    ROUTE_NO_VALID_SEGMENT(
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_005",
+        "유효한 경로 구간을 생성할 수 없습니다."
+    ),
+    INVALID_ROUTE_PATH(
+        HttpStatus.BAD_REQUEST,
+        "COURSE_400_001",
+        "코스 경로 형식이 올바르지 않습니다"
+    ),
+
+
+    /*==== 경로 ====*/
+    TMAP_API_FAILED(
+        HttpStatus.BAD_GATEWAY,
+        "EXT_001",
+        "TMAP 경로 API 호출에 실패했습니다."
+    ),
+
+    TMAP_EMPTY_RESPONSE(
+        HttpStatus.BAD_GATEWAY,
+        "EXT_002",
+        "TMAP API 응답이 비어있습니다."
+    ),
+
+    TMAP_NO_ROUTE(
+        HttpStatus.BAD_GATEWAY,
+        "EXT_003",
+        "TMAP에서 유효한 경로를 반환하지 않았습니다."
+    ),
+    /*=====코스 서치 ====*/
+    COURSE_SEARCH_LAT_LNG_REQUIRED(
+        HttpStatus.BAD_REQUEST,
+        "CRS_S_001",
+        "nearby 검색 또는 거리순 정렬에는 위도(lat)와 경도(lng)가 필수입니다."
+    ),
+
+    COURSE_SEARCH_INVALID_DISTANCE_BUCKET(
+        HttpStatus.BAD_REQUEST,
+        "CRS_S_002",
+        "거리 필터 값이 올바르지 않습니다."
+    ),
+
+    COURSE_SEARCH_INVALID_ENUM(
+        HttpStatus.BAD_REQUEST,
+        "CRS_S_003",
+        "검색 조건 값이 올바르지 않습니다."
+    ),
+
+    COURSE_SEARCH_MAPPING_FAILED(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        "F001",
-        "파일 업로드에 실패했습니다."
+        "CRS_S_004",
+        "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
     );
+
 
     private final HttpStatus httpStatus;
     private final String code;

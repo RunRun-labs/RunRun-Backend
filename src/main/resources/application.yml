@@ -41,3 +41,6 @@ server:
   port: 8080
 file:
   upload-path: ${FILE_UPLOAD_PATH}
+tmap:
+  app-key: ${TMAP_APP_KEY}
+  base-url: ${TMAP_BASE_URL}

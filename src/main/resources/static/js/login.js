@@ -60,16 +60,31 @@ document.addEventListener("DOMContentLoaded", () => {
           throw new Error(result?.message || "로그인에 실패했습니다.");
         }
 
-        const token = result.data;
-        if (token?.accessToken) {
-          localStorage.setItem("accessToken", token.accessToken);
+        // 새로운 응답 구조: { token: TokenDto, userId: Long }
+        const loginData = result.data;
+        
+        // 항상 덮어쓰기 위해 조건 없이 저장
+        if (loginData?.token?.accessToken) {
+          localStorage.setItem("accessToken", loginData.token.accessToken);
+        } else {
+          localStorage.removeItem("accessToken");
         }
-        if (token?.refreshToken) {
-          localStorage.setItem("refreshToken", token.refreshToken);
+        
+        if (loginData?.token?.refreshToken) {
+          localStorage.setItem("refreshToken", loginData.token.refreshToken);
+        } else {
+          localStorage.removeItem("refreshToken");
+        }
+        
+        // userId는 항상 덮어쓰기 (값이 없으면 제거)
+        if (loginData?.userId != null && loginData?.userId !== undefined) {
+          localStorage.setItem("userId", String(loginData.userId));
+        } else {
+          localStorage.removeItem("userId");
         }
 
         setMessage("로그인 성공! 홈으로 이동합니다.");
-        window.location.href = "/home";
+        window.location.href = "/test";
       } catch (error) {
         setMessage(error.message || "로그인 중 오류가 발생했습니다.");
       } finally {

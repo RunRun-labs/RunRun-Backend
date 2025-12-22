@@ -56,9 +56,10 @@ dependencies {
         exclude group: 'org.locationtech.jts', module: 'jts-core'
     }
     implementation 'org.locationtech.jts:jts-core:1.19.0'
-
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation "org.n52.jackson:jackson-datatype-jts:2.0.0"
+    implementation 'org.springframework.boot:spring-boot-jackson2'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-
 }
 
 tasks.named('test') {

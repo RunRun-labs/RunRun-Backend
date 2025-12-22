@@ -1,7 +1,8 @@
 package com.multi.runrunbackend.domain.challenge.constant;
 
 /**
- * Please explain the class!!!
+ * * 사용자의 챌린지 참여 상태를 나타내는 Enum + * JOINED(참여), IN_PROGRESS(진행중), COMPLETED(완료), FAILED(실패),
+ * CANCELED(취소)
  *
  * @author : 김용원
  * @filename : UserChallengeStatus

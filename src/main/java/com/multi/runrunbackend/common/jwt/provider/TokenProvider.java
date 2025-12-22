@@ -58,11 +58,11 @@ public class TokenProvider {
 
     }
 
-    public String generateToken(String memberId, List<String> roles, String code, Long memberNo) {
+    public String generateToken(String memberId, List<String> roles, String code, Long userId) {
         Claims claims = Jwts
             .claims()
             .setSubject(memberId);
-        claims.put("memberNo", memberNo);
+        claims.put("userId", userId);
         long now = (new Date()).getTime();
         Date tokenExpiresIn = new Date();
         if (code.equals("A")) {
@@ -146,6 +146,7 @@ public class TokenProvider {
 
         CustomUser customUser = new CustomUser();
         customUser.setEmail(claims.getSubject());
+        customUser.setLoginId(claims.getSubject());
         customUser.setAuthorities(authorities);
         return new UsernamePasswordAuthenticationToken(customUser, "", authorities);
     }

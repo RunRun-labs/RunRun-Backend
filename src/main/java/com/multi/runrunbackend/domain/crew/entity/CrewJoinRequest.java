@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,11 +35,11 @@ public class CrewJoinRequest extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "crew_id", nullable = false)
     private Crew crew;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -97,7 +98,7 @@ public class CrewJoinRequest extends BaseEntity {
     }
 
     /**
-     * @description : cancel - 가입 신청 취소 (Soft Delete)
+     * @description : cancel - 가입 신청 취소
      * @filename : CrewJoinRequest
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일

@@ -17,8 +17,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * @author : kyungsoo
- * @description : 광고가 노출되는 위치와 유형을 정의하는 광고 슬롯 엔티티. 노출 방식, 일일 노출 한도, 프리미엄 여부 등을 관리한다.
- * @filename : AdSlot
+ * @description : 광고 캠페인의 실제 크리에이티브(이미지, 링크 등)를 관리하는 엔티티. 클릭 수와 노출 수를 추적한다.
+ * @filename : AdCreative
  * @since : 2025. 12. 17. Wednesday
  */
 @Getter
@@ -50,7 +50,7 @@ public class AdCreative extends BaseEntity {
     @Column(nullable = false)
     private Long exposureCount;
 
-    @Column(name = "redirect_url")
+    @Column(name = "redirect_url", length = 500)
     private String redirectUrl;
 
     @PrePersist

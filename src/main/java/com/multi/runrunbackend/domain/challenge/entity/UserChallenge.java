@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
  *
  * @author : kimyongwon
  * @description : * 사용자의 챌린지 참여 정보를 관리하는 엔티티 - 사용자 ↔ 챌린지 매핑 - 챌린지 진행 상태 관리 - 목표 대비 진행도 관리
- * @filename : UserSetting
+ * @filename : UserChallenge
  * @since : 25. 12. 17. 오전 11:46 수요일
  */
 @Entity
