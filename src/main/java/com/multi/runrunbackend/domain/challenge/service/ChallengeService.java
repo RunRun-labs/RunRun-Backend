@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.challenge.service;
 
+import com.multi.runrunbackend.common.exception.custom.CustomException;
 import com.multi.runrunbackend.common.exception.custom.FileUploadException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
@@ -8,8 +9,7 @@ import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.challenge.constant.UserChallengeStatus;
-import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeCreateReqDto;
-import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeUpdateReqDto;
+import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeReqDto;
 import com.multi.runrunbackend.domain.challenge.dto.res.ChallengeResDto;
 import com.multi.runrunbackend.domain.challenge.entity.Challenge;
 import com.multi.runrunbackend.domain.challenge.entity.UserChallenge;
@@ -17,6 +17,7 @@ import com.multi.runrunbackend.domain.challenge.repository.ChallengeRepository;
 import com.multi.runrunbackend.domain.challenge.repository.UserChallengeRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,9 +52,8 @@ public class ChallengeService {
     private static final long MAX_IMAGE_SIZE = 5L * 1024 * 1024; // 5MB
 
     // 챌린지 생성 (ADMIN)
-    public ChallengeResDto createChallenge(ChallengeCreateReqDto req, MultipartFile imageFile, CustomUser principal) {
+    public ChallengeResDto createChallenge(ChallengeReqDto req, MultipartFile imageFile, CustomUser principal) {
         User user = getUserByPrincipal(principal);
-        // TODO: 필요 시 user.getRole() 등을 통해 관리자 권한 추가 검증
         // validateAdminRole(user); // 실제 권한 체크 필요 시 주석 해제
 
         Challenge savedChallenge = saveChallenge(req);
@@ -64,7 +64,7 @@ public class ChallengeService {
     }
 
     // 챌린지 수정 (ADMIN)
-    public void updateChallenge(Long challengeId, ChallengeUpdateReqDto req, MultipartFile imageFile, CustomUser principal) {
+    public void updateChallenge(Long challengeId, @Valid ChallengeReqDto req, MultipartFile imageFile, CustomUser principal) {
         User user = getUserByPrincipal(principal);
         // validateAdminRole(user);
 
@@ -81,10 +81,10 @@ public class ChallengeService {
                 req.getEndDate()
         );
 
-        // 이미지 파일이 새로 들어온 경우 교체
+
         if (imageFile != null && !imageFile.isEmpty()) {
             validateFile(imageFile);
-            // 기존 이미지가 있다면 스토리지에서 삭제
+
             if (challenge.getImageUrl() != null) fileStorage.delete(challenge.getImageUrl());
 
             String imageUrl = fileStorage.upload(imageFile, FileDomainType.CHALLENGE_IMAGE, challenge.getId());
@@ -112,6 +112,11 @@ public class ChallengeService {
                 .map(ChallengeResDto::from)
                 .collect(Collectors.toList());
 
+        resDtos.forEach(dto -> {
+            long count = userChallengeRepository.countByChallengeId(dto.getId());
+            dto.setParticipantCount(count);
+        });
+
         if (principal != null) {
             User user = getUserByPrincipal(principal);
             mapUserChallengeStatus(user.getId(), resDtos);
@@ -130,7 +135,9 @@ public class ChallengeService {
 
         ChallengeResDto resDto = ChallengeResDto.from(challenge);
 
-        // 로그인한 사용자라면 참여 상태와 진행도 주입
+        long count = userChallengeRepository.countByChallengeId(challengeId);
+        resDto.setParticipantCount(count);
+
         if (principal != null) {
             User user = getUserByPrincipal(principal);
             userChallengeRepository.findByUserId(user.getId()).stream()
@@ -160,11 +167,10 @@ public class ChallengeService {
                         || uc.getStatus() == UserChallengeStatus.IN_PROGRESS));
 
         if (alreadyJoined) {
-            // 적절한 예외 처리 (이미 참여중)
-            throw new IllegalArgumentException("이미 참여 중인 챌린지입니다.");
+            throw new CustomException(ErrorCode.ALREADY_JOINED) {
+            };
         }
 
-        // 새 참여 기록 생성 (UserChallenge.join 메서드 활용)
         UserChallenge userChallenge = UserChallenge.join(user, challenge);
         userChallengeRepository.save(userChallenge);
     }
@@ -194,7 +200,7 @@ public class ChallengeService {
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private Challenge saveChallenge(ChallengeCreateReqDto req) {
+    private Challenge saveChallenge(ChallengeReqDto req) {
         Challenge challenge = Challenge.builder()
                 .title(req.getTitle())
                 .challengeType(req.getChallengeType())
