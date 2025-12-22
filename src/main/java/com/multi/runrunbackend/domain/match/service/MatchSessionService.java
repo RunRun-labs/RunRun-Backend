@@ -9,13 +9,11 @@ import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
-import com.multi.runrunbackend.domain.notification.constant.NotificationType;
-import com.multi.runrunbackend.domain.notification.constant.RelatedType;
-import com.multi.runrunbackend.domain.notification.entity.Notification;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import com.multi.runrunbackend.domain.recruit.entity.RecruitUser;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
+import com.multi.runrunbackend.domain.user.entity.User;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -81,25 +79,24 @@ public class MatchSessionService {
             .build())
         .collect(Collectors.toList());
 
+    User host = recruit.getUser();
+
+    boolean isHostAlreadyIncluded = sessionUsers.stream()
+        .anyMatch(u -> u.getUser().getId().equals(host.getId()));
+
+    if (!isHostAlreadyIncluded) {
+      SessionUser hostSessionUser = SessionUser.builder()
+          .matchSession(matchSession)
+          .user(host)
+          .isReady(false)
+          .build();
+
+      sessionUsers.add(hostSessionUser);
+    }
     sessionUserRepository.saveAll(sessionUsers);
 
     recruit.delete();
 
     return matchSession.getId();
-  }
-
-  private void notifyParticipants(List<SessionUser> users, Long sessionId) {
-    for (SessionUser user : users) {
-      Notification notification = Notification.builder()
-          .receiver(user.getUser())
-          .title("매칭 확정")
-          .message("매칭이 확정되었습니다! 채팅방으로 이동하세요.")
-          .notificationType(NotificationType.MATCH) // type
-          .relatedType(RelatedType.ROOM)
-          .relatedId(sessionId)
-          .build();
-
-
-    }
   }
 }
