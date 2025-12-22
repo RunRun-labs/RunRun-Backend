@@ -889,6 +889,13 @@ body {
   color: var(--text-muted);
 }
 
+.participant-right-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .participant-ready-status {
   display: flex;
   flex-direction: column;
@@ -904,6 +911,29 @@ body {
 
 .participant-ready-text.waiting {
   color: var(--text-light);
+}
+
+/* 강퇴 버튼 */
+.kick-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: #EF4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.kick-btn:hover {
+  background-color: #DC2626;
+}
+
+.kick-btn:active {
+  background-color: #B91C1C;
+  transform: scale(0.98);
 }
 
 .participant-modal-footer {
