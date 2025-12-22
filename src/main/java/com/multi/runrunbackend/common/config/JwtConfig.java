@@ -51,17 +51,25 @@ public class JwtConfig {
                                 "/error",
                                 "/img/**",
                                 "/myPage/**",
-                                "/challenge/**"
+                                "/challenge/**",
+                                "/course_auto/**",
+                                "/api/routes/**",
+                                "/files/**",
+                                "/course",
+                                "/courseCreate",
+                                "/courseDetail/**",
+                                "/courseUpdate/**",
+                                "/course_manual/**"
                         ).permitAll()
                         .requestMatchers(
                                 PathRequest.toStaticResources().atCommonLocations()
                         ).permitAll()
                         .anyRequest().authenticated()
 
-                ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                        UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                        exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                                .accessDeniedHandler(jwtAccessDeniedHandler));
+            ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
+                UsernamePasswordAuthenticationFilter.class).exceptionHandling(
+                exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                    .accessDeniedHandler(jwtAccessDeniedHandler));
 
         return http.build();
 

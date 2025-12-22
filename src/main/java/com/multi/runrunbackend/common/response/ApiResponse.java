@@ -33,6 +33,14 @@ public class ApiResponse<T> {
             .build();
     }
 
+    public static <T> ApiResponse<T> successNoData(String message) {
+        return ApiResponse.<T>builder()
+            .success(true)
+            .code("SUCCESS")
+            .message(message)
+            .build();
+    }
+
 
     public static <T> ApiResponse<T> error(ErrorCode errorCode) {
         return ApiResponse.<T>builder()
