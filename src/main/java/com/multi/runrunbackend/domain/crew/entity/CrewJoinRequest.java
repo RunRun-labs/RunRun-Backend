@@ -4,22 +4,10 @@ import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+
 /**
  * @author : BoKyung
  * @description : 크루 가입 신청 엔티티
@@ -88,7 +76,9 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void approve() {
-        validatePending();
+        if (!this.joinStatus.equals(JoinStatus.PENDING)) {
+            throw new BusinessException(ErrorCode.NOT_PENDING_STATUS);
+        }
         this.joinStatus = JoinStatus.APPROVED;
     }
 
@@ -99,7 +89,9 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void reject() {
-        validatePending();
+        if (!this.joinStatus.equals(JoinStatus.PENDING)) {
+            throw new BusinessException(ErrorCode.NOT_PENDING_STATUS);
+        }
         this.joinStatus = JoinStatus.REJECTED;
     }
 
@@ -110,7 +102,9 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void cancel() {
-        validatePending();
+        if (!this.joinStatus.equals(JoinStatus.PENDING)) {
+            throw new BusinessException(ErrorCode.NOT_PENDING_STATUS);
+        }
         this.joinStatus = JoinStatus.CANCELED;
         this.delete();
     }
