@@ -266,10 +266,10 @@ async function loadMoreCrews() {
         }
 
         const hasPaceFilter = currentFilters.pace && currentFilters.pace.trim();
-        const hasDistanceRangeFilter = currentFilters.distance &&
-            (currentFilters.distance.includes('미만') || currentFilters.distance.includes('이상'));
+        const hasDistanceFilter = currentFilters.distance && currentFilters.distance.trim();
 
-        const hasClientSideFilter = hasPaceFilter || hasDistanceRangeFilter;
+        const hasClientSideFilter = hasPaceFilter || hasDistanceFilter;
+
 
         console.log(`${page.crews.length}개 크루 렌더링`);
         const renderedCount = renderCrews(page.crews);
@@ -347,16 +347,16 @@ function buildApiUrl() {
         params.append('keyword', currentFilters.search.trim());
     }
 
-    if (currentFilters.distance && currentFilters.distance.trim()) {
-        const value = currentFilters.distance.trim();
-
-        if (!value.includes('미만') && !value.includes('이상')) {
-            const num = parseInt(value.replace(/[^0-9]/g, ''), 10);
-            if (!isNaN(num)) {
-                params.append('distance', `${num}km`);
-            }
-        }
-    }
+    // if (currentFilters.distance && currentFilters.distance.trim()) {
+    //     const value = currentFilters.distance.trim();
+    //
+    //     if (!value.includes('미만') && !value.includes('이상')) {
+    //         const num = parseInt(value.replace(/[^0-9]/g, ''), 10);
+    //         if (!isNaN(num)) {
+    //             params.append('distance', `${num}km`);
+    //         }
+    //     }
+    // }
 
     if (currentFilters.recruitStatus === 'recruiting') {
 
@@ -388,91 +388,35 @@ function renderCrews(crews) {
 
     if (currentFilters.distance && currentFilters.distance.trim()) {
         const filter = currentFilters.distance.trim();
-        const filterNum = parseInt(filter.replace(/[^0-9]/g, ''), 10);
+        const beforeCount = filteredCrews.length;
 
-        console.log(`거리 필터 적용 시작: "${filter}", 숫자: ${filterNum}`);
-
-        if (!isNaN(filterNum)) {
-            const beforeCount = filteredCrews.length;
+        if (filter !== '') {
             filteredCrews = filteredCrews.filter(crew => {
-                if (!crew.distance) {
-                    console.log(`크루 ${crew.crewId || crew.crewName}: 거리 정보 없음`);
-                    return false;
-                }
+                if (!crew.distance) return false;
 
-                const crewNum = parseInt(
-                    crew.distance.replace(/[^0-9]/g, ''),
-                    10
-                );
-
-                if (isNaN(crewNum)) {
-                    console.log(`크루 ${crew.crewId || crew.crewName}: 거리 파싱 실패 (${crew.distance})`);
-                    return false;
-                }
-
-                let matches = false;
-                if (filter.includes('미만')) {
-                    matches = crewNum < filterNum;
-                } else if (filter.includes('이상')) {
-                    matches = crewNum >= filterNum;
-                } else {
-
-                    matches = crewNum === filterNum;
-                }
-
-                if (matches) {
-                    console.log(`크루 ${crew.crewId || crew.crewName}: ${crewNum}km 매칭 (필터: ${filter})`);
-                }
-                return matches;
+                return crew.distance.trim() === filter;
             });
-
-            console.log(`거리 필터 적용 완료: ${beforeCount}개 → ${filteredCrews.length}개 (${filter})`);
         }
+
+        console.log(`거리 필터 적용 (${filter || '전체'}): ${beforeCount}개 → ${filteredCrews.length}개`);
     }
+
 
     if (currentFilters.pace && currentFilters.pace.trim()) {
         const paceFilter = currentFilters.pace.trim();
+        const beforeCount = filteredCrews.length;
 
-        filteredCrews = filteredCrews.filter(crew => {
-            if (!crew.averagePace) return false;
+        if (paceFilter !== '') {
+            filteredCrews = filteredCrews.filter(crew => {
+                if (!crew.averagePace) return false;
 
-            const pace = crew.averagePace.trim();
-            const paceMinutes = parsePaceToMinutes(pace);
+                return crew.averagePace.trim() === paceFilter;
+            });
+        }
 
-            if (paceMinutes === null) return false;
-
-            if (paceFilter.includes('이하')) {
-
-                const maxPace = parseFloat(paceFilter.match(/(\d+(?:\.\d+)?)/)?.[1]);
-                if (!isNaN(maxPace)) {
-                    return paceMinutes <= maxPace;
-                }
-                return false;
-            } else if (paceFilter.includes('이상')) {
-
-                const minPace = parseFloat(paceFilter.match(/(\d+(?:\.\d+)?)/)?.[1]);
-                if (!isNaN(minPace)) {
-                    return paceMinutes >= minPace;
-                }
-                return false;
-            } else if (paceFilter.includes('~') || paceFilter.includes('-')) {
-
-                const rangeMatch = paceFilter.match(/(\d+(?:\.\d+)?)[~-](\d+(?:\.\d+)?)/);
-                if (rangeMatch) {
-                    const minPace = parseFloat(rangeMatch[1]);
-                    const maxPace = parseFloat(rangeMatch[2]);
-                    if (!isNaN(minPace) && !isNaN(maxPace)) {
-                        return paceMinutes >= minPace && paceMinutes <= maxPace;
-                    }
-                }
-                return false;
-            }
-
-            return false;
-        });
-
-        console.log(`페이스 필터 적용 (${paceFilter}): ${crews.length}개 → ${filteredCrews.length}개`);
+        console.log(`페이스 필터 적용 (${paceFilter || '전체'}): ${beforeCount}개 → ${filteredCrews.length}개`);
     }
+
 
     filteredCrews.forEach(crew => {
         const card = createCrewCard(crew);
