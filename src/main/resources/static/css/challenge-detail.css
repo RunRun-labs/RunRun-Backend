@@ -97,44 +97,62 @@ body {
     object-fit: cover;
 }
 
-.challenge-action-section {
-    margin-bottom: 16px;
-}
-
-.challenge-progress-area {
+.challenge-info-card {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--stroke);
+    background: #ffffff;
+    padding: 16px;
+    margin-bottom: 20px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 16px;
-    border-radius: 12px;
-    background: #dedede;
-    border: 1px solid var(--stroke);
+    gap: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-.progress-header {
+.info-row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    font-size: 12px;
+    gap: 10px;
+    font-size: 13px;
 }
 
-.progress-label {
+.info-icon {
+    font-size: 16px;
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.info-text {
+    color: var(--text-strong);
+    flex: 1;
+}
+
+.progress-row {
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+.info-label {
+    color: var(--text-strong);
+    font-weight: 500;
+}
+
+.info-value {
+    color: var(--text-strong);
     font-weight: 600;
-    color: var(--text-strong);
-}
-
-.progress-value {
-    font-weight: 700;
-    color: var(--text-strong);
 }
 
 .progress-bar-container {
     width: 100%;
+    margin-top: 4px;
 }
 
 .progress-bar {
     width: 100%;
-    height: 12px;
+    height: 10px;
     background: #eef2f4;
     border-radius: 999px;
     overflow: hidden;
@@ -149,19 +167,19 @@ body {
     min-width: 0;
 }
 
-.progress-stats {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: var(--text-muted);
-    justify-content: flex-end;
+.info-message {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--stroke);
+    font-size: 13px;
+    color: var(--text-strong);
+    text-align: center;
 }
 
-.progress-stats span:first-child {
-    font-weight: 600;
-    color: var(--text-strong);
+.challenge-action-section {
+    margin-bottom: 16px;
 }
+
 
 .join-button {
     width: 100%;
@@ -205,29 +223,6 @@ body {
     color: #fff;
 }
 
-.days-remaining {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 12px 0;
-    margin-bottom: 20px;
-    font-size: 13px;
-}
-
-.days-label {
-    color: var(--text-muted);
-}
-
-.days-value {
-    font-weight: 700;
-    color: var(--text-strong);
-    font-size: 16px;
-}
-
-.days-suffix {
-    color: var(--text-muted);
-}
 
 .challenge-detail-section {
     margin-top: 8px;
@@ -311,6 +306,26 @@ body {
         margin-bottom: 16px;
     }
 
+    .challenge-info-card {
+        padding: 14px;
+        gap: 10px;
+    }
+
+    .info-row {
+        font-size: 12px;
+    }
+
+    .info-icon {
+        font-size: 14px;
+        width: 18px;
+    }
+
+    .info-message {
+        font-size: 12px;
+        margin-top: 6px;
+        padding-top: 10px;
+    }
+
     .join-button {
         height: 44px;
         font-size: 13px;
@@ -319,14 +334,6 @@ body {
     .cancel-button {
         height: 40px;
         font-size: 12px;
-    }
-
-    .days-remaining {
-        font-size: 12px;
-    }
-
-    .days-value {
-        font-size: 15px;
     }
 
     .challenge-description {
@@ -355,6 +362,26 @@ body {
 
     .challenge-image-container {
         margin-bottom: 14px;
+    }
+
+    .challenge-info-card {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .info-row {
+        font-size: 11px;
+    }
+
+    .info-icon {
+        font-size: 13px;
+        width: 16px;
+    }
+
+    .info-message {
+        font-size: 11px;
+        margin-top: 4px;
+        padding-top: 8px;
     }
 
     .join-button {
@@ -404,7 +431,7 @@ body {
         margin: 0 auto 20px;
     }
 
-    .days-remaining {
+    .challenge-info-card {
         max-width: 600px;
         margin: 0 auto 24px;
     }
