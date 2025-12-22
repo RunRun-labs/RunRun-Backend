@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | Challenge Detail</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/challenge-detail.css"
+            th:href="@{/css/challenge-detail.css}"
+    />
+</head>
+<body class="challenge-detail-body">
+<main class="page challenge-detail-page">
+    <button class="back-button" type="button" aria-label="챌린지 목록으로 돌아가기">
+        <img
+                th:src="@{/img/icons/back.png}"
+                src="/img/icons/back.png"
+                alt="뒤로가기 아이콘"
+        />
+    </button>
+
+    <!-- 챌린지 제목 -->
+    <header class="challenge-detail-header">
+        <h1 class="challenge-detail-title" data-role="challenge-title">챌린지 제목</h1>
+    </header>
+
+    <!-- 챌린지 이미지 -->
+    <div class="challenge-image-container">
+        <img
+                class="challenge-image"
+                data-role="challenge-image"
+                src=""
+                alt="챌린지 이미지"
+        />
+    </div>
+
+    <!-- 참여 상태에 따른 UI -->
+    <section class="challenge-action-section">
+        <!-- 참여중인 경우: 진행 상황 -->
+        <div class="challenge-progress-area" data-role="progress-area" hidden>
+            <div class="progress-header">
+                <span class="progress-label">진행 상황</span>
+                <span class="progress-value" data-role="progress-text">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" data-role="progress-bar">
+                    <div class="progress-fill" data-role="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="progress-stats" data-role="progress-stats">
+                <span data-role="progress-current">0</span>
+                <span>/</span>
+                <span data-role="progress-target">0</span>
+            </div>
+        </div>
+
+        <!-- 참여하지 않은 경우: 참여하기 버튼 -->
+        <button
+                class="join-button"
+                type="button"
+                data-role="join-button"
+                hidden
+        >
+            참여하기
+        </button>
+
+        <!-- 참여중인 경우: 포기 버튼 -->
+        <button
+                class="cancel-button"
+                type="button"
+                data-role="cancel-button"
+                hidden
+        >
+            챌린지 포기
+        </button>
+    </section>
+
+    <!-- 남은 일수 -->
+    <div class="days-remaining" data-role="days-remaining">
+        <span class="days-label">종료까지</span>
+        <span class="days-value" data-role="days-text">-일</span>
+        <span class="days-suffix">남음</span>
+    </div>
+
+    <!-- 챌린지 상세 정보 -->
+    <section class="challenge-detail-section">
+        <h2 class="detail-section-title">상세보기</h2>
+        <div class="challenge-description" data-role="challenge-description">
+            <!-- JS로 동적 생성 -->
+        </div>
+    </section>
+</main>
+
+<template id="bottomNavTemplate">
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+            <img
+                    src="/img/icons/chat.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+            <img
+                    src="/img/icons/feed.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>feed</span>
+        </a>
+        <a class="nav-item" th:href="@{/}" href="/">
+            <img
+                    src="/img/icons/home.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+            <img
+                    src="/img/icons/match.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>match</span>
+        </a>
+        <a class="nav-item" th:href="@{/my}" href="/my">
+            <img
+                    src="/img/icons/my.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>my</span>
+        </a>
+    </nav>
+</template>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/challenge-detail.js" th:src="@{/js/challenge-detail.js}"></script>
+</body>
+</html>
+
