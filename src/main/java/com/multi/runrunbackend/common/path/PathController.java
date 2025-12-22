@@ -1,13 +1,11 @@
 package com.multi.runrunbackend.common.path;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
-@RequiredArgsConstructor
 public class PathController {
 
 
@@ -19,6 +17,16 @@ public class PathController {
     @GetMapping("/signup")
     public String signupView() {
         return "auth/signup";
+    }
+
+    @GetMapping("/myPage")
+    public String myPageView() {
+        return "mypage/mypage";
+    }
+
+    @GetMapping("/myPage/edit")
+    public String myPageEdit() {
+        return "mypage/mypage-edit";
     }
 
     @GetMapping("/course_auto")
