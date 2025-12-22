@@ -9,11 +9,9 @@ import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
-import com.multi.runrunbackend.domain.notification.NotificationResDto;
 import com.multi.runrunbackend.domain.notification.constant.NotificationType;
 import com.multi.runrunbackend.domain.notification.constant.RelatedType;
 import com.multi.runrunbackend.domain.notification.entity.Notification;
-import com.multi.runrunbackend.domain.notification.repository.NotificationRepository;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import com.multi.runrunbackend.domain.recruit.entity.RecruitUser;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
@@ -41,8 +39,6 @@ public class MatchSessionService {
   private final MatchSessionRepository matchSessionRepository;
   private final RecruitUserRepository recruitUserRepository;
   private final SessionUserRepository sessionUserRepository;
-  private final NotificationRepository notificationRepository;
-  //  private final SimpMessagingTemplate messagingTemplate;
 
   @Transactional
   public Long createOfflineSession(Long recruitId, Long id) {
@@ -87,8 +83,6 @@ public class MatchSessionService {
 
     sessionUserRepository.saveAll(sessionUsers);
 
-    //    notifyParticipants(sessionUsers, matchSession.getId());
-
     recruit.delete();
 
     return matchSession.getId();
@@ -105,11 +99,7 @@ public class MatchSessionService {
           .relatedId(sessionId)
           .build();
 
-      notificationRepository.save(notification);
 
-      NotificationResDto msg = NotificationResDto.from(notification);
-
-      //      messagingTemplate.convertAndSend("/sub/user/" + user.getUser().getId(), msg);
     }
   }
 }
