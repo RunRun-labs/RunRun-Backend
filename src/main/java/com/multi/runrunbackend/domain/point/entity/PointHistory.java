@@ -2,8 +2,19 @@ package com.multi.runrunbackend.domain.point.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseCreatedEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * @author : BoKyung
@@ -12,7 +23,6 @@ import lombok.*;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
-@Table(name = "point_history")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -22,11 +32,12 @@ public class PointHistory extends BaseCreatedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "point_product_id", nullable = false)
     private PointProduct pointProduct;
 
@@ -49,11 +60,11 @@ public class PointHistory extends BaseCreatedEntity {
     public static PointHistory toEntity(User user, PointProduct pointProduct, String pointType,
                                         Integer changeAmount, String reason) {
         return PointHistory.builder()
-                .user(user)
-                .pointProduct(pointProduct)
-                .pointType(pointType)
-                .changeAmount(changeAmount)
-                .reason(reason)
-                .build();
+            .user(user)
+            .pointProduct(pointProduct)
+            .pointType(pointType)
+            .changeAmount(changeAmount)
+            .reason(reason)
+            .build();
     }
 }

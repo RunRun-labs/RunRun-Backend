@@ -1,9 +1,9 @@
 package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
-import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
@@ -15,7 +15,6 @@ import org.hibernate.annotations.SQLRestriction;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
-@Table(name = "crew")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -27,7 +26,7 @@ public class Crew extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -83,7 +82,7 @@ public class Crew extends BaseEntity {
     }
 
     /**
-     * @description : updateCrew - 크루 정보 수정 (크루명 제외)
+     * @description : updateCrew - 크루 정보 수정
      * @filename : Crew
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
@@ -111,7 +110,6 @@ public class Crew extends BaseEntity {
     }
 
     /**
-     * @throws BusinessException 이미 해체된 크루인 경우 (크루 상태 = DISBANDED)
      * @description : updateRecruitStatus - 모집 상태 변경
      * @filename : Crew
      * @author : BoKyung
@@ -125,7 +123,6 @@ public class Crew extends BaseEntity {
     }
 
     /**
-     * @throws BusinessException 이미 해체된 크루인 경우 (크루 상태 = DISBANDED)
      * @description : softDelete - 크루 해체 (Soft Delete)
      * @filename : Crew
      * @author : BoKyung

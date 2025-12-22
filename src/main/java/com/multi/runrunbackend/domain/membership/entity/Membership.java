@@ -2,10 +2,20 @@ package com.multi.runrunbackend.domain.membership.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.*;
-import lombok.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * @author : BoKyung
@@ -14,7 +24,6 @@ import java.time.LocalDateTime;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
-@Table(name = "membership")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -25,7 +34,7 @@ public class Membership extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -70,7 +79,6 @@ public class Membership extends BaseEntity {
         LocalDateTime now = LocalDateTime.now();
         this.membershipGrade = "PREMIUM";
         this.membershipStatus = "ACTIVE";
-        this.startDate = now;
         this.nextBillingDate = now.plusMonths(1); // 1개월 후
     }
 
@@ -81,6 +89,7 @@ public class Membership extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void cancelMembership() {
+
         this.membershipStatus = "CANCELED";
     }
 
@@ -94,6 +103,7 @@ public class Membership extends BaseEntity {
         this.membershipGrade = "FREE";
         this.membershipStatus = "EXPIRED";
         this.endDate = LocalDateTime.now();
+        this.nextBillingDate = null;
     }
 
     /**

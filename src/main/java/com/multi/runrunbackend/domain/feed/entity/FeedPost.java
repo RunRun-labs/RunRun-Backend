@@ -38,7 +38,7 @@ public class FeedPost extends BaseEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "runnig_result_id", nullable = false)
+    @JoinColumn(name = "runing_result_id", nullable = false)
     private RunningResult runningResult;
 
     @Column(length = 500)
@@ -55,5 +55,5 @@ public class FeedPost extends BaseEntity {
     public void updateContent(String content) {
         this.content = content;
     }
-    
+
 }

@@ -11,7 +11,6 @@ import lombok.*;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
-@Table(name = "user_point")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -22,7 +21,7 @@ public class UserPoint {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

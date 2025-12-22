@@ -2,10 +2,20 @@ package com.multi.runrunbackend.domain.point.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.*;
-import lombok.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * @author : BoKyung
@@ -14,7 +24,6 @@ import java.time.LocalDateTime;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
-@Table(name = "point_expiration")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -25,11 +34,11 @@ public class PointExpiration extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "point_history_id", nullable = false)
     private PointHistory pointHistory;
 
@@ -58,17 +67,17 @@ public class PointExpiration extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static PointExpiration toEntity(User user, PointHistory pointHistory,
-                                           Integer earnedPoint) {
+        Integer earnedPoint) {
         LocalDateTime now = LocalDateTime.now();
         return PointExpiration.builder()
-                .user(user)
-                .pointHistory(pointHistory)
-                .earnedPoint(earnedPoint)
-                .remainingPoint(earnedPoint)
-                .expirationStatus("ACTIVE")
-                .earnedAt(now)
-                .expiresAt(now.plusYears(1)) // 1년 후 만료
-                .build();
+            .user(user)
+            .pointHistory(pointHistory)
+            .earnedPoint(earnedPoint)
+            .remainingPoint(earnedPoint)
+            .expirationStatus("ACTIVE")
+            .earnedAt(now)
+            .expiresAt(now.plusYears(1)) // 1년 후 만료
+            .build();
     }
 
     /**

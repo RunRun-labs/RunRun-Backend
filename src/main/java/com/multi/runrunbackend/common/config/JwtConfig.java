@@ -35,32 +35,43 @@ public class JwtConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .sessionManagement(
-                        sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                ).authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/auth/**",
-                                "/login",
-                                "/signup",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/public/**",
-                                "/error",
-                                "/img/**",
-                                "/crews/new",
-                                "/crews/**"
-                        ).permitAll()
-                        .requestMatchers(
-                                PathRequest.toStaticResources().atCommonLocations()
-                        ).permitAll()
-                        .anyRequest().authenticated()
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .sessionManagement(
+                sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            ).authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/auth/**",
+                    "/login",
+                    "/signup",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/public/**",
+                    "/error",
+                    "/img/**",
+                    "/chat/**",
+                    "/ws/**",
+                    "/myPage/**",
+                    "/course_auto/**",
+                    "/api/routes/**",
+                    "/files/**",
+                    "/course",
+                    "/courseCreate",
+                    "/courseDetail/**",
+                    "/courseUpdate/**",
+                    "/course_manual/**",
+                    "/crews/new",
+                    "/crews/**"
+                ).permitAll()
+                .requestMatchers(
+                    PathRequest.toStaticResources().atCommonLocations()
+                ).permitAll()
+                .anyRequest().authenticated()
 
-                ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                        UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                        exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                                .accessDeniedHandler(jwtAccessDeniedHandler));
+            ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
+                UsernamePasswordAuthenticationFilter.class).exceptionHandling(
+                exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                    .accessDeniedHandler(jwtAccessDeniedHandler));
 
         return http.build();
 

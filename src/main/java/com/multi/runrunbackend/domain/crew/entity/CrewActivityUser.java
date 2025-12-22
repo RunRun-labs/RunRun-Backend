@@ -24,7 +24,7 @@ public class CrewActivityUser extends BaseCreatedEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "crewActivity_id", nullable = false)
+    @JoinColumn(name = "crew_activity_id", nullable = false)
     private CrewActivity crewActivity;
 
     @ManyToOne(fetch = FetchType.LAZY)
