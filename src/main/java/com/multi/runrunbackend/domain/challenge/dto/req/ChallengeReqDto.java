@@ -21,7 +21,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ChallengeCreateReqDto {
+public class ChallengeReqDto {
 
     @NotBlank(message = "챌린지 제목은 필수입니다.")
     private String title;
