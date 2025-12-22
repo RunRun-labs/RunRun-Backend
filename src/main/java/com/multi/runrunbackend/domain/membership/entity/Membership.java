@@ -62,11 +62,11 @@ public class Membership extends BaseEntity {
     public static Membership toEntity(User user) {
         LocalDateTime now = LocalDateTime.now();
         return Membership.builder()
-            .user(user)
-            .membershipGrade("FREE")
-            .membershipStatus("ACTIVE")
-            .startDate(now)
-            .build();
+                .user(user)
+                .membershipGrade("FREE")
+                .membershipStatus("ACTIVE")
+                .startDate(now)
+                .build();
     }
 
     /**

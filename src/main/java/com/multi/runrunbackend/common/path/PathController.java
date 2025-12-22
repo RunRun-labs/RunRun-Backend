@@ -43,6 +43,25 @@ public class PathController {
     return "recruit/recruit-update";
   }
 
+    @GetMapping("/crews")
+    public String crewListPage() {
+        return "crew/crewList";
+    }
+
+    @GetMapping("/crews/new")
+    public String crewCreatePage() {
+        return "crew/createCrew";
+    }
+
+    @GetMapping("/crews/{crewId}")
+    public String crewDetailPage() {
+        return "crew/crewDetailList";
+    }
+
+    @GetMapping("/crews/{crewId}/edit")
+    public String crewEditPage() {
+        return "crew/updateCrew";
+    }
 
   @GetMapping("/chat")
   public String chatList() {

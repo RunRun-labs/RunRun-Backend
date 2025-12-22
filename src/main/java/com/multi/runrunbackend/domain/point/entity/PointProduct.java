@@ -1,16 +1,8 @@
 package com.multi.runrunbackend.domain.point.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 /**
  * @author : BoKyung
@@ -19,6 +11,7 @@ import lombok.NoArgsConstructor;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
+@Table(name = "point_product")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -51,14 +44,14 @@ public class PointProduct extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static PointProduct toEntity(String productName, Integer requiredPoint,
-        String productImageUrl, String productDescription) {
+                                        String productImageUrl, String productDescription) {
         return PointProduct.builder()
-            .productName(productName)
-            .requiredPoint(requiredPoint)
-            .productImageUrl(productImageUrl)
-            .productDescription(productDescription)
-            .isAvailable(true)
-            .build();
+                .productName(productName)
+                .requiredPoint(requiredPoint)
+                .productImageUrl(productImageUrl)
+                .productDescription(productDescription)
+                .isAvailable(true)
+                .build();
     }
 
     /**

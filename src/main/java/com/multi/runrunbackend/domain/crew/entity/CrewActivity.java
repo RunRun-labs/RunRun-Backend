@@ -53,13 +53,13 @@ public class CrewActivity extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static CrewActivity toEntity(Crew crew, String region, Integer distance,
-        Integer participationCnt) {
+                                        Integer participationCnt) {
         return CrewActivity.builder()
-            .crew(crew)
-            .region(region)
-            .distance(distance)
-            .participationCnt(participationCnt)
-            .build();
+                .crew(crew)
+                .region(region)
+                .distance(distance)
+                .participationCnt(participationCnt)
+                .build();
     }
 
     /**

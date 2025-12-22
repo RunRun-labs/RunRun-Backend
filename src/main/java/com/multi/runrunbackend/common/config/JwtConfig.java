@@ -60,6 +60,8 @@ public class JwtConfig {
                     "/courseDetail/**",
                     "/courseUpdate/**",
                     "/course_manual/**",
+                    "/crews/new",
+                    "/crews/**"
                     "/match/**",
                     "/recruit/**"
                 ).permitAll()

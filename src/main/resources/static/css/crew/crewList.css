@@ -1,0 +1,599 @@
+/* =========================
+   기본 설정 & 리셋
+   ========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* 컬러 시스템 */
+    --primary-color: #BAFF29;
+    --primary-dark: #A3E024;
+    --bg-color: #FFFFFF;
+    --card-bg: #F0FFC7;
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --text-tertiary: #999999;
+    --border-color: #E0E0E0;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+    /* 간격 시스템 */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    /* 폰트 시스템 */
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-md: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 20px;
+
+    /* 반응형 기준 */
+    --header-height: 56px;
+    --nav-height: 64px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Helvetica', 'Arial', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+/* =========================
+   헤더 영역
+   ========================= */
+.crew-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    background-color: var(--bg-color);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 100;
+}
+
+.btn-back {
+    background: none;
+    border: none;
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    transition: opacity 0.2s;
+}
+
+.btn-back:hover {
+    opacity: 0.7;
+}
+
+.btn-back:active {
+    opacity: 0.5;
+}
+
+.header-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-left: var(--spacing-md);
+}
+
+/* =========================
+   메인 컨텐츠 영역
+   ========================= */
+.crew-main {
+    padding-top: var(--header-height);
+    padding-bottom: calc(var(--nav-height) + var(--spacing-md));
+    min-height: 100vh;
+}
+
+/* =========================
+   검색 영역
+   ========================= */
+.search-section {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 95;
+    padding: var(--spacing-md);
+    background-color: var(--bg-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.search-icon {
+    position: absolute;
+    left: var(--spacing-md);
+    pointer-events: none;
+    color: var(--text-secondary);
+}
+
+.search-input {
+    flex: 1;
+    height: 44px;
+    padding: 0 var(--spacing-md) 0 44px;
+    border: 1px solid var(--border-color);
+    border-radius: 22px;
+    font-size: var(--font-size-md);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    border-color: var(--primary-color);
+}
+
+.search-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.btn-search {
+    padding: 0 var(--spacing-lg);
+    height: 44px;
+    background-color: var(--primary-color);
+    color: var(--text-primary);
+    border: none;
+    border-radius: 22px;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.btn-search:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-search:active {
+    transform: scale(0.98);
+}
+
+/* =========================
+   필터 영역
+   ========================= */
+.filter-section {
+    position: sticky;
+    top: calc(var(--header-height) + 76px); /* 헤더 + 검색바 높이 */
+    z-index: 94;
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: var(--bg-color);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.filter-section::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-dropdown {
+    position: relative;
+}
+
+.btn-filter {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-filter:hover {
+    border-color: var(--primary-color);
+}
+
+.btn-filter--active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.btn-filter svg {
+    transition: transform 0.2s;
+}
+
+.btn-filter[data-active="true"] svg {
+    transform: rotate(180deg);
+}
+
+/* 드롭다운 메뉴 */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    min-width: 140px;
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+}
+
+.dropdown-menu.show {
+    display: block;
+    animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-secondary);
+}
+
+.dropdown-item.active {
+    background-color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* =========================
+   크루 카드 리스트
+   ========================= */
+.crew-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-sm); /* 필터와의 간격 */
+}
+
+.crew-card {
+    display: flex;
+    gap: var(--spacing-md);
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+.crew-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.crew-card:active {
+    transform: translateY(0);
+}
+
+.crew-card__image-wrapper {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #E8E8E8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.crew-card__image-wrapper::after {
+    content: '🏃';
+    font-size: 48px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.3;
+}
+
+.crew-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: relative;
+    z-index: 1;
+    background-color: #E8E8E8;
+}
+
+.crew-card__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    min-width: 0;
+}
+
+.crew-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.crew-card__title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.crew-card__badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.crew-card__badge--recruiting {
+    background-color: var(--primary-color);
+    color: var(--text-primary);
+}
+
+.crew-card__badge--closed {
+    background-color: #FFE5E5;
+    color: #FF4444;
+}
+
+.crew-card__description {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+}
+
+.crew-card__details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xs);
+}
+
+.crew-card__detail-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.detail-icon {
+    color: var(--text-tertiary);
+}
+
+.crew-card__running-info {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xs);
+}
+
+.running-info__item {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.running-info__label {
+    color: var(--text-tertiary);
+}
+
+.running-info__value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* =========================
+   로딩 & 상태 표시
+   ========================= */
+.loading-spinner,
+.no-more-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    gap: var(--spacing-md);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner p,
+.no-more-data p {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+/* =========================
+   하단 네비게이션
+   ========================= */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    background-color: var(--bg-color);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: var(--spacing-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-xs);
+    transition: color 0.2s;
+}
+
+.nav-item svg {
+    stroke: currentColor;
+}
+
+.nav-item--active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.nav-item:hover {
+    color: var(--text-primary);
+}
+
+/* =========================
+   반응형 디자인
+   ========================= */
+
+/* 태블릿 (768px 이상) */
+@media (min-width: 768px) {
+    .crew-main {
+        max-width: 768px;
+        margin: 0 auto;
+    }
+
+    .crew-list {
+        padding: 0 var(--spacing-lg);
+    }
+
+    .crew-card {
+        gap: var(--spacing-lg);
+        padding: var(--spacing-lg);
+    }
+
+    .crew-card__image-wrapper {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+/* 데스크탑 (1024px 이상) */
+@media (min-width: 1024px) {
+    .crew-main {
+        max-width: 1024px;
+    }
+
+    .crew-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-lg);
+    }
+
+    .crew-card {
+        flex-direction: column;
+    }
+
+    .crew-card__image-wrapper {
+        width: 100%;
+        height: 160px;
+    }
+}
+
+/* 큰 데스크탑 (1440px 이상) */
+@media (min-width: 1440px) {
+    .crew-main {
+        max-width: 1200px;
+    }
+
+    .crew-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* =========================
+   접근성 개선
+   ========================= */
+.crew-card:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* =========================
+   다크모드 지원 (선택사항)
+   ========================= */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #121212;
+        --card-bg: #1E1E1E;
+        --text-primary: #FFFFFF;
+        --text-secondary: #B0B0B0;
+        --text-tertiary: #808080;
+        --border-color: #2C2C2C;
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+    }
+}
