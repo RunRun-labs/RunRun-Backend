@@ -101,7 +101,7 @@ public class ChallengeService {
                 .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
 
 
-        challengeRepository.delete(challenge);
+        challenge.deleteChallenge();
     }
 
     // 챌린지 목록 조회 (로그인 시 상태 포함)

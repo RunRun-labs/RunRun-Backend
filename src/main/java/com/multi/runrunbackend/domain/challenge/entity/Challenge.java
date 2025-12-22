@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 
@@ -20,6 +21,7 @@ import java.time.LocalDate;
 @Table(name = "challenge")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("is_deleted = false")
 public class Challenge extends BaseEntity {
 
     @Id
@@ -69,6 +71,10 @@ public class Challenge extends BaseEntity {
         this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    public void deleteChallenge() {
+        this.delete();
     }
 
     public void updateImageUrl(String imageUrl) {
