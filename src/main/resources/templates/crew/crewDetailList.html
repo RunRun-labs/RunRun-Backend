@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>크루 상세 - 런런</title>
+    <link rel="stylesheet" th:href="@{/css/crew/crewDetailList.css}">
+</head>
+<body>
+
+<header class="crew-header">
+    <button class="btn-back" onclick="history.back()" aria-label="뒤로가기">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </button>
+    <h1 class="header-title">크루 상세</h1>
+</header>
+
+<main class="crew-detail-main">
+
+    <section class="crew-hero">
+        <div class="crew-hero__image-wrapper">
+            <img src=""
+                 alt=""
+                 class="crew-hero__image"
+                 onerror="this.style.display='none'"
+                 id="crewImage">
+
+            <span class="crew-hero__badge crew-hero__badge--recruiting"
+                  id="recruitmentBadge"
+                  style="display: none;">
+                    모집중
+                </span>
+            <span class="crew-hero__badge crew-hero__badge--closed"
+                  id="recruitmentBadgeClosed"
+                  style="display: none;">
+                    모집마감
+                </span>
+        </div>
+    </section>
+
+    <section class="crew-info">
+        <div class="crew-info__header">
+            <h2 class="crew-info__title" id="crewName">
+                크루 이름
+            </h2>
+            <span class="crew-info__leader" id="crewLeader" style="display: none;">
+                크루장
+            </span>
+        </div>
+
+        <div class="crew-info__location">
+            <svg class="icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2C6.68629 2 4 4.68629 4 8C4 12 10 18 10 18C10 18 16 12 16 8C16 4.68629 13.3137 2 10 2Z"
+                      stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="10" cy="8" r="2" fill="currentColor"/>
+            </svg>
+            <span id="crewLocation">서울 광진구</span>
+
+            <svg class="icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 10C11.6569 10 13 8.65685 13 7C13 5.34315 11.6569 4 10 4C8.34315 4 7 5.34315 7 7C7 8.65685 8.34315 10 10 10Z"
+                      stroke="currentColor" stroke-width="1.5"/>
+                <path d="M3 17C3 13.6863 5.68629 11 9 11H11C14.3137 11 17 13.6863 17 17" stroke="currentColor"
+                      stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span><span id="memberCount">24</span>명 참여중</span>
+        </div>
+
+        <div class="crew-info__running">
+            <div class="running-info__item">
+                <svg class="icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 2L12 8L18 9L12 10L10 16L8 10L2 9L8 8L10 2Z" stroke="currentColor" stroke-width="1.5"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="running-info__label">거리:</span>
+                <span class="running-info__value" id="crewDistance">-</span>
+            </div>
+            <div class="running-info__item">
+                <svg class="icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span class="running-info__label">페이스:</span>
+                <span class="running-info__value" id="crewPace">-</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="crew-description">
+        <h3 class="section-title">
+            <span class="title-icon">👑</span>
+            크루 소개
+        </h3>
+        <p class="description-text" id="crewDescription">
+            매주 월, 수, 금 아침 6시에 모여서 함께 달리는 크루입니다.
+            초보자도 환영합니다! 🏃
+        </p>
+    </section>
+
+    <section class="crew-schedule">
+        <h3 class="section-title">
+            <span class="title-icon">📅</span>
+            정기 러닝
+        </h3>
+        <div class="schedule-card">
+            <div class="schedule-card__time">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M3 8H17" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M7 2V5M13 2V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span id="regularSchedule">
+                        매주 월, 수, 금 06:00
+                    </span>
+            </div>
+        </div>
+    </section>
+
+    <section class="crew-activities">
+        <h3 class="section-title">최근 활동</h3>
+
+        <div class="activity-list" id="activityList">
+
+            <div class="empty-state" id="emptyActivityState" style="display: none;">
+                <p>아직 활동 기록이 없습니다</p>
+            </div>
+        </div>
+    </section>
+
+    <input type="hidden" id="crewId" value="">
+    <input type="hidden" id="isApplied" value="false">
+</main>
+
+<footer class="crew-footer">
+
+    <button class="btn-action btn-action--join"
+            id="joinBtn"
+            style="display: none;"
+            aria-label="크루 신청하기">
+        가입 신청
+    </button>
+
+    <button class="btn-action btn-action--cancel"
+            id="cancelBtn"
+            style="display: none;"
+            aria-label="신청 취소하기">
+        신청 취소
+    </button>
+</footer>
+
+<nav class="bottom-nav">
+    <a href="/chat" class="nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M8 10H8.01M12 10H12.01M16 10H16.01M21 12C21 16.4183 16.9706 20 12 20C10.4607 20 9.01172 19.6565 7.74467 19.0511L3 20L4.39499 16.28C3.51156 15.0423 3 13.5743 3 12C3 7.58172 7.02944 4 12 4C16.9706 4 21 7.58172 21 12Z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>chat</span>
+    </a>
+    <a href="/crew" class="nav-item nav-item--active">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.3503 17.623 3.8507 18.1676 4.55231C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89317 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>crew</span>
+    </a>
+    <a href="/" class="nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>home</span>
+    </a>
+    <a href="/match" class="nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>match</span>
+    </a>
+    <a href="/my" class="nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>my</span>
+    </a>
+</nav>
+
+<script th:src="@{/js/crew/crewDetailList.js}"></script>
+</body>
+</html>
