@@ -48,6 +48,14 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST,
             "F004",
             "파일 크기가 제한을 초과했습니다."
+    ),
+
+
+    /* ===== 챌린지 ===== */
+    ALREADY_JOINED(
+            HttpStatus.CONFLICT,
+            "CH001",
+            "이미 참여 중인 챌린지입니다."
     );
 
     private final HttpStatus httpStatus;
