@@ -174,7 +174,7 @@ function createChallengeCard(challenge, sectionType) {
     const startDate = formatDate(challenge.startDate);
     const endDate = formatDate(challenge.endDate);
     dateRow.innerHTML = `
-        <span class="challenge-meta-label">기간:</span>
+        <span class="challenge-meta-label">📅 </span>
         <span class="challenge-meta-value">${startDate} ~ ${endDate}</span>
     `;
 
@@ -191,7 +191,7 @@ function createChallengeCard(challenge, sectionType) {
     participantRow.className = "challenge-meta-row";
     const participantCount = challenge.participantCount || 0;
     participantRow.innerHTML = `
-        <span class="challenge-meta-label">참여 인원:</span>
+        <span class="challenge-meta-label">👥 </span>
         <span class="challenge-meta-value">${participantCount}명</span>
     `;
 
