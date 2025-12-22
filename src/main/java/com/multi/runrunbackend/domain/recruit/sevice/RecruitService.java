@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.match.service.MatchSessionService;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitUpdateReqDto;
@@ -40,6 +41,7 @@ public class RecruitService {
   private final RecruitRepository recruitRepository;
   private final UserRepository userRepository;
   private final RecruitUserRepository recruitUserRepository;
+  private final MatchSessionService matchSessionService;
 //  private final CourseRepository courseRepository;
 
 
