@@ -144,6 +144,30 @@ public class CourseController {
             ApiResponse.success("코스 삭제 성공"));
     }
 
+    @PostMapping("/like/{course_id}")
+    public ResponseEntity<ApiResponse> likeCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        courseService.likeCourse(principal, courseId);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 좋아요 성공")
+        );
+    }
+
+    @DeleteMapping("/like/{course_id}")
+    public ResponseEntity<ApiResponse> unLikeCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        courseService.unLikeCourse(principal, courseId);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 좋아요 삭제")
+        );
+    }
+
 }
 
 
