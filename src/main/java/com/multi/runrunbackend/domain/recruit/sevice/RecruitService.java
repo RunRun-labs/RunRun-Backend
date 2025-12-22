@@ -168,6 +168,10 @@ public class RecruitService {
     recruitUserRepository.save(recruitUser);
 
     recruit.increaseParticipants();
+
+    if (recruit.getCurrentParticipants().equals(recruit.getMaxParticipants())) {
+      matchSessionService.createOfflineSession(recruit.getId(), recruit.getUser().getId());
+    }
   }
 
   @Transactional
