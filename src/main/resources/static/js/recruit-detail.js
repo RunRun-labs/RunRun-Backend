@@ -162,6 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderActionButton(recruitData) {
     const actionButton = document.getElementById("actionButton");
     const actionDisabledText = document.getElementById("actionDisabledText");
+    const startRunningButton = document.getElementById("startRunningButton");
 
     const isAuthor = recruitData.isAuthor || false;
     const isParticipant = recruitData.isParticipant || false;
@@ -169,6 +170,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     actionButton.style.display = "none";
     actionDisabledText.style.display = "none";
+    startRunningButton.style.display = "none";
+
+    // 방장인 경우 러닝 시작하기 버튼 표시
+    if (isAuthor && currentParticipants > 1) {
+      startRunningButton.style.display = "block";
+      startRunningButton.onclick = () => {
+        confirmMatch();
+      };
+      return;
+    }
 
     if (isAuthor && currentParticipants === 1) {
       actionButton.textContent = "수정하기";
@@ -224,11 +235,6 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       return;
     }
-
-    if (isAuthor && currentParticipants > 1) {
-      actionDisabledText.textContent = "수정 불가";
-      actionDisabledText.style.display = "block";
-    }
   }
 
   // 참여 취소 함수
@@ -263,6 +269,45 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("참여 취소 처리 중 오류:", error);
       alert("참여 취소 처리 중 오류가 발생했습니다.");
+    }
+  }
+
+  // 매칭 확정 (러닝 시작하기)
+  async function confirmMatch() {
+    try {
+      const token = localStorage.getItem("accessToken") || getCookie("accessToken");
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        window.location.href = "/login";
+        return;
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      };
+
+      const requestBody = {
+        recruitId: parseInt(recruitId, 10),
+      };
+
+      const response = await fetch("/api/match/confirm", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert("러닝이 시작되었습니다.");
+        window.location.href = "/recruit";
+      } else {
+        alert(result.message || "매칭 확정 처리 중 오류가 발생했습니다.");
+      }
+    } catch (error) {
+      console.error("매칭 확정 처리 중 오류:", error);
+      alert("매칭 확정 처리 중 오류가 발생했습니다.");
     }
   }
 
