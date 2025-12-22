@@ -50,23 +50,23 @@ public class CrewService {
     @Transactional
     public Long createCrew(String loginId, CrewCreateReqDto reqDto) {
 
-        // 1. 사용자 조회
+        // 사용자 조회
         User user = findUserByLoginId(loginId);
 
-        // 2. 프리미엄 멤버십인지 검증
+        // 프리미엄 멤버십인지 검증
 //       validatePremiumMembership(user.get);
 
-        // 3. 1인 1크루 생성 제한 검증
+        // 1인 1크루 생성 제한 검증
         validateNotAlreadyLeader(user.getId());
 
-        // 4. 크루명 중복 확인
+        // 크루명 중복 확인
         validateCrewNameNotDuplicate(reqDto.getCrewName());
 
-        // 5. 크루 생성
+        // 크루 생성
         Crew crew = reqDto.toEntity(user);
         crewRepository.save(crew);
 
-        // 6. 크루장 자동 등록
+        // 크루장 자동 등록
         CrewUser crewLeader = CrewUser.toEntity(crew, user, CrewRole.LEADER);
         crewUserRepository.save(crewLeader);
 
@@ -81,19 +81,19 @@ public class CrewService {
      */
     @Transactional
     public void updateCrew(Long crewId, String loginId, CrewUpdateReqDto reqDto) {
-        // 1. 사용자 조회
+        // 사용자 조회
         User user = findUserByLoginId(loginId);
 
-        // 2. 크루 조회
+        // 크루 조회
         Crew crew = findCrewById(crewId);
 
-        // 3. 크루장 권한 검증
+        // 크루장 권한 검증
         validateCrewLeader(crewId, user.getId());
 
-        // 4. 해체되지 않은 크루인지 검증
+        // 해체되지 않은 크루인지 검증
         crew.validateNotDisbanded();
 
-        // 5. 크루 정보 수정
+        // 크루 정보 수정
         crew.updateCrew(
                 reqDto.getCrewDescription(),
                 reqDto.getCrewImageUrl(),
@@ -111,19 +111,19 @@ public class CrewService {
      */
     @Transactional
     public void deleteCrew(Long crewId, String loginId) {
-        // 1. 사용자 조회
+        // 사용자 조회
         User user = findUserByLoginId(loginId);
 
-        // 2. 크루 조회
+        // 크루 조회
         Crew crew = findCrewById(crewId);
 
-        // 3. 크루장 권한 검증
+        // 크루장 권한 검증
         validateCrewLeader(crewId, user.getId());
 
-        // 4. 크루 해체 (soft delete)
+        // 크루 해체 (soft delete)
         crew.softDelete();
 
-        // 5. 모든 크루원 soft delete
+        // 모든 크루원 soft delete
         List<CrewUser> crewUsers = crewUserRepository.findAllByCrewIdAndIsDeletedFalse(crewId);
         crewUsers.forEach(CrewUser::delete);
     }
@@ -142,15 +142,13 @@ public class CrewService {
         Pageable pageable = PageRequest.of(0, size);
         List<Crew> crews;
 
-        // 여러 필터를 조합할 수 있도록 동적 쿼리 사용
-        // keyword, region, distance를 모두 조합 가능
         boolean hasFilters = (keyword != null && !keyword.isBlank())
                 || (distance != null && !distance.isBlank())
                 || (averagePace != null && !averagePace.isBlank())
                 || (recruiting != null);
 
         if (hasFilters) {
-            // 일반 필터 쿼리 사용
+
             crews = crewRepository.findAllWithFilters(
                     cursor, keyword, distance, averagePace, recruiting, CrewStatus.ACTIVE,
                     CrewRecruitStatus.RECRUITING,
@@ -175,13 +173,13 @@ public class CrewService {
      * @description : 크루 상세 조회
      */
     public CrewDetailResDto getCrewDetail(Long crewId) {
-        // 1. 크루 조회
+        // 크루 조회
         Crew crew = findCrewById(crewId);
 
-        // 2. 크루원 수 조회
+        // 크루원 수 조회
         Long memberCount = crewUserRepository.countByCrewIdAndIsDeletedFalse(crewId);
 
-        // 3. 최근 활동 내역 조회 (최대 5개)
+        // 최근 활동 내역 조회 (최대 5개)
         Pageable pageable = PageRequest.of(0, 5);
         List<CrewActivity> recentActivities = crewActivityRepository
                 .findTop5ByCrewIdOrderByCreatedAtDesc(crewId, pageable);
@@ -201,16 +199,16 @@ public class CrewService {
      */
     @Transactional
     public void updateRecruitStatus(String loginId, Long crewId, CrewStatusChangeReqDto reqDto) {
-        // 1. 사용자 조회
+        // 사용자 조회
         User user = findUserByLoginId(loginId);
 
-        // 2. 크루 조회
+        // 크루 조회
         Crew crew = findCrewById(crewId);
 
-        // 3. 크루장 권한 검증
+        // 크루장 권한 검증
         validateCrewLeader(crewId, user.getId());
 
-        // 4. 모집 상태 변경 (해체 여부 검증 포함)
+        // 모집 상태 변경 (해체 여부 검증 포함)
         crew.updateRecruitStatus(reqDto.getRecruitStatus());
     }
 
