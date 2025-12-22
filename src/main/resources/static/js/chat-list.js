@@ -445,8 +445,22 @@ function handleNewMessage(sessionId, message) {
   room.lastMessageSender = message.senderName;
   room.lastMessageTime = message.createdAt || new Date().toISOString();
 
-  // UI 업데이트 (해당 채팅방만)
-  updateChatRoomUI(room);
+  // 채팅방 목록 재정렬 (최신 메시지가 맨 위로)
+  chatRooms.sort((a, b) => {
+    const timeA = a.lastMessageTime ? new Date(a.lastMessageTime) : null;
+    const timeB = b.lastMessageTime ? new Date(b.lastMessageTime) : null;
+    
+    if (!timeA && !timeB) return 0;
+    if (!timeA) return 1;  // null은 뒤로
+    if (!timeB) return -1;
+    
+    return timeB - timeA;  // 내림차순 (최신이 먼저)
+  });
+
+  // 전체 목록 다시 렌더링 (정렬된 순서로)
+  const activeFilter = document.querySelector('.filter-btn.active');
+  const filter = activeFilter ? activeFilter.dataset.filter : 'all';
+  filterChatList(filter);
 }
 
 // 특정 채팅방 UI 업데이트

@@ -267,6 +267,19 @@ public class ChatService {
     // 2. 각 세션을 DTO로 변환
     List<ChatRoomListResDto> result = mySessionUsers.stream()
         .map(this::convertToChatRoomDto)
+        .sorted((a, b) -> {
+          // lastMessageTime 기준 내림차순 정렬 (최신 메시지가 맨 위)
+          LocalDateTime timeA = a.getLastMessageTime();
+          LocalDateTime timeB = b.getLastMessageTime();
+          
+          // null 처리: 메시지 없는 방은 맨 아래로
+          if (timeA == null && timeB == null) return 0;
+          if (timeA == null) return 1;  // a를 뒤로
+          if (timeB == null) return -1; // b를 뒤로
+          
+          // 내림차순: 최신 시간이 먼저
+          return timeB.compareTo(timeA);
+        })
         .toList();
 
     log.info("=== 채팅방 목록 조회 완료: {} 개 ===", result.size());
