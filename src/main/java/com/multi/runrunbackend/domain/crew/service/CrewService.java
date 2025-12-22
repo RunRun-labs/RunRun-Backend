@@ -258,7 +258,7 @@ public class CrewService {
      */
     private void validateCrewLeader(Long crewId, Long userId) {
         boolean isLeader = crewUserRepository
-                .existsByCrewIdAndUserIdAndRole(crewId, userId, CrewRole.LEADER);
+                .existsByCrewIdAndUserIdAndRoleAndIsDeletedFalse(crewId, userId, CrewRole.LEADER);
 
         if (!isLeader) {
             throw new BusinessException(ErrorCode.NOT_CREW_LEADER);
