@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 매칭 선택</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/match-select.css" th:href="@{/css/match-select.css}">
+</head>
+<body>
+<main class="page">
+  <header class="header">
+    <button class="back-button" type="button" aria-label="뒤로가기">
+      <img
+          th:src="@{/img/icons/back.png}"
+          alt="뒤로가기 아이콘"
+      />
+    </button>
+    <h1 class="header-title">매칭 선택</h1>
+  </header>
+
+  <section class="match-buttons">
+    <button class="match-button" data-match-type="online" type="button">
+      <div class="match-icon">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="32" cy="32" r="28" stroke="#000" stroke-width="2.5" fill="none"/>
+          <circle cx="32" cy="32" r="18" stroke="#000" stroke-width="2.5" fill="none"/>
+          <circle cx="32" cy="32" r="8" stroke="#000" stroke-width="2.5" fill="none"/>
+          <path d="M32 4L32 12M32 52L32 60M4 32L12 32M52 32L60 32" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="match-label">온라인 매칭</span>
+    </button>
+
+    <button class="match-button" data-match-type="offline" type="button">
+      <div class="match-icon">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 8L12 18L32 28L52 18L32 8Z" stroke="#000" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+          <path d="M12 18V46L32 56L52 46V18" stroke="#000" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+          <path d="M32 28V56" stroke="#000" stroke-width="2.5"/>
+          <circle cx="32" cy="32" r="3" fill="#000"/>
+        </svg>
+      </div>
+      <span class="match-label">오프라인 매칭</span>
+    </button>
+
+    <button class="match-button" data-match-type="ghost" type="button">
+      <div class="match-icon">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 12C20 12 12 20 12 30C12 38 16 44 24 46V54H40V46C48 44 52 38 52 30C52 20 44 12 32 12Z" stroke="#000" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+          <circle cx="26" cy="30" r="2.5" fill="#000"/>
+          <circle cx="38" cy="30" r="2.5" fill="#000"/>
+          <path d="M26 38C26 40.5 28.5 42.5 32 42.5C35.5 42.5 38 40.5 38 38" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M20 20L18 18M46 20L48 18M20 44L18 46M46 44L48 46" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="match-label">고스트 매칭</span>
+    </button>
+
+    <button class="match-button" data-match-type="solo" type="button">
+      <div class="match-icon">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="32" cy="24" r="10" stroke="#000" stroke-width="2.5" fill="none"/>
+          <path d="M16 50C16 42 23 36 32 36C41 36 48 42 48 50" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M32 16V8M32 40V32" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="match-label">솔로 플레이</span>
+    </button>
+  </section>
+</main>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/match-select.js" th:src="@{/js/match-select.js}"></script>
+</body>
+</html>
+
