@@ -82,8 +82,16 @@ async function loadCrewData() {
 
         // 신청 여부 확인 (로그인한 경우)
         if (token) {
-            const appliedResponse = await fetch(`/api/crews/${crewId}/applied`, {...});
-            isApplied = appliedResponse.data?.applied || false;
+            try {
+                const appliedRes = await fetch(`/api/crews/${crewId}/applied`, {method: 'GET', headers});
+                if (appliedRes.ok) {
+                    const appliedJson = await appliedRes.json();
+                    const appliedData = appliedJson.data || appliedJson;
+                    isApplied = appliedData?.applied || false;
+                }
+            } catch (e) {
+                console.warn('applied 조회 실패:', e);
+            }
         }
 
     } catch (error) {
