@@ -2,8 +2,6 @@ package com.multi.runrunbackend.domain.challenge.repository;
 
 import com.multi.runrunbackend.domain.challenge.entity.UserChallenge;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -16,7 +14,10 @@ import java.util.List;
  */
 public interface UserChallengeRepository extends JpaRepository<UserChallenge, Long> {
 
-    // 특정 사용자의 모든 챌린지 참여 이력 조회
-    @Query("SELECT uc FROM UserChallenge uc JOIN FETCH uc.challenge WHERE uc.user.id = :userId")
-    List<UserChallenge> findByUserId(@Param("userId") Long userId);
+    // 특정 사용자의 챌린지 참여 이력 조회
+    List<UserChallenge> findByUserId(Long userId);
+
+    // 특정 챌린지의 참여자 수 카운트
+    long countByChallengeId(Long challengeId);
+
 }
