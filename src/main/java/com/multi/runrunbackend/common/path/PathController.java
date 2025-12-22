@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Controller
 public class PathController {
 
-
     @GetMapping("/login")
     public String loginView() {
         return "auth/login";
@@ -19,6 +18,16 @@ public class PathController {
         return "auth/signup";
     }
 
+
+  @GetMapping("/chat")
+  public String chatList() {
+    return "chat/chat-list";
+  }
+
+  @GetMapping("/chat/chat1")
+  public String chat1() {
+    return "chat/chat1";
+  }
     @GetMapping("/myPage")
     public String myPageView() {
         return "mypage/mypage";

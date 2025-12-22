@@ -49,6 +49,8 @@ public class JwtConfig {
                     "/public/**",
                     "/error",
                     "/img/**",
+                    "/chat/**",
+                    "/ws/**",
                     "/myPage/**",
                     "/course_auto/**",
                     "/api/routes/**",
