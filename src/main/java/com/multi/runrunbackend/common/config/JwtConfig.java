@@ -49,14 +49,14 @@ public class JwtConfig {
                     "/public/**",
                     "/error",
                     "/img/**",
-                    "/test/**",
+                    "/course_auto/**",
                     "/api/routes/**",
                     "/files/**",
                     "/course",
                     "/courseCreate",
                     "/courseDetail/**",
                     "/courseUpdate/**",
-                    "/test2/**"
+                    "/course_manual/**"
                 ).permitAll()
                 .requestMatchers(
                     PathRequest.toStaticResources().atCommonLocations()

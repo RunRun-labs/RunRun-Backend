@@ -21,14 +21,14 @@ public class PathController {
         return "auth/signup";
     }
 
-    @GetMapping("/test")
+    @GetMapping("/course_auto")
     public String testView() {
-        return "test";
+        return "courseAuto";
     }
 
-    @GetMapping("/test2")
+    @GetMapping("/course_manual")
     public String test2View() {
-        return "test2";
+        return "courseManual";
     }
 
     @GetMapping("/course")
