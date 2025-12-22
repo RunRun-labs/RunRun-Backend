@@ -50,6 +50,15 @@ public enum ErrorCode {
     JOIN_REQUEST_NOT_PENDING(HttpStatus.BAD_REQUEST, "CR012", "대기 상태의 요청만 처리할 수 있습니다."),
     ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR013", "이미 가입 신청한 크루입니다."),
     CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014", "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
+
+    /* ===== 크루 가입 ===== */
+    ALREADY_JOINED_CREW(HttpStatus.BAD_REQUEST, "CR015", "이미 가입한 크루가 있습니다."),
+    ALREADY_REQUESTED_JOIN(HttpStatus.BAD_REQUEST, "CR016", "이미 가입 신청한 크루입니다."),
+    INVALID_JOIN_STATUS(HttpStatus.BAD_REQUEST, "CR017", "대기중 상태의 신청만 처리할 수 있습니다."),
+    INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, "CR019", "포인트가 부족합니다."),  // 포인트 구현할 경우
+    NOT_PENDING_STATUS(HttpStatus.BAD_REQUEST, "CR020", "대기중 상태의 요청만 취소할 수 있습니다."),
+    CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR021", "크루원을 찾을 수 없습니다."),
+
     FILE_EMPTY(
             HttpStatus.BAD_REQUEST,
             "F002",
@@ -160,12 +169,8 @@ public enum ErrorCode {
             HttpStatus.INTERNAL_SERVER_ERROR,
             "CRS_S_004",
             "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
-    );
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "CRS_S_004",
-        "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
     ),
-  /* ==== 모집글 ====*/
+    /* ==== 모집글 ====*/
     RECRUIT_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "모집글을 찾을 수 없습니다."),
     INVALID_RECRUIT(HttpStatus.BAD_REQUEST, "R002", "삭제된 모집글입니다"),
     RECRUIT_UPDATE_DENIED(HttpStatus.FORBIDDEN, "R003", "모집글 수정 권한이 없습니다."),
