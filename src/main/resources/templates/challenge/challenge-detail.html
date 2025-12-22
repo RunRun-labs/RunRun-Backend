@@ -44,26 +44,39 @@
         />
     </div>
 
-    <!-- 참여 상태에 따른 UI -->
-    <section class="challenge-action-section">
+    <!-- 챌린지 정보 카드 -->
+    <section class="challenge-info-card">
+        <!-- 날짜 범위 -->
+        <div class="info-row">
+            <span class="info-icon">📅</span>
+            <span class="info-text" data-role="period-text">-</span>
+        </div>
+
+        <!-- 참가자 수 -->
+        <div class="info-row">
+            <span class="info-icon">👥</span>
+            <span class="info-text" data-role="participant-text">-명 참가</span>
+        </div>
+
         <!-- 참여중인 경우: 진행 상황 -->
-        <div class="challenge-progress-area" data-role="progress-area" hidden>
-            <div class="progress-header">
-                <span class="progress-label">진행 상황</span>
-                <span class="progress-value" data-role="progress-text">0%</span>
-            </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar" data-role="progress-bar">
-                    <div class="progress-fill" data-role="progress-fill" style="width: 0%"></div>
-                </div>
-            </div>
-            <div class="progress-stats" data-role="progress-stats">
-                <span data-role="progress-current">0</span>
-                <span>/</span>
-                <span data-role="progress-target">0</span>
+        <div class="info-row progress-row" data-role="progress-area" hidden>
+            <span class="info-label">진행 상황</span>
+            <span class="info-value" data-role="progress-stats">-</span>
+        </div>
+        <div class="progress-bar-container" data-role="progress-bar-container" hidden>
+            <div class="progress-bar" data-role="progress-bar">
+                <div class="progress-fill" data-role="progress-fill" style="width: 0%"></div>
             </div>
         </div>
 
+        <!-- 목표 달성 기간 메시지 -->
+        <div class="info-message" data-role="days-message">
+            <span data-role="days-message-text">-</span>
+        </div>
+    </section>
+
+    <!-- 참여 상태에 따른 UI -->
+    <section class="challenge-action-section">
         <!-- 참여하지 않은 경우: 참여하기 버튼 -->
         <button
                 class="join-button"
@@ -84,13 +97,6 @@
             챌린지 포기
         </button>
     </section>
-
-    <!-- 남은 일수 -->
-    <div class="days-remaining" data-role="days-remaining">
-        <span class="days-label">종료까지</span>
-        <span class="days-value" data-role="days-text">-일</span>
-        <span class="days-suffix">남음</span>
-    </div>
 
     <!-- 챌린지 상세 정보 -->
     <section class="challenge-detail-section">
@@ -154,4 +160,5 @@
 <script src="/js/challenge-detail.js" th:src="@{/js/challenge-detail.js}"></script>
 </body>
 </html>
+
 
