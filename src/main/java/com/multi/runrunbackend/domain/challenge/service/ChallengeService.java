@@ -120,6 +120,69 @@ public class ChallengeService {
         return resDtos;
     }
 
+    /**
+     * 챌린지 상세 조회
+     */
+    @Transactional(readOnly = true)
+    public ChallengeResDto getChallengeDetail(Long challengeId, CustomUser principal) {
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
+
+        ChallengeResDto resDto = ChallengeResDto.from(challenge);
+
+        // 로그인한 사용자라면 참여 상태와 진행도 주입
+        if (principal != null) {
+            User user = getUserByPrincipal(principal);
+            userChallengeRepository.findByUserId(user.getId()).stream()
+                    .filter(uc -> uc.getChallenge().getId().equals(challengeId))
+                    .findFirst()
+                    .ifPresent(uc -> {
+                        resDto.setMyStatus(uc.getStatus());
+                        resDto.setProgressValue(uc.getProgressValue()); // 진행도 설정
+                    });
+        }
+
+        return resDto;
+    }
+
+    /**
+     * 챌린지 참여하기
+     */
+    public void joinChallenge(Long challengeId, CustomUser principal) {
+        User user = getUserByPrincipal(principal);
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
+
+        // 중복 참여 체크
+        boolean alreadyJoined = userChallengeRepository.findByUserId(user.getId()).stream()
+                .anyMatch(uc -> uc.getChallenge().getId().equals(challengeId)
+                        && (uc.getStatus() == UserChallengeStatus.JOINED
+                        || uc.getStatus() == UserChallengeStatus.IN_PROGRESS));
+
+        if (alreadyJoined) {
+            // 적절한 예외 처리 (이미 참여중)
+            throw new IllegalArgumentException("이미 참여 중인 챌린지입니다.");
+        }
+
+        // 새 참여 기록 생성 (UserChallenge.join 메서드 활용)
+        UserChallenge userChallenge = UserChallenge.join(user, challenge);
+        userChallengeRepository.save(userChallenge);
+    }
+
+    /**
+     * 챌린지 포기하기 (취소)
+     */
+    public void cancelChallenge(Long challengeId, CustomUser principal) {
+        User user = getUserByPrincipal(principal);
+
+        UserChallenge userChallenge = userChallengeRepository.findByUserId(user.getId()).stream()
+                .filter(uc -> uc.getChallenge().getId().equals(challengeId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
+
+        userChallengeRepository.delete(userChallenge);
+    }
+
 
     private User getUserByPrincipal(CustomUser principal) {
         if (principal == null) {

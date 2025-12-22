@@ -40,7 +40,7 @@ public class ChallengeController {
         return ResponseEntity.ok(ApiResponse.success("챌린지 생성 성공", res));
     }
 
-    
+
     @PutMapping(value = "/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<ApiResponse<Void>> updateChallenge(
             @PathVariable Long id,
@@ -68,4 +68,35 @@ public class ChallengeController {
         List<ChallengeResDto> res = challengeService.getChallengeList(principal);
         return ResponseEntity.ok(ApiResponse.success("챌린지 목록 조회 성공", res));
     }
+
+    // 챌린지 상세 조회 (NEW)
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ChallengeResDto>> getChallengeDetail(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        ChallengeResDto res = challengeService.getChallengeDetail(id, principal);
+        return ResponseEntity.ok(ApiResponse.success("챌린지 상세 조회 성공", res));
+    }
+
+    // 챌린지 참여하기 (NEW)
+    @PostMapping("/{id}/join")
+    public ResponseEntity<ApiResponse<Void>> joinChallenge(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        challengeService.joinChallenge(id, principal);
+        return ResponseEntity.ok(ApiResponse.success("챌린지 참여 성공", null));
+    }
+
+    
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<Void>> cancelChallenge(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        challengeService.cancelChallenge(id, principal);
+        return ResponseEntity.ok(ApiResponse.success("챌린지 포기 성공", null));
+    }
+
 }
