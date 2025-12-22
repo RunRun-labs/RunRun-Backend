@@ -32,31 +32,41 @@ public class JwtConfig {
         return new BCryptPasswordEncoder();
     }
 
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http.csrf(AbstractHttpConfigurer::disable)
-        .formLogin(AbstractHttpConfigurer::disable)
-        .httpBasic(AbstractHttpConfigurer::disable)
-        .sessionManagement(
-            sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        ).authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/auth/**",
-                "/login",
-                "/signup",
-                "/swagger-ui/**",
-                "/v3/api-docs/**",
-                "/public/**",
-                "/error",
-                "/img/**",
-                "/match/**",
-                "/recruit/**",
-                "/myPage/**"
-            ).permitAll()
-            .requestMatchers(
-                PathRequest.toStaticResources().atCommonLocations()
-            ).permitAll()
-            .anyRequest().authenticated()
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .sessionManagement(
+                sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            ).authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/auth/**",
+                    "/login",
+                    "/signup",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/public/**",
+                    "/error",
+                    "/img/**",
+                    "/chat/**",
+                    "/ws/**",
+                    "/myPage/**",
+                    "/course_auto/**",
+                    "/api/routes/**",
+                    "/files/**",
+                    "/course",
+                    "/courseCreate",
+                    "/courseDetail/**",
+                    "/courseUpdate/**",
+                    "/course_manual/**",
+                    "/match/**",
+                    "/recruit/**"
+                ).permitAll()
+                .requestMatchers(
+                    PathRequest.toStaticResources().atCommonLocations()
+                ).permitAll()
+                .anyRequest().authenticated()
 
             ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
                 UsernamePasswordAuthenticationFilter.class).exceptionHandling(

@@ -8,6 +8,7 @@ import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.jwt.dto.TokenDto;
 import com.multi.runrunbackend.common.jwt.service.TokenService;
+import com.multi.runrunbackend.domain.auth.dto.AuthSignInResDto;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignInDto;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignUpDto;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -64,7 +65,7 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenDto login(UserSignInDto userSignInDto) {
+    public AuthSignInResDto login(UserSignInDto userSignInDto) {
         UserDetails userDetails = customUserDetailService.loadUserByUsername(
             userSignInDto.getLoginId());
         if (!passwordEncoder.matches(userSignInDto.getLoginPw(),
@@ -83,7 +84,8 @@ public class AuthService {
         User user = userRepository.findByLoginId(userSignInDto.getLoginId())
             .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
         user.updateLastLogin(now());
-        return token;
+
+        return AuthSignInResDto.from(token, user);
     }
 }
 

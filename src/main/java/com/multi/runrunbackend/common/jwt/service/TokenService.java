@@ -109,12 +109,12 @@ public class TokenService {
     }
 
 
-    private String createAccessToken(String memberId, List<String> roles, Long memberNo) {
-        return tokenProvider.generateToken(memberId, roles, "A", memberNo);
+    private String createAccessToken(String loginId, List<String> roles, Long userId) {
+        return tokenProvider.generateToken(loginId, roles, "A", userId);
     }
 
-    private String createRefreshToken(String memberId, Long memberNo) {
-        return tokenProvider.generateToken(memberId, null, "R", memberNo);
+    private String createRefreshToken(String loginId, Long userId) {
+        return tokenProvider.generateToken(loginId, null, "R", userId);
     }
 
     public void deleteRefreshToken(String accessToken) {
