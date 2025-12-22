@@ -3,12 +3,10 @@ package com.multi.runrunbackend.domain.crew.repository;
 import com.multi.runrunbackend.domain.crew.entity.CrewRole;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author : BoKyung
@@ -41,40 +39,28 @@ public interface CrewUserRepository extends JpaRepository<CrewUser, Long> {
      */
     boolean existsByCrewIdAndUserIdAndIsDeletedFalse(Long crewId, Long userId);
 
-    /**
-     * @param crewId 크루 ID
-     * @description : 특정 크루의 모든 크루원을 역할로 조회 (is_deleted = false만)
-     */
-    @Query("SELECT cu FROM CrewUser cu " +
-            "JOIN FETCH cu.user " +
-            "WHERE cu.crew.id = :crewId " +
-            "AND cu.isDeleted = false " +
-            "ORDER BY " +
-            "CASE cu.role " +
-            "  WHEN 'LEADER' THEN 0 " +
-            "  WHEN 'SUB_LEADER' THEN 1 " +
-            "  WHEN 'STAFF' THEN 2 " +
-            "  ELSE 3 " +
-            "END, cu.createdAt ASC")
-    List<CrewUser> indAllByCrewIdAndIsDeletedFalseOrderByRole(@Param("crewId") Long crewId);
+//    /**
+//     * @param crewId 크루 ID
+//     * @description : 특정 크루의 모든 크루원을 역할로 조회 (is_deleted = false만)
+//     */
+//    @Query("SELECT cu FROM CrewUser cu " +
+//            "JOIN FETCH cu.user " +
+//            "WHERE cu.crew.id = :crewId " +
+//            "AND cu.isDeleted = false " +
+//            "ORDER BY " +
+//            "CASE cu.role " +
+//            "  WHEN com.multi.runrunbackend.domain.crew.entity.CrewRole.LEADER THEN 0 " +
+//            "  WHEN com.multi.runrunbackend.domain.crew.entity.CrewRole.SUB_LEADER THEN 1 " +
+//            "  WHEN com.multi.runrunbackend.domain.crew.entity.CrewRole.STAFF THEN 2 " +
+//            "  ELSE 3 " +
+//            "END, cu.createdAt ASC")
+//    List<CrewUser> findAllByCrewIdAndIsDeletedFalseOrderByRole(@Param("crewId") Long crewId);
 
     /**
      * @param crewId 크루 ID
      * @description : 크루원 수 조회
      */
     Long countByCrewIdAndIsDeletedFalse(Long crewId);
-
-    /**
-     * @param userId 사용자 ID
-     * @description : 사용자가 속한 크루 조회 (1인 1크루, 논리 삭제 제외)
-     */
-    @Query("SELECT cu FROM CrewUser cu " +
-            "JOIN FETCH cu.crew c " +
-            "WHERE cu.user.id = :userId " +
-            "AND cu.isDeleted = false " +
-            "AND c.isDeleted = false " +
-            "AND c.crewStatus = 'ACTIVE'")
-    Optional<CrewUser> findByUserIdAndIsDeletedFalse(@Param("userId") Long userId);
 
     /**
      * @param crewId 크루 ID
