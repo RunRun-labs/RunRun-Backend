@@ -125,11 +125,30 @@ function renderChallengeDetail(challenge) {
         descriptionEl.textContent = challenge.description || "상세 정보가 없습니다.";
     }
 
+    // 챌린지 기간 (시작일 ~ 종료일)
+    const periodTextEl = document.querySelector('[data-role="period-text"]');
+    if (periodTextEl) {
+        const startDate = formatDate(challenge.startDate);
+        const endDate = formatDate(challenge.endDate);
+        periodTextEl.textContent = `${startDate} ~ ${endDate}`;
+    }
+
+    // 참가자 수
+    const participantTextEl = document.querySelector('[data-role="participant-text"]');
+    if (participantTextEl) {
+        const participantCount = challenge.participantCount || 0;
+        participantTextEl.textContent = `${participantCount}명 참가`;
+    }
+
     // 남은 일수 계산
     const daysRemaining = calculateDaysRemaining(challenge.endDate);
-    const daysTextEl = document.querySelector('[data-role="days-text"]');
-    if (daysTextEl) {
-        daysTextEl.textContent = daysRemaining >= 0 ? `${daysRemaining}일` : "종료됨";
+    const daysMessageEl = document.querySelector('[data-role="days-message-text"]');
+    if (daysMessageEl) {
+        if (daysRemaining >= 0) {
+            daysMessageEl.textContent = `목표 달성 기간이 ${daysRemaining}일 남았어요!`;
+        } else {
+            daysMessageEl.textContent = "챌린지가 종료되었습니다.";
+        }
     }
 
     // 사용자 참여 상태에 따른 UI 표시
@@ -139,21 +158,50 @@ function renderChallengeDetail(challenge) {
     const joinBtn = document.querySelector('[data-role="join-button"]');
     const cancelBtn = document.querySelector('[data-role="cancel-button"]');
     const progressArea = document.querySelector('[data-role="progress-area"]');
+    const progressBarContainer = document.querySelector('[data-role="progress-bar-container"]');
 
-    if (joinBtn) joinBtn.hidden = true;
-    if (cancelBtn) cancelBtn.hidden = true;
-    if (progressArea) progressArea.hidden = true;
+    // 모든 UI 요소를 명시적으로 숨김
+    if (joinBtn) {
+        joinBtn.hidden = true;
+        joinBtn.style.display = "none";
+    }
+    if (cancelBtn) {
+        cancelBtn.hidden = true;
+        cancelBtn.style.display = "none";
+    }
+    if (progressArea) {
+        progressArea.hidden = true;
+        progressArea.style.display = "none";
+    }
+    if (progressBarContainer) {
+        progressBarContainer.hidden = true;
+        progressBarContainer.style.display = "none";
+    }
 
     if (status === "JOINED" || status === "IN_PROGRESS") {
         // 1. 참여중: 진행 상황 표시 + 포기 버튼
+        if (progressArea) {
+            progressArea.hidden = false;
+            progressArea.style.display = "flex";
+        }
+        if (progressBarContainer) {
+            progressBarContainer.hidden = false;
+            progressBarContainer.style.display = "block";
+        }
         showProgressArea(challenge);
-        if (cancelBtn) cancelBtn.hidden = false;
+        if (cancelBtn) {
+            cancelBtn.hidden = false;
+            cancelBtn.style.display = "block";
+        }
     } else if (status === "COMPLETED" || status === "FAILED") {
         // 2. 완료/실패: 아무 버튼도 안 띄우거나 "완료됨" 표시
+        // progress area는 숨김 상태 유지
     } else {
         // 3. 미참여 (null, CANCELED): 참여하기 버튼 표시 (단, 기간이 남았을 때만)
+        // progress area는 숨김 상태 유지
         if (daysRemaining >= 0 && joinBtn) {
             joinBtn.hidden = false;
+            joinBtn.style.display = "block";
         }
     }
 }
@@ -165,7 +213,9 @@ function showProgressArea(challenge) {
     const progressArea = document.querySelector('[data-role="progress-area"]');
     if (!progressArea) return;
 
+    // 이미 renderChallengeDetail에서 표시 처리했지만, 이중으로 보장
     progressArea.hidden = false;
+    progressArea.style.display = "flex";
 
     let targetValue = challenge.targetValue || 0;
     const progressValue = challenge.progressValue || 0;
@@ -181,27 +231,18 @@ function showProgressArea(challenge) {
         progressPercent = Math.min((progressValue / targetValue) * 100, 100);
     }
 
-    // 진행률 텍스트
-    const progressTextEl = document.querySelector('[data-role="progress-text"]');
-    if (progressTextEl) {
-        progressTextEl.textContent = `${Math.round(progressPercent)}%`;
+    // 진행 통계 (현재 / 목표) - 카드 형식에 맞게 표시
+    const progressStatsEl = document.querySelector('[data-role="progress-stats"]');
+    if (progressStatsEl) {
+        const currentText = formatProgressValue(progressValue, challenge.challengeType);
+        const targetText = formatProgressValue(targetValue, challenge.challengeType);
+        progressStatsEl.textContent = `${currentText}/${targetText}`;
     }
 
     // 진행 바
     const progressFillEl = document.querySelector('[data-role="progress-fill"]');
     if (progressFillEl) {
         progressFillEl.style.width = `${progressPercent}%`;
-    }
-
-    // 진행 통계 (현재 / 목표)
-    const progressCurrentEl = document.querySelector('[data-role="progress-current"]');
-    const progressTargetEl = document.querySelector('[data-role="progress-target"]');
-    if (progressCurrentEl) {
-        progressCurrentEl.textContent = formatProgressValue(progressValue, challenge.challengeType);
-    }
-    if (progressTargetEl) {
-        // targetValue는 위에서 분 단위로 변환되었으므로 formatProgressValue(->formatTime)에서 올바르게 처리됨
-        progressTargetEl.textContent = formatProgressValue(targetValue, challenge.challengeType);
     }
 }
 
@@ -222,6 +263,19 @@ function formatProgressValue(value, challengeType) {
         default:
             return value.toString();
     }
+}
+
+/**
+ * 날짜 포맷팅 (YYYY-MM-DD → YYYY.MM.DD)
+ */
+function formatDate(dateString) {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "-";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}.${month}.${day}`;
 }
 
 /**
