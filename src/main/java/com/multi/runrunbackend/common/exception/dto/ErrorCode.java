@@ -30,24 +30,24 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_102", "유효하지 않은 리프레시 토큰입니다."),
     FILE_UPLOAD_FAILED(
 
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "F001",
-            "파일 업로드에 실패했습니다."
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "F001",
+        "파일 업로드에 실패했습니다."
     ),
     FILE_EMPTY(
-            HttpStatus.BAD_REQUEST,
-            "F002",
-            "업로드할 파일이 비어 있습니다."
+        HttpStatus.BAD_REQUEST,
+        "F002",
+        "업로드할 파일이 비어 있습니다."
     ),
     FILE_NOT_IMAGE(
-            HttpStatus.BAD_REQUEST,
-            "F003",
-            "이미지 파일만 업로드할 수 있습니다."
+        HttpStatus.BAD_REQUEST,
+        "F003",
+        "이미지 파일만 업로드할 수 있습니다."
     ),
     FILE_SIZE_EXCEEDED(
-            HttpStatus.BAD_REQUEST,
-            "F004",
-            "파일 크기가 제한을 초과했습니다."
+        HttpStatus.BAD_REQUEST,
+        "F004",
+        "파일 크기가 제한을 초과했습니다."
     ),
     /*==== 코스 ====*/
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS_001", "코스를 찾을 수 없습니다"),
@@ -144,7 +144,13 @@ public enum ErrorCode {
         HttpStatus.INTERNAL_SERVER_ERROR,
         "CRS_S_004",
         "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
-    );
+    ),
+    ALREADY_LIKED_COURSE(HttpStatus.CONFLICT, "CRS_005", "이미 좋아요한 코스입니다"),
+    COURSE_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "CRS_006", "사용할 수 없는 코스입니다"),
+    CANNOT_LIKE_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_007",
+        "본인의 코스는 좋아요할 수 없습니다"), COURSELIKE_NOT_FOUND(
+        HttpStatus.NOT_FOUND, "CRS_008", "해당 좋아요를 찾을 수 없습니다"),
+    NOT_LIKED(HttpStatus.BAD_REQUEST, "CRS_009", "좋아요를 누르지 않은 코스입니다");
 
 
     private final HttpStatus httpStatus;
