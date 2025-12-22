@@ -1,6 +1,11 @@
 package com.multi.runrunbackend.domain.course.service;
 
+import static com.multi.runrunbackend.common.exception.dto.ErrorCode.ALREADY_LIKED_COURSE;
+import static com.multi.runrunbackend.common.exception.dto.ErrorCode.CANNOT_LIKE_OWN_COURSE;
+import static com.multi.runrunbackend.common.exception.dto.ErrorCode.COURSE_NOT_AVAILABLE;
+
 import com.multi.runrunbackend.common.exception.custom.BadRequestException;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.ExternalApiException;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
@@ -22,6 +27,8 @@ import com.multi.runrunbackend.domain.course.dto.res.CourseUpdateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.dto.res.TmapPedestrianResDto;
 import com.multi.runrunbackend.domain.course.entity.Course;
+import com.multi.runrunbackend.domain.course.entity.CourseLike;
+import com.multi.runrunbackend.domain.course.repository.CourseLikeRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseRepositoryCustom;
 import com.multi.runrunbackend.domain.course.util.GeometryParser;
@@ -72,6 +79,7 @@ public class CourseService {
     private final FileStorage fileStorage;
     private final CourseRepositoryCustom courseRepositoryCustom;
     private final GeometryParser geometryParser;
+    private final CourseLikeRepository courseLikeRepository;
 
     @Value("${tmap.app-key}")
     private String tmapAppKey;
@@ -139,7 +147,7 @@ public class CourseService {
         if (!course.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException(ErrorCode.COURSE_FORBIDDEN);
         }
-        
+
         LineString parsedPath = geometryParser.parseLineString(req.getPath());
 
         LineString cleanedPath = simplifyLineString(parsedPath);
@@ -862,6 +870,58 @@ public class CourseService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
         return CourseDetailResDto.fromEntity(course, user);
+
+    }
+
+    public void likeCourse(CustomUser principal, Long courseId) {
+
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(COURSE_NOT_AVAILABLE);
+        }
+        if (course.getUser().getId().equals(user.getId())) {
+            throw new BusinessException(CANNOT_LIKE_OWN_COURSE);
+        }
+
+        if (courseLikeRepository.existsByCourse_IdAndUser_Id(user.getId(), courseId)) {
+            throw new BusinessException(ALREADY_LIKED_COURSE);
+        }
+        courseLikeRepository.save(CourseLike.create(user, course));
+
+        courseRepository.increaseLikeCount(courseId);
+    }
+
+    public void unLikeCourse(CustomUser principal, Long courseId) {
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(COURSE_NOT_AVAILABLE);
+        }
+
+        int deleted = courseLikeRepository
+            .deleteByCourseIdAndUserId(courseId, user.getId());
+
+        if (deleted == 0) {
+            throw new BadRequestException(ErrorCode.NOT_LIKED);
+        }
+
+        int updated = courseRepository.decreaseLikeCount(courseId);
+
+        if (updated == 0) {
+            log.warn("likeCount already zero. courseId={}", courseId);
+        }
 
     }
 
