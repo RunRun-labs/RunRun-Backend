@@ -1,6 +1,8 @@
 package com.multi.runrunbackend.domain.recruit.repository;
 
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,4 +46,6 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
       @Param("keyword") String keyword,
       Pageable pageable
   );
+
+  List<Recruit> findAllByIsDeletedFalseAndMeetingAtBefore(LocalDateTime time);
 }
