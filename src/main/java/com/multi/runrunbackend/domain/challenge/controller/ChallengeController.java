@@ -2,8 +2,7 @@ package com.multi.runrunbackend.domain.challenge.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
-import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeCreateReqDto;
-import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeUpdateReqDto;
+import com.multi.runrunbackend.domain.challenge.dto.req.ChallengeReqDto;
 import com.multi.runrunbackend.domain.challenge.dto.res.ChallengeResDto;
 import com.multi.runrunbackend.domain.challenge.service.ChallengeService;
 import jakarta.validation.Valid;
@@ -32,7 +31,7 @@ public class ChallengeController {
 
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<ApiResponse<ChallengeResDto>> createChallenge(
-            @RequestPart("request") @Valid ChallengeCreateReqDto req,
+            @RequestPart("request") @Valid ChallengeReqDto req,
             @RequestPart(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal CustomUser principal
     ) {
@@ -44,7 +43,7 @@ public class ChallengeController {
     @PutMapping(value = "/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<ApiResponse<Void>> updateChallenge(
             @PathVariable Long id,
-            @RequestPart("request") @Valid ChallengeUpdateReqDto req,
+            @RequestPart("request") @Valid ChallengeReqDto req,
             @RequestPart(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal CustomUser principal
     ) {
@@ -69,7 +68,7 @@ public class ChallengeController {
         return ResponseEntity.ok(ApiResponse.success("챌린지 목록 조회 성공", res));
     }
 
-    // 챌린지 상세 조회 (NEW)
+    // 챌린지 상세 조회
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ChallengeResDto>> getChallengeDetail(
             @PathVariable Long id,
@@ -79,7 +78,7 @@ public class ChallengeController {
         return ResponseEntity.ok(ApiResponse.success("챌린지 상세 조회 성공", res));
     }
 
-    // 챌린지 참여하기 (NEW)
+    // 챌린지 참여하기
     @PostMapping("/{id}/join")
     public ResponseEntity<ApiResponse<Void>> joinChallenge(
             @PathVariable Long id,
@@ -89,7 +88,7 @@ public class ChallengeController {
         return ResponseEntity.ok(ApiResponse.success("챌린지 참여 성공", null));
     }
 
-    
+
     @PostMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<Void>> cancelChallenge(
             @PathVariable Long id,
