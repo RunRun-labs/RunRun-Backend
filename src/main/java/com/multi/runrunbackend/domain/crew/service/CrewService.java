@@ -10,10 +10,7 @@ import com.multi.runrunbackend.domain.crew.dto.res.CrewActivityResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewListResDto;
-import com.multi.runrunbackend.domain.crew.entity.Crew;
-import com.multi.runrunbackend.domain.crew.entity.CrewActivity;
-import com.multi.runrunbackend.domain.crew.entity.CrewRole;
-import com.multi.runrunbackend.domain.crew.entity.CrewUser;
+import com.multi.runrunbackend.domain.crew.entity.*;
 import com.multi.runrunbackend.domain.crew.repository.CrewActivityRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
@@ -43,6 +40,7 @@ public class CrewService {
     private final CrewUserRepository crewUserRepository;
     private final CrewActivityRepository crewActivityRepository;
     private final UserRepository userRepository;
+    //    private final MembershipRepository membershipRepository;
     private final TokenProvider tokenProvider;
 
     /**
@@ -51,6 +49,7 @@ public class CrewService {
      */
     @Transactional
     public Long createCrew(String loginId, CrewCreateReqDto reqDto) {
+
         // 1. 사용자 조회
         User user = findUserByLoginId(loginId);
 
@@ -63,25 +62,8 @@ public class CrewService {
         // 4. 크루명 중복 확인
         validateCrewNameNotDuplicate(reqDto.getCrewName());
 
-        // 5. 이미지 URL이 없을 경우 기본값 설정
-        String imageUrl = reqDto.getCrewImageUrl();
-        if (imageUrl == null || imageUrl.trim().isEmpty()) {
-            // 기본 이미지 URL 설정 (SVG 데이터 URI 사용)
-            // 회색 배경에 "Crew Image" 텍스트가 있는 간단한 SVG
-            imageUrl = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI0Y1RjVGNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5DcmV3IEltYWdlPC90ZXh0Pjwvc3ZnPg==";
-        }
-
-        // 6. 크루 생성 (이미지 URL 포함)
-        CrewCreateReqDto reqDtoWithImage = CrewCreateReqDto.builder()
-                .crewName(reqDto.getCrewName())
-                .crewDescription(reqDto.getCrewDescription())
-                .crewImageUrl(imageUrl)
-                .region(reqDto.getRegion())
-                .distance(reqDto.getDistance())
-                .averagePace(reqDto.getAveragePace())
-                .activityTime(reqDto.getActivityTime())
-                .build();
-        Crew crew = reqDtoWithImage.toEntity(user);
+        // 5. 크루 생성
+        Crew crew = reqDto.toEntity(user);
         crewRepository.save(crew);
 
         // 6. 크루장 자동 등록
@@ -170,10 +152,12 @@ public class CrewService {
         if (hasFilters) {
             // 일반 필터 쿼리 사용
             crews = crewRepository.findAllWithFilters(
-                    cursor, keyword, distance, averagePace, recruiting, pageable);
+                    cursor, keyword, distance, averagePace, recruiting, CrewStatus.ACTIVE,
+                    CrewRecruitStatus.RECRUITING,
+                    CrewRecruitStatus.CLOSED, pageable);
         } else {
             // 필터가 없는 경우
-            crews = crewRepository.findAllByIdLessThanOrderByIdDesc(cursor, pageable);
+            crews = crewRepository.findAllByIdLessThanOrderByIdDesc(cursor, CrewStatus.ACTIVE, pageable);
         }
 
         List<CrewListResDto> crewListResDtos = crews.stream()
@@ -203,7 +187,7 @@ public class CrewService {
                 .findTop5ByCrewIdOrderByCreatedAtDesc(crewId, pageable);
 
         List<CrewActivityResDto> activityResDtos = recentActivities.stream()
-                .map(CrewActivityResDto::toEntity)
+                .map(CrewActivityResDto::toDto)
                 .collect(Collectors.toList());
 
         return CrewDetailResDto.toEntity(crew, memberCount, activityResDtos);
