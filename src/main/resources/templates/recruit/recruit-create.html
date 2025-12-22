@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 모집글 생성</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/recruit-create.css" th:href="@{/css/recruit-create.css}">
+  <script
+      type="text/javascript"
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=8b23243ecce1d67f7d49784724586afa&libraries=services,clusterer">
+  </script>
+</head>
+<body>
+<main class="page">
+  <header class="header">
+    <button type="button" id="backBtn" class="back-button" aria-label="뒤로가기">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <h1 class="header-title">모집글 생성</h1>
+  </header>
+
+  <div class="form-container">
+    <!-- 제목 -->
+    <div class="form-group">
+      <label for="title" class="form-label">제목</label>
+      <input
+          type="text"
+          id="title"
+          class="form-input"
+          placeholder="제목을 입력하세요"
+          maxlength="100"
+      />
+    </div>
+
+    <!-- 코스 -->
+    <div class="form-group">
+      <label for="course" class="form-label">코스</label>
+      <div class="course-input-group">
+        <input
+            type="text"
+            id="course"
+            class="form-input"
+            placeholder="코스를 선택하세요"
+            readonly
+        />
+        <button type="button" id="courseSearchBtn" class="course-search-button">조회</button>
+      </div>
+    </div>
+
+    <!-- 출발지 -->
+    <div class="form-group">
+      <label for="meetingPlace" class="form-label">출발지</label>
+      <input
+          type="text"
+          id="meetingPlace"
+          class="form-input"
+          placeholder="지도에서 위치를 클릭하세요"
+          readonly
+      />
+    </div>
+
+    <!-- 카카오맵 -->
+    <div class="map-section">
+      <div id="map" class="map-container"></div>
+    </div>
+
+    <!-- 최대 인원 -->
+    <div class="form-group">
+      <label for="maxParticipants" class="form-label">최대 인원</label>
+      <input
+          type="number"
+          id="maxParticipants"
+          class="form-input"
+          placeholder="최대 인원을 입력하세요"
+          min="2"
+          value="2"
+      />
+    </div>
+
+    <!-- 출발시간 -->
+    <div class="form-group">
+      <label class="form-label">출발시간</label>
+      <div class="datetime-group">
+        <input
+            type="date"
+            id="meetingDate"
+            class="form-input"
+        />
+        <select
+            id="meetingTime"
+            class="form-input"
+        >
+          <!-- JavaScript로 30분 단위 옵션 생성 -->
+        </select>
+      </div>
+    </div>
+
+    <!-- 설명 -->
+    <div class="form-group">
+      <label for="content" class="form-label">설명</label>
+      <textarea
+          id="content"
+          class="form-textarea"
+          rows="5"
+          placeholder="모집글 설명을 입력하세요"
+      ></textarea>
+    </div>
+
+    <!-- 태그 선택 영역 -->
+    <div class="tags-section">
+      <!-- 뛸 거리 -->
+      <div class="tag-group">
+        <label class="tag-label">뛸 거리</label>
+        <div class="chip-container">
+          <button type="button" class="chip" data-distance="3">3km</button>
+          <button type="button" class="chip" data-distance="5">5km</button>
+          <button type="button" class="chip" data-distance="10">10km</button>
+        </div>
+      </div>
+
+      <!-- 페이스 -->
+      <div class="tag-group">
+        <label class="tag-label">페이스</label>
+        <div class="chip-container">
+          <button type="button" class="chip" data-pace="2:00">2:00/km 이하</button>
+          <button type="button" class="chip" data-pace="3:00">3:00/km</button>
+          <button type="button" class="chip" data-pace="3:30">3:30/km</button>
+          <button type="button" class="chip" data-pace="4:00">4:00/km</button>
+          <button type="button" class="chip" data-pace="4:30">4:30/km</button>
+          <button type="button" class="chip" data-pace="5:00">5:00/km</button>
+          <button type="button" class="chip" data-pace="5:30">5:30/km</button>
+          <button type="button" class="chip" data-pace="6:00">6:00/km</button>
+          <button type="button" class="chip" data-pace="6:30">6:30/km</button>
+          <button type="button" class="chip" data-pace="7:00">7:00/km</button>
+          <button type="button" class="chip" data-pace="7:30">7:30/km</button>
+          <button type="button" class="chip" data-pace="8:00">8:00/km</button>
+          <button type="button" class="chip" data-pace="8:30">8:30/km</button>
+          <button type="button" class="chip" data-pace="9:00">9:00/km 이상</button>
+        </div>
+      </div>
+
+      <!-- 나이대 -->
+      <div class="tag-group">
+        <label class="tag-label">나이대</label>
+        <div class="chip-container">
+          <button type="button" class="chip" data-age="0">10대 이하</button>
+          <button type="button" class="chip" data-age="20">20대</button>
+          <button type="button" class="chip" data-age="30">30대</button>
+          <button type="button" class="chip" data-age="40">40대</button>
+          <button type="button" class="chip" data-age="50">50대</button>
+          <button type="button" class="chip" data-age="60">60대</button>
+          <button type="button" class="chip" data-age="70">70대 이상</button>
+        </div>
+      </div>
+
+      <!-- 성별 -->
+      <div class="tag-group">
+        <label class="tag-label">성별</label>
+        <div class="chip-container">
+          <button type="button" class="chip" data-gender="MALE">MALE</button>
+          <button type="button" class="chip" data-gender="FEMALE">FEMALE</button>
+          <button type="button" class="chip" data-gender="ANY">ANY</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 작성 완료 버튼 (하단 고정) -->
+  <button type="button" id="submitBtn" class="submit-button">작성 완료</button>
+</main>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/recruit-create.js" th:src="@{/js/recruit-create.js}"></script>
+</body>
+</html>
+
+
