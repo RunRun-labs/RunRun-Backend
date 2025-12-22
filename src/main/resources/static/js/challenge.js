@@ -146,9 +146,13 @@ function createChallengeCard(challenge, sectionType) {
     const thumbImg = document.createElement("img");
     thumbImg.src = challenge.imageUrl || "/img/default-challenge.png";
     thumbImg.alt = challenge.title || "챌린지 이미지";
+
+    // [수정] 무한 루프 방지 로직 추가
     thumbImg.onerror = function () {
+        this.onerror = null; // 이벤트 핸들러 제거 (루프 방지)
         this.src = "/img/default-challenge.png";
     };
+
     thumb.appendChild(thumbImg);
 
     // 콘텐츠
