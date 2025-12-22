@@ -17,6 +17,7 @@ import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -154,6 +155,10 @@ public class RecruitService {
 
     if (recruit.getCurrentParticipants() >= recruit.getMaxParticipants()) {
       throw new ValidationException(ErrorCode.RECRUIT_FULL);
+    }
+
+    if (LocalDateTime.now().plusHours(1).isAfter(recruit.getMeetingAt())) {
+      throw new ValidationException(ErrorCode.RECRUIT_TIME_OVER);
     }
 
     RecruitUser recruitUser = RecruitUser.builder()
