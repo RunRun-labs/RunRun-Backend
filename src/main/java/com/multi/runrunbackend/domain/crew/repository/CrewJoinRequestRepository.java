@@ -65,5 +65,20 @@ public interface CrewJoinRequestRepository extends JpaRepository<CrewJoinRequest
      * @description : 특정 크루에 특정 사용자가 특정 상태로 신청한 내역이 있는지 확인
      */
     boolean existsByCrewAndUserAndJoinStatus(Crew crew, User user, JoinStatus joinStatus);
+
+    /**
+     * @param crewId 크루 ID
+     * @param userId 사용자 ID
+     * @description : 크루 ID와 사용자 ID로 가장 최근 가입 신청 기록 조회 (삭제되지 않은 것만) - 가장 마지막 상태로 적용하기 위해
+     */
+    @Query("SELECT cjr FROM CrewJoinRequest cjr " +
+            "WHERE cjr.crew.id = :crewId " +
+            "AND cjr.user.id = :userId " +
+            "AND cjr.isDeleted = false " +
+            "ORDER BY cjr.createdAt DESC")
+    Optional<CrewJoinRequest> findByCrewIdAndUserId(
+            @Param("crewId") Long crewId,
+            @Param("userId") Long userId
+    );
 }
 
