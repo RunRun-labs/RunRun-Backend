@@ -157,7 +157,9 @@ public enum ErrorCode {
         "본인의 코스는 즐겨찾기할 수 없습니다"),
     FAVORITE_NOT_FOUND(
         HttpStatus.NOT_FOUND, "CRS_008", "해당 즐겨찾기를 찾을 수 없습니다"),
-    NOT_FAVORITE(HttpStatus.BAD_REQUEST, "CRS_009", "즐겨찾기를 누르지 않은 코스입니다");
+    NOT_FAVORITE(HttpStatus.BAD_REQUEST, "CRS_009", "즐겨찾기를 누르지 않은 코스입니다"),
+    CANNOT_SIREN_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_010", "본인의 코스는 신고할 수 없습니다"),
+    ALREADY_SIREN_COURSE(HttpStatus.CONFLICT, "CRS_011", "이미 신고한 코스입니다");
 
 
     private final HttpStatus httpStatus;
