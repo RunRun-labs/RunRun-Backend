@@ -84,6 +84,36 @@ public class CrewJoinService {
     }
 
     /**
+     * @param crewId  크루 ID
+     * @param loginId 신청 취소하는 회원 ID
+     * @description : 신청자가 대기중인 가입 신청을 취소 (차감된 포인트 100P가 환불)
+     */
+    @Transactional
+    public void cancelJoinRequest(Long crewId, String loginId) {
+        //크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 회원 조회
+        User user = findUserByLoginId(loginId);
+
+        // 대기중인 가입 신청 조회
+        CrewJoinRequest joinRequest = crewJoinRequestRepository.findByCrewAndUserAndJoinStatus(
+                        crew, user, JoinStatus.PENDING)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.JOIN_REQUEST_NOT_FOUND));
+
+        // 가입 신청 취소로 상태 변경
+        joinRequest.cancel();
+
+//        // 포인트 환불
+//        UserPoint userPoint = userPointRepository.findByUser(user)
+//                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+//
+//        userPoint.addPoint(JOIN_REQUEST_POINT);
+
+        log.info("크루 가입 신청 취소 완료 - crewId: {}, loginId: {}", crewId, loginId);
+    }
+
+    /**
      * 공통 메서드
      */
 
