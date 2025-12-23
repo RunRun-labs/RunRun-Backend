@@ -69,7 +69,7 @@ public class MatchSessionService {
   }
 
   @Transactional
-  public Long createOfflineSessionBySystem(Long recruitId) {
+  public void createOfflineSessionBySystem(Long recruitId) {
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
