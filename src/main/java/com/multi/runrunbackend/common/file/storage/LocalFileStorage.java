@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 @Profile("local")
 @RequiredArgsConstructor
+@Slf4j
 public class LocalFileStorage implements FileStorage {
 
     @Value("${file.upload-path}")
@@ -38,6 +40,7 @@ public class LocalFileStorage implements FileStorage {
 
             return String.format("/files/%s/%d/%s", domainType.getDir(), refId, fileName);
         } catch (IOException e) {
+            log.warn("파일 변경 감지 중 오류 발생, 새 파일 업로드로 대체: {}", e.getMessage());
             throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
