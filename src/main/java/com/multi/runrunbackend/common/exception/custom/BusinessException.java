@@ -3,10 +3,10 @@ package com.multi.runrunbackend.common.exception.custom;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 
 /**
- * @author : kyungsoo
+ * @author : BoKyung
  * @description : Please explain the class!!!
  * @filename : BusinessException
- * @since : 2025. 12. 22. Monday
+ * @since : 25. 12. 17. 수요일
  */
 public class BusinessException extends CustomException {
 

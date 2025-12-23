@@ -1,0 +1,392 @@
+:root {
+  --primary: #baff29;
+  --text-strong: #1a1c1e;
+  --text-muted: #6c7278;
+  --stroke: #edf1f3;
+  --info: #4d81e7;
+  --bg: #ffffff;
+  --highlight: #baff29;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: var(--bg);
+  color: var(--text-strong);
+  display: flex;
+  justify-content: center;
+  overflow-x: hidden;
+}
+
+.page {
+  position: relative;
+  width: min(420px, 100vw);
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 0 20px 100px;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.header {
+  position: relative;
+  width: 100%;
+  padding: 18px 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.back-button {
+  position: absolute;
+  left: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.back-button:active {
+  transform: scale(0.95);
+}
+
+.back-button img {
+  width: 24px;
+  height: 24px;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-strong);
+  text-align: center;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  flex: 1;
+  padding-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  background: var(--bg);
+  color: var(--text-strong);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+}
+
+.form-input:read-only {
+  background: var(--stroke);
+  cursor: not-allowed;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  background: var(--bg);
+  color: var(--text-strong);
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.form-textarea:focus {
+  border-color: var(--primary);
+}
+
+.course-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.course-input-group .form-input {
+  flex: 1;
+}
+
+.course-search-button {
+  padding: 12px 20px;
+  background: var(--primary);
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  white-space: nowrap;
+  transition: transform 0.2s ease;
+}
+
+.course-search-button:active {
+  transform: scale(0.98);
+}
+
+.map-section {
+  width: 100%;
+  margin: 8px 0;
+}
+
+.map-container {
+  width: 100%;
+  height: 250px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--stroke);
+}
+
+.datetime-group {
+  display: flex;
+  gap: 8px;
+}
+
+.datetime-group .form-input {
+  flex: 1;
+}
+
+.datetime-group select.form-input {
+  /* 드롭다운 높이는 JavaScript로 size 속성으로 제어 */
+}
+
+.datetime-group select.form-input[size] {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.tags-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.tag-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tag-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 10px 16px;
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  background: var(--bg);
+  color: var(--text-strong);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.chip:hover {
+  border-color: var(--primary);
+}
+
+.chip.selected {
+  background: var(--highlight);
+  border-color: var(--highlight);
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.submit-button {
+  position: fixed;
+  bottom: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(380px, calc(100vw - 40px));
+  max-width: 420px;
+  padding: 16px;
+  background: var(--primary);
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-strong);
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 100;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.submit-button:active {
+  transform: translateX(-50%) scale(0.98);
+}
+
+.submit-button:disabled {
+  background: var(--stroke);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 420px;
+  margin: 0 auto;
+  height: 76px;
+  border-top: 1px solid var(--primary);
+  background: #fff;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  padding: 8px 12px 6px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.nav-item {
+  text-align: center;
+  text-decoration: none;
+  color: #000;
+  font-family: "Fugaz One", "Inter", sans-serif;
+  font-size: 10px;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.nav-item img {
+  width: 28px;
+  height: 28px;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 0 16px 100px;
+  }
+
+  .submit-button {
+    width: calc(100vw - 32px);
+  }
+}
+
+@media (max-width: 920px) and (max-height: 520px) {
+  .page {
+    width: min(420px, 100vw);
+    padding: 0 14px 100px;
+  }
+
+  .header {
+    padding: 14px 0 18px;
+  }
+
+  .header-title {
+    font-size: 16px;
+  }
+
+  .bottom-nav {
+    height: 68px;
+    padding: 6px 12px 6px;
+  }
+
+  .nav-item img {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (min-width: 900px) {
+  body {
+    justify-content: flex-start;
+  }
+
+  .page {
+    max-width: 960px;
+    width: 100%;
+    padding: 0 32px 140px;
+  }
+
+  .submit-button {
+    max-width: 960px;
+    width: calc(100% - 64px);
+  }
+
+  .bottom-nav {
+    max-width: 960px;
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+    height: 82px;
+    padding: 10px 24px 10px;
+  }
+
+  .nav-item {
+    font-size: 11px;
+  }
+
+  .nav-item img {
+    width: 30px;
+    height: 30px;
+  }
+}
