@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.crew.controller;
 import com.multi.runrunbackend.common.jwt.provider.TokenProvider;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewJoinReqDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewJoinRequestResDto;
 import com.multi.runrunbackend.domain.crew.service.CrewJoinService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author : BoKyung
@@ -75,6 +78,29 @@ public class CrewJoinController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.successNoData("가입 신청이 취소되었습니다."));
+    }
+
+    /**
+     * @param crewId        크루 ID
+     * @param authorization JWT 토큰 (Authorization 헤더)
+     * @description : 크루장이 대기중인 가입 신청 목록을 조회한다. 크루장 또는 부크루장만 조회 가능.
+     */
+    @GetMapping("/{crewId}/join-requests")
+    @Operation(summary = "가입 신청 목록 조회", description = "크루장이 대기중인 가입 신청 목록을 조회합니다.")
+    public ResponseEntity<ApiResponse<List<CrewJoinRequestResDto>>> getJoinRequestList(
+            @Parameter(description = "크루 ID", required = true)
+            @PathVariable Long crewId,
+
+            @Parameter(description = "JWT 토큰", required = true)
+            @RequestHeader("Authorization") String authorization
+    ) {
+        String jwt = tokenProvider.resolveToken(authorization);
+        String loginId = tokenProvider.getUserId(jwt);
+
+        List<CrewJoinRequestResDto> joinRequests =
+                crewJoinService.getJoinRequestList(crewId, loginId);
+
+        return ResponseEntity.ok(ApiResponse.success("가입 신청 목록을 조회했습니다.", joinRequests));
     }
 
 }
