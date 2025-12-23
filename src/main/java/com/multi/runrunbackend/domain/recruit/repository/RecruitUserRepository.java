@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.recruit.repository;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import com.multi.runrunbackend.domain.recruit.entity.RecruitUser;
 import com.multi.runrunbackend.domain.user.entity.User;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -21,6 +22,8 @@ public interface RecruitUserRepository extends JpaRepository<RecruitUser, Long> 
   boolean existsByRecruitAndUser(Recruit recruit, User user);
 
   Optional<RecruitUser> findFirstByRecruitAndUserNotOrderByCreatedAtAsc(Recruit recruit, User user);
+
+  List<RecruitUser> findAllByRecruitId(Long recruitId);
 }
 
 

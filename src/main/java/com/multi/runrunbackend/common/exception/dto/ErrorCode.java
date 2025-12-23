@@ -172,20 +172,23 @@ public enum ErrorCode {
   INVALID_AGE_RANGE(HttpStatus.BAD_REQUEST, "R008", "최소 나이는 최대 나이보다 클 수 없습니다."),
   INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "R009", "모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다."),
   RECRUIT_FULL(HttpStatus.BAD_REQUEST, "R010", "참여 인원이 다 찼습니다."),
+  UNAUTHORIZED_HOST(HttpStatus.FORBIDDEN, "R011", "방장에게만 권한이 있습니다."),
+  RECRUIT_TIME_OVER(HttpStatus.BAD_REQUEST, "R012", "모집 신청 기간이 지났습니다."),
+  NOT_ENOUGH_PARTICIPANTS(HttpStatus.BAD_REQUEST, "RO13", "참가자가 최소 1명은 더 있어야 출발할 수 있습니다."),
+  TOO_EARLY_TO_START(HttpStatus.BAD_REQUEST, "RO14", "매칭 확정은 모임 시간 3시간 전부터 가능합니다."),
+  /*===== 세션/채팅 =====*/
+  SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
+  SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
+  NOT_SESSION_HOST(HttpStatus.FORBIDDEN, "SES_003", "방장만 실행할 수 있습니다."),
+  CANNOT_KICK_SELF(HttpStatus.BAD_REQUEST, "SES_004", "자기 자신은 강퇴할 수 없습니다."),
+  USER_ALREADY_LEFT(HttpStatus.BAD_REQUEST, "SES_005", "이미 퇴장한 사용자입니다."),
+  ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
+  HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다.");
 
-    /*===== 세션/채팅 =====*/
-    SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
-    SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
-    NOT_SESSION_HOST(HttpStatus.FORBIDDEN, "SES_003", "방장만 실행할 수 있습니다."),
-    CANNOT_KICK_SELF(HttpStatus.BAD_REQUEST, "SES_004", "자기 자신은 강퇴할 수 없습니다."),
-    USER_ALREADY_LEFT(HttpStatus.BAD_REQUEST, "SES_005", "이미 퇴장한 사용자입니다."),
-    ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
-    HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다.");
 
-
-    private final HttpStatus httpStatus;
-    private final String code;
-    private final String message;
+  private final HttpStatus httpStatus;
+  private final String code;
+  private final String message;
 
     ErrorCode(HttpStatus httpStatus, String code, String message) {
         this.httpStatus = httpStatus;
