@@ -27,7 +27,7 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
                  ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography
              ) / 1000 AS distance
       FROM recruit r
-      WHERE r.is_deleted = false
+      WHERE r.status = 'RECRUITING'
       AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))
       AND (:radius IS NULL OR 
           ST_DWithin(
@@ -37,7 +37,7 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
           )
       )
       """,
-      countQuery = "SELECT count(*) FROM recruit r WHERE r.is_deleted = false AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))",
+      countQuery = "SELECT count(*) FROM recruit r WHERE r.status = 'RECRUITING' AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))",
       nativeQuery = true)
   Slice<Recruit> findRecruitsWithFilters(
       @Param("lat") Double myLat,
