@@ -1,8 +1,6 @@
 package com.multi.runrunbackend.domain.course.service;
 
-import static com.multi.runrunbackend.common.exception.dto.ErrorCode.ALREADY_FAVORITE_COURSE;
 import static com.multi.runrunbackend.common.exception.dto.ErrorCode.ALREADY_LIKED_COURSE;
-import static com.multi.runrunbackend.common.exception.dto.ErrorCode.CANNOT_FAVORITE_OWN_COURSE;
 import static com.multi.runrunbackend.common.exception.dto.ErrorCode.CANNOT_LIKE_OWN_COURSE;
 import static com.multi.runrunbackend.common.exception.dto.ErrorCode.COURSE_NOT_AVAILABLE;
 
@@ -19,6 +17,7 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.course.constant.CourseStatus;
 import com.multi.runrunbackend.domain.course.dto.req.CourseCreateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseListReqDto;
+import com.multi.runrunbackend.domain.course.dto.req.CourseSirenReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseUpdateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
@@ -31,10 +30,12 @@ import com.multi.runrunbackend.domain.course.dto.res.TmapPedestrianResDto;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.course.entity.CourseFavorite;
 import com.multi.runrunbackend.domain.course.entity.CourseLike;
+import com.multi.runrunbackend.domain.course.entity.CourseSiren;
 import com.multi.runrunbackend.domain.course.repository.CourseFavoriteRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseLikeRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseRepositoryCustom;
+import com.multi.runrunbackend.domain.course.repository.CourseSirenRepository;
 import com.multi.runrunbackend.domain.course.util.GeometryParser;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
@@ -85,6 +86,7 @@ public class CourseService {
     private final GeometryParser geometryParser;
     private final CourseLikeRepository courseLikeRepository;
     private final CourseFavoriteRepository courseFavoriteRepository;
+    private final CourseSirenRepository courseSirenRepository;
 
     @Value("${tmap.app-key}")
     private String tmapAppKey;
@@ -199,12 +201,17 @@ public class CourseService {
 
     public CursorPage<CourseListResDto> getCourseList(CustomUser principal, CourseListReqDto req) {
 
-        String loginId = principal.getLoginId();
+        Long currentUserId = null;
+        if (principal != null) {
+            String loginId = principal.getLoginId();
+            User user = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+            if (user != null) {
+                currentUserId = user.getId();
+            }
+        }
 
-        User user = userRepository.findByLoginId(loginId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-
-        return courseRepositoryCustom.searchCourses(req);
+        return courseRepositoryCustom.searchCourses(req, currentUserId);
 
     }
 
@@ -919,7 +926,7 @@ public class CourseService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
         if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new BusinessException(COURSE_NOT_AVAILABLE);
+            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
         }
 
         int deleted = courseLikeRepository
@@ -948,14 +955,14 @@ public class CourseService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
         if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new BusinessException(COURSE_NOT_AVAILABLE);
+            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
         }
         if (course.getUser().getId().equals(user.getId())) {
-            throw new BusinessException(CANNOT_FAVORITE_OWN_COURSE);
+            throw new BusinessException(ErrorCode.CANNOT_FAVORITE_OWN_COURSE);
         }
 
         if (courseFavoriteRepository.existsByCourse_IdAndUser_Id(user.getId(), courseId)) {
-            throw new BusinessException(ALREADY_FAVORITE_COURSE);
+            throw new BusinessException(ErrorCode.ALREADY_FAVORITE_COURSE);
         }
         courseFavoriteRepository.save(CourseFavorite.create(user, course));
 
@@ -974,7 +981,7 @@ public class CourseService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
         if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new BusinessException(COURSE_NOT_AVAILABLE);
+            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
         }
 
         int deleted = courseFavoriteRepository
@@ -989,6 +996,30 @@ public class CourseService {
         if (updated == 0) {
             log.warn("favoriteCount already zero. courseId={}", courseId);
         }
+
+    }
+
+    public void sirenCourse(CustomUser principal, Long courseId, CourseSirenReqDto req) {
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
+        }
+
+        if (course.getUser().getId().equals(user.getId())) {
+            throw new BusinessException(ErrorCode.CANNOT_SIREN_OWN_COURSE);
+        }
+
+        if (courseSirenRepository.existsByCourse_IdAndUser_Id(courseId, user.getId())) {
+            throw new BusinessException(ErrorCode.ALREADY_SIREN_COURSE);
+        }
+        courseSirenRepository.save(CourseSiren.create(user, course, req));
 
     }
 
