@@ -1,7 +1,7 @@
 package com.multi.runrunbackend.domain.crew.repository;
 
+import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
-import com.multi.runrunbackend.domain.crew.entity.CrewRole;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import com.multi.runrunbackend.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,9 +39,7 @@ public interface CrewUserRepository extends JpaRepository<CrewUser, Long> {
     /**
      * @param crew 크루 엔티티
      * @param user 사용자 엔티티
-     * @return 크루원 정보 (Optional)
-     * @method : findByCrewAndUserAndIsDeletedFalse
-     * @description : 특정 크루의 특정 사용자 크루원 정보를 조회 (권한 확인용 -> 역할 변경에 사용)
+     * @description : 특정 크루의 특정 사용자 크루원 정보를 조회 (권한 확인용, 역할 변경에 사용)
      */
     Optional<CrewUser> findByCrewAndUserAndIsDeletedFalse(Crew crew, User user);
 
@@ -55,9 +53,9 @@ public interface CrewUserRepository extends JpaRepository<CrewUser, Long> {
             "AND cu.isDeleted = false " +
             "ORDER BY " +
             "CASE cu.role " +
-            "  WHEN com.multi.runrunbackend.domain.crew.entity.CrewRole.LEADER THEN 0 " +
-            "  WHEN com.multi.runrunbackend.domain.crew.entity.CrewRole.SUB_LEADER THEN 1 " +
-            "  WHEN com.multi.runrunbackend.domain.crew.entity.CrewRole.STAFF THEN 2 " +
+            "  WHEN com.multi.runrunbackend.domain.crew.constant.CrewRole.LEADER THEN 0 " +
+            "  WHEN com.multi.runrunbackend.domain.crew.constant.CrewRole.SUB_LEADER THEN 1 " +
+            "  WHEN com.multi.runrunbackend.domain.crew.constant.CrewRole.STAFF THEN 2 " +
             "  ELSE 3 " +
             "END, cu.createdAt ASC")
     List<CrewUser> findAllByCrewIdAndIsDeletedFalseOrderByRole(@Param("crewId") Long crewId);
@@ -79,7 +77,7 @@ public interface CrewUserRepository extends JpaRepository<CrewUser, Long> {
             "WHERE cu.user.id = :userId " +
             "AND cu.isDeleted = false " +
             "AND c.isDeleted = false " +
-            "AND c.crewStatus = com.multi.runrunbackend.domain.crew.entity.CrewStatus.ACTIVE")
+            "AND c.crewStatus = com.multi.runrunbackend.domain.crew.constant.CrewStatus.ACTIVE")
     Optional<CrewUser> findByUserIdAndIsDeletedFalse(@Param("userId") Long userId);
 
     /**
