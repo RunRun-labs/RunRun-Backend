@@ -97,7 +97,7 @@ public class CourseService {
             user.getId()
         );
 
-        String thumbnailUrl = generateThumbnailFromPath(cleanedPath, user.getId());
+        String thumbnailUrl = generateThumbnailFromPath(parsedPath, user.getId());
         if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
             thumbnailUrl = imageUrl != null ? imageUrl : "";
         }
@@ -139,16 +139,14 @@ public class CourseService {
         if (!course.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException(ErrorCode.COURSE_FORBIDDEN);
         }
-        
-        LineString parsedPath = geometryParser.parseLineString(req.getPath());
-
-        LineString cleanedPath = simplifyLineString(parsedPath);
-
         String imageUrl = resolveImageUrl(
             imageFile,
             FileDomainType.COURSE_IMAGE,
             user.getId()
         );
+        LineString parsedPath = geometryParser.parseLineString(req.getPath());
+
+        LineString cleanedPath = simplifyLineString(parsedPath);
 
         String thumbnailUrl = generateThumbnailFromPath(cleanedPath, user.getId());
         if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
@@ -394,24 +392,19 @@ public class CourseService {
         return fileStorage.upload(file, domainType, refId);
     }
 
-    private String generateThumbnailFromPath(LineString path, Long refId) {
+    private String generateThumbnailFromPath(LineString rawPath, Long refId) {
 
-        if (path == null || path.isEmpty()) {
+        if (rawPath == null || rawPath.isEmpty()) {
             return null;
         }
 
-        List<double[]> coords = toCoordinateList(path);
-        coords = pruneSmallLoops(coords);
-        coords = simplifyCoordinates(coords, SIMPLIFY_TOLERANCE_M);
-
+        List<double[]> coords = prepareThumbnailPath(rawPath);
         if (coords.size() < 2) {
             return null;
         }
 
-        List<double[]> sampled = sampleCoordinates(coords, 200);
-
-        byte[] imageBytes = drawPathThumbnail(sampled);
-        if (imageBytes == null || imageBytes.length == 0) {
+        byte[] imageBytes = drawPathThumbnail(coords);
+        if (imageBytes == null) {
             return null;
         }
 
@@ -425,24 +418,86 @@ public class CourseService {
         return fileStorage.upload(file, FileDomainType.COURSE_THUMBNAIL, refId);
     }
 
+    private List<double[]> prepareThumbnailPath(LineString rawPath) {
+        List<double[]> coords = toCoordinateList(rawPath);
+
+        coords = removeMicroSegments(coords, 3.0);      // 노이즈 제거
+        coords = expandLoopIfNeeded(coords);            // 루프/왕복 벌림
+        coords = simplifyCoordinates(coords, 25.0);     // 썸네일 전용 simplify
+        coords = sampleCoordinates(coords, 180);        // 균일 샘플링
+
+        return coords;
+    }
+
+    private List<double[]> expandLoopIfNeeded(List<double[]> coords) {
+        if (coords.size() < 10) {
+            return coords;
+        }
+
+        double[] start = coords.get(0);
+        double[] end = coords.get(coords.size() - 1);
+
+        if (distanceMeters(start, end) < 20) { // 루프 판단
+            List<double[]> expanded = new ArrayList<>();
+            expanded.add(start);
+
+            for (int i = 1; i < coords.size(); i++) {
+                double[] prev = coords.get(i - 1);
+                double[] curr = coords.get(i);
+
+                double dx = curr[0] - prev[0];
+                double dy = curr[1] - prev[1];
+                double len = Math.sqrt(dx * dx + dy * dy);
+
+                if (len > 0) {
+                    double offset = 5 / 111320.0; // 약 5m
+                    double ox = -dy / len * offset;
+                    double oy = dx / len * offset;
+                    expanded.add(new double[]{curr[0] + ox, curr[1] + oy});
+                } else {
+                    expanded.add(curr);
+                }
+            }
+            return expanded;
+        }
+        return coords;
+    }
+
+    private List<double[]> removeMicroSegments(List<double[]> coords, double minMeters) {
+        List<double[]> result = new ArrayList<>();
+        result.add(coords.get(0));
+
+        for (int i = 1; i < coords.size(); i++) {
+            if (distanceMeters(result.get(result.size() - 1), coords.get(i)) >= minMeters) {
+                result.add(coords.get(i));
+            }
+        }
+        return result;
+    }
+
 
     private byte[] drawPathThumbnail(List<double[]> coords) {
         int width = 400;
         int height = 200;
-        int padding = 12;
+        
+        int strokeWidth = 6;
+        int markerRadius = 4;
+        int padding = 20 + strokeWidth + markerRadius;
 
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = image.createGraphics();
+
         try {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // background
             g2d.setColor(Color.WHITE);
             g2d.fillRect(0, 0, width, height);
 
-            double minLng = Double.MAX_VALUE;
-            double maxLng = Double.MIN_VALUE;
-            double minLat = Double.MAX_VALUE;
-            double maxLat = Double.MIN_VALUE;
+            // bounding box
+            double minLng = Double.MAX_VALUE, maxLng = -Double.MAX_VALUE;
+            double minLat = Double.MAX_VALUE, maxLat = -Double.MAX_VALUE;
 
             for (double[] c : coords) {
                 minLng = Math.min(minLng, c[0]);
@@ -451,40 +506,57 @@ public class CourseService {
                 maxLat = Math.max(maxLat, c[1]);
             }
 
-            final double minLngFinal = minLng;
-            final double maxLngFinal = maxLng;
-            final double minLatFinal = minLat;
-            final double maxLatFinal = maxLat;
+            double pathWidth = maxLng - minLng;
+            double pathHeight = maxLat - minLat;
 
-            final double dx = Math.max(maxLngFinal - minLngFinal, 1e-9);
-            final double dy = Math.max(maxLatFinal - minLatFinal, 1e-9);
+            double scaleX = (width - padding * 2) / pathWidth;
+            double scaleY = (height - padding * 2) / pathHeight;
+            double scale = Math.min(scaleX, scaleY) * 0.92;
 
-            Function<double[], Point2D> toPoint = coord -> {
-                double lng = coord[0];
-                double lat = coord[1];
-                double x = padding + (lng - minLngFinal) / dx * (width - padding * 2);
-                double y = padding + (maxLatFinal - lat) / dy * (height - padding * 2);
-                return new Point2D.Double(x, y);
-            };
+            double offsetX =
+                (width - pathWidth * scale) / 2 - minLng * scale;
+            double offsetY =
+                (height - pathHeight * scale) / 2 + maxLat * scale;
 
+            Function<double[], Point2D> toPoint = c -> new Point2D.Double(
+                c[0] * scale + offsetX,
+                -c[1] * scale + offsetY
+            );
+
+            // path
             Path2D path = new Path2D.Double();
-            Point2D first = toPoint.apply(coords.get(0));
-            path.moveTo(first.getX(), first.getY());
+            Point2D start = toPoint.apply(coords.get(0));
+            path.moveTo(start.getX(), start.getY());
+
             for (int i = 1; i < coords.size(); i++) {
                 Point2D p = toPoint.apply(coords.get(i));
                 path.lineTo(p.getX(), p.getY());
             }
 
-            g2d.setColor(new Color(0xFF3D00));
-            g2d.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            // === Nike / Strava style ===
+            // base stroke
+            g2d.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.setColor(new Color(255, 61, 0, 80));
             g2d.draw(path);
 
-            drawMarker(g2d, toPoint.apply(coords.get(0)), Color.BLACK);
-            drawMarker(g2d, toPoint.apply(coords.get(coords.size() - 1)), Color.BLACK);
+            // main stroke
+            g2d.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.setColor(new Color(255, 61, 0));
+            g2d.draw(path);
+
+            // start marker
+            drawMarker(g2d, start, Color.BLACK);
+
+            // end marker (루프면 생략)
+            Point2D end = toPoint.apply(coords.get(coords.size() - 1));
+            if (start.distance(end) > 8) {
+                drawMarker(g2d, end, Color.DARK_GRAY);
+            }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, "png", baos);
             return baos.toByteArray();
+
         } catch (IOException e) {
             return null;
         } finally {
