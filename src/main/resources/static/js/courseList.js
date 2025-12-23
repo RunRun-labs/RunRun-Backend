@@ -34,6 +34,7 @@ let currentFilters = {
   lng: null,
   radiusM: 1500, // default: 1.5km
 };
+const DEFAULT_PAGE_SIZE = 5;
 
 // ==========================
 // Get JWT Token
@@ -114,7 +115,7 @@ async function loadCourseList(reset = false) {
     if (currentCursor) {
       params.append("cursor", currentCursor);
     }
-    params.append("size", "20");
+    params.append("size", String(DEFAULT_PAGE_SIZE));
 
     const url = `/api/routes${
       params.toString() ? "?" + params.toString() : ""
@@ -332,20 +333,33 @@ function escapeHtml(text) {
 // Event Listeners
 // ==========================
 
-// Search
-if (searchButton) {
+function initSearchListeners() {
+  if (!searchButton || !searchInput) {
+    return;
+  }
+
   searchButton.addEventListener("click", () => {
     currentFilters.keyword = searchInput.value.trim() || null;
     loadCourseList(true);
   });
-}
 
-if (searchInput) {
   searchInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       currentFilters.keyword = searchInput.value.trim() || null;
       loadCourseList(true);
     }
+  });
+
+  let searchDebounceTimer = null;
+  searchInput.addEventListener("input", () => {
+    const nextKeyword = searchInput.value.trim();
+    if (searchDebounceTimer) {
+      clearTimeout(searchDebounceTimer);
+    }
+    searchDebounceTimer = setTimeout(() => {
+      currentFilters.keyword = nextKeyword || null;
+      loadCourseList(true);
+    }, 300);
   });
 }
 
@@ -608,6 +622,7 @@ if (courseContent) {
 // ==========================
 function init() {
   initDOMElements();
+  initSearchListeners();
 
   if (!courseListContainer) {
     console.error("courseList container not found!");
