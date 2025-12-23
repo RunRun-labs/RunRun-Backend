@@ -574,7 +574,8 @@ function sendMessage() {
 function displayMessage(message, isPrevious = false) {
   const messagesDiv = document.getElementById('chat-messages');
 
-  if (message.messageType === 'SYSTEM') {
+  // 시스템 메시지 (SYSTEM, KICK 포함)
+  if (message.messageType === 'SYSTEM' || message.messageType === 'KICK') {
     const systemDiv = document.createElement('div');
     systemDiv.className = 'system-message';
     const p = document.createElement('p');
