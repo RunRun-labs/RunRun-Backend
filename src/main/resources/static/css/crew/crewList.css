@@ -384,6 +384,14 @@ body {
     color: #FF4444;
 }
 
+.crew-card__badge--pending {
+    background-color: #FFE08C;
+    color: #5A4100;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
 .crew-card__description {
     font-size: var(--font-size-sm);
     color: var(--text-secondary);

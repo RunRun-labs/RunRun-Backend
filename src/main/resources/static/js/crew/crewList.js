@@ -418,10 +418,19 @@ function renderCrews(crews) {
     }
 
 
+    const renderedCards = [];
+
     filteredCrews.forEach(crew => {
         const card = createCrewCard(crew);
+        renderedCards.push({crew, card});
         crewListContainer.appendChild(card);
     });
+
+    // 로그인한 경우에만 PENDING 배지 표시 시도
+    const token = getAccessToken();
+    if (token && renderedCards.length > 0) {
+        annotatePendingBadges(renderedCards.map(rc => rc.crew.crewId), token);
+    }
 
     return filteredCrews.length;
 }
@@ -429,7 +438,6 @@ function renderCrews(crews) {
 
 /**
  * 페이스 문자열을 분 단위 숫자로 변환
- * 지원 형식: "3:00/km", "5분/km", "5~6분/km", "3"
  */
 function parsePaceToMinutes(paceStr) {
     if (!paceStr) return null;
@@ -507,6 +515,7 @@ function createCrewCard(crew) {
             <div class="crew-card__header">
                 <h2 class="crew-card__title">${escapeHtml(crew.crewName)}</h2>
                 ${badge}
+                <span class="crew-card__badge crew-card__badge--pending" data-pending-badge style="display:none;">🔵요청중</span>
             </div>
             <div class="crew-card__details">
                 <div class="crew-card__detail-item">
@@ -601,6 +610,39 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/**
+ * 특정 크루 카드에 PENDING 배지를 표시/숨김
+ */
+function setPendingBadge(crewId, isPending) {
+    const card = crewListContainer.querySelector(`.crew-card[data-crew-id="${crewId}"]`);
+    if (!card) return;
+    const badge = card.querySelector('[data-pending-badge]');
+    if (!badge) return;
+    badge.style.display = isPending ? 'inline-flex' : 'none';
+}
+
+/**
+ * 현재 사용자 기준 PENDING 상태인 크루에 배지 표시 - 응답의 crewJoinState가 PENDING이면 '요청중' 표시
+ */
+async function annotatePendingBadges(crewIds, token) {
+    if (!crewIds || crewIds.length === 0) return;
+    const headers = {'Authorization': `Bearer ${token}`};
+
+    await Promise.allSettled(crewIds.map(async (id) => {
+        try {
+            const res = await fetch(`/api/crews/${id}/applied`, {method: 'GET', headers});
+            if (!res.ok) return;
+            const json = await res.json().catch(() => null);
+            const data = json?.data || json;
+            const state = data?.crewJoinState || data?.state || data?.joinStatus;
+            const isPending = state === 'PENDING';
+            setPendingBadge(id, isPending);
+        } catch (e) {
+            console.warn('pending 배지 조회 실패', id, e);
+        }
+    }));
 }
 
 /**
