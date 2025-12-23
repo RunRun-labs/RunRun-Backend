@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author : KIMGWANGHO
@@ -27,7 +26,6 @@ public class MatchSessionScheduler {
   private final MatchSessionService matchSessionService;
 
   @Scheduled(cron = "0 * * * * *")
-  @Transactional
   public void autoCreateMatchSession() {
 
     LocalDateTime targetTime = LocalDateTime.now().plusHours(1);
@@ -42,7 +40,7 @@ public class MatchSessionScheduler {
       try {
         matchSessionService.createOfflineSession(recruit.getId(), recruit.getUser().getId());
       } catch (Exception e) {
-
+        log.error("자동 생성 실패 id={}", recruit.getId(), e);
       }
     }
   }
