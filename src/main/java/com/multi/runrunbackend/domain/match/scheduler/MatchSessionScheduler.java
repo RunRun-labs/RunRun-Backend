@@ -38,7 +38,7 @@ public class MatchSessionScheduler {
 
     for (Recruit recruit : pendingRecruits) {
       try {
-        matchSessionService.createOfflineSession(recruit.getId(), recruit.getUser().getId());
+        matchSessionService.createOfflineSessionBySystem(recruit.getId());
       } catch (Exception e) {
         log.error("자동 생성 실패 id={}", recruit.getId(), e);
       }
