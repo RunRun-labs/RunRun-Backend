@@ -243,6 +243,6 @@ function formatDate(dateString) {
 }
 
 function getChallengeTypeLabel(type) {
-    const labels = {DISTANCE: "거리형", TIME: "시간형", ATTENDANCE: "출석형"};
+    const labels = {DISTANCE: "거리형", TIME: "시간형", COUNT: "출석형"};
     return labels[type] || type;
 }
