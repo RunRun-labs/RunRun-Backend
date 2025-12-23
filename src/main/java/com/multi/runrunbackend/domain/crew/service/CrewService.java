@@ -3,20 +3,17 @@ package com.multi.runrunbackend.domain.crew.service;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.jwt.provider.TokenProvider;
-import com.multi.runrunbackend.domain.crew.constant.CrewRecruitStatus;
-import com.multi.runrunbackend.domain.crew.constant.CrewRole;
-import com.multi.runrunbackend.domain.crew.constant.CrewStatus;
+import com.multi.runrunbackend.domain.crew.constant.*;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewStatusChangeReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
-import com.multi.runrunbackend.domain.crew.dto.res.CrewActivityResDto;
-import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
-import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
-import com.multi.runrunbackend.domain.crew.dto.res.CrewListResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.*;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
 import com.multi.runrunbackend.domain.crew.entity.CrewActivity;
+import com.multi.runrunbackend.domain.crew.entity.CrewJoinRequest;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import com.multi.runrunbackend.domain.crew.repository.CrewActivityRepository;
+import com.multi.runrunbackend.domain.crew.repository.CrewJoinRequestRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -28,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +42,7 @@ public class CrewService {
     private final CrewRepository crewRepository;
     private final CrewUserRepository crewUserRepository;
     private final CrewActivityRepository crewActivityRepository;
+    private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
     //    private final MembershipRepository membershipRepository;
     private final TokenProvider tokenProvider;
@@ -268,6 +267,57 @@ public class CrewService {
         if (!isLeader) {
             throw new BusinessException(ErrorCode.NOT_CREW_LEADER);
         }
+    }
+
+    /**
+     * @param crewId  크루 ID
+     * @param loginId 사용자 로그인 ID
+     * @description : 특정 사용자가 특정 크루에 가입 신청한 상태를 조회 <- 프론트 UI 분기를 위한 상태 값으로 반환
+     */
+    @Transactional(readOnly = true)
+    public CrewAppliedResDto getAppliedStatus(Long crewId, String loginId) {
+        // 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 사용자 조회
+        User user = findUserByLoginId(loginId);
+
+        // 크루원인지 먼저 확인
+        Optional<CrewUser> crewUserOpt = crewUserRepository
+                .findByCrewAndUserAndIsDeletedFalse(crew, user);
+
+        if (crewUserOpt.isPresent()) {
+            // 크루원이면 무조건 APPROVED!
+            return CrewAppliedResDto.builder()
+                    .crewJoinState(CrewJoinState.APPROVED)
+                    .build();
+        }
+
+        // 가입 신청 기록 조회
+        Optional<CrewJoinRequest> joinRequestOpt = crewJoinRequestRepository
+                .findByCrewIdAndUserId(crewId, user.getId());
+
+        // 신청 기록 없음 → NOT_APPLIED
+        if (joinRequestOpt.isEmpty()) {
+            return CrewAppliedResDto.builder()
+                    .crewJoinState(CrewJoinState.NOT_APPLIED)
+                    .build();
+        }
+
+        // 신청 기록 있음 → 상태 확인
+        JoinStatus status = joinRequestOpt.get().getJoinStatus();
+
+        // PENDING만 대기 상태
+        if (status == JoinStatus.PENDING) {
+            return CrewAppliedResDto.builder()
+                    .crewJoinState(CrewJoinState.PENDING)
+                    .build();
+        }
+
+        // 나머지 (REJECTED, CANCELED) → 재신청 가능
+        return CrewAppliedResDto.builder()
+                .crewJoinState(CrewJoinState.CAN_REAPPLY)
+                .build();
     }
 
 }
