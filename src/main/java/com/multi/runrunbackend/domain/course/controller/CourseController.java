@@ -170,14 +170,14 @@ public class CourseController {
     }
 
     @PostMapping("/favorite/{course_id}")
-    public ResponseEntity<ApiResponse> FavoriteCourse(
+    public ResponseEntity<ApiResponse> favoriteCourse(
         @AuthenticationPrincipal CustomUser principal,
         @PathVariable(name = "course_id") Long courseId
     ) {
         courseService.favoriteCourse(principal, courseId);
 
         return ResponseEntity.ok(
-            ApiResponse.successNoData("코스 좋아요 성공")
+            ApiResponse.successNoData("코스 즐겨찾기 성공")
         );
     }
 
@@ -189,12 +189,12 @@ public class CourseController {
         courseService.unFavoriteCourse(principal, courseId);
 
         return ResponseEntity.ok(
-            ApiResponse.successNoData("코스 좋아요 삭제")
+            ApiResponse.successNoData("코스 즐겨찾기 삭제")
         );
     }
 
     @PostMapping("/siren/{course_id}")
-    public ResponseEntity<ApiResponse> sirenCoure(
+    public ResponseEntity<ApiResponse> sirenCourse(
         @AuthenticationPrincipal CustomUser principal,
         @PathVariable(name = "course_id") Long courseId,
         @Valid @RequestBody CourseSirenReqDto req) {
