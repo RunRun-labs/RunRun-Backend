@@ -98,6 +98,24 @@ body {
     margin-left: var(--spacing-md);
 }
 
+/* 가입 신청 버튼(초록색) */
+.btn-action--join {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* 가입 취소 버튼(빨간색) */
+.btn-action--cancel {
+    background-color: #f44336;
+    color: white;
+}
+
+/* 가입 탈퇴 버튼(회색) */
+.btn-action--leave {
+    background-color: #9E9E9E;
+    color: white;
+}
+
 /* =========================
    메인 컨텐츠 영역
    ========================= */
@@ -437,6 +455,15 @@ section {
 
 .btn-action--cancel:hover {
     background-color: var(--danger-dark);
+}
+
+.btn-action--leave {
+    background-color: #999999;
+    color: #FFFFFF;
+}
+
+.btn-action--leave:hover {
+    background-color: #777777;
 }
 
 .btn-action:disabled {
