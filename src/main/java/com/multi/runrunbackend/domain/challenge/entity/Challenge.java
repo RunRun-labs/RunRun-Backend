@@ -50,6 +50,9 @@ public class Challenge extends BaseEntity {
 
     @Column(nullable = false)
     private LocalDate endDate;
+    
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
 
     @Builder
     public Challenge(String title, ChallengeType challengeType, Double targetValue,
@@ -74,7 +77,7 @@ public class Challenge extends BaseEntity {
     }
 
     public void deleteChallenge() {
-        this.delete();
+        this.isDeleted = true;
     }
 
     public void updateImageUrl(String imageUrl) {
