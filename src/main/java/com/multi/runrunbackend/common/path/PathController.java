@@ -40,6 +40,17 @@ public class PathController {
         return "challenge/challenge-detail";
     }
 
+    @GetMapping("/challenge/create")
+    public String challengeCreateView() {
+        return "challenge/challenge-create";
+    }
+
+    @GetMapping("/challenge/{id}/edit")
+    public String challengeEditView(@PathVariable Long id, Model model) {
+        model.addAttribute("challengeId", id);
+        return "challenge/challenge-edit";
+    }
+
     @GetMapping("/course_auto")
     public String testView() {
         return "courseAuto";
