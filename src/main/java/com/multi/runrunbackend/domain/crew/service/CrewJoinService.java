@@ -189,6 +189,45 @@ public class CrewJoinService {
     }
 
     /**
+     * @param crewId        크루 ID
+     * @param loginId       거절하는 크루장 로그인 ID
+     * @param joinRequestId 거절할 가입 신청 ID
+     * @description : 크루장이 가입 신청을 거절 (포인트가 환불)
+     */
+    @Transactional
+    public void rejectJoinRequest(Long crewId, String loginId, Long joinRequestId) {
+        // 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 크루장 조회
+        User leader = findUserByLoginId(loginId);
+
+        // 크루장 또는 부크루장 권한 확인
+        validateLeaderOrSubLeader(crew, leader);
+
+        // 가입 신청 조회
+        CrewJoinRequest joinRequest = crewJoinRequestRepository.findByIdAndIsDeletedFalse(joinRequestId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.JOIN_REQUEST_NOT_FOUND));
+
+        // 크루 ID 일치 확인
+        if (!joinRequest.getCrew().getId().equals(crewId)) {
+            throw new BusinessException(ErrorCode.JOIN_REQUEST_NOT_FOUND);
+        }
+
+        // 거절 처리
+        joinRequest.reject();
+
+//        // 포인트 환불
+//        UserPoint userPoint = userPointRepository.findByUser(joinRequest.getUser())
+//                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+//
+//        userPoint.addPoint(JOIN_REQUEST_POINT);
+
+        log.info("크루 가입 거절 완료 - crewId: {}, rejectedUserId: {}",
+                crewId, joinRequest.getUser().getId());
+    }
+
+    /**
      * 공통 메서드
      */
 
