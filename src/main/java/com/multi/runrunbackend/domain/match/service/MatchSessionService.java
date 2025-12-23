@@ -73,7 +73,12 @@ public class MatchSessionService {
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
-    return createSessionInternal(recruit);
+    if (recruit.getCurrentParticipants() < 2) {
+      recruitRepository.delete(recruit);
+      return;
+    }
+
+    createSessionInternal(recruit);
   }
 
   private Long createSessionInternal(Recruit recruit) {
