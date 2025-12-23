@@ -63,6 +63,18 @@ public class PathController {
         return "crew/updateCrew";
     }
 
+    @GetMapping("/crews/{crewId}/join")
+    public String crewJoinPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
+        return "crew/crewJoin";
+    }
+
+    @GetMapping("/crews/{crewId}/join-requests")
+    public String crewJoinRequestListPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
+        return "crew/crewJoinRequestList";
+    }
+
   @GetMapping("/chat")
   public String chatList() {
     return "chat/chat-list";
