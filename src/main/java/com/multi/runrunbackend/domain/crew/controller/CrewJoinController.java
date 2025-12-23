@@ -35,7 +35,7 @@ public class CrewJoinController {
      * @param crewId        가입 신청할 크루 ID
      * @param authorization JWT 토큰
      * @param reqDto        가입 신청 정보 (자기소개, 거리, 페이스, 지역)
-     * @description : 회원이 크루에 가입 신청을 한다 (100P가 차감되며, 크루장에게 알림 발송)
+     * @description : 회원이 크루에 가입 신청 (100P가 차감되며, 크루장에게 알림 발송)
      */
     @PostMapping("/{crewId}/join")
     public ResponseEntity<ApiResponse<Void>> requestJoin(
@@ -134,7 +134,7 @@ public class CrewJoinController {
      * @param crewId        크루 ID
      * @param joinRequestId 거절할 가입 신청 ID
      * @param authorization JWT 토큰 (Authorization 헤더)
-     * @description : 크루장이 가입 신청을 거절한다. 포인트가 환불된다.
+     * @description : 크루장이 가입 신청을 거절 (포인트 환불)
      */
     @PostMapping("/{crewId}/join-requests/{joinRequestId}/reject")
     public ResponseEntity<ApiResponse<Void>> rejectJoinRequest(
@@ -154,6 +154,29 @@ public class CrewJoinController {
 
         return ResponseEntity.ok(
                 ApiResponse.successNoData("가입 신청이 거절되었습니다.")
+        );
+    }
+
+    /**
+     * @param crewId        크루 ID
+     * @param authorization JWT 토큰 (Authorization 헤더)
+     * @description : 크루원이 크루 탈퇴
+     */
+    @DeleteMapping("/{crewId}/leave")
+    public ResponseEntity<ApiResponse<Void>> leaveCrew(
+            @Parameter(description = "크루 ID", required = true)
+            @PathVariable Long crewId,
+
+            @Parameter(description = "JWT 토큰", required = true)
+            @RequestHeader("Authorization") String authorization
+    ) {
+        String jwt = tokenProvider.resolveToken(authorization);
+        String loginId = tokenProvider.getUserId(jwt);
+
+        crewJoinService.leaveCrew(crewId, loginId);
+
+        return ResponseEntity.ok(
+                ApiResponse.successNoData("크루에서 탈퇴되었습니다.")
         );
     }
 
