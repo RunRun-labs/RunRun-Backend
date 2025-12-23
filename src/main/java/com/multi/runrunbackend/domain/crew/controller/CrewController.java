@@ -1,10 +1,12 @@
 package com.multi.runrunbackend.domain.crew.controller;
 
+import com.multi.runrunbackend.common.jwt.provider.TokenProvider;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewStatusChangeReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewAppliedResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
 import com.multi.runrunbackend.domain.crew.service.CrewService;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 public class CrewController {
 
     private final CrewService crewService;
+    private final TokenProvider tokenProvider;
 
     /**
      * @param reqDto 크루 생성 요청 DTO
@@ -143,5 +146,28 @@ public class CrewController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("모집 상태 변경 성공", null));
+    }
+
+    /**
+     * @param crewId        크루 ID
+     * @param authorization JWT 토큰 (Authorization 헤더)
+     * @description : 특정 사용자가 특정 크루에 가입 신청한 상태를 조회
+     */
+    @GetMapping("/{crewId}/applied")
+    public ResponseEntity<ApiResponse<CrewAppliedResDto>> getAppliedStatus(
+            @PathVariable Long crewId,
+            @RequestHeader("Authorization") String authorization
+    ) {
+        // JWT 토큰에서 loginId 추출
+        String jwt = tokenProvider.resolveToken(authorization);
+        String loginId = tokenProvider.getUserId(jwt);
+
+        // Service 호출하여 가입 신청 상태 조회
+        CrewAppliedResDto result = crewService.getAppliedStatus(crewId, loginId);
+
+        // 성공 응답 반환
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("가입 신청 상태 조회 성공", result));
     }
 }
