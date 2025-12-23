@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.recruit.dto.res;
 
+import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import java.time.LocalDateTime;
 import lombok.Builder;
@@ -40,6 +41,7 @@ public class RecruitDetailResDto {
 
   private Boolean isAuthor;
   private Boolean isParticipant;
+  private RecruitStatus status;
 
   public static RecruitDetailResDto from(Recruit recruit, Long currentUserId,
       boolean isParticipant) {
@@ -67,6 +69,7 @@ public class RecruitDetailResDto {
         .ageMax(recruit.getAgeMax())
         .isAuthor(isAuthor)
         .isParticipant(isParticipant)
+        .status(recruit.getStatus())
         .build();
   }
 }
