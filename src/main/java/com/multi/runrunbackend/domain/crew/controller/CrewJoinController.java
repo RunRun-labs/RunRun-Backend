@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.jwt.provider.TokenProvider;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewJoinReqDto;
 import com.multi.runrunbackend.domain.crew.service.CrewJoinService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,29 @@ public class CrewJoinController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.successNoData("크루 가입 신청이 완료되었습니다."));
+    }
+
+    /**
+     * @param crewId        크루 ID
+     * @param authorization JWT 토큰 (Authorization 헤더)
+     * @description : 신청자가 대기중인 가입 신청을 취소한다. 차감된 100P가 환불된다.
+     */
+    @DeleteMapping("/{crewId}/join-cancel")
+    @Operation(summary = "가입 신청 취소", description = "대기중인 가입 신청을 취소하고 포인트를 환불받습니다.")
+    public ResponseEntity<ApiResponse<Void>> cancelJoinRequest(
+            @Parameter(description = "크루 ID", required = true)
+            @PathVariable Long crewId,
+
+            @Parameter(description = "JWT 토큰", required = true)
+            @RequestHeader("Authorization") String authorization
+    ) {
+        String jwt = tokenProvider.resolveToken(authorization);
+        String loginId = tokenProvider.getUserId(jwt);
+
+        crewJoinService.cancelJoinRequest(crewId, loginId);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.successNoData("가입 신청이 취소되었습니다."));
     }
 
 }
