@@ -130,4 +130,31 @@ public class CrewJoinController {
         );
     }
 
+    /**
+     * @param crewId        크루 ID
+     * @param joinRequestId 거절할 가입 신청 ID
+     * @param authorization JWT 토큰 (Authorization 헤더)
+     * @description : 크루장이 가입 신청을 거절한다. 포인트가 환불된다.
+     */
+    @PostMapping("/{crewId}/join-requests/{joinRequestId}/reject")
+    public ResponseEntity<ApiResponse<Void>> rejectJoinRequest(
+            @Parameter(description = "크루 ID", required = true)
+            @PathVariable Long crewId,
+
+            @Parameter(description = "가입 신청 ID", required = true)
+            @PathVariable Long joinRequestId,
+
+            @Parameter(description = "JWT 토큰", required = true)
+            @RequestHeader("Authorization") String authorization
+    ) {
+        String jwt = tokenProvider.resolveToken(authorization);
+        String loginId = tokenProvider.getUserId(jwt);
+
+        crewJoinService.rejectJoinRequest(crewId, loginId, joinRequestId);
+
+        return ResponseEntity.ok(
+                ApiResponse.successNoData("가입 신청이 거절되었습니다.")
+        );
+    }
+
 }
