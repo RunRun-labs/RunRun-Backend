@@ -41,4 +41,13 @@ public class CourseFavorite extends BaseSoftDeleteEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    public static CourseFavorite create(User user, Course course) {
+        CourseFavorite courseFavorite = new CourseFavorite();
+        courseFavorite.course = course;
+        courseFavorite.user = user;
+
+        return courseFavorite;
+
+    }
 }
