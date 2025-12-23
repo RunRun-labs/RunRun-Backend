@@ -34,7 +34,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
     private final CourseCursorCodec cursorCodec;
 
     @Override
-    public CursorPage<CourseListResDto> searchCourses(CourseListReqDto req) {
+    public CursorPage<CourseListResDto> searchCourses(CourseListReqDto req, Long currentUserId) {
 
         int size = (req.getSize() == null || req.getSize() <= 0) ? 10 : Math.min(req.getSize(), 50);
         CourseSortType sortType =
@@ -53,6 +53,19 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
 
         // 공통 WHERE
         StringBuilder where = new StringBuilder(" WHERE c.status = 'ACTIVE' ");
+
+        if (currentUserId != null) {
+            where.append("""
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM course_siren cs
+                        WHERE cs.course_id = c.id
+                          AND cs.user_id = :currentUserId
+                          AND cs.is_deleted IS false
+                    )
+                """);
+            params.put("currentUserId", currentUserId);
+        }
 
         // keyword
         if (req.getKeyword() != null && !req.getKeyword().isBlank()) {
@@ -114,21 +127,22 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         // 정렬 분기: nearby=true여도 FAVORITE/LIKE/LATEST로 정상 정렬되게 바꿈
         if (sortType == CourseSortType.DISTANCE) {
             return runDistanceQuery(req, where.toString(), params, cursor, size, pointExpr,
-                centerExpr);
+                centerExpr, currentUserId);
         }
         if (sortType == CourseSortType.LIKE) {
             // nearby=true면 dist_m도 같이 내려주기(표시용). 정렬은 like_count DESC.
             return runCountDescQuery(where.toString(), params, cursor, size,
-                "c.like_count", CourseSortType.LIKE, nearby, pointExpr, centerExpr);
+                "c.like_count", CourseSortType.LIKE, nearby, pointExpr, centerExpr, currentUserId);
         }
         if (sortType == CourseSortType.FAVORITE) {
             return runCountDescQuery(where.toString(), params, cursor, size,
-                "c.favorite_count", CourseSortType.FAVORITE, nearby, pointExpr, centerExpr);
+                "c.favorite_count", CourseSortType.FAVORITE, nearby, pointExpr, centerExpr,
+                currentUserId);
         }
 
         // default: latest
         return runLatestQuery(where.toString(), params, cursor, size, nearby, pointExpr,
-            centerExpr);
+            centerExpr, currentUserId);
     }
 
     private CursorPage<CourseListResDto> runLatestQuery(
@@ -138,7 +152,8 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         int size,
         boolean includeDist,
         String pointExpr,
-        String centerExpr
+        String centerExpr,
+        Long currentUserId
     ) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
@@ -157,7 +172,25 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
                 .append(") AS dist_m ");
         }
 
+        if (currentUserId != null) {
+            sql.append(", CASE WHEN cl.id IS NOT NULL THEN true ELSE false END AS is_liked ");
+            sql.append(", CASE WHEN cf.id IS NOT NULL THEN true ELSE false END AS is_favorited ");
+        } else {
+            sql.append(", false AS is_liked ");
+            sql.append(", false AS is_favorited ");
+        }
+
         sql.append(" FROM course c ");
+
+        // LEFT JOIN for like and favorite status
+        if (currentUserId != null) {
+            sql.append(
+                " LEFT JOIN course_like cl ON c.id = cl.course_id AND cl.user_id = :currentUserId ");
+            sql.append(
+                " LEFT JOIN course_favorite cf ON c.id = cf.course_id AND cf.user_id = :currentUserId ");
+            params.put("currentUserId", currentUserId);
+        }
+
         sql.append(whereSql);
 
         // 커서: created_at desc, id desc
@@ -174,7 +207,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         List<CourseListResDto> rows = jdbc.query(sql.toString(), params,
             (rs, rowNum) -> {
                 try {
-                    return mapRow(rs, includeDist);
+                    return mapRow(rs, includeDist, currentUserId != null);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -198,7 +231,8 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         CourseSortType sortType,
         boolean includeDist,
         String pointExpr,
-        String centerExpr
+        String centerExpr,
+        Long currentUserId
     ) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
@@ -217,7 +251,26 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
                 .append(") AS dist_m ");
         }
 
+        // 좋아요/즐겨찾기 상태 조회
+        if (currentUserId != null) {
+            sql.append(", CASE WHEN cl.id IS NOT NULL THEN true ELSE false END AS is_liked ");
+            sql.append(", CASE WHEN cf.id IS NOT NULL THEN true ELSE false END AS is_favorited ");
+        } else {
+            sql.append(", false AS is_liked ");
+            sql.append(", false AS is_favorited ");
+        }
+
         sql.append(" FROM course c ");
+
+        // LEFT JOIN for like and favorite status
+        if (currentUserId != null) {
+            sql.append(
+                " LEFT JOIN course_like cl ON c.id = cl.course_id AND cl.user_id = :currentUserId ");
+            sql.append(
+                " LEFT JOIN course_favorite cf ON c.id = cf.course_id AND cf.user_id = :currentUserId ");
+            params.put("currentUserId", currentUserId);
+        }
+
         sql.append(whereSql);
 
         // 커서: count desc, id desc
@@ -236,7 +289,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         List<CourseListResDto> rows = jdbc.query(sql.toString(), params,
             (rs, rowNum) -> {
                 try {
-                    return mapRow(rs, includeDist);
+                    return mapRow(rs, includeDist, currentUserId != null);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -260,7 +313,8 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         CursorPayload cursor,
         int size,
         String pointExpr,
-        String centerExpr
+        String centerExpr,
+        Long currentUserId
     ) {
         // dist_m 한번만 계산해서 ORDER/CURSOR에서 재사용
         StringBuilder sql = new StringBuilder();
@@ -277,7 +331,27 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
             """);
         sql.append(" ST_Distance(").append(pointExpr).append(", ").append(centerExpr)
             .append(") AS dist_m ");
+
+        // 좋아요/즐겨찾기 상태 조회
+        if (currentUserId != null) {
+            sql.append(", CASE WHEN cl.id IS NOT NULL THEN true ELSE false END AS is_liked ");
+            sql.append(", CASE WHEN cf.id IS NOT NULL THEN true ELSE false END AS is_favorited ");
+        } else {
+            sql.append(", false AS is_liked ");
+            sql.append(", false AS is_favorited ");
+        }
+
         sql.append(" FROM course c ");
+
+        // LEFT JOIN for like and favorite status
+        if (currentUserId != null) {
+            sql.append(
+                " LEFT JOIN course_like cl ON c.id = cl.course_id AND cl.user_id = :currentUserId ");
+            sql.append(
+                " LEFT JOIN course_favorite cf ON c.id = cf.course_id AND cf.user_id = :currentUserId ");
+            params.put("currentUserId", currentUserId);
+        }
+
         sql.append(whereSql);
         sql.append(" ) ");
         sql.append(" SELECT * FROM base WHERE 1=1 ");
@@ -295,7 +369,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         List<CourseListResDto> rows = jdbc.query(sql.toString(), params,
             (rs, rowNum) -> {
                 try {
-                    return mapRow(rs, true);
+                    return mapRow(rs, true, currentUserId != null);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -310,7 +384,8 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         });
     }
 
-    private CourseListResDto mapRow(ResultSet rs, boolean includeDist) throws Exception {
+    private CourseListResDto mapRow(ResultSet rs, boolean includeDist, boolean includeStatus)
+        throws Exception {
         OffsetDateTime createdAt = null;
         Timestamp ts = rs.getTimestamp("created_at");
         if (ts != null) {
@@ -331,6 +406,17 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         if (includeDist) {
             Object d = rs.getObject("dist_m");
             b.distM(d == null ? null : ((Number) d).doubleValue());
+        }
+
+        // 좋아요/즐겨찾기 상태
+        if (includeStatus) {
+            Object isLikedObj = rs.getObject("is_liked");
+            Object isFavoritedObj = rs.getObject("is_favorited");
+            b.isLiked(isLikedObj != null && (Boolean) isLikedObj);
+            b.isFavorited(isFavoritedObj != null && (Boolean) isFavoritedObj);
+        } else {
+            b.isLiked(false);
+            b.isFavorited(false);
         }
 
         return b.build();

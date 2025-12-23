@@ -12,5 +12,5 @@ import com.multi.runrunbackend.domain.course.dto.res.CourseListResDto;
  */
 public interface CourseRepositoryCustom {
 
-    CursorPage<CourseListResDto> searchCourses(CourseListReqDto req);
+    CursorPage<CourseListResDto> searchCourses(CourseListReqDto req, Long currentUserId);
 }
