@@ -5,6 +5,7 @@ import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
+import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitUpdateReqDto;
@@ -142,7 +143,7 @@ public class RecruitService {
       throw new ForbiddenException(ErrorCode.RECRUIT_DELETE_DENIED);
     }
 
-    recruit.delete();
+    recruitRepository.delete(recruit);
   }
 
   @Transactional
@@ -188,7 +189,7 @@ public class RecruitService {
       if (nextLeader.isPresent()) {
         recruit.changeHost(nextLeader.get().getUser());
       } else {
-        recruit.delete();
+        recruitRepository.delete(recruit);
       }
     }
 
