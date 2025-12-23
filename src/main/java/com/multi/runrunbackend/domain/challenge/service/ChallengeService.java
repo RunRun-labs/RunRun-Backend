@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ChallengeService {
 
     private final ChallengeRepository challengeRepository;
@@ -51,7 +50,7 @@ public class ChallengeService {
 
     private static final long MAX_IMAGE_SIZE = 5L * 1024 * 1024; // 5MB
 
-    // 챌린지 생성 (ADMIN)
+    @Transactional
     public ChallengeResDto createChallenge(ChallengeReqDto req, MultipartFile imageFile, CustomUser principal) {
         User user = getUserByPrincipal(principal);
         // validateAdminRole(user); // 실제 권한 체크 필요 시 주석 해제
@@ -63,7 +62,7 @@ public class ChallengeService {
         return ChallengeResDto.from(savedChallenge);
     }
 
-    // 챌린지 수정 (ADMIN)
+    @Transactional
     public void updateChallenge(Long challengeId, @Valid ChallengeReqDto req, MultipartFile imageFile, CustomUser principal) {
         User user = getUserByPrincipal(principal);
         // validateAdminRole(user);
@@ -71,7 +70,7 @@ public class ChallengeService {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
 
-        // 정보 업데이트
+
         challenge.update(
                 req.getTitle(),
                 req.getChallengeType(),
@@ -92,7 +91,7 @@ public class ChallengeService {
         }
     }
 
-    // 챌린지 삭제 (ADMIN)
+    @Transactional
     public void deleteChallenge(Long challengeId, CustomUser principal) {
         User user = getUserByPrincipal(principal);
         // validateAdminRole(user);
@@ -104,7 +103,6 @@ public class ChallengeService {
         challenge.deleteChallenge();
     }
 
-    // 챌린지 목록 조회 (로그인 시 상태 포함)
     @Transactional(readOnly = true)
     public List<ChallengeResDto> getChallengeList(CustomUser principal) {
         List<Challenge> challenges = challengeRepository.findAll();
@@ -125,9 +123,6 @@ public class ChallengeService {
         return resDtos;
     }
 
-    /**
-     * 챌린지 상세 조회
-     */
     @Transactional(readOnly = true)
     public ChallengeResDto getChallengeDetail(Long challengeId, CustomUser principal) {
         Challenge challenge = challengeRepository.findById(challengeId)
@@ -152,9 +147,7 @@ public class ChallengeService {
         return resDto;
     }
 
-    /**
-     * 챌린지 참여하기
-     */
+    @Transactional
     public void joinChallenge(Long challengeId, CustomUser principal) {
         User user = getUserByPrincipal(principal);
         Challenge challenge = challengeRepository.findById(challengeId)
@@ -175,9 +168,7 @@ public class ChallengeService {
         userChallengeRepository.save(userChallenge);
     }
 
-    /**
-     * 챌린지 포기하기 (취소)
-     */
+    @Transactional
     public void cancelChallenge(Long challengeId, CustomUser principal) {
         User user = getUserByPrincipal(principal);
 
