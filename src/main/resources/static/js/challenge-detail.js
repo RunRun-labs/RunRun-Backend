@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const bottomNavTemplate = document.getElementById("bottomNavTemplate");
     const joinButton = document.querySelector('[data-role="join-button"]');
     const cancelButton = document.querySelector('[data-role="cancel-button"]');
+    const editButton = document.querySelector('[data-role="edit-button"]');
+    const deleteButton = document.querySelector('[data-role="delete-button"]');
     const progressArea = document.querySelector('[data-role="progress-area"]');
 
     // 뒤로가기 버튼 클릭 이벤트
@@ -48,6 +50,20 @@ document.addEventListener("DOMContentLoaded", () => {
             handleCancelChallenge(challengeId);
         });
     }
+
+    // 수정하기 버튼 클릭 이벤트
+    if (editButton) {
+        editButton.addEventListener("click", () => {
+            handleEditChallenge(challengeId);
+        });
+    }
+
+    // 삭제하기 버튼 클릭 이벤트
+    if (deleteButton) {
+        deleteButton.addEventListener("click", () => {
+            handleDeleteChallenge(challengeId);
+        });
+    }
 });
 
 /**
@@ -69,6 +85,10 @@ async function loadChallengeDetail(challengeId) {
     const accessToken = localStorage.getItem("accessToken");
 
     try {
+        // 관리자 권한 확인
+        const role = getRoleFromJwt(accessToken);
+        const isAdmin = role === "ROLE_ADMIN";
+
         // API 경로는 ChallengeController의 @RequestMapping("/challenges")를 따름
         const response = await fetch(`/challenges/${challengeId}`, {
             headers: accessToken
@@ -88,7 +108,7 @@ async function loadChallengeDetail(challengeId) {
             throw new Error("서버에서 받은 챌린지 정보가 비어있습니다.");
         }
 
-        renderChallengeDetail(challenge);
+        renderChallengeDetail(challenge, isAdmin);
     } catch (error) {
         console.error("챌린지 로드 실패:", error);
         alert(error.message || "챌린지 정보를 불러오는 중 오류가 발생했습니다.");
@@ -98,7 +118,7 @@ async function loadChallengeDetail(challengeId) {
 /**
  * 챌린지 상세 정보 렌더링
  */
-function renderChallengeDetail(challenge) {
+function renderChallengeDetail(challenge, isAdmin = false) {
     // 제목
     const titleEl = document.querySelector('[data-role="challenge-title"]');
     if (titleEl) {
@@ -151,12 +171,53 @@ function renderChallengeDetail(challenge) {
         }
     }
 
-    // 사용자 참여 상태에 따른 UI 표시
+    // 관리자일 경우 수정하기/삭제하기 버튼 표시
+    if (isAdmin) {
+        const joinBtn = document.querySelector('[data-role="join-button"]');
+        const cancelBtn = document.querySelector('[data-role="cancel-button"]');
+        const editBtn = document.querySelector('[data-role="edit-button"]');
+        const deleteBtn = document.querySelector('[data-role="delete-button"]');
+        const progressArea = document.querySelector('[data-role="progress-area"]');
+        const progressBarContainer = document.querySelector('[data-role="progress-bar-container"]');
+
+        // 일반 사용자용 버튼 숨김
+        if (joinBtn) {
+            joinBtn.hidden = true;
+            joinBtn.style.display = "none";
+        }
+        if (cancelBtn) {
+            cancelBtn.hidden = true;
+            cancelBtn.style.display = "none";
+        }
+        if (progressArea) {
+            progressArea.hidden = true;
+            progressArea.style.display = "none";
+        }
+        if (progressBarContainer) {
+            progressBarContainer.hidden = true;
+            progressBarContainer.style.display = "none";
+        }
+
+        // 관리자용 버튼 표시
+        if (editBtn) {
+            editBtn.hidden = false;
+            editBtn.style.display = "block";
+        }
+        if (deleteBtn) {
+            deleteBtn.hidden = false;
+            deleteBtn.style.display = "block";
+        }
+        return;
+    }
+
+    // 일반 사용자: 참여 상태에 따른 UI 표시
     const status = challenge.myStatus; // JOINED, IN_PROGRESS, COMPLETED, FAILED, CANCELED, null
 
     // 모든 버튼/영역 초기화 (숨김)
     const joinBtn = document.querySelector('[data-role="join-button"]');
     const cancelBtn = document.querySelector('[data-role="cancel-button"]');
+    const editBtn = document.querySelector('[data-role="edit-button"]');
+    const deleteBtn = document.querySelector('[data-role="delete-button"]');
     const progressArea = document.querySelector('[data-role="progress-area"]');
     const progressBarContainer = document.querySelector('[data-role="progress-bar-container"]');
 
@@ -168,6 +229,14 @@ function renderChallengeDetail(challenge) {
     if (cancelBtn) {
         cancelBtn.hidden = true;
         cancelBtn.style.display = "none";
+    }
+    if (editBtn) {
+        editBtn.hidden = true;
+        editBtn.style.display = "none";
+    }
+    if (deleteBtn) {
+        deleteBtn.hidden = true;
+        deleteBtn.style.display = "none";
     }
     if (progressArea) {
         progressArea.hidden = true;
@@ -397,6 +466,96 @@ async function handleCancelChallenge(challengeId) {
         if (cancelButton) {
             cancelButton.disabled = false;
             cancelButton.textContent = "챌린지 포기";
+        }
+    }
+}
+
+/**
+ * JWT에서 역할(role) 추출
+ */
+function getRoleFromJwt(token) {
+    if (!token || typeof token !== "string") return null;
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+
+    try {
+        const payloadJson = decodeBase64Url(parts[1]);
+        const payload = JSON.parse(payloadJson);
+
+        if (typeof payload.role === "string") return payload.role;
+        if (typeof payload.auth === "string") return payload.auth;
+
+        const authorities = payload.authorities || payload.roles;
+        if (Array.isArray(authorities) && typeof authorities[0] === "string") return authorities[0];
+
+        return null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Base64URL 디코딩
+ */
+function decodeBase64Url(base64Url) {
+    let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    while (base64.length % 4) base64 += "=";
+
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    return new TextDecoder("utf-8").decode(bytes);
+}
+
+/**
+ * 챌린지 수정하기
+ */
+async function handleEditChallenge(challengeId) {
+    // 수정 페이지로 이동 (또는 모달 열기)
+    window.location.href = `/challenge/${challengeId}/edit`;
+}
+
+/**
+ * 챌린지 삭제하기
+ */
+async function handleDeleteChallenge(challengeId) {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+        alert("로그인이 필요합니다.");
+        return;
+    }
+
+    if (!confirm("정말 챌린지를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+        return;
+    }
+
+    const deleteButton = document.querySelector('[data-role="delete-button"]');
+    if (deleteButton) {
+        deleteButton.disabled = true;
+        deleteButton.textContent = "삭제 중...";
+    }
+
+    try {
+        const response = await fetch(`/challenges/${challengeId}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data?.message || "챌린지 삭제에 실패했습니다.");
+        }
+
+        alert("챌린지가 삭제되었습니다.");
+        window.location.href = "/challenge";
+    } catch (error) {
+        alert(error.message || "챌린지 삭제 중 오류가 발생했습니다.");
+    } finally {
+        if (deleteButton) {
+            deleteButton.disabled = false;
+            deleteButton.textContent = "삭제하기";
         }
     }
 }
