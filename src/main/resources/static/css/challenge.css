@@ -80,6 +80,35 @@ body {
     text-transform: uppercase;
 }
 
+.create-button-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+    padding: 0 4px;
+}
+
+.create-button {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: #000;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(186, 255, 41, 0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.create-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(186, 255, 41, 0.6);
+}
+
+.create-button:active {
+    transform: translateY(0);
+}
+
 .challenge-intro {
     margin: 0 0 20px;
     padding: 0 4px;
@@ -269,6 +298,15 @@ body {
         margin-bottom: 16px;
     }
 
+    .create-button-container {
+        margin-bottom: 12px;
+    }
+
+    .create-button {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
     .challenge-card {
         padding: 10px;
         gap: 10px;
@@ -302,6 +340,15 @@ body {
         margin-bottom: 14px;
     }
 
+    .create-button-container {
+        margin-bottom: 10px;
+    }
+
+    .create-button {
+        padding: 5px 10px;
+        font-size: 10px;
+    }
+
     .section-title {
         font-size: 16px;
     }
@@ -331,6 +378,15 @@ body {
 
     .challenge-page {
         padding-bottom: 160px;
+    }
+
+    .create-button-container {
+        margin-bottom: 20px;
+    }
+
+    .create-button {
+        padding: 10px 20px;
+        font-size: 13px;
     }
 
     .challenge-list {

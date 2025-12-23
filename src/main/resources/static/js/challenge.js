@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const backButton = document.querySelector(".back-button");
     const bottomNavMount = document.getElementById("bottomNavMount");
     const bottomNavTemplate = document.getElementById("bottomNavTemplate");
+    const createButton = document.querySelector('[data-role="create-button"]');
 
     if (backButton) {
         backButton.addEventListener("click", () => {
@@ -15,6 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
         bottomNavMount.replaceWith(clone);
     }
 
+    // 등록하기 버튼 클릭 이벤트
+    if (createButton) {
+        createButton.addEventListener("click", () => {
+            window.location.href = "/challenge/create";
+        });
+    }
+
     loadChallenges();
 });
 
@@ -25,10 +33,15 @@ async function loadChallenges() {
         const role = getRoleFromJwt(accessToken);
         const isAdmin = role === "ROLE_ADMIN";
 
-        // ✅ 관리자면 안내 문구 숨김
+        // ✅ 관리자면 안내 문구 숨김 및 등록하기 버튼 표시
         if (isAdmin) {
             const intro = document.querySelector(".challenge-intro");
             if (intro) intro.hidden = true;
+
+            const createButton = document.querySelector('[data-role="create-button"]');
+            if (createButton) {
+                createButton.hidden = false;
+            }
         }
 
         const response = await fetch("/challenges", {
