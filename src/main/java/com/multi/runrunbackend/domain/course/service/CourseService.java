@@ -1,6 +1,11 @@
 package com.multi.runrunbackend.domain.course.service;
 
+import static com.multi.runrunbackend.common.exception.dto.ErrorCode.ALREADY_LIKED_COURSE;
+import static com.multi.runrunbackend.common.exception.dto.ErrorCode.CANNOT_LIKE_OWN_COURSE;
+import static com.multi.runrunbackend.common.exception.dto.ErrorCode.COURSE_NOT_AVAILABLE;
+
 import com.multi.runrunbackend.common.exception.custom.BadRequestException;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.ExternalApiException;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
@@ -12,6 +17,7 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.course.constant.CourseStatus;
 import com.multi.runrunbackend.domain.course.dto.req.CourseCreateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseListReqDto;
+import com.multi.runrunbackend.domain.course.dto.req.CourseSirenReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseUpdateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
@@ -22,8 +28,14 @@ import com.multi.runrunbackend.domain.course.dto.res.CourseUpdateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.dto.res.TmapPedestrianResDto;
 import com.multi.runrunbackend.domain.course.entity.Course;
+import com.multi.runrunbackend.domain.course.entity.CourseFavorite;
+import com.multi.runrunbackend.domain.course.entity.CourseLike;
+import com.multi.runrunbackend.domain.course.entity.CourseSiren;
+import com.multi.runrunbackend.domain.course.repository.CourseFavoriteRepository;
+import com.multi.runrunbackend.domain.course.repository.CourseLikeRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseRepositoryCustom;
+import com.multi.runrunbackend.domain.course.repository.CourseSirenRepository;
 import com.multi.runrunbackend.domain.course.util.GeometryParser;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
@@ -72,6 +84,9 @@ public class CourseService {
     private final FileStorage fileStorage;
     private final CourseRepositoryCustom courseRepositoryCustom;
     private final GeometryParser geometryParser;
+    private final CourseLikeRepository courseLikeRepository;
+    private final CourseFavoriteRepository courseFavoriteRepository;
+    private final CourseSirenRepository courseSirenRepository;
 
     @Value("${tmap.app-key}")
     private String tmapAppKey;
@@ -139,7 +154,7 @@ public class CourseService {
         if (!course.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException(ErrorCode.COURSE_FORBIDDEN);
         }
-        
+
         LineString parsedPath = geometryParser.parseLineString(req.getPath());
 
         LineString cleanedPath = simplifyLineString(parsedPath);
@@ -186,12 +201,17 @@ public class CourseService {
 
     public CursorPage<CourseListResDto> getCourseList(CustomUser principal, CourseListReqDto req) {
 
-        String loginId = principal.getLoginId();
+        Long currentUserId = null;
+        if (principal != null) {
+            String loginId = principal.getLoginId();
+            User user = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+            if (user != null) {
+                currentUserId = user.getId();
+            }
+        }
 
-        User user = userRepository.findByLoginId(loginId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-
-        return courseRepositoryCustom.searchCourses(req);
+        return courseRepositoryCustom.searchCourses(req, currentUserId);
 
     }
 
@@ -861,7 +881,145 @@ public class CourseService {
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
-        return CourseDetailResDto.fromEntity(course, user);
+        boolean isLiked = courseLikeRepository.existsByCourse_IdAndUser_Id(courseId, user.getId());
+
+        boolean isFavorited = courseFavoriteRepository.existsByCourse_IdAndUser_Id(courseId,
+            user.getId());
+
+        return CourseDetailResDto.fromEntity(course, user, isLiked, isFavorited);
+
+    }
+
+    @Transactional
+    public void likeCourse(CustomUser principal, Long courseId) {
+
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(COURSE_NOT_AVAILABLE);
+        }
+        if (course.getUser().getId().equals(user.getId())) {
+            throw new BusinessException(CANNOT_LIKE_OWN_COURSE);
+        }
+
+        if (courseLikeRepository.existsByCourse_IdAndUser_Id(user.getId(), courseId)) {
+            throw new BusinessException(ALREADY_LIKED_COURSE);
+        }
+        courseLikeRepository.save(CourseLike.create(user, course));
+
+        courseRepository.increaseLikeCount(courseId);
+    }
+
+    @Transactional
+    public void unLikeCourse(CustomUser principal, Long courseId) {
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
+        }
+
+        int deleted = courseLikeRepository
+            .deleteByCourseIdAndUserId(courseId, user.getId());
+
+        if (deleted == 0) {
+            throw new BadRequestException(ErrorCode.NOT_LIKED);
+        }
+
+        int updated = courseRepository.decreaseLikeCount(courseId);
+
+        if (updated == 0) {
+            log.warn("likeCount already zero. courseId={}", courseId);
+        }
+
+    }
+
+    @Transactional
+    public void favoriteCourse(CustomUser principal, Long courseId) {
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
+        }
+        if (course.getUser().getId().equals(user.getId())) {
+            throw new BusinessException(ErrorCode.CANNOT_FAVORITE_OWN_COURSE);
+        }
+
+        if (courseFavoriteRepository.existsByCourse_IdAndUser_Id(user.getId(), courseId)) {
+            throw new BusinessException(ErrorCode.ALREADY_FAVORITE_COURSE);
+        }
+        courseFavoriteRepository.save(CourseFavorite.create(user, course));
+
+        courseRepository.increaseFavoriteCount(courseId);
+    }
+
+    @Transactional
+    public void unFavoriteCourse(CustomUser principal, Long courseId) {
+
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
+        }
+
+        int deleted = courseFavoriteRepository
+            .deleteByCourseIdAndUserId(courseId, user.getId());
+
+        if (deleted == 0) {
+            throw new BadRequestException(ErrorCode.NOT_FAVORITE);
+        }
+
+        int updated = courseRepository.decreaseFavoriteCount(courseId);
+
+        if (updated == 0) {
+            log.warn("favoriteCount already zero. courseId={}", courseId);
+        }
+
+    }
+
+    public void sirenCourse(CustomUser principal, Long courseId, CourseSirenReqDto req) {
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
+        }
+
+        if (course.getUser().getId().equals(user.getId())) {
+            throw new BusinessException(ErrorCode.CANNOT_SIREN_OWN_COURSE);
+        }
+
+        if (courseSirenRepository.existsByCourse_IdAndUser_Id(courseId, user.getId())) {
+            throw new BusinessException(ErrorCode.ALREADY_SIREN_COURSE);
+        }
+        courseSirenRepository.save(CourseSiren.create(user, course, req));
 
     }
 

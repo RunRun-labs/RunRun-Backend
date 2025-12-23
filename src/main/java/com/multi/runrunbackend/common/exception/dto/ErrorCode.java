@@ -30,9 +30,9 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_102", "유효하지 않은 리프레시 토큰입니다."),
     FILE_UPLOAD_FAILED(
 
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "F001",
-            "파일 업로드에 실패했습니다."
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "F001",
+        "파일 업로드에 실패했습니다."
     ),
 
     /* ===== 크루 관련 ===== */
@@ -49,37 +49,23 @@ public enum ErrorCode {
     JOIN_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "CR011", "가입 신청을 찾을 수 없습니다."),
     JOIN_REQUEST_NOT_PENDING(HttpStatus.BAD_REQUEST, "CR012", "대기 상태의 요청만 처리할 수 있습니다."),
     ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR013", "이미 가입 신청한 크루입니다."),
-    CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014", "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
+    CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014",
+        "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
     FILE_EMPTY(
-            HttpStatus.BAD_REQUEST,
-            "F002",
-            "업로드할 파일이 비어 있습니다."
+        HttpStatus.BAD_REQUEST,
+        "F002",
+        "업로드할 파일이 비어 있습니다."
     ),
     FILE_NOT_IMAGE(
-            HttpStatus.BAD_REQUEST,
-            "F003",
-            "이미지 파일만 업로드할 수 있습니다."
+        HttpStatus.BAD_REQUEST,
+        "F003",
+        "이미지 파일만 업로드할 수 있습니다."
     ),
     FILE_SIZE_EXCEEDED(
-            HttpStatus.BAD_REQUEST,
-            "F004",
-            "파일 크기가 제한을 초과했습니다."
-    ),
-    /*==== 코스 ====*/
-    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS_001", "코스를 찾을 수 없습니다"),
-
-    COURSE_FORBIDDEN(
-        HttpStatus.FORBIDDEN,
-        "CRS_002",
-        "해당 코스에 대한 권한이 없습니다."
-    ),
-
-    COURSE_IMAGE_TOO_LARGE(
         HttpStatus.BAD_REQUEST,
-        "CRS_003",
-        "이미지 파일 용량이 너무 큽니다."
+        "F004",
+        "파일 크기가 제한을 초과했습니다."
     ),
-    COURSE_NOT_ACTIVE(HttpStatus.FORBIDDEN, "CRS_004", "코스가 ACTIVE 상태가 아닙니다"),
 
     /*==== TMAP====*/
 
@@ -161,34 +147,65 @@ public enum ErrorCode {
         "CRS_S_004",
         "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
     ),
-  /* ==== 모집글 ====*/
-  RECRUIT_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "모집글을 찾을 수 없습니다."),
-  INVALID_RECRUIT(HttpStatus.BAD_REQUEST, "R002", "삭제된 모집글입니다"),
-  RECRUIT_UPDATE_DENIED(HttpStatus.FORBIDDEN, "R003", "모집글 수정 권한이 없습니다."),
-  RECRUIT_DELETE_DENIED(HttpStatus.FORBIDDEN, "R004", "모집글 삭제 권한이 없습니다."),
-  RECRUIT_HAS_PARTICIPANTS(HttpStatus.BAD_REQUEST, "R005", "참여자가 있어 모집글을 수정할 수 없습니다."),
-  ALREADY_PARTICIPATED(HttpStatus.BAD_REQUEST, "R006", "이미 참여 중입니다."),
-  NOT_PARTICIPATED(HttpStatus.BAD_REQUEST, "R007", "참여 상태가 아닙니다."),
-  INVALID_AGE_RANGE(HttpStatus.BAD_REQUEST, "R008", "최소 나이는 최대 나이보다 클 수 없습니다."),
-  INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "R009", "모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다."),
-  RECRUIT_FULL(HttpStatus.BAD_REQUEST, "R010", "참여 인원이 다 찼습니다."),
-  UNAUTHORIZED_HOST(HttpStatus.FORBIDDEN, "R011", "방장에게만 권한이 있습니다."),
-  RECRUIT_TIME_OVER(HttpStatus.BAD_REQUEST, "R012", "모집 신청 기간이 지났습니다."),
-  NOT_ENOUGH_PARTICIPANTS(HttpStatus.BAD_REQUEST, "RO13", "참가자가 최소 1명은 더 있어야 출발할 수 있습니다."),
-  TOO_EARLY_TO_START(HttpStatus.BAD_REQUEST, "RO14", "매칭 확정은 모임 시간 3시간 전부터 가능합니다."),
-  /*===== 세션/채팅 =====*/
-  SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
-  SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
-  NOT_SESSION_HOST(HttpStatus.FORBIDDEN, "SES_003", "방장만 실행할 수 있습니다."),
-  CANNOT_KICK_SELF(HttpStatus.BAD_REQUEST, "SES_004", "자기 자신은 강퇴할 수 없습니다."),
-  USER_ALREADY_LEFT(HttpStatus.BAD_REQUEST, "SES_005", "이미 퇴장한 사용자입니다."),
-  ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
-  HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다.");
+    /*==== 코스 ====*/
+    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS_001", "코스를 찾을 수 없습니다"),
+
+    COURSE_FORBIDDEN(
+        HttpStatus.FORBIDDEN,
+        "CRS_002",
+        "해당 코스에 대한 권한이 없습니다."
+    ),
+
+    COURSE_IMAGE_TOO_LARGE(
+        HttpStatus.BAD_REQUEST,
+        "CRS_003",
+        "이미지 파일 용량이 너무 큽니다."
+    ),
+    COURSE_NOT_ACTIVE(HttpStatus.FORBIDDEN, "CRS_004", "코스가 ACTIVE 상태가 아닙니다"),
+    ALREADY_LIKED_COURSE(HttpStatus.CONFLICT, "CRS_005", "이미 좋아요한 코스입니다"),
+    COURSE_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "CRS_006", "사용할 수 없는 코스입니다"),
+    CANNOT_LIKE_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_007",
+        "본인의 코스는 좋아요할 수 없습니다"),
+    COURSELIKE_NOT_FOUND(
+        HttpStatus.NOT_FOUND, "CRS_008", "해당 좋아요를 찾을 수 없습니다"),
+    NOT_LIKED(HttpStatus.BAD_REQUEST, "CRS_009", "좋아요를 누르지 않은 코스입니다"),
+    ALREADY_FAVORITE_COURSE(HttpStatus.CONFLICT, "CRS_010", "이미 즐겨찾기한 코스입니다"),
+    CANNOT_FAVORITE_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_011",
+        "본인의 코스는 즐겨찾기할 수 없습니다"),
+    FAVORITE_NOT_FOUND(
+        HttpStatus.NOT_FOUND, "CRS_012", "해당 즐겨찾기를 찾을 수 없습니다"),
+    NOT_FAVORITE(HttpStatus.BAD_REQUEST, "CRS_013", "즐겨찾기를 누르지 않은 코스입니다"),
+    CANNOT_SIREN_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_014", "본인의 코스는 신고할 수 없습니다"),
+    ALREADY_SIREN_COURSE(HttpStatus.CONFLICT, "CRS_015", "이미 신고한 코스입니다"),
+
+    /* ==== 모집글 ====*/
+    RECRUIT_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "모집글을 찾을 수 없습니다."),
+    INVALID_RECRUIT(HttpStatus.BAD_REQUEST, "R002", "삭제된 모집글입니다"),
+    RECRUIT_UPDATE_DENIED(HttpStatus.FORBIDDEN, "R003", "모집글 수정 권한이 없습니다."),
+    RECRUIT_DELETE_DENIED(HttpStatus.FORBIDDEN, "R004", "모집글 삭제 권한이 없습니다."),
+    RECRUIT_HAS_PARTICIPANTS(HttpStatus.BAD_REQUEST, "R005", "참여자가 있어 모집글을 수정할 수 없습니다."),
+    ALREADY_PARTICIPATED(HttpStatus.BAD_REQUEST, "R006", "이미 참여 중입니다."),
+    NOT_PARTICIPATED(HttpStatus.BAD_REQUEST, "R007", "참여 상태가 아닙니다."),
+    INVALID_AGE_RANGE(HttpStatus.BAD_REQUEST, "R008", "최소 나이는 최대 나이보다 클 수 없습니다."),
+    INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "R009", "모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다."),
+    RECRUIT_FULL(HttpStatus.BAD_REQUEST, "R010", "참여 인원이 다 찼습니다."),
+    UNAUTHORIZED_HOST(HttpStatus.FORBIDDEN, "R011", "방장에게만 권한이 있습니다."),
+    RECRUIT_TIME_OVER(HttpStatus.BAD_REQUEST, "R012", "모집 신청 기간이 지났습니다."),
+    NOT_ENOUGH_PARTICIPANTS(HttpStatus.BAD_REQUEST, "RO13", "참가자가 최소 1명은 더 있어야 출발할 수 있습니다."),
+    TOO_EARLY_TO_START(HttpStatus.BAD_REQUEST, "RO14", "매칭 확정은 모임 시간 3시간 전부터 가능합니다."),
+    /*===== 세션/채팅 =====*/
+    SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
+    SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
+    NOT_SESSION_HOST(HttpStatus.FORBIDDEN, "SES_003", "방장만 실행할 수 있습니다."),
+    CANNOT_KICK_SELF(HttpStatus.BAD_REQUEST, "SES_004", "자기 자신은 강퇴할 수 없습니다."),
+    USER_ALREADY_LEFT(HttpStatus.BAD_REQUEST, "SES_005", "이미 퇴장한 사용자입니다."),
+    ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
+    HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다.");
 
 
-  private final HttpStatus httpStatus;
-  private final String code;
-  private final String message;
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
 
     ErrorCode(HttpStatus httpStatus, String code, String message) {
         this.httpStatus = httpStatus;

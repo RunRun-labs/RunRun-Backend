@@ -116,7 +116,7 @@ async function loadCourseList(reset = false) {
     }
     params.append("size", "20");
 
-    const url = `/api/routes${
+    const url = `/api/courses${
       params.toString() ? "?" + params.toString() : ""
     }`;
     console.log("Fetching courses from:", url);
@@ -269,14 +269,14 @@ function createCourseCard(course) {
     </div>
     <div class="course-thumbnail-wrapper">
       <div class="course-actions">
-        <button class="action-icon heart-icon" type="button" aria-label="좋아요" onclick="event.stopPropagation();">
+        <button class="action-icon heart-icon ${course.isLiked ? "active" : ""}" type="button" aria-label="좋아요" onclick="event.stopPropagation();">
           <img
               src="http://localhost:3845/assets/9af0c1d4ec1d966c7ec0b9ad1664f0fb4dc60971.svg"
               alt="하트 아이콘"
           />
           <span class="action-count">${course.likeCount || 0}</span>
         </button>
-        <button class="action-icon star-icon" type="button" aria-label="즐겨찾기" onclick="event.stopPropagation();">
+        <button class="action-icon star-icon ${course.isFavorited ? "active" : ""}" type="button" aria-label="즐겨찾기" onclick="event.stopPropagation();">
           <img
               src="http://localhost:3845/assets/a153ec3dff46ec34044b8bce0977bd3c5e0e43d7.svg"
               alt="별 아이콘"
