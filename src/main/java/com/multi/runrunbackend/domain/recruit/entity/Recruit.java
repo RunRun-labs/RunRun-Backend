@@ -1,8 +1,9 @@
 package com.multi.runrunbackend.domain.recruit.entity;
 
-import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.common.entitiy.BaseTimeEntity;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.recruit.constant.GenderLimit;
+import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitUpdateReqDto;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.Column;
@@ -22,7 +23,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
 
 /**
  * @author : KIMGWANGHO
@@ -36,8 +36,7 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "recruit")
-@SQLRestriction("is_deleted = false")
-public class Recruit extends BaseEntity {
+public class Recruit extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -92,6 +91,11 @@ public class Recruit extends BaseEntity {
   @Builder.Default
   private Integer currentParticipants = 1;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status", nullable = false)
+  @Builder.Default
+  private RecruitStatus status = RecruitStatus.RECRUITING;
+
   public void increaseParticipants() {
     this.currentParticipants++;
   }
@@ -116,10 +120,6 @@ public class Recruit extends BaseEntity {
     if (req.getGenderLimit() != null) {
       this.genderLimit = req.getGenderLimit();
     }
-  }
-
-  public void delete() {
-    this.isDeleted = true;
   }
 
   public void changeHost(User newHost) {
