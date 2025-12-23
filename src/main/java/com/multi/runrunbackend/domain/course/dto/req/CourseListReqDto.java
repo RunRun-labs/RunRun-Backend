@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.course.dto.req;
 
 import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
 import com.multi.runrunbackend.domain.course.constant.CourseSortType;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +24,7 @@ public class CourseListReqDto {
     private String keyword;
 
 
-    private CourseRegisterType registerType;
+    private List<CourseRegisterType> registerTypes;
     private Boolean nearby;
     private Double lat;
     private Double lng;
@@ -41,7 +42,7 @@ public class CourseListReqDto {
 
     public static CourseListReqDto fromParams(
         String keyword,
-        CourseRegisterType registerType,
+        List<CourseRegisterType> registerTypes,
         Boolean nearby,
         Double lat,
         Double lng,
@@ -53,7 +54,7 @@ public class CourseListReqDto {
     ) {
         return CourseListReqDto.builder()
             .keyword(normalizeBlank(keyword))
-            .registerType(registerType)
+            .registerTypes(registerTypes)
             .nearby(nearby)
             .lat(lat)
             .lng(lng)

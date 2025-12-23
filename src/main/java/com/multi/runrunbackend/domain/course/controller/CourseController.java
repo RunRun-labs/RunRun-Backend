@@ -21,6 +21,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -78,7 +79,7 @@ public class CourseController {
         @AuthenticationPrincipal CustomUser principal,
 
         @RequestParam(required = false) String keyword,
-        @RequestParam(required = false) CourseRegisterType registerType,
+        @RequestParam(required = false) List<CourseRegisterType> registerType,
         @RequestParam(required = false) Boolean nearby,
 
         @RequestParam(required = false)
