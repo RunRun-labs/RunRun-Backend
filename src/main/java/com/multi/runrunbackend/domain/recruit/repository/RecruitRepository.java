@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.recruit.repository;
 
+import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -47,5 +48,5 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
       Pageable pageable
   );
 
-  List<Recruit> findAllByIsDeletedFalseAndMeetingAtBefore(LocalDateTime time);
+  List<Recruit> findAllByStatusAndMeetingAtBefore(RecruitStatus status, LocalDateTime time);
 }
