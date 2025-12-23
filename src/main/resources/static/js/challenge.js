@@ -61,37 +61,54 @@ async function loadChallenges() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const filtered = (Array.isArray(challenges) ? challenges : []).filter((c) => {
-            const endDate = new Date(c.endDate);
-            endDate.setHours(0, 0, 0, 0);
-            return isNaN(endDate.getTime()) ? true : endDate >= today;
-        });
-
         if (isAdmin) {
-            hideSectionTitle("ongoing");
-            hideSectionTitle("available");
+            // 관리자는 종료일이 미래인 챌린지만 표시
+            const filtered = (Array.isArray(challenges) ? challenges : []).filter((c) => {
+                const endDate = new Date(c.endDate);
+                endDate.setHours(0, 0, 0, 0);
+                return isNaN(endDate.getTime()) ? true : endDate >= today;
+            });
 
-            const ongoingSection = document.querySelector(`[data-section="ongoing"]`);
+            // 관리자: 참여 중(ongoing) 섹션 숨김 + 도전 가능(available) 영역에만 표시
+            const ongoingSection = document.querySelector('[data-section="ongoing"]');
             if (ongoingSection) ongoingSection.hidden = true;
-
-            setEmptyMessageHidden("ongoing", true);
-            setEmptyMessageHidden("available", true);
 
             renderChallenges("available", filtered);
             return;
         }
 
+        // 일반 사용자: 참여 중(ongoing) + 도전 가능(available)
         const ongoing = [];
         const available = [];
 
-        filtered.forEach((challenge) => {
+        (Array.isArray(challenges) ? challenges : []).forEach((challenge) => {
             const status = challenge.myStatus;
-            if (status === "JOINED" || status === "IN_PROGRESS") ongoing.push(challenge);
-            else available.push(challenge);
+
+            const endDate = new Date(challenge.endDate);
+            endDate.setHours(0, 0, 0, 0);
+
+            const isFutureOrToday = isNaN(endDate.getTime()) ? true : endDate >= today;
+
+            // 1) 도전종료: 무시 (탭 삭제됨)
+            if (status === "COMPLETED" || status === "FAILED") {
+                return;
+            }
+
+            // 2) 도전중: JOINED/IN_PROGRESS && endDate >= today
+            if ((status === "JOINED" || status === "IN_PROGRESS") && isFutureOrToday) {
+                ongoing.push(challenge);
+                return;
+            }
+
+            // 3) 도전 가능: 위 조건에 해당하지 않는 나머지 && endDate >= today
+            if (isFutureOrToday) {
+                available.push(challenge);
+            }
         });
 
         renderChallenges("ongoing", ongoing);
         renderChallenges("available", available);
+
     } catch (error) {
         console.error("챌린지 로드 실패:", error);
     }
@@ -146,8 +163,9 @@ function renderChallenges(sectionType, challenges) {
 
     // 기존 카드 제거 (empty 블록은 유지)
     Array.from(listContainer.children).forEach((child) => {
-        const isEmptyBlock = child.getAttribute("data-role") === `${sectionType}-empty`;
-        if (!isEmptyBlock) child.remove();
+        const role = child.getAttribute("data-role");
+        if (role === `${sectionType}-empty`) return;
+        child.remove();
     });
 
     if (!Array.isArray(challenges) || challenges.length === 0) {
