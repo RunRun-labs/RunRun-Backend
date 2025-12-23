@@ -1,9 +1,6 @@
 package com.multi.runrunbackend.domain.challenge.service;
 
-import com.multi.runrunbackend.common.exception.custom.CustomException;
-import com.multi.runrunbackend.common.exception.custom.FileUploadException;
-import com.multi.runrunbackend.common.exception.custom.NotFoundException;
-import com.multi.runrunbackend.common.exception.custom.TokenException;
+import com.multi.runrunbackend.common.exception.custom.*;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
@@ -52,8 +49,9 @@ public class ChallengeService {
 
     @Transactional
     public ChallengeResDto createChallenge(ChallengeReqDto req, MultipartFile imageFile, CustomUser principal) {
+        validateAdminRole(principal);
+
         User user = getUserByPrincipal(principal);
-        // validateAdminRole(user); // 실제 권한 체크 필요 시 주석 해제
 
         Challenge savedChallenge = saveChallenge(req);
 
@@ -64,8 +62,8 @@ public class ChallengeService {
 
     @Transactional
     public void updateChallenge(Long challengeId, @Valid ChallengeReqDto req, MultipartFile imageFile, CustomUser principal) {
+        validateAdminRole(principal);
         User user = getUserByPrincipal(principal);
-        // validateAdminRole(user);
 
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
@@ -93,8 +91,9 @@ public class ChallengeService {
 
     @Transactional
     public void deleteChallenge(Long challengeId, CustomUser principal) {
+        validateAdminRole(principal);
+
         User user = getUserByPrincipal(principal);
-        // validateAdminRole(user);
 
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
@@ -190,6 +189,20 @@ public class ChallengeService {
         return userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     }
+
+    private void validateAdminRole(CustomUser principal) {
+        if (principal == null) {
+            throw new TokenException(ErrorCode.UNAUTHORIZED);
+        }
+
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin) {
+            throw new ForbiddenException(ErrorCode.CHALLENGE_FORBIDDEN);
+        }
+    }
+
 
     private Challenge saveChallenge(ChallengeReqDto req) {
         Challenge challenge = Challenge.builder()
