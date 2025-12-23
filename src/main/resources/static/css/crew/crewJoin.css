@@ -1,0 +1,380 @@
+/* ========================================
+   전역 스타일 및 리셋
+======================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #BAFF29;
+    --primary-dark: #A0E020;
+    --border-color: #BAFF29;
+    --border-light: rgba(186, 255, 41, 0.3);
+    --error-color: #FF4444;
+    --error-border: #FF4444;
+    --text-primary: #1A1A1A;
+    --text-secondary: #666666;
+    --text-placeholder: #999999;
+    --bg-white: #FFFFFF;
+    --bg-gray: #F5F5F5;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-white);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* ========================================
+   컨테이너
+======================================== */
+.container {
+    max-width: 480px;
+    margin: 0 auto;
+    background-color: var(--bg-white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* ========================================
+   헤더
+======================================== */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--bg-white);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #E5E5E5;
+}
+
+.btn-back {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    transition: opacity 0.2s;
+}
+
+.btn-back:hover {
+    opacity: 0.7;
+}
+
+.header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ========================================
+   메인 컨텐츠
+======================================== */
+.main-content {
+    flex: 1;
+    padding: 24px 20px 100px;
+    overflow-y: auto;
+}
+
+/* ========================================
+   폼 스타일
+======================================== */
+.crew-join-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.form-group--half {
+    flex: 1;
+}
+
+.form-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 14px;
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    background-color: var(--bg-white);
+    color: var(--text-primary);
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: var(--text-placeholder);
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--border-color);
+    box-shadow: 0 0 0 3px rgba(186, 255, 41, 0.1);
+}
+
+/* 읽기 전용 입력 필드 */
+.form-input--readonly {
+    background-color: var(--bg-gray);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    border-color: #E5E5E5;
+}
+
+.form-input--readonly:focus {
+    border-color: #E5E5E5;
+    box-shadow: none;
+}
+
+/* 에러 상태 스타일 */
+.form-input.error,
+.form-textarea.error,
+.form-select.error {
+    border-color: var(--error-border);
+    background-color: #FFF5F5;
+}
+
+.form-input.error:focus,
+.form-textarea.error:focus,
+.form-select.error:focus {
+    border-color: var(--error-border);
+    box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.1);
+}
+
+.error-text {
+    color: var(--error-color);
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: -4px;
+    min-height: 18px;
+    display: block;
+}
+
+.error-text:empty {
+    display: none;
+}
+
+.form-guide {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 400;
+    margin-top: 4px;
+    display: block;
+}
+
+/* ========================================
+   토스트
+======================================== */
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: red;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 99999;
+}
+
+.toast.show {
+    opacity: 1 !important;
+}
+
+/* ========================================
+   미리보기 박스
+======================================== */
+.preview-box {
+    width: 100%;
+    min-height: 120px;
+    padding: 16px;
+    border: 2px dashed var(--border-light);
+    border-radius: 8px;
+    background-color: var(--bg-white);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.preview-box__placeholder {
+    font-size: 14px;
+    color: var(--text-placeholder);
+    text-align: center;
+    margin: auto 0;
+}
+
+.preview-box__content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.preview-box__item {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+/* ========================================
+   제출 버튼
+======================================== */
+.form-actions {
+    margin-top: 8px;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-submit:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(186, 255, 41, 0.3);
+}
+
+.btn-submit:active {
+    transform: translateY(0);
+}
+
+.btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ========================================
+   하단 네비게이션
+======================================== */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background-color: var(--bg-white);
+    border-top: 1px solid #E5E5E5;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+.nav-item span {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.nav-item:hover {
+    color: var(--text-primary);
+}
+
+/* ========================================
+   반응형 (태블릿)
+======================================== */
+@media (min-width: 768px) {
+    .main-content {
+        padding: 32px 40px 120px;
+    }
+
+    .crew-join-form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .form-input,
+    .form-textarea,
+    .form-select {
+        font-size: 15px;
+    }
+
+    .btn-submit {
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* ========================================
+   반응형 (데스크톱)
+======================================== */
+@media (min-width: 1024px) {
+    .container {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .main-content {
+        padding: 40px 60px 120px;
+    }
+
+    .crew-join-form {
+        max-width: 700px;
+    }
+}
+
