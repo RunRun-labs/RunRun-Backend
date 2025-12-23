@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.crew.entity;
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
