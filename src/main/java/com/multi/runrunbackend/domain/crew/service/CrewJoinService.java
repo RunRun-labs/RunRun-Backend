@@ -151,6 +151,44 @@ public class CrewJoinService {
     }
 
     /**
+     * @param crewId        크루 ID
+     * @param loginId       승인하는 크루장 로그인 ID
+     * @param joinRequestId 처리할 가입 신청 ID
+     * @description : 크루장이 가입 신청을 승인 (승인 시 크루원으로 추가)
+     */
+    @Transactional
+    public void approveJoinRequest(Long crewId, String loginId, Long joinRequestId) {
+        //크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 크루장 조회
+        User leader = findUserByLoginId(loginId);
+
+        // 크루장 또는 부크루장 권한 확인
+        validateLeaderOrSubLeader(crew, leader);
+
+        // 가입 신청 조회
+        CrewJoinRequest joinRequest = crewJoinRequestRepository.findByIdAndIsDeletedFalse(joinRequestId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.JOIN_REQUEST_NOT_FOUND));
+
+        // 크루 ID 일치 확인
+        if (!joinRequest.getCrew().getId().equals(crewId)) {
+            throw new BusinessException(ErrorCode.JOIN_REQUEST_NOT_FOUND);
+        }
+
+        // 승인 처리
+        joinRequest.approve();
+
+        // 크루원으로 추가
+        CrewUser newCrewUser = CrewUser.toEntity(crew, joinRequest.getUser(), CrewRole.MEMBER);
+        crewUserRepository.save(newCrewUser);
+
+        log.info("크루 가입 승인 완료 - crewId: {}, newMemberId: {}",
+                crewId, joinRequest.getUser().getId());
+
+    }
+
+    /**
      * 공통 메서드
      */
 
@@ -168,6 +206,19 @@ public class CrewJoinService {
     private User findUserByLoginId(String loginId) {
         return userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    /**
+     * 크루장 또는 부크루장 권한 검증
+     */
+    private void validateLeaderOrSubLeader(Crew crew, User user) {
+        CrewUser crewUser = crewUserRepository.findByCrewAndUserAndIsDeletedFalse(crew, user)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+
+        if (!crewUser.getRole().equals(CrewRole.LEADER)
+                && !crewUser.getRole().equals(CrewRole.SUB_LEADER)) {
+            throw new BusinessException(ErrorCode.NOT_CREW_LEADER_OR_SUB_LEADER);
+        }
     }
 
 }
