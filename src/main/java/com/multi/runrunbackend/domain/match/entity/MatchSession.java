@@ -39,34 +39,34 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("is_deleted = false")
 public class MatchSession extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recruit_id")
-    private Recruit recruit;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "recruit_id", nullable = true)
+  private Recruit recruit;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
-    private Course course;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "course_id", nullable = true)
+  private Course course;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "running_result_id")
-    private RunningResult runningResult;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "running_result_id", nullable = true)
+  private RunningResult runningResult;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
-    private SessionType type;
+  @Enumerated(EnumType.STRING)
+  @Column(length = 20, nullable = false)
+  private SessionType type;
 
-    @Column(name = "target_distance")
-    private Double targetDistance;
+  @Column(name = "target_distance", nullable = true)
+  private Double targetDistance;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
-    private SessionStatus status;
+  @Enumerated(EnumType.STRING)
+  @Column(length = 20, nullable = false)
+  private SessionStatus status;
 
-    @Column(nullable = false)
-    private Integer duration;
+  @Column(nullable = false)
+  private Integer duration;
 
 }
