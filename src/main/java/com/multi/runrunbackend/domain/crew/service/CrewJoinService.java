@@ -3,10 +3,13 @@ package com.multi.runrunbackend.domain.crew.service;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.crew.constant.JoinStatus;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewJoinReqDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewJoinRequestResDto;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
 import com.multi.runrunbackend.domain.crew.entity.CrewJoinRequest;
+import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import com.multi.runrunbackend.domain.crew.repository.CrewJoinRequestRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
@@ -16,6 +19,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author : BoKyung
@@ -111,6 +117,37 @@ public class CrewJoinService {
 //        userPoint.addPoint(JOIN_REQUEST_POINT);
 
         log.info("크루 가입 신청 취소 완료 - crewId: {}, loginId: {}", crewId, loginId);
+    }
+
+    /**
+     * @param crewId  크루 ID
+     * @param loginId 조회하는 크루장 ID
+     * @description : 크루장이 대기중인 가입 신청 목록을 조회 (크루장 또는 부크루장만 조회 가능)
+     */
+    public List<CrewJoinRequestResDto> getJoinRequestList(Long crewId, String loginId) {
+        //크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 회원 조회
+        User user = findUserByLoginId(loginId);
+
+        // 크루장 또는 부크루장 권한 확인
+        CrewUser crewUser = crewUserRepository.findByCrewAndUserAndIsDeletedFalse(crew, user)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+
+        if (!crewUser.getRole().equals(CrewRole.LEADER)
+                && !crewUser.getRole().equals(CrewRole.SUB_LEADER)) {
+            throw new BusinessException(ErrorCode.NOT_CREW_LEADER_OR_SUB_LEADER);
+        }
+
+        // 대기중인 가입 신청 목록 조회
+        List<CrewJoinRequest> joinRequests = crewJoinRequestRepository
+                .findAllByCrewAndJoinStatusAndIsDeletedFalse(crew, JoinStatus.PENDING);
+
+        // DTO로 변환하여 반환
+        return joinRequests.stream()
+                .map(CrewJoinRequestResDto::toDto)
+                .collect(Collectors.toList());
     }
 
     /**
