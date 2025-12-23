@@ -9,7 +9,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -18,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.PatternMatchUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
 
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter {
@@ -34,24 +35,25 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     private static final String[] EXACT_PATHS = {
-        "/health-check"
+            "/health-check"
     };
 
     private static final String[] WILDCARD_PATHS = {
-        "/auth/**",
-        "/public/**",
-        "/swagger-ui/**",
-        "/static/**",
-        "/css/**",
-        "/js/**",
-        "/favicon.ico"
+            "/auth/**",
+            "/public/**",
+            "/swagger-ui/**",
+            "/static/**",
+            "/css/**",
+            "/js/**",
+            "/crews/new",
+            "/crews/**"
 
     };
 
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-        FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain) throws ServletException, IOException {
         log.info("[JwtFilter] doFilterInternal START ===================================");
         String requestURI = request.getRequestURI();
 
@@ -71,7 +73,7 @@ public class JwtFilter extends OncePerRequestFilter {
             for (String wildcardPath : WILDCARD_PATHS) {
                 if (PatternMatchUtils.simpleMatch(wildcardPath, requestURI)) {
                     log.info("[JwtFilter] 요청 URI({})가 제외 경로({})에 해당하여 필터를 건너뜁니다.",
-                        requestURI, wildcardPath);
+                            requestURI, wildcardPath);
                     filterChain.doFilter(request, response);
                     return;
                 }
@@ -87,8 +89,8 @@ public class JwtFilter extends OncePerRequestFilter {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
                 ApiExceptionDto errorResponse = new ApiExceptionDto(
-                    HttpStatus.UNAUTHORIZED,
-                    "로그아웃된 토큰입니다 (블랙리스트 등록됨)"
+                        HttpStatus.UNAUTHORIZED,
+                        "로그아웃된 토큰입니다 (블랙리스트 등록됨)"
                 );
 
                 response.getWriter().write(convertObjectToJson(errorResponse));
@@ -110,13 +112,13 @@ public class JwtFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
                     log.info("[JwtFilter] SecurityContext에 Authentication 객체 설정 완료: {}",
-                        authentication);
+                            authentication);
                     log.info(
-                        "[JwtFilter] SecurityContext에 Authentication 객체 설정 완료  authentication.getAuthorities(): {}",
-                        authentication.getAuthorities());
+                            "[JwtFilter] SecurityContext에 Authentication 객체 설정 완료  authentication.getAuthorities(): {}",
+                            authentication.getAuthorities());
 
                     log.info("[JwtFilter] SecurityContextHolder 객체 확인: {}",
-                        SecurityContextHolder.getContext().getAuthentication());
+                            SecurityContextHolder.getContext().getAuthentication());
 
                 } else {
                     log.warn("[JwtFilter] JWT 토큰이 유효하지 않습니다.");
@@ -136,7 +138,7 @@ public class JwtFilter extends OncePerRequestFilter {
             response.setCharacterEncoding("UTF-8");
 
             ApiExceptionDto errorResponse = new ApiExceptionDto(HttpStatus.UNAUTHORIZED,
-                e.getMessage());
+                    e.getMessage());
 
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.getWriter().write(convertObjectToJson(errorResponse));

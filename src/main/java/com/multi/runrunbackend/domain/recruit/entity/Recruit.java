@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.recruit.entity;
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.recruit.constant.GenderLimit;
+import com.multi.runrunbackend.domain.recruit.dto.req.RecruitUpdateReqDto;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,53 +39,90 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("is_deleted = false")
 public class Recruit extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
-    private Course course;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "course_id")
+  private Course course;
 
-    @Column(length = 100, nullable = false)
-    private String title;
+  @Column(length = 100, nullable = false)
+  private String title;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String content;
+  @Column(columnDefinition = "TEXT", nullable = false)
+  private String content;
 
-    @Column(name = "meeting_place", length = 255, nullable = false)
-    private String meetingPlace;
+  @Column(name = "meeting_place", length = 255, nullable = false)
+  private String meetingPlace;
 
-    @Column(nullable = false)
-    private Double latitude;
+  @Column(nullable = false)
+  private Double latitude;
 
-    @Column(nullable = false)
-    private Double longitude;
+  @Column(nullable = false)
+  private Double longitude;
 
-    @Column(name = "target_distance")
-    private Double targetDistance;
+  @Column(name = "target_distance")
+  private Double targetDistance;
 
-    @Column(name = "target_pace", length = 20, nullable = false)
-    private String targetPace;
+  @Column(name = "target_pace", length = 20, nullable = false)
+  private String targetPace;
 
-    @Column(name = "max_participants", nullable = false)
-    private Integer maxParticipants;
+  @Column(name = "max_participants", nullable = false)
+  private Integer maxParticipants;
 
-    @Column(name = "age_min", nullable = false)
-    private Integer ageMin;
+  @Column(name = "age_min", nullable = false)
+  private Integer ageMin;
 
-    @Column(name = "age_max", nullable = false)
-    private Integer ageMax;
+  @Column(name = "age_max", nullable = false)
+  private Integer ageMax;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "gender_limit", length = 10, nullable = false)
-    private GenderLimit genderLimit;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "gender_limit", length = 10, nullable = false)
+  private GenderLimit genderLimit;
 
-    @Column(name = "meeting_at", nullable = false)
-    private LocalDateTime meetingAt;
+  @Column(name = "meeting_at", nullable = false)
+  private LocalDateTime meetingAt;
 
+  @Column(name = "current_participants", nullable = false)
+  @Builder.Default
+  private Integer currentParticipants = 1;
+
+  public void increaseParticipants() {
+    this.currentParticipants++;
+  }
+
+  public void decreaseParticipants() {
+    if (this.currentParticipants > 0) {
+      this.currentParticipants--;
+    }
+  }
+
+  public void update(RecruitUpdateReqDto req) {
+    this.title = req.getTitle();
+    this.content = req.getContent();
+    this.meetingAt = req.getMeetingAt();
+    this.meetingPlace = req.getMeetingPlace();
+    this.latitude = req.getLatitude();
+    this.longitude = req.getLongitude();
+    this.targetDistance = req.getTargetDistance();
+    this.targetPace = req.getTargetPace();
+    this.maxParticipants = req.getMaxParticipants();
+
+    if (req.getGenderLimit() != null) {
+      this.genderLimit = req.getGenderLimit();
+    }
+  }
+
+  public void delete() {
+    this.isDeleted = true;
+  }
+
+  public void changeHost(User newHost) {
+    this.user = newHost;
+  }
 }

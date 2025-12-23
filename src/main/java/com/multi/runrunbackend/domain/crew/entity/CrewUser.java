@@ -1,7 +1,16 @@
 package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.user.entity.User;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,11 +19,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+
 
 /**
  * @author : BoKyung
@@ -41,8 +46,9 @@ public class CrewUser extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
-    private String role;  // LEADER, SUB_LEADER, MANAGER, MEMBER
+    private CrewRole role;  // LEADER, SUB_LEADER, STAFF, MEMBER
 
     @Column(name = "participation_count", nullable = false)
     private Integer participationCount;
@@ -54,13 +60,13 @@ public class CrewUser extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static CrewUser toEntity(Crew crew, User user, String role) {
+    public static CrewUser toEntity(Crew crew, User user, CrewRole role) {
         return CrewUser.builder()
-            .crew(crew)
-            .user(user)
-            .role(role)
-            .participationCount(0)
-            .build();
+                .crew(crew)
+                .user(user)
+                .role(role)
+                .participationCount(0)
+                .build();
     }
 
     /**
@@ -69,7 +75,8 @@ public class CrewUser extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public void updateRole(String role) {
+    public void updateRole(CrewRole role) {
+
         this.role = role;
     }
 
@@ -82,4 +89,18 @@ public class CrewUser extends BaseEntity {
     public void incrementParticipationCount() {
         this.participationCount++;
     }
+
+    /**
+     * @throws BusinessException 크루장이 아닌 경우
+     * @description : validateLeader - 크루장 권한 검증
+     * @filename : CrewMember
+     * @author : BoKyung
+     * @since : 25. 12. 17. 수요일
+     */
+    public void validateLeader() {
+        if (this.role != CrewRole.LEADER) {
+            throw new BusinessException(ErrorCode.NOT_CREW_LEADER);
+        }
+    }
+
 }
