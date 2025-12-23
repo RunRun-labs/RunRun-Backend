@@ -30,9 +30,9 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_102", "유효하지 않은 리프레시 토큰입니다."),
     FILE_UPLOAD_FAILED(
 
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "F001",
-            "파일 업로드에 실패했습니다."
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "F001",
+        "파일 업로드에 실패했습니다."
     ),
 
     /* ===== 크루 관련 ===== */
@@ -49,21 +49,24 @@ public enum ErrorCode {
     JOIN_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "CR011", "가입 신청을 찾을 수 없습니다."),
     JOIN_REQUEST_NOT_PENDING(HttpStatus.BAD_REQUEST, "CR012", "대기 상태의 요청만 처리할 수 있습니다."),
     ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR013", "이미 가입 신청한 크루입니다."),
-    CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014", "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
+    CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014",
+        "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
+    FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F001", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
-            HttpStatus.BAD_REQUEST,
-            "F002",
-            "업로드할 파일이 비어 있습니다."
+        HttpStatus.BAD_REQUEST,
+        "F002",
+        "업로드할 파일이 비어 있습니다."
     ),
+
     FILE_NOT_IMAGE(
-            HttpStatus.BAD_REQUEST,
-            "F003",
-            "이미지 파일만 업로드할 수 있습니다."
+        HttpStatus.BAD_REQUEST,
+        "F003",
+        "이미지 파일만 업로드할 수 있습니다."
     ),
     FILE_SIZE_EXCEEDED(
-            HttpStatus.BAD_REQUEST,
-            "F004",
-            "파일 크기가 제한을 초과했습니다."
+        HttpStatus.BAD_REQUEST,
+        "F004",
+        "파일 크기가 제한을 초과했습니다."
     ),
     /*==== 코스 ====*/
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS_001", "코스를 찾을 수 없습니다"),
@@ -161,17 +164,17 @@ public enum ErrorCode {
         "CRS_S_004",
         "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
     ),
-  /* ==== 모집글 ====*/
-  RECRUIT_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "모집글을 찾을 수 없습니다."),
-  INVALID_RECRUIT(HttpStatus.BAD_REQUEST, "R002", "삭제된 모집글입니다"),
-  RECRUIT_UPDATE_DENIED(HttpStatus.FORBIDDEN, "R003", "모집글 수정 권한이 없습니다."),
-  RECRUIT_DELETE_DENIED(HttpStatus.FORBIDDEN, "R004", "모집글 삭제 권한이 없습니다."),
-  RECRUIT_HAS_PARTICIPANTS(HttpStatus.BAD_REQUEST, "R005", "참여자가 있어 모집글을 수정할 수 없습니다."),
-  ALREADY_PARTICIPATED(HttpStatus.BAD_REQUEST, "R006", "이미 참여 중입니다."),
-  NOT_PARTICIPATED(HttpStatus.BAD_REQUEST, "R007", "참여 상태가 아닙니다."),
-  INVALID_AGE_RANGE(HttpStatus.BAD_REQUEST, "R008", "최소 나이는 최대 나이보다 클 수 없습니다."),
-  INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "R009", "모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다."),
-  RECRUIT_FULL(HttpStatus.BAD_REQUEST, "R010", "참여 인원이 다 찼습니다."),
+    /* ==== 모집글 ====*/
+    RECRUIT_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "모집글을 찾을 수 없습니다."),
+    INVALID_RECRUIT(HttpStatus.BAD_REQUEST, "R002", "삭제된 모집글입니다"),
+    RECRUIT_UPDATE_DENIED(HttpStatus.FORBIDDEN, "R003", "모집글 수정 권한이 없습니다."),
+    RECRUIT_DELETE_DENIED(HttpStatus.FORBIDDEN, "R004", "모집글 삭제 권한이 없습니다."),
+    RECRUIT_HAS_PARTICIPANTS(HttpStatus.BAD_REQUEST, "R005", "참여자가 있어 모집글을 수정할 수 없습니다."),
+    ALREADY_PARTICIPATED(HttpStatus.BAD_REQUEST, "R006", "이미 참여 중입니다."),
+    NOT_PARTICIPATED(HttpStatus.BAD_REQUEST, "R007", "참여 상태가 아닙니다."),
+    INVALID_AGE_RANGE(HttpStatus.BAD_REQUEST, "R008", "최소 나이는 최대 나이보다 클 수 없습니다."),
+    INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "R009", "모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다."),
+    RECRUIT_FULL(HttpStatus.BAD_REQUEST, "R010", "참여 인원이 다 찼습니다."),
 
     /*===== 세션/채팅 =====*/
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
@@ -180,8 +183,12 @@ public enum ErrorCode {
     CANNOT_KICK_SELF(HttpStatus.BAD_REQUEST, "SES_004", "자기 자신은 강퇴할 수 없습니다."),
     USER_ALREADY_LEFT(HttpStatus.BAD_REQUEST, "SES_005", "이미 퇴장한 사용자입니다."),
     ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
-    HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다.");
-
+    HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다."),
+    /*=====MAPBOX =====*/
+    MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
+        "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
+    MAPBOX_OVERLAY_EMPTY(HttpStatus.BAD_REQUEST, "M_001",
+        "썸네일 생성에 필요한 overlay 값이 비어있습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
