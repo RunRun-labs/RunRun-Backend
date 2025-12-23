@@ -51,21 +51,21 @@ public enum ErrorCode {
     ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR013", "이미 가입 신청한 크루입니다."),
     CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014",
         "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
-    FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F001", "필수 파일이 누락되었습니다."),
+    FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
         HttpStatus.BAD_REQUEST,
-        "F002",
+        "F003",
         "업로드할 파일이 비어 있습니다."
     ),
 
     FILE_NOT_IMAGE(
         HttpStatus.BAD_REQUEST,
-        "F003",
+        "F004",
         "이미지 파일만 업로드할 수 있습니다."
     ),
     FILE_SIZE_EXCEEDED(
         HttpStatus.BAD_REQUEST,
-        "F004",
+        "F005",
         "파일 크기가 제한을 초과했습니다."
     ),
     /*==== 코스 ====*/
@@ -187,7 +187,7 @@ public enum ErrorCode {
     /*=====MAPBOX =====*/
     MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
         "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
-    MAPBOX_OVERLAY_EMPTY(HttpStatus.BAD_REQUEST, "M_001",
+    MAPBOX_OVERLAY_EMPTY(HttpStatus.BAD_REQUEST, "M_002",
         "썸네일 생성에 필요한 overlay 값이 비어있습니다.");
 
     private final HttpStatus httpStatus;
