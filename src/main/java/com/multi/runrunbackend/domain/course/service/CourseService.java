@@ -1,6 +1,8 @@
 package com.multi.runrunbackend.domain.course.service;
 
+import static com.multi.runrunbackend.common.exception.dto.ErrorCode.ALREADY_FAVORITE_COURSE;
 import static com.multi.runrunbackend.common.exception.dto.ErrorCode.ALREADY_LIKED_COURSE;
+import static com.multi.runrunbackend.common.exception.dto.ErrorCode.CANNOT_FAVORITE_OWN_COURSE;
 import static com.multi.runrunbackend.common.exception.dto.ErrorCode.CANNOT_LIKE_OWN_COURSE;
 import static com.multi.runrunbackend.common.exception.dto.ErrorCode.COURSE_NOT_AVAILABLE;
 
@@ -27,7 +29,9 @@ import com.multi.runrunbackend.domain.course.dto.res.CourseUpdateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.dto.res.TmapPedestrianResDto;
 import com.multi.runrunbackend.domain.course.entity.Course;
+import com.multi.runrunbackend.domain.course.entity.CourseFavorite;
 import com.multi.runrunbackend.domain.course.entity.CourseLike;
+import com.multi.runrunbackend.domain.course.repository.CourseFavoriteRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseLikeRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseRepository;
 import com.multi.runrunbackend.domain.course.repository.CourseRepositoryCustom;
@@ -80,6 +84,7 @@ public class CourseService {
     private final CourseRepositoryCustom courseRepositoryCustom;
     private final GeometryParser geometryParser;
     private final CourseLikeRepository courseLikeRepository;
+    private final CourseFavoriteRepository courseFavoriteRepository;
 
     @Value("${tmap.app-key}")
     private String tmapAppKey;
@@ -869,10 +874,16 @@ public class CourseService {
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
-        return CourseDetailResDto.fromEntity(course, user);
+        // 현재 사용자가 이 코스에 좋아요를 눌렀는지 확인
+        boolean isLiked = courseLikeRepository.existsByCourse_IdAndUser_Id(courseId, user.getId());
+        // 현재 사용자가 이 코스에 즐겨찾기를 눌렀는지 확인
+        boolean isFavorited = courseFavoriteRepository.existsByCourse_IdAndUser_Id(courseId, user.getId());
+
+        return CourseDetailResDto.fromEntity(course, user, isLiked, isFavorited);
 
     }
 
+    @Transactional
     public void likeCourse(CustomUser principal, Long courseId) {
 
         String loginId = principal.getLoginId();
@@ -897,6 +908,7 @@ public class CourseService {
         courseRepository.increaseLikeCount(courseId);
     }
 
+    @Transactional
     public void unLikeCourse(CustomUser principal, Long courseId) {
         String loginId = principal.getLoginId();
 
@@ -921,6 +933,61 @@ public class CourseService {
 
         if (updated == 0) {
             log.warn("likeCount already zero. courseId={}", courseId);
+        }
+
+    }
+
+    @Transactional
+    public void favoriteCourse(CustomUser principal, Long courseId) {
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(COURSE_NOT_AVAILABLE);
+        }
+        if (course.getUser().getId().equals(user.getId())) {
+            throw new BusinessException(CANNOT_FAVORITE_OWN_COURSE);
+        }
+
+        if (courseFavoriteRepository.existsByCourse_IdAndUser_Id(user.getId(), courseId)) {
+            throw new BusinessException(ALREADY_FAVORITE_COURSE);
+        }
+        courseFavoriteRepository.save(CourseFavorite.create(user, course));
+
+        courseRepository.increaseFavoriteCount(courseId);
+    }
+
+    @Transactional
+    public void unFavoriteCourse(CustomUser principal, Long courseId) {
+
+        String loginId = principal.getLoginId();
+
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
+            ErrorCode.USER_NOT_FOUND));
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (course.getStatus() != CourseStatus.ACTIVE) {
+            throw new BusinessException(COURSE_NOT_AVAILABLE);
+        }
+
+        int deleted = courseFavoriteRepository
+            .deleteByCourseIdAndUserId(courseId, user.getId());
+
+        if (deleted == 0) {
+            throw new BadRequestException(ErrorCode.NOT_FAVORITE);
+        }
+
+        int updated = courseRepository.decreaseFavoriteCount(courseId);
+
+        if (updated == 0) {
+            log.warn("favoriteCount already zero. courseId={}", courseId);
         }
 
     }
