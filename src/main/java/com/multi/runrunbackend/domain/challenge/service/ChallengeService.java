@@ -159,7 +159,7 @@ public class ChallengeService {
                         || uc.getStatus() == UserChallengeStatus.IN_PROGRESS));
 
         if (alreadyJoined) {
-            throw new CustomException(ErrorCode.ALREADY_JOINED) {
+            throw new BusinessException(ErrorCode.ALREADY_JOINED) {
             };
         }
 
