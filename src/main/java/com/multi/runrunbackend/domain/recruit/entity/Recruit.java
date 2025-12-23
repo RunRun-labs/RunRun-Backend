@@ -125,4 +125,8 @@ public class Recruit extends BaseTimeEntity {
   public void changeHost(User newHost) {
     this.user = newHost;
   }
+
+  public void updateStatus(RecruitStatus recruitStatus) {
+    this.status = recruitStatus;
+  }
 }
