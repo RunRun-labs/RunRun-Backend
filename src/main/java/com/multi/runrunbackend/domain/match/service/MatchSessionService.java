@@ -14,11 +14,13 @@ import com.multi.runrunbackend.domain.recruit.entity.RecruitUser;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
+import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,24 +36,38 @@ import org.springframework.transaction.annotation.Transactional;
 public class MatchSessionService {
 
   private final RecruitRepository recruitRepository;
+  private final UserRepository userRepository;
   private final MatchSessionRepository matchSessionRepository;
   private final RecruitUserRepository recruitUserRepository;
   private final SessionUserRepository sessionUserRepository;
 
   @Transactional
-  public Long createOfflineSession(Long recruitId, Long id) {
+  public Long createOfflineSession(Long recruitId, UserDetails userDetails) {
+
+    User user = userRepository.findByLoginId(userDetails.getUsername())
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
-    if (!recruit.getUser().getId().equals(id)) {
+    if (!recruit.getUser().getId().equals(user.getId())) {
       throw new ForbiddenException(ErrorCode.UNAUTHORIZED_HOST);
     }
+    return createSessionInternal(recruit);
+  }
 
+  @Transactional
+  public Long createOfflineSessionBySystem(Long recruitId) {
+    Recruit recruit = recruitRepository.findById(recruitId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+
+    return createSessionInternal(recruit);
+  }
+
+  private Long createSessionInternal(Recruit recruit) {
     if (matchSessionRepository.existsByRecruit(recruit)) {
       return matchSessionRepository.findByRecruit(recruit).get().getId();
     }
-
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime recruitCreatedAt = recruit.getCreatedAt();
 
@@ -69,7 +85,7 @@ public class MatchSessionService {
     matchSessionRepository.save(matchSession);
 
     List<RecruitUser> participants = recruitUserRepository.findAllByRecruitIdAndIsDeletedFalse(
-        recruitId);
+        recruit.getId());
 
     List<SessionUser> sessionUsers = participants.stream()
         .map(p -> SessionUser.builder()
@@ -99,4 +115,6 @@ public class MatchSessionService {
 
     return matchSession.getId();
   }
+
 }
+
