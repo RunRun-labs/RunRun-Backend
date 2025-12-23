@@ -1,0 +1,317 @@
+/* ========================================
+   전역 스타일 및 리셋
+======================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #BAFF29;
+    --primary-dark: #A0E020;
+    --danger-color: #FF4444;
+    --danger-dark: #E63939;
+    --text-primary: #1A1A1A;
+    --text-secondary: #666666;
+    --text-placeholder: #999999;
+    --bg-white: #FFFFFF;
+    --bg-gray: #F5F5F5;
+    --border-color: #E5E5E5;
+    --border-light: #F0F0F0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-white);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* ========================================
+   컨테이너
+======================================== */
+.container {
+    max-width: 480px;
+    margin: 0 auto;
+    background-color: var(--bg-white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* ========================================
+   헤더
+======================================== */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--bg-white);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.btn-back {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    transition: opacity 0.2s;
+}
+
+.btn-back:hover {
+    opacity: 0.7;
+}
+
+.header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ========================================
+   서브헤더 (승인 대기)
+======================================== */
+.sub-header {
+    background-color: var(--primary-color);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sub-header__label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sub-header__count {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ========================================
+   메인 컨텐츠
+======================================== */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    padding-bottom: 100px; /* 하단 네비게이션바 높이 고려 */
+    overflow-y: auto;
+}
+
+/* ========================================
+   가입 신청 목록
+======================================== */
+.join-request-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.join-request-card {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.join-request-card__profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.join-request-card__profile-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--bg-gray);
+}
+
+.join-request-card__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.join-request-card__date {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.join-request-card__message {
+    background-color: var(--bg-gray);
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 60px;
+}
+
+.join-request-card__message p {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.join-request-card__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-reject,
+.btn-approve {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border-color);
+}
+
+.btn-reject {
+    background-color: var(--bg-white);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.btn-reject:hover {
+    background-color: var(--bg-gray);
+}
+
+.btn-approve {
+    background-color: var(--primary-color);
+    color: var(--text-primary);
+    border-color: var(--primary-color);
+}
+
+.btn-approve:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-reject:disabled,
+.btn-approve:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   빈 상태
+======================================== */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    min-height: 400px;
+}
+
+.empty-state__icon {
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+.empty-state__text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* ========================================
+   하단 네비게이션
+======================================== */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background-color: var(--bg-white);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+.nav-item span {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.nav-item-active {
+    color: var(--text-primary);
+}
+
+.nav-item:hover {
+    color: var(--text-primary);
+}
+
+/* ========================================
+   반응형 (태블릿)
+======================================== */
+@media (min-width: 768px) {
+    .main-content {
+        padding: 32px 40px 120px;
+    }
+
+    .join-request-list {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+}
+
+/* ========================================
+   반응형 (데스크톱)
+======================================== */
+@media (min-width: 1024px) {
+    .container {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .main-content {
+        padding: 40px 60px 120px;
+    }
+
+    .join-request-list {
+        max-width: 700px;
+    }
+}
+
+

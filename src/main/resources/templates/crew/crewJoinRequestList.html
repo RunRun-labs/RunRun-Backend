@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>크루 알림 - 런런</title>
+    <link rel="stylesheet" th:href="@{/css/crew/crewJoinRequestList.css}">
+</head>
+<body>
+<div class="container">
+    <!-- 헤더 -->
+    <header class="header">
+        <button type="button" class="btn-back" onclick="history.back()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h1 class="header-title">크루 알림</h1>
+    </header>
+
+    <!-- 승인 대기 서브헤더 -->
+    <div class="sub-header">
+        <span class="sub-header__label">승인 대기</span>
+        <span class="sub-header__count" id="pendingCount">0명</span>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
+        <!-- 가입 신청 목록 -->
+        <section class="join-request-list" id="joinRequestList">
+            <!-- Thymeleaf로 초기 데이터 렌더링 -->
+            <article th:each="request : ${joinRequests}" class="join-request-card" th:data-request-id="${request.joinRequestId}">
+                <div class="join-request-card__profile">
+                    <img th:src="${request.userProfileImageUrl ?: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMzAiIGZpbGw9IiNGNUY1RjUiLz48Y2lyY2xlIGN4PSIzMCIgY3k9IjI1IiByPSI4IiBmaWxsPSIjOTk5Ii8+PHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDIwIDMwSDQwQzQ1IDMwIDUwIDM1IDUwIDQwIiBmaWxsPSIjOTk5Ii8+PC9zdmc+'}"
+                         alt="프로필"
+                         class="join-request-card__profile-image"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMzAiIGZpbGw9IiNGNUY1RjUiLz48Y2lyY2xlIGN4PSIzMCIgY3k9IjI1IiByPSI4IiBmaWxsPSIjOTk5Ii8+PHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDIwIDMwSDQwQzQ1IDMwIDUwIDM1IDUwIDQwIiBmaWxsPSIjOTk5Ii8+PC9zdmc+'">
+                    <p class="join-request-card__name" th:text="${request.userName}">러너 1</p>
+                    <p class="join-request-card__date" th:text="${#temporals.format(request.createdAt, 'yyyy.MM.dd')}">2025.10.19</p>
+                </div>
+                <div class="join-request-card__message">
+                    <p th:text="${request.introduction ?: '자기소개가 없습니다.'}">안녕하세요! 러닝 초보입니다. 함께 달리고 싶어요~!</p>
+                </div>
+                <div class="join-request-card__actions">
+                    <button type="button" class="btn-reject" th:data-request-id="${request.joinRequestId}">
+                        거절
+                    </button>
+                    <button type="button" class="btn-approve" th:data-request-id="${request.joinRequestId}">
+                        승인
+                    </button>
+                </div>
+            </article>
+        </section>
+
+        <!-- 빈 상태 (신청자가 없을 때) -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <svg class="empty-state__icon" width="80" height="80" viewBox="0 0 80 80" fill="none">
+                <rect x="10" y="10" width="60" height="50" rx="4" fill="#E0E0E0"/>
+                <rect x="20" y="20" width="40" height="30" rx="2" fill="#F5F5F5"/>
+                <path d="M30 35H50M30 40H45M30 45H50" stroke="#999" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="65" cy="15" r="8" fill="#FF4444"/>
+                <path d="M61 15L69 15M65 11L65 19" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <p class="empty-state__text">현재 승인 대기 중인 신청자가 없습니다.</p>
+        </div>
+    </main>
+
+    <!-- 하단 네비게이션 -->
+    <nav class="bottom-nav">
+        <a href="/chat" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M21 15C21 16.6569 17.866 18 14 18H7L3 22V6C3 4.34315 6.13401 3 10 3H14C17.866 3 21 4.34315 21 6V15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>chat</span>
+        </a>
+        <a href="/feed" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>feed</span>
+        </a>
+        <a href="/home" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>home</span>
+        </a>
+        <a href="/match/select" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span>match</span>
+        </a>
+        <a href="/myPage" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>my</span>
+        </a>
+    </nav>
+</div>
+
+<input type="hidden" id="crewId" th:value="${crewId}">
+
+<script th:src="@{/js/crew/crewJoinRequestList.js}"></script>
+</body>
+</html>
+
+
