@@ -5,21 +5,8 @@ import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import lombok.*;
 
 
 /**
@@ -57,7 +44,7 @@ public class CrewUser extends BaseEntity {
 
     /**
      * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
-     * @filename : CrewMember
+     * @filename : CrewUser
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
@@ -72,7 +59,7 @@ public class CrewUser extends BaseEntity {
 
     /**
      * @description : updateRole - 크루원 권한 변경
-     * @filename : CrewMember
+     * @filename : CrewUser
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
@@ -83,7 +70,7 @@ public class CrewUser extends BaseEntity {
 
     /**
      * @description : incrementParticipationCount - 참여 횟수 증가
-     * @filename : CrewMember
+     * @filename : CrewUser
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
@@ -94,7 +81,7 @@ public class CrewUser extends BaseEntity {
     /**
      * @throws BusinessException 크루장이 아닌 경우
      * @description : validateLeader - 크루장 권한 검증
-     * @filename : CrewMember
+     * @filename : CrewUser
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
