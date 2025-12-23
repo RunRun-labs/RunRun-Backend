@@ -168,6 +168,30 @@ public class CourseController {
         );
     }
 
+    @PostMapping("/favorite/{course_id}")
+    public ResponseEntity<ApiResponse> FavoriteCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        courseService.favoriteCourse(principal, courseId);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 좋아요 성공")
+        );
+    }
+
+    @DeleteMapping("/favorite/{course_id}")
+    public ResponseEntity<ApiResponse> unFavoriteCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        courseService.unFavoriteCourse(principal, courseId);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 좋아요 삭제")
+        );
+    }
+
 }
 
 
