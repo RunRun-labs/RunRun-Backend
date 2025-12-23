@@ -9,6 +9,7 @@ import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
+import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import com.multi.runrunbackend.domain.recruit.entity.RecruitUser;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
@@ -84,7 +85,7 @@ public class MatchSessionService {
 
     matchSessionRepository.save(matchSession);
 
-    List<RecruitUser> participants = recruitUserRepository.findAllByRecruitIdAndIsDeletedFalse(
+    List<RecruitUser> participants = recruitUserRepository.findAllByRecruitId(
         recruit.getId());
 
     List<SessionUser> sessionUsers = participants.stream()
@@ -111,7 +112,7 @@ public class MatchSessionService {
     }
     sessionUserRepository.saveAll(sessionUsers);
 
-    recruit.delete();
+    recruit.updateStatus(RecruitStatus.MATCHED);
 
     return matchSession.getId();
   }
