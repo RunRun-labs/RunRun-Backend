@@ -1,12 +1,9 @@
 package com.multi.runrunbackend.domain.match.controller;
 
-import com.multi.runrunbackend.common.exception.custom.NotFoundException;
-import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.match.dto.req.MatchConfirmReqDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchConfirmResDto;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
-import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -36,11 +33,9 @@ public class MatchSessionController {
       @RequestBody MatchConfirmReqDto reqDto,
       @AuthenticationPrincipal UserDetails userDetails
   ) {
-    User user = userRepository.findByLoginId(userDetails.getUsername())
-        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     Long sessionId = matchSessionService.createOfflineSession(
         reqDto.getRecruitId(),
-        user.getId()
+        userDetails
     );
     return ResponseEntity.ok(ApiResponse.success(new MatchConfirmResDto(sessionId)));
   }
