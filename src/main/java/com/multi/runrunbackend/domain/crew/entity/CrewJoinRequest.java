@@ -3,6 +3,9 @@ package com.multi.runrunbackend.domain.crew.entity;
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.crew.constant.CrewDistanceType;
+import com.multi.runrunbackend.domain.crew.constant.CrewPaceType;
+import com.multi.runrunbackend.domain.crew.constant.JoinStatus;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,11 +40,13 @@ public class CrewJoinRequest extends BaseEntity {
     @Column(name = "introduction", nullable = false, columnDefinition = "TEXT")
     private String introduction;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "distance", nullable = false)
-    private Integer distance;
+    private CrewDistanceType distance;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "pace", nullable = false)
-    private Integer pace;
+    private CrewPaceType pace;
 
     @Column(name = "region", nullable = false, length = 100)
     private String region;
@@ -57,7 +62,7 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static CrewJoinRequest toEntity(Crew crew, User user, String introduction,
-                                           Integer distance, Integer pace, String region) {
+                                           CrewDistanceType distance, CrewPaceType pace, String region) {
         return CrewJoinRequest.builder()
                 .crew(crew)
                 .user(user)
@@ -76,9 +81,7 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void approve() {
-        if (!this.joinStatus.equals(JoinStatus.PENDING)) {
-            throw new BusinessException(ErrorCode.NOT_PENDING_STATUS);
-        }
+        validatePending();
         this.joinStatus = JoinStatus.APPROVED;
     }
 
@@ -89,9 +92,7 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void reject() {
-        if (!this.joinStatus.equals(JoinStatus.PENDING)) {
-            throw new BusinessException(ErrorCode.NOT_PENDING_STATUS);
-        }
+        validatePending();
         this.joinStatus = JoinStatus.REJECTED;
     }
 
@@ -102,9 +103,7 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void cancel() {
-        if (!this.joinStatus.equals(JoinStatus.PENDING)) {
-            throw new BusinessException(ErrorCode.NOT_PENDING_STATUS);
-        }
+        validatePending();
         this.joinStatus = JoinStatus.CANCELED;
         this.delete();
     }
