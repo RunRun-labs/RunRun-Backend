@@ -327,8 +327,7 @@ function formatProgressValue(value, challengeType) {
         case "TIME":
             return formatTime(value);
         case "COUNT":
-        case "ATTENDANCE":
-            return `${Math.round(value)}회`;
+            return `${Math.round(value)}일`;
         default:
             return value.toString();
     }
@@ -510,7 +509,10 @@ function decodeBase64Url(base64Url) {
  * 챌린지 수정하기
  */
 async function handleEditChallenge(challengeId) {
-    // 수정 페이지로 이동 (또는 모달 열기)
+    if (!challengeId) {
+        console.error("챌린지 ID가 없습니다.");
+        return;
+    }
     window.location.href = `/challenge/${challengeId}/edit`;
 }
 
