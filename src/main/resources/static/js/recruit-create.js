@@ -305,8 +305,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const meetingDateTime = new Date(`${meetingDate}T${meetingTime}:00`);
-    const meetingAt = meetingDateTime.toISOString();
+    // 날짜와 시간을 LocalDateTime 형식으로 변환 (시간대 변환 없이)
+    // 형식: "YYYY-MM-DDTHH:mm:ss"
+    const meetingAt = `${meetingDate}T${meetingTime}:00`;
 
     const requestData = {
       title: title,
