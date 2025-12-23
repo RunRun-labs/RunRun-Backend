@@ -60,7 +60,7 @@ public class CrewJoinController {
     /**
      * @param crewId        크루 ID
      * @param authorization JWT 토큰 (Authorization 헤더)
-     * @description : 신청자가 대기중인 가입 신청을 취소한다. 차감된 100P가 환불된다.
+     * @description : 신청자가 대기중인 가입 신청을 취소 (차감된 100P가 환불)
      */
     @DeleteMapping("/{crewId}/join-cancel")
     @Operation(summary = "가입 신청 취소", description = "대기중인 가입 신청을 취소하고 포인트를 환불받습니다.")
@@ -83,7 +83,7 @@ public class CrewJoinController {
     /**
      * @param crewId        크루 ID
      * @param authorization JWT 토큰 (Authorization 헤더)
-     * @description : 크루장이 대기중인 가입 신청 목록을 조회한다. 크루장 또는 부크루장만 조회 가능.
+     * @description : 크루장이 대기중인 가입 신청 목록을 조회 (크루장 또는 부크루장만 조회 가능)
      */
     @GetMapping("/{crewId}/join-requests")
     @Operation(summary = "가입 신청 목록 조회", description = "크루장이 대기중인 가입 신청 목록을 조회합니다.")
@@ -101,6 +101,33 @@ public class CrewJoinController {
                 crewJoinService.getJoinRequestList(crewId, loginId);
 
         return ResponseEntity.ok(ApiResponse.success("가입 신청 목록을 조회했습니다.", joinRequests));
+    }
+
+    /**
+     * @param crewId        크루 ID
+     * @param joinRequestId 승인할 가입 신청 ID
+     * @param authorization JWT 토큰 (Authorization 헤더)
+     * @description : 크루장이 가입 신청을 승인 (크루원으로 추가)
+     */
+    @PostMapping("/{crewId}/join-requests/{joinRequestId}/approve")
+    public ResponseEntity<ApiResponse<Void>> approveJoinRequest(
+            @Parameter(description = "크루 ID", required = true)
+            @PathVariable Long crewId,
+
+            @Parameter(description = "가입 신청 ID", required = true)
+            @PathVariable Long joinRequestId,
+
+            @Parameter(description = "JWT 토큰", required = true)
+            @RequestHeader("Authorization") String authorization
+    ) {
+        String jwt = tokenProvider.resolveToken(authorization);
+        String loginId = tokenProvider.getUserId(jwt);
+
+        crewJoinService.approveJoinRequest(crewId, loginId, joinRequestId);
+
+        return ResponseEntity.ok(
+                ApiResponse.successNoData("가입 신청이 승인되었습니다.")
+        );
     }
 
 }
