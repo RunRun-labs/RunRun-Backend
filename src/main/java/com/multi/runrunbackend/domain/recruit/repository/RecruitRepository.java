@@ -1,6 +1,9 @@
 package com.multi.runrunbackend.domain.recruit.repository;
 
+import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,7 +28,7 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
                  ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography
              ) / 1000 AS distance
       FROM recruit r
-      WHERE r.is_deleted = false
+      WHERE r.status = 'RECRUITING'
       AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))
       AND (:radius IS NULL OR 
           ST_DWithin(
@@ -35,7 +38,7 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
           )
       )
       """,
-      countQuery = "SELECT count(*) FROM recruit r WHERE r.is_deleted = false AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))",
+      countQuery = "SELECT count(*) FROM recruit r WHERE r.status = 'RECRUITING' AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))",
       nativeQuery = true)
   Slice<Recruit> findRecruitsWithFilters(
       @Param("lat") Double myLat,
@@ -44,4 +47,6 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
       @Param("keyword") String keyword,
       Pageable pageable
   );
+
+  List<Recruit> findAllByStatusAndMeetingAtBefore(RecruitStatus status, LocalDateTime time);
 }

@@ -206,7 +206,7 @@ async function loadCourseData() {
       headers["Authorization"] = token;
     }
 
-    const response = await fetch(`/api/routes/${courseId}`, {
+    const response = await fetch(`/api/courses/${courseId}`, {
       method: "GET",
       headers: headers,
     });
@@ -230,6 +230,10 @@ async function loadCourseData() {
 
     // Fill form fields with course data
     fillCourseData(course);
+
+    // Initialize like and favorite buttons
+    initLikeButton(courseId, course);
+    initFavoriteButton(courseId, course);
 
     // Show/hide edit/delete buttons based on isOwner
     const courseActions = document.getElementById("courseActions");
@@ -515,7 +519,7 @@ async function deleteCourse() {
       return;
     }
 
-    const response = await fetch(`/api/routes/${courseId}`, {
+    const response = await fetch(`/api/courses/${courseId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -532,6 +536,274 @@ async function deleteCourse() {
   } catch (error) {
     console.error("Delete course error:", error);
     alert("코스 삭제 중 오류가 발생했습니다");
+  }
+}
+
+// ==========================
+// Like/Favorite Functions
+// ==========================
+
+let isLiked = false;
+let isFavorited = false;
+let likeButtonInitialized = false;
+let favoriteButtonInitialized = false;
+
+// Initialize like button
+function initLikeButton(courseId, course) {
+  const likeBtn = document.getElementById("likeBtn");
+  const likeCountEl = document.getElementById("likeCount");
+
+  if (!likeBtn || !likeCountEl) {
+    console.warn("Like button elements not found");
+    return;
+  }
+
+  // Set initial state
+  isLiked = course.isLiked || false;
+  if (likeCountEl) {
+    likeCountEl.textContent = course.likeCount || 0;
+  }
+
+  // Update button appearance
+  if (isLiked) {
+    likeBtn.classList.add("active");
+  } else {
+    likeBtn.classList.remove("active");
+  }
+
+  // Add event listener only once
+  if (!likeButtonInitialized) {
+    likeBtn.addEventListener("click", async () => {
+      await handleLikeClick(courseId);
+    });
+    likeButtonInitialized = true;
+  }
+}
+
+// Initialize favorite button
+function initFavoriteButton(courseId, course) {
+  const favoriteBtn = document.getElementById("favoriteBtn");
+  const favoriteCountEl = document.getElementById("favoriteCount");
+
+  if (!favoriteBtn || !favoriteCountEl) {
+    console.warn("Favorite button elements not found");
+    return;
+  }
+
+  // Set initial state
+  isFavorited = course.isFavorited || false;
+  if (favoriteCountEl) {
+    favoriteCountEl.textContent = course.favoriteCount || 0;
+  }
+
+  // Update button appearance
+  if (isFavorited) {
+    favoriteBtn.classList.add("active");
+  } else {
+    favoriteBtn.classList.remove("active");
+  }
+
+  // Add event listener only once
+  if (!favoriteButtonInitialized) {
+    favoriteBtn.addEventListener("click", async () => {
+      await handleFavoriteClick(courseId);
+    });
+    favoriteButtonInitialized = true;
+  }
+}
+
+// Handle like click
+async function handleLikeClick(courseId) {
+  const token = getAccessToken();
+  if (!token) {
+    alert("로그인이 필요합니다");
+    window.location.href = "/login";
+    return;
+  }
+
+  const likeBtn = document.getElementById("likeBtn");
+  const likeCountEl = document.getElementById("likeCount");
+
+  try {
+    if (isLiked) {
+      // Unlike
+      const response = await fetch(`/api/courses/like/${courseId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message || errorData.error || "좋아요 취소에 실패했습니다";
+        alert(errorMessage);
+        return;
+      }
+
+      isLiked = false;
+      likeBtn.classList.remove("active");
+      // Refresh course data to update counts
+      await refreshCourseData(courseId);
+    } else {
+      // Like
+      const response = await fetch(`/api/courses/like/${courseId}`, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message || errorData.error || "좋아요에 실패했습니다";
+        alert(errorMessage);
+        return;
+      }
+
+      isLiked = true;
+      likeBtn.classList.add("active");
+      // Refresh course data to update counts
+      await refreshCourseData(courseId);
+    }
+  } catch (error) {
+    console.error("Like error:", error);
+    alert("좋아요 처리 중 오류가 발생했습니다: " + error.message);
+  }
+}
+
+// Handle favorite click
+async function handleFavoriteClick(courseId) {
+  const token = getAccessToken();
+  if (!token) {
+    alert("로그인이 필요합니다");
+    window.location.href = "/login";
+    return;
+  }
+
+  const favoriteBtn = document.getElementById("favoriteBtn");
+  const favoriteCountEl = document.getElementById("favoriteCount");
+
+  try {
+    if (isFavorited) {
+      // Unfavorite
+      const response = await fetch(`/api/courses/favorite/${courseId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message ||
+          errorData.error ||
+          "즐겨찾기 취소에 실패했습니다";
+        alert(errorMessage);
+        return;
+      }
+
+      isFavorited = false;
+      favoriteBtn.classList.remove("active");
+      // Refresh course data to update counts
+      await refreshCourseData(courseId);
+    } else {
+      // Favorite
+      const response = await fetch(`/api/courses/favorite/${courseId}`, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message || errorData.error || "즐겨찾기에 실패했습니다";
+        alert(errorMessage);
+        return;
+      }
+
+      isFavorited = true;
+      favoriteBtn.classList.add("active");
+      // Refresh course data to update counts
+      await refreshCourseData(courseId);
+    }
+  } catch (error) {
+    console.error("Favorite error:", error);
+    alert("즐겨찾기 처리 중 오류가 발생했습니다: " + error.message);
+  }
+}
+
+// Refresh course data after like/favorite action
+async function refreshCourseData(courseId) {
+  try {
+    const token = getAccessToken();
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = token;
+    }
+
+    const response = await fetch(`/api/courses/${courseId}`, {
+      method: "GET",
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      throw new Error("코스 데이터를 불러올 수 없습니다");
+    }
+
+    const result = await response.json();
+    const course = result.data;
+
+    if (course) {
+      // Update counts
+      const likeCountEl = document.getElementById("likeCount");
+      const favoriteCountEl = document.getElementById("favoriteCount");
+
+      if (likeCountEl) {
+        likeCountEl.textContent = course.likeCount || 0;
+      }
+      if (favoriteCountEl) {
+        favoriteCountEl.textContent = course.favoriteCount || 0;
+      }
+
+      // Update state
+      isLiked = course.isLiked || false;
+      isFavorited = course.isFavorited || false;
+
+      // Update button appearance
+      const likeBtn = document.getElementById("likeBtn");
+      const favoriteBtn = document.getElementById("favoriteBtn");
+
+      if (likeBtn) {
+        if (isLiked) {
+          likeBtn.classList.add("active");
+        } else {
+          likeBtn.classList.remove("active");
+        }
+      }
+
+      if (favoriteBtn) {
+        if (isFavorited) {
+          favoriteBtn.classList.add("active");
+        } else {
+          favoriteBtn.classList.remove("active");
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Refresh course data error:", error);
   }
 }
 
@@ -573,9 +845,179 @@ function bootstrapMap() {
   }, 600);
 }
 
+// ==========================
+// Siren (Report) Functions
+// ==========================
+
+// Open siren modal
+function openSirenModal() {
+  const modal = document.getElementById("sirenModal");
+  const descriptionTextarea = document.getElementById("sirenDescription");
+  const errorEl = document.getElementById("sirenDescriptionError");
+
+  if (modal) {
+    modal.style.display = "flex";
+    if (descriptionTextarea) {
+      descriptionTextarea.value = "";
+    }
+    if (errorEl) {
+      errorEl.style.display = "none";
+      errorEl.textContent = "";
+    }
+  }
+}
+
+// Close siren modal
+function closeSirenModal() {
+  const modal = document.getElementById("sirenModal");
+  const descriptionTextarea = document.getElementById("sirenDescription");
+  const errorEl = document.getElementById("sirenDescriptionError");
+
+  if (modal) {
+    modal.style.display = "none";
+  }
+  if (descriptionTextarea) {
+    descriptionTextarea.value = "";
+  }
+  if (errorEl) {
+    errorEl.style.display = "none";
+    errorEl.textContent = "";
+  }
+}
+
+// Validate siren description
+function validateSirenDescription(description) {
+  if (!description || description.trim().length === 0) {
+    return "신고 사유를 반드시 입력해주세요.";
+  }
+  if (description.trim().length < 10) {
+    return "신고 사유는 10자 이상 입력해주세요.";
+  }
+  if (description.trim().length > 500) {
+    return "신고 사유는 500자 이하로 입력해주세요.";
+  }
+  return null;
+}
+
+// Submit siren report
+async function submitSirenReport() {
+  const courseId = getCourseIdFromUrl();
+  if (!courseId) {
+    alert("코스 ID를 찾을 수 없습니다");
+    return;
+  }
+
+  const descriptionTextarea = document.getElementById("sirenDescription");
+  const errorEl = document.getElementById("sirenDescriptionError");
+
+  if (!descriptionTextarea) {
+    console.error("Siren description textarea not found");
+    return;
+  }
+
+  const description = descriptionTextarea.value.trim();
+
+  // Validate
+  const validationError = validateSirenDescription(description);
+  if (validationError) {
+    if (errorEl) {
+      errorEl.textContent = validationError;
+      errorEl.style.display = "block";
+    }
+    return;
+  }
+
+  // Hide error if validation passes
+  if (errorEl) {
+    errorEl.style.display = "none";
+    errorEl.textContent = "";
+  }
+
+  const token = getAccessToken();
+  if (!token) {
+    alert("로그인이 필요합니다");
+    window.location.href = "/login";
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/courses/siren/${courseId}`, {
+      method: "POST",
+      headers: {
+        Authorization: token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        description: description,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage =
+        errorData.message ||
+        errorData.error ||
+        errorData.detail ||
+        "신고하기에 실패했습니다";
+      alert(errorMessage);
+      return;
+    }
+
+    alert("신고가 접수되었습니다.");
+    closeSirenModal();
+    // 신고 완료 후 목록 페이지로 이동
+    window.location.href = "/course";
+  } catch (error) {
+    console.error("Siren report error:", error);
+    alert("신고 처리 중 오류가 발생했습니다: " + error.message);
+  }
+}
+
+// Initialize siren button
+function initSirenButton() {
+  const sirenBtn = document.getElementById("sirenBtn");
+  const closeBtn = document.getElementById("closeSirenModal");
+  const cancelBtn = document.getElementById("cancelSirenBtn");
+  const submitBtn = document.getElementById("submitSirenBtn");
+  const modal = document.getElementById("sirenModal");
+
+  if (sirenBtn) {
+    sirenBtn.addEventListener("click", openSirenModal);
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closeSirenModal);
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", closeSirenModal);
+  }
+
+  if (submitBtn) {
+    submitBtn.addEventListener("click", submitSirenReport);
+  }
+
+  // Close modal when clicking outside
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        closeSirenModal();
+      }
+    });
+  }
+
+  // Close modal on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal && modal.style.display === "flex") {
+      closeSirenModal();
+    }
+  });
+}
+
 // Wait for both DOM and Kakao Maps SDK
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
+    initSirenButton();
     if (typeof kakao !== "undefined" && kakao.maps) {
       bootstrapMap();
     } else {
@@ -584,6 +1026,7 @@ if (document.readyState === "loading") {
     }
   });
 } else {
+  initSirenButton();
   if (typeof kakao !== "undefined" && kakao.maps) {
     bootstrapMap();
   } else {

@@ -434,7 +434,7 @@ async function loadCourseData() {
       headers["Authorization"] = token;
     }
 
-    const response = await fetch(`/api/routes/${id}`, {
+    const response = await fetch(`/api/courses/${id}`, {
       method: "GET",
       headers: headers,
     });
@@ -750,7 +750,7 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
-    const response = await fetch(`/api/routes/${id}`, {
+    const response = await fetch(`/api/courses/${id}`, {
       method: "PUT",
       headers: {
         Authorization: token,
