@@ -69,113 +69,120 @@ public enum ErrorCode {
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS_001", "코스를 찾을 수 없습니다"),
 
     COURSE_FORBIDDEN(
-            HttpStatus.FORBIDDEN,
-            "CRS_002",
-            "해당 코스에 대한 권한이 없습니다."
+        HttpStatus.FORBIDDEN,
+        "CRS_002",
+        "해당 코스에 대한 권한이 없습니다."
     ),
 
     COURSE_IMAGE_TOO_LARGE(
-            HttpStatus.BAD_REQUEST,
-            "CRS_003",
-            "이미지 파일 용량이 너무 큽니다."
+        HttpStatus.BAD_REQUEST,
+        "CRS_003",
+        "이미지 파일 용량이 너무 큽니다."
     ),
     COURSE_NOT_ACTIVE(HttpStatus.FORBIDDEN, "CRS_004", "코스가 ACTIVE 상태가 아닙니다"),
 
     /*==== TMAP====*/
 
     ROUTE_DISTANCE_EXCEEDED(
-            HttpStatus.BAD_REQUEST,
-            "ROUTE_001",
-            "요청한 경로 거리가 허용 범위를 초과했습니다."
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_001",
+        "요청한 경로 거리가 허용 범위를 초과했습니다."
     ),
 
     ROUTE_END_POINT_REQUIRED(
-            HttpStatus.BAD_REQUEST,
-            "ROUTE_002",
-            "도착 좌표(endLat, endLng)는 필수입니다."
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_002",
+        "도착 좌표(endLat, endLng)는 필수입니다."
     ),
 
     ROUTE_DISTANCE_INVALID(
-            HttpStatus.BAD_REQUEST,
-            "ROUTE_003",
-            "요청 거리 값이 올바르지 않습니다."
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_003",
+        "요청 거리 값이 올바르지 않습니다."
     ),
 
     ROUTE_INVALID_POINTS(
-            HttpStatus.BAD_REQUEST,
-            "ROUTE_004",
-            "경로 포인트는 최소 2개 이상 필요합니다."
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_004",
+        "경로 포인트는 최소 2개 이상 필요합니다."
     ),
 
     ROUTE_NO_VALID_SEGMENT(
-            HttpStatus.BAD_REQUEST,
-            "ROUTE_005",
-            "유효한 경로 구간을 생성할 수 없습니다."
+        HttpStatus.BAD_REQUEST,
+        "ROUTE_005",
+        "유효한 경로 구간을 생성할 수 없습니다."
     ),
     INVALID_ROUTE_PATH(
-            HttpStatus.BAD_REQUEST,
-            "COURSE_400_001",
-            "코스 경로 형식이 올바르지 않습니다"
+        HttpStatus.BAD_REQUEST,
+        "COURSE_400_001",
+        "코스 경로 형식이 올바르지 않습니다"
     ),
 
 
     /*==== 경로 ====*/
     TMAP_API_FAILED(
-            HttpStatus.BAD_GATEWAY,
-            "EXT_001",
-            "TMAP 경로 API 호출에 실패했습니다."
+        HttpStatus.BAD_GATEWAY,
+        "EXT_001",
+        "TMAP 경로 API 호출에 실패했습니다."
     ),
 
     TMAP_EMPTY_RESPONSE(
-            HttpStatus.BAD_GATEWAY,
-            "EXT_002",
-            "TMAP API 응답이 비어있습니다."
+        HttpStatus.BAD_GATEWAY,
+        "EXT_002",
+        "TMAP API 응답이 비어있습니다."
     ),
 
     TMAP_NO_ROUTE(
-            HttpStatus.BAD_GATEWAY,
-            "EXT_003",
-            "TMAP에서 유효한 경로를 반환하지 않았습니다."
+        HttpStatus.BAD_GATEWAY,
+        "EXT_003",
+        "TMAP에서 유효한 경로를 반환하지 않았습니다."
     ),
     /*=====코스 서치 ====*/
     COURSE_SEARCH_LAT_LNG_REQUIRED(
-            HttpStatus.BAD_REQUEST,
-            "CRS_S_001",
-            "nearby 검색 또는 거리순 정렬에는 위도(lat)와 경도(lng)가 필수입니다."
+        HttpStatus.BAD_REQUEST,
+        "CRS_S_001",
+        "nearby 검색 또는 거리순 정렬에는 위도(lat)와 경도(lng)가 필수입니다."
     ),
 
     COURSE_SEARCH_INVALID_DISTANCE_BUCKET(
-            HttpStatus.BAD_REQUEST,
-            "CRS_S_002",
-            "거리 필터 값이 올바르지 않습니다."
+        HttpStatus.BAD_REQUEST,
+        "CRS_S_002",
+        "거리 필터 값이 올바르지 않습니다."
     ),
 
     COURSE_SEARCH_INVALID_ENUM(
-            HttpStatus.BAD_REQUEST,
-            "CRS_S_003",
-            "검색 조건 값이 올바르지 않습니다."
+        HttpStatus.BAD_REQUEST,
+        "CRS_S_003",
+        "검색 조건 값이 올바르지 않습니다."
     ),
 
     COURSE_SEARCH_MAPPING_FAILED(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "CRS_S_004",
-            "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
-    );
         HttpStatus.INTERNAL_SERVER_ERROR,
         "CRS_S_004",
         "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
     ),
   /* ==== 모집글 ====*/
-    RECRUIT_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "모집글을 찾을 수 없습니다."),
-    INVALID_RECRUIT(HttpStatus.BAD_REQUEST, "R002", "삭제된 모집글입니다"),
-    RECRUIT_UPDATE_DENIED(HttpStatus.FORBIDDEN, "R003", "모집글 수정 권한이 없습니다."),
-    RECRUIT_DELETE_DENIED(HttpStatus.FORBIDDEN, "R004", "모집글 삭제 권한이 없습니다."),
-    RECRUIT_HAS_PARTICIPANTS(HttpStatus.BAD_REQUEST, "R005", "참여자가 있어 모집글을 수정할 수 없습니다."),
-    ALREADY_PARTICIPATED(HttpStatus.BAD_REQUEST, "R006", "이미 참여 중입니다."),
-    NOT_PARTICIPATED(HttpStatus.BAD_REQUEST, "R007", "참여 상태가 아닙니다."),
-    INVALID_AGE_RANGE(HttpStatus.BAD_REQUEST, "R008", "최소 나이는 최대 나이보다 클 수 없습니다."),
-    INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "R009", "모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다."),
-    RECRUIT_FULL(HttpStatus.BAD_REQUEST, "R010", "참여 인원이 다 찼습니다.");
+  RECRUIT_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "모집글을 찾을 수 없습니다."),
+  INVALID_RECRUIT(HttpStatus.BAD_REQUEST, "R002", "삭제된 모집글입니다"),
+  RECRUIT_UPDATE_DENIED(HttpStatus.FORBIDDEN, "R003", "모집글 수정 권한이 없습니다."),
+  RECRUIT_DELETE_DENIED(HttpStatus.FORBIDDEN, "R004", "모집글 삭제 권한이 없습니다."),
+  RECRUIT_HAS_PARTICIPANTS(HttpStatus.BAD_REQUEST, "R005", "참여자가 있어 모집글을 수정할 수 없습니다."),
+  ALREADY_PARTICIPATED(HttpStatus.BAD_REQUEST, "R006", "이미 참여 중입니다."),
+  NOT_PARTICIPATED(HttpStatus.BAD_REQUEST, "R007", "참여 상태가 아닙니다."),
+  INVALID_AGE_RANGE(HttpStatus.BAD_REQUEST, "R008", "최소 나이는 최대 나이보다 클 수 없습니다."),
+  INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "R009", "모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다."),
+  RECRUIT_FULL(HttpStatus.BAD_REQUEST, "R010", "참여 인원이 다 찼습니다."),
+
+    /*===== 세션/채팅 =====*/
+    SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
+    SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
+    NOT_SESSION_HOST(HttpStatus.FORBIDDEN, "SES_003", "방장만 실행할 수 있습니다."),
+    CANNOT_KICK_SELF(HttpStatus.BAD_REQUEST, "SES_004", "자기 자신은 강퇴할 수 없습니다."),
+    USER_ALREADY_LEFT(HttpStatus.BAD_REQUEST, "SES_005", "이미 퇴장한 사용자입니다."),
+    ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
+    HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다.");
+
+
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;

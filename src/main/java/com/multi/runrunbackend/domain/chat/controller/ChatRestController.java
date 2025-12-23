@@ -186,4 +186,17 @@ public class ChatRestController {
     chatService.updateLastReadAt(sessionId, principal);
     return ResponseEntity.ok(ApiResponse.success("읽음 시간 업데이트 완료", null));
   }
+
+  /**
+   * 참여자 강퇴 (방장만 가능)
+   */
+  @DeleteMapping("/sessions/{sessionId}/kick/{userId}")
+  public ResponseEntity<ApiResponse<Void>> kickUser(
+      @PathVariable Long sessionId,
+      @PathVariable Long userId,
+      @AuthenticationPrincipal CustomUser principal) {
+
+    chatService.kickUser(sessionId, userId, principal);
+    return ResponseEntity.ok(ApiResponse.success("사용자를 강퇴했습니다.", null));
+  }
 }
