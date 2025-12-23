@@ -64,7 +64,7 @@ public class CourseController {
     public ResponseEntity<ApiResponse<CourseCreateResDto>> createCourse(
         @AuthenticationPrincipal CustomUser principal,
         @Valid @RequestPart("course") CourseCreateReqDto req,
-        @RequestPart(value = "imageFile") MultipartFile imageFile
+        @RequestPart(value = "imageFile", required = false) MultipartFile imageFile
     ) {
 
         CourseCreateResDto res = courseService.createCourse(req, imageFile, principal);
