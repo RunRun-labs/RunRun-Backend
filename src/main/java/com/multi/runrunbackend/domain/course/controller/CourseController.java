@@ -6,6 +6,7 @@ import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
 import com.multi.runrunbackend.domain.course.constant.CourseSortType;
 import com.multi.runrunbackend.domain.course.dto.req.CourseCreateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseListReqDto;
+import com.multi.runrunbackend.domain.course.dto.req.CourseSirenReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseUpdateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
@@ -44,7 +45,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/routes")
+@RequestMapping("/api/courses")
 public class CourseController {
 
 
@@ -190,6 +191,19 @@ public class CourseController {
         return ResponseEntity.ok(
             ApiResponse.successNoData("코스 좋아요 삭제")
         );
+    }
+
+    @PostMapping("/siren/{course_id}")
+    public ResponseEntity<ApiResponse> sirenCoure(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId,
+        @Valid @RequestBody CourseSirenReqDto req) {
+        courseService.sirenCourse(principal, courseId, req);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 신고하기 성공")
+        );
+
     }
 
 }
