@@ -1,8 +1,13 @@
 package com.multi.runrunbackend.domain.challenge.repository;
 
+import com.multi.runrunbackend.domain.challenge.constant.UserChallengeStatus;
 import com.multi.runrunbackend.domain.challenge.entity.UserChallenge;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -20,4 +25,19 @@ public interface UserChallengeRepository extends JpaRepository<UserChallenge, Lo
     // 특정 챌린지의 참여자 수 카운트
     long countByChallengeId(Long challengeId);
 
+    // 종료일이 지났는데 아직 상태가 (JOINED, IN_PROGRESS)인 것들 조회 -> 실패 처리
+    @Query("SELECT uc FROM UserChallenge uc JOIN uc.challenge c " +
+            "WHERE uc.status IN :statuses AND c.endDate < :criteriaDate")
+    List<UserChallenge> findChallengesToFail(
+            @Param("statuses") Collection<UserChallengeStatus> statuses,
+            @Param("criteriaDate") LocalDate criteriaDate
+    );
+
+    // 시작일이 되었는데 아직 상태가 JOINED인 것들 조회 -> 시작(IN_PROGRESS) 처리
+    @Query("SELECT uc FROM UserChallenge uc JOIN uc.challenge c " +
+            "WHERE uc.status = :status AND c.startDate <= :criteriaDate")
+    List<UserChallenge> findChallengesToStart(
+            @Param("status") UserChallengeStatus status,
+            @Param("criteriaDate") LocalDate criteriaDate
+    );
 }
