@@ -37,6 +37,7 @@ public class ChallengeResDto {
 
     private Long participantCount;
 
+
     public static ChallengeResDto from(Challenge challenge) {
         return ChallengeResDto.builder()
                 .id(challenge.getId())
@@ -47,7 +48,6 @@ public class ChallengeResDto {
                 .imageUrl(challenge.getImageUrl())
                 .startDate(challenge.getStartDate())
                 .endDate(challenge.getEndDate())
-                .participantCount(0L)
                 .build();
     }
 }
