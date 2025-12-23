@@ -37,7 +37,7 @@ public class CrewJoinRequest extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "introduction", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "introduction", columnDefinition = "TEXT")
     private String introduction;
 
     @Enumerated(EnumType.STRING)
@@ -86,7 +86,7 @@ public class CrewJoinRequest extends BaseEntity {
     }
 
     /**
-     * @description : reject - 가입 신청 거절
+     * @description : reject - 가입 신청 거절 (거절 후 재신청 가능하도록 soft delete 처리)
      * @filename : CrewJoinRequest
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
@@ -94,6 +94,7 @@ public class CrewJoinRequest extends BaseEntity {
     public void reject() {
         validatePending();
         this.joinStatus = JoinStatus.REJECTED;
+        this.delete(); // 거절 후 재신청 가능하도록 soft delete 처리
     }
 
     /**
