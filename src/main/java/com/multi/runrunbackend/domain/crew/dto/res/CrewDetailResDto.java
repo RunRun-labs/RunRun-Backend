@@ -1,8 +1,8 @@
 package com.multi.runrunbackend.domain.crew.dto.res;
 
+import com.multi.runrunbackend.domain.crew.constant.CrewRecruitStatus;
+import com.multi.runrunbackend.domain.crew.constant.CrewStatus;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
-import com.multi.runrunbackend.domain.crew.entity.CrewRecruitStatus;
-import com.multi.runrunbackend.domain.crew.entity.CrewStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
