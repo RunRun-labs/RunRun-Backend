@@ -562,6 +562,78 @@ body {
   white-space: nowrap;
 }
 
+/* 좋아요 - 빨간색으로 채워진 하트 */
+.heart-icon {
+  position: relative;
+}
+
+.heart-icon.active img {
+  opacity: 0;
+}
+
+.heart-icon.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-color: #ff0000;
+  -webkit-mask-image: url("/img/heart-fill.svg");
+  mask-image: url("/img/heart-fill.svg");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+  z-index: 1;
+  display: block;
+}
+
+.heart-icon:not(.active) img {
+  opacity: 1;
+}
+
+/* 즐겨찾기 - 초록색으로 채워진 별 */
+.star-icon {
+  position: relative;
+}
+
+.star-icon.active img {
+  opacity: 0;
+}
+
+.star-icon.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-color: #26ff00;
+  -webkit-mask-image: url("/img/star-fill.svg");
+  mask-image: url("/img/star-fill.svg");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+  z-index: 1;
+  display: block;
+}
+
+.star-icon:not(.active) img {
+  opacity: 1;
+}
+
 /* Create Button Large */
 .create-button-container {
   display: flex;

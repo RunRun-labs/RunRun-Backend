@@ -103,6 +103,98 @@
           />
         </div>
 
+        <!-- Like/Favorite Actions -->
+        <div class="course-like-actions">
+          <button
+            class="action-icon heart-icon"
+            type="button"
+            id="likeBtn"
+            aria-label="좋아요"
+          >
+            <img
+              src="http://localhost:3845/assets/9af0c1d4ec1d966c7ec0b9ad1664f0fb4dc60971.svg"
+              alt="좋아요 아이콘"
+            />
+            <span class="action-count" id="likeCount">0</span>
+          </button>
+          <button
+            class="action-icon star-icon"
+            type="button"
+            id="favoriteBtn"
+            aria-label="즐겨찾기"
+          >
+            <img
+              src="http://localhost:3845/assets/a153ec3dff46ec34044b8bce0977bd3c5e0e43d7.svg"
+              alt="즐겨찾기 아이콘"
+            />
+            <span class="action-count" id="favoriteCount">0</span>
+          </button>
+          <button
+            class="action-icon siren-icon"
+            type="button"
+            id="sirenBtn"
+            aria-label="신고하기"
+          >
+            <img src="/img/siren.svg" alt="신고하기 아이콘" />
+            <span>신고하기</span>
+          </button>
+        </div>
+
+        <!-- Siren Modal -->
+        <div class="modal-overlay" id="sirenModal" style="display: none">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2 class="modal-title">코스 신고하기</h2>
+              <button
+                class="modal-close"
+                type="button"
+                id="closeSirenModal"
+                aria-label="닫기"
+              >
+                ×
+              </button>
+            </div>
+            <div class="modal-body">
+              <p class="modal-description">
+                부적절한 내용이 있다면 신고해주세요. 신고 사유를 자세히
+                입력해주시면 더 빠르게 처리할 수 있습니다.
+              </p>
+              <div class="form-field">
+                <label class="field-label" for="sirenDescription"
+                  >신고 사유</label
+                >
+                <textarea
+                  class="field-textarea"
+                  id="sirenDescription"
+                  placeholder="신고 사유를 입력해주세요 (10자 이상 500자 이하)"
+                  rows="5"
+                ></textarea>
+                <p
+                  class="field-error"
+                  id="sirenDescriptionError"
+                  style="display: none"
+                ></p>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                class="modal-button cancel-button"
+                type="button"
+                id="cancelSirenBtn"
+              >
+                취소
+              </button>
+              <button
+                class="modal-button submit-button"
+                type="button"
+                id="submitSirenBtn"
+              >
+                신고하기
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Course Images -->
         <div class="form-field" id="courseImageField" style="display: none">
           <label class="field-label">이미지</label>

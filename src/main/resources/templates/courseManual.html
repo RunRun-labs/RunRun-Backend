@@ -344,19 +344,23 @@
     const res = await fetch(API_BASE + url, {
       method: "POST",
       headers,
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`HTTP ${res.status}: ${text || "요청에 실패했습니다."}`);
+      throw new Error(
+          `HTTP ${res.status}: ${text || "요청에 실패했습니다."}`
+      );
     }
     return res.json();
   }
 
-  document.getElementById('generateFromPointsBtn').addEventListener('click', async () => {
+  document
+  .getElementById("generateFromPointsBtn")
+  .addEventListener("click", async () => {
     let source = [];
     if (poiMarkers.length >= 2) {
-      source = poiMarkers.map(m => {
+      source = poiMarkers.map((m) => {
         const pos = m.getPosition();
         return {lat: pos.getLat(), lng: pos.getLng()};
       });
