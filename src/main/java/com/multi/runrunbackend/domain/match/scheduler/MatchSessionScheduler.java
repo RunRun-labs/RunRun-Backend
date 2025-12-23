@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.match.scheduler;
 
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
+import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import java.time.LocalDateTime;
@@ -29,8 +30,10 @@ public class MatchSessionScheduler {
   public void autoCreateMatchSession() {
 
     LocalDateTime targetTime = LocalDateTime.now().plusHours(1);
-    List<Recruit> pendingRecruits = recruitRepository.findAllByIsDeletedFalseAndMeetingAtBefore(
-        targetTime);
+    List<Recruit> pendingRecruits = recruitRepository.findAllByStatusAndMeetingAtBefore(
+        RecruitStatus.RECRUITING,
+        targetTime
+    );
 
     if (pendingRecruits.isEmpty()) {
       return;
