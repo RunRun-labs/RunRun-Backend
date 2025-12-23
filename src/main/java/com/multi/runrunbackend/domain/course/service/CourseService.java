@@ -874,10 +874,10 @@ public class CourseService {
         Course course = courseRepository.findById(courseId)
             .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
-        // 현재 사용자가 이 코스에 좋아요를 눌렀는지 확인
         boolean isLiked = courseLikeRepository.existsByCourse_IdAndUser_Id(courseId, user.getId());
-        // 현재 사용자가 이 코스에 즐겨찾기를 눌렀는지 확인
-        boolean isFavorited = courseFavoriteRepository.existsByCourse_IdAndUser_Id(courseId, user.getId());
+
+        boolean isFavorited = courseFavoriteRepository.existsByCourse_IdAndUser_Id(courseId,
+            user.getId());
 
         return CourseDetailResDto.fromEntity(course, user, isLiked, isFavorited);
 

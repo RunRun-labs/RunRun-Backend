@@ -39,8 +39,10 @@ public class CourseDetailResDto {
     private String userName;
     private LocalDateTime createdAt;
     private Boolean isOwner;
+    private Boolean isLiked;
+    private Boolean isFavorited;
 
-    public static CourseDetailResDto fromEntity(Course course, User user) {
+    public static CourseDetailResDto fromEntity(Course course, User user, boolean isLiked, boolean isFavorited) {
         if (course == null) {
             return null;
         }
@@ -62,6 +64,8 @@ public class CourseDetailResDto {
             .isOwner(isOwner)
             .userName(user.getName())
             .createdAt(course.getCreatedAt())
+            .isLiked(isLiked)
+            .isFavorited(isFavorited)
             .build();
     }
 }
