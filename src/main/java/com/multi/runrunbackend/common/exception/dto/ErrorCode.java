@@ -56,8 +56,7 @@ public enum ErrorCode {
     ALREADY_REQUESTED_JOIN(HttpStatus.BAD_REQUEST, "CR016", "이미 가입 신청한 크루입니다."),
     INVALID_JOIN_STATUS(HttpStatus.BAD_REQUEST, "CR017", "대기중 상태의 신청만 처리할 수 있습니다."),
     INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, "CR019", "포인트가 부족합니다."),  // 포인트 구현할 경우
-    NOT_PENDING_STATUS(HttpStatus.BAD_REQUEST, "CR020", "대기중 상태의 요청만 취소할 수 있습니다."),
-    CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR021", "크루원을 찾을 수 없습니다."),
+    CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR020", "크루원을 찾을 수 없습니다."),
 
     FILE_EMPTY(
             HttpStatus.BAD_REQUEST,
