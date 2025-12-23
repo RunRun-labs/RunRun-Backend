@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.match.service;
 
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
+import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
@@ -54,6 +55,16 @@ public class MatchSessionService {
     if (!recruit.getUser().getId().equals(user.getId())) {
       throw new ForbiddenException(ErrorCode.UNAUTHORIZED_HOST);
     }
+
+    if (recruit.getCurrentParticipants() < 2) {
+      throw new ValidationException(ErrorCode.NOT_ENOUGH_PARTICIPANTS);
+    }
+
+    LocalDateTime allowedStartTime = recruit.getMeetingAt().minusHours(3);
+    if (LocalDateTime.now().isBefore(allowedStartTime)) {
+      throw new ValidationException(ErrorCode.TOO_EARLY_TO_START);
+    }
+
     return createSessionInternal(recruit);
   }
 
