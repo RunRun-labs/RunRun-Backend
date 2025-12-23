@@ -202,7 +202,7 @@ public class RecruitService {
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
-    if (recruit.getIsDeleted()) {
+    if (recruit.getStatus() != RecruitStatus.RECRUITING) {
       throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
     }
     return recruit;
