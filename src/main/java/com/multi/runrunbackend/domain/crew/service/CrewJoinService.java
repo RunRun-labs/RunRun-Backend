@@ -203,6 +203,39 @@ public class CrewJoinService {
     }
 
     /**
+     * @param crewId  크루 ID
+     * @param loginId 탈퇴하려는 회원 로그인 ID
+     * @description : 크루원이 크루 탈퇴 (승인된 크루원만 탈퇴 가능, 크루장은 탈퇴 불가 -> 위임 또는 해체 필요)
+     */
+    @Transactional
+    public void leaveCrew(Long crewId, String loginId) {
+        // 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 회원 조회
+        User user = findUserByLoginId(loginId);
+
+        // 크루원인지 확인
+        CrewUser crewUser = crewUserRepository.findByCrewAndUserAndIsDeletedFalse(crew, user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+
+        // 크루장은 탈퇴 불가
+        if (crewUser.getRole().equals(CrewRole.LEADER)) {
+            throw new BusinessException(ErrorCode.CANNOT_LEAVE_AS_LEADER);
+        }
+
+        // CrewUser soft delete 처리
+        crewUser.delete();
+
+        // 승인된 가입 신청도 함께 처리 (APPROVED 상태의 가입 신청을 찾아서 soft delete)
+        crewJoinRequestRepository.findByCrewAndUserAndJoinStatus(crew, user, JoinStatus.APPROVED)
+                .ifPresent(joinRequest -> joinRequest.delete());
+
+        log.info("크루 탈퇴 완료 - crewId: {}, userId: {}, role: {}",
+                crewId, user.getId(), crewUser.getRole());
+    }
+
+    /**
      * 공통 메서드
      */
 
