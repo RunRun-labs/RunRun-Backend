@@ -30,4 +30,23 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             where c.id = :courseId
         """)
     int decreaseLikeCount(@Param("courseId") Long courseId);
+
+    @Modifying
+    @Query("""
+            update Course c
+            set c.favoriteCount = c.favoriteCount + 1
+            where c.id = :courseId
+        """)
+    int increaseFavoriteCount(@Param("courseId") Long courseId);
+
+    @Modifying
+    @Query("""
+            update Course c
+            set c.favoriteCount = 
+                case when c.favoriteCount > 0 then c.favoriteCount - 1 else 0 end
+            where c.id = :courseId
+        """)
+    int decreaseFavoriteCount(@Param("courseId") Long courseId);
+
+
 }
