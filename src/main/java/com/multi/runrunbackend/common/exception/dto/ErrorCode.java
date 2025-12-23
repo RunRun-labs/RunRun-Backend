@@ -51,6 +51,7 @@ public enum ErrorCode {
     ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR013", "이미 가입 신청한 크루입니다."),
     CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014",
         "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
+    FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
         HttpStatus.BAD_REQUEST,
         "F002",
@@ -147,6 +148,7 @@ public enum ErrorCode {
         "CRS_S_004",
         "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
     ),
+
     /*==== 코스 ====*/
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS_001", "코스를 찾을 수 없습니다"),
 
@@ -200,8 +202,12 @@ public enum ErrorCode {
     CANNOT_KICK_SELF(HttpStatus.BAD_REQUEST, "SES_004", "자기 자신은 강퇴할 수 없습니다."),
     USER_ALREADY_LEFT(HttpStatus.BAD_REQUEST, "SES_005", "이미 퇴장한 사용자입니다."),
     ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
-    HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다.");
-
+    HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다."),
+    /*=====MAPBOX =====*/
+    MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
+        "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
+    MAPBOX_OVERLAY_EMPTY(HttpStatus.BAD_REQUEST, "M_002",
+        "썸네일 생성에 필요한 overlay 값이 비어있습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

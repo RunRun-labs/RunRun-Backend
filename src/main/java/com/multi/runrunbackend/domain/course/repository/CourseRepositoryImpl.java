@@ -36,7 +36,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
     @Override
     public CursorPage<CourseListResDto> searchCourses(CourseListReqDto req, Long currentUserId) {
 
-        int size = (req.getSize() == null || req.getSize() <= 0) ? 10 : Math.min(req.getSize(), 50);
+        int size = (req.getSize() == null || req.getSize() <= 0) ? 5 : Math.min(req.getSize(), 50);
         CourseSortType sortType =
             (req.getSortType() == null) ? CourseSortType.LATEST : req.getSortType();
 
