@@ -148,9 +148,16 @@ public enum ErrorCode {
     ALREADY_LIKED_COURSE(HttpStatus.CONFLICT, "CRS_005", "이미 좋아요한 코스입니다"),
     COURSE_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "CRS_006", "사용할 수 없는 코스입니다"),
     CANNOT_LIKE_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_007",
-        "본인의 코스는 좋아요할 수 없습니다"), COURSELIKE_NOT_FOUND(
+        "본인의 코스는 좋아요할 수 없습니다"),
+    COURSELIKE_NOT_FOUND(
         HttpStatus.NOT_FOUND, "CRS_008", "해당 좋아요를 찾을 수 없습니다"),
-    NOT_LIKED(HttpStatus.BAD_REQUEST, "CRS_009", "좋아요를 누르지 않은 코스입니다");
+    NOT_LIKED(HttpStatus.BAD_REQUEST, "CRS_009", "좋아요를 누르지 않은 코스입니다"),
+    ALREADY_FAVORITE_COURSE(HttpStatus.CONFLICT, "CRS_005", "이미 즐겨찾기한 코스입니다"),
+    CANNOT_FAVORITE_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_007",
+        "본인의 코스는 즐겨찾기할 수 없습니다"),
+    FAVORITE_NOT_FOUND(
+        HttpStatus.NOT_FOUND, "CRS_008", "해당 즐겨찾기를 찾을 수 없습니다"),
+    NOT_FAVORITE(HttpStatus.BAD_REQUEST, "CRS_009", "즐겨찾기를 누르지 않은 코스입니다");
 
 
     private final HttpStatus httpStatus;
