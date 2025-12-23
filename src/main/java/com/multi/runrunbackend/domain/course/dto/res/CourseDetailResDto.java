@@ -42,7 +42,8 @@ public class CourseDetailResDto {
     private Boolean isLiked;
     private Boolean isFavorited;
 
-    public static CourseDetailResDto fromEntity(Course course, User user, boolean isLiked, boolean isFavorited) {
+    public static CourseDetailResDto fromEntity(Course course, User user, Boolean isLiked,
+        Boolean isFavorited) {
         if (course == null) {
             return null;
         }
