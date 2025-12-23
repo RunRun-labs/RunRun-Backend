@@ -73,10 +73,15 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
             params.put("kw", "%" + req.getKeyword().trim() + "%");
         }
 
-        // register type
-        if (req.getRegisterType() != null) {
-            where.append(" AND c.register_type = :registerType ");
-            params.put("registerType", req.getRegisterType().name());
+        // register type (multiple)
+        if (req.getRegisterTypes() != null && !req.getRegisterTypes().isEmpty()) {
+            where.append(" AND c.register_type IN (:registerTypes) ");
+            params.put(
+                "registerTypes",
+                req.getRegisterTypes().stream()
+                    .map(Enum::name)
+                    .toList()
+            );
         }
 
         // distance bucket filter (course.distance_m)
@@ -117,11 +122,14 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
                 (req.getRadiusM() == null || req.getRadiusM() <= 0) ? 1500 : req.getRadiusM();
             params.put("radiusM", radiusM);
 
-            where.append(" AND ST_DWithin(")
-                .append(pointExpr)
-                .append(", ")
-                .append(centerExpr)
-                .append(", :radiusM) ");
+            if (nearby) {
+                where.append(" AND c.start_lat IS NOT NULL AND c.start_lng IS NOT NULL ");
+                where.append(" AND ST_DWithin(")
+                    .append(pointExpr)
+                    .append(", ")
+                    .append(centerExpr)
+                    .append(", :radiusM) ");
+            }
         }
 
         // 정렬 분기: nearby=true여도 FAVORITE/LIKE/LATEST로 정상 정렬되게 바꿈
