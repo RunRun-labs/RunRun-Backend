@@ -51,6 +51,11 @@ public class PathController {
         return "challenge/challenge-edit";
     }
 
+    @GetMapping("/challenge/end")
+    public String challengeEndView() {
+        return "challenge/challenge-end";
+    }
+
     @GetMapping("/course_auto")
     public String testView() {
         return "courseAuto";
