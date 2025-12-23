@@ -32,7 +32,7 @@ public class PointHistory extends BaseCreatedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -58,7 +58,7 @@ public class PointHistory extends BaseCreatedEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static PointHistory toEntity(User user, PointProduct pointProduct, String pointType,
-        Integer changeAmount, String reason) {
+                                        Integer changeAmount, String reason) {
         return PointHistory.builder()
             .user(user)
             .pointProduct(pointProduct)

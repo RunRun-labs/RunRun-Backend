@@ -21,16 +21,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class JwtConfig {
 
-    private final TokenProvider tokenProvider;
-    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final RedisTemplate<String, String> redisTemplate;
+  private final TokenProvider tokenProvider;
+  private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+  private final RedisTemplate<String, String> redisTemplate;
 
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,22 +49,34 @@ public class JwtConfig {
                 "/public/**",
                 "/error",
                 "/img/**",
+                "/chat/**",
+                "/ws/**",
+                "/myPage/**",
+                "/course_auto/**",
+                "/api/routes/**",
+                "/files/**",
+                "/course",
+                "/courseCreate",
+                "/courseDetail/**",
+                "/courseUpdate/**",
+                "/course_manual/**",
+                "/crews/new",
+                "/crews/**",
                 "/match/**",
-                "/recruit/**",
-                "/myPage/**"
+                "/recruit/**"
             ).permitAll()
             .requestMatchers(
                 PathRequest.toStaticResources().atCommonLocations()
             ).permitAll()
             .anyRequest().authenticated()
 
-            ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                    .accessDeniedHandler(jwtAccessDeniedHandler));
+        ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
+            UsernamePasswordAuthenticationFilter.class).exceptionHandling(
+            exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .accessDeniedHandler(jwtAccessDeniedHandler));
 
-        return http.build();
+    return http.build();
 
-    }
+  }
 
 }

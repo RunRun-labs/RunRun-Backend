@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | 코스 상세보기</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services"
+      th:src="@{//dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services}"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="/css/courseDetail.css"
+      th:href="@{/css/courseDetail.css}"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <!-- Header -->
+      <header class="course-header">
+        <button
+          class="back-button"
+          type="button"
+          aria-label="뒤로가기"
+          onclick="history.back()"
+        >
+          <img
+            src="http://localhost:3845/assets/5d8e7700a6d94e6f5d3b62853522a7c52a457010.svg"
+            alt="뒤로가기 아이콘"
+          />
+        </button>
+        <h1 class="page-title">코스 상세보기</h1>
+      </header>
+
+      <!-- Main Content -->
+      <main class="course-content" id="courseContent">
+        <!-- Course Image -->
+        <div
+          class="course-image-container"
+          id="courseImageContainer"
+          style="display: none"
+        >
+          <img id="courseImage" alt="코스 이미지" class="course-image" />
+        </div>
+
+        <!-- Course Map -->
+        <div class="form-field">
+          <label class="field-label">코스</label>
+          <div class="map-container" id="map"></div>
+        </div>
+
+        <!-- Title Field -->
+        <div class="form-field">
+          <label class="field-label">제목</label>
+          <input type="text" class="field-input" id="courseTitle" readonly />
+        </div>
+
+        <!-- Content Field -->
+        <div class="form-field">
+          <label class="field-label">내용</label>
+          <textarea
+            class="field-textarea"
+            id="courseDescription"
+            readonly
+          ></textarea>
+        </div>
+
+        <!-- Distance Field -->
+        <div class="form-field">
+          <label class="field-label">거리</label>
+          <input type="text" class="field-input" id="courseDistance" readonly />
+        </div>
+
+        <!-- Location Field -->
+        <div class="form-field">
+          <label class="field-label">위치</label>
+          <input type="text" class="field-input" id="courseAddress" readonly />
+        </div>
+
+        <!-- Author Field -->
+        <div class="form-field">
+          <label class="field-label">작성자</label>
+          <input type="text" class="field-input" id="courseAuthor" readonly />
+        </div>
+
+        <!-- Created Date Field -->
+        <div class="form-field">
+          <label class="field-label">작성일자</label>
+          <input
+            type="text"
+            class="field-input"
+            id="courseCreatedAt"
+            readonly
+          />
+        </div>
+
+        <!-- Course Images -->
+        <div class="form-field" id="courseImageField" style="display: none">
+          <label class="field-label">이미지</label>
+          <div class="image-preview">
+            <img
+              id="courseImagePreview"
+              alt="코스 이미지"
+              class="preview-image"
+            />
+          </div>
+        </div>
+
+        <!-- Action Buttons (Edit/Delete) -->
+        <div class="course-actions" id="courseActions" style="display: none">
+          <button class="edit-button" type="button" id="editBtn">
+            수정하기
+          </button>
+          <button class="delete-button" type="button" id="deleteBtn">
+            삭제하기
+          </button>
+        </div>
+      </main>
+
+      <!-- Bottom Navigation -->
+      <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+    </div>
+
+    <!-- Course ID for JavaScript -->
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      const courseId = /*[[${courseId}]]*/ null;
+      /*]]>*/
+    </script>
+
+    <script src="/js/courseDetail.js" th:src="@{/js/courseDetail.js}"></script>
+  </body>
+</html>

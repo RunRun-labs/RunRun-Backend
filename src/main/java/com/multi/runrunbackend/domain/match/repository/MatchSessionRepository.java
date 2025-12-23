@@ -1,9 +1,13 @@
 package com.multi.runrunbackend.domain.match.repository;
 
+import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * @author : KIMGWANGHO
@@ -16,4 +20,8 @@ public interface MatchSessionRepository extends JpaRepository<MatchSession, Long
   boolean existsByRecruit(Recruit recruit);
 
   Optional<MatchSession> findByRecruit(Recruit recruit);
+
+  @Modifying
+  @Query("UPDATE MatchSession ms SET ms.status = :status WHERE ms.id = :sessionId")
+  int updateStatus(@Param("sessionId") Long sessionId, @Param("status") SessionStatus status);
 }

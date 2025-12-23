@@ -26,7 +26,7 @@ spring:
       database: 0
       timeout: 2000ms
   mongodb:
-    uri: mongodb://${MONGO_USER:runrun}:${MONGO_PASSWORD:runrun123}@localhost:${MONGO_PORT:27017}/${MONGO_DB:runrun_chat}?authSource=admin
+    uri: mongodb://localhost:${MONGO_PORT:27017}/${MONGO_DB:runrun_chat}
 springdoc:
   group-configs:
     - group: all
@@ -41,3 +41,6 @@ server:
   port: 8080
 file:
   upload-path: ${FILE_UPLOAD_PATH}
+tmap:
+  app-key: ${TMAP_APP_KEY}
+  base-url: ${TMAP_BASE_URL}

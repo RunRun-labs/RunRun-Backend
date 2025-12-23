@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | 코스 만들기</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services"
+      th:src="@{//dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services}"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="/css/courseCreate.css"
+      th:href="@{/css/courseCreate.css}"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <!-- Header -->
+      <header class="course-header">
+        <button
+          class="back-button"
+          type="button"
+          aria-label="뒤로가기"
+          onclick="history.back()"
+        >
+          <img
+            src="http://localhost:3845/assets/5d8e7700a6d94e6f5d3b62853522a7c52a457010.svg"
+            alt="뒤로가기 아이콘"
+          />
+        </button>
+        <h1 class="page-title">코스 만들기</h1>
+      </header>
+
+      <!-- Sticky Create Button (Fixed above bottom nav) -->
+      <button
+        class="create-button-sticky"
+        type="submit"
+        id="stickyCreateBtn"
+        form="courseForm"
+      >
+        코스 생성하기
+      </button>
+
+      <!-- Main Content -->
+      <main class="course-content">
+        <form
+          class="course-form"
+          th:action="@{/api/routes}"
+          action="/api/routes"
+          method="post"
+          id="courseForm"
+          enctype="multipart/form-data"
+        >
+          <!-- Title Field -->
+          <div class="form-field" data-field="title">
+            <label class="field-label">제목</label>
+            <input
+              type="text"
+              name="title"
+              class="field-input"
+              placeholder="제목을 입력하세요"
+              maxlength="50"
+            />
+            <p class="field-error" data-error-for="title"></p>
+          </div>
+
+          <!-- Content Field -->
+          <div class="form-field" data-field="description">
+            <label class="field-label">내용</label>
+            <textarea
+              name="description"
+              class="field-textarea"
+              placeholder="내용을 입력하세요"
+              rows="8"
+              maxlength="500"
+            ></textarea>
+            <p class="field-error" data-error-for="description"></p>
+          </div>
+
+          <!-- Route Builder Launcher -->
+          <div class="form-field">
+            <label class="field-label">코스</label>
+            <p class="helper-text">
+              아래 버튼을 눌러 자동/수동 편집 화면에서 경로를 완성해 주세요.
+              완료 후 이 화면으로 돌아오면 정보가 채워집니다.
+            </p>
+            <div class="route-launcher">
+              <button type="button" id="autoRouteBtn" class="mode-button">
+                자동 등록
+              </button>
+              <button type="button" id="manualRouteBtn" class="mode-button">
+                수동 등록
+              </button>
+            </div>
+            <div class="route-summary" id="routeSummary">
+              아직 선택된 코스가 없습니다.
+            </div>
+            <div class="map-container compact" id="mapPreview"></div>
+            <p class="field-error" data-error-for="path"></p>
+            <input type="hidden" name="path" id="pathInput" />
+            <input type="hidden" name="distanceM" id="distanceMInput" />
+            <input type="hidden" name="startLat" id="startLatInput" />
+            <input type="hidden" name="startLng" id="startLngInput" />
+            <input type="hidden" name="address" id="addressInput" />
+            <input
+              type="hidden"
+              name="courseRegisterType"
+              id="courseRegisterTypeInput"
+            />
+          </div>
+
+          <!-- Image Upload Section -->
+          <div class="form-field">
+            <label class="field-label">이미지</label>
+            <div class="image-upload-area" id="imageUploadArea">
+              <div class="upload-placeholder" id="uploadPlaceholder">
+                <img
+                  src="http://localhost:3845/assets/7ed265b4ee3f9b3742a3bbc82a2767b38c5893e9.svg"
+                  alt="카메라 아이콘"
+                  class="camera-icon"
+                />
+                <span class="upload-text">이미지 넣기</span>
+              </div>
+              <div class="image-preview" id="imagePreview"></div>
+              <input
+                type="file"
+                name="image"
+                id="imageInput"
+                accept="image/*"
+                class="image-input"
+              />
+            </div>
+          </div>
+        </form>
+      </main>
+
+      <!-- Bottom Navigation -->
+      <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+    </div>
+
+    <script src="/js/courseCreate.js" th:src="@{/js/courseCreate.js}"></script>
+  </body>
+</html>

@@ -2,19 +2,10 @@ package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
 /**
@@ -54,14 +45,19 @@ public class Crew extends BaseEntity {
     @Column(name = "distance", nullable = false, length = 50)
     private String distance;
 
+    @Column(name = "pace", length = 50)
+    private String averagePace;
+
     @Column(name = "activity_time", nullable = false, length = 100)
     private String activityTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "crew_status", length = 20)
-    private String crewStatus;  // ACTIVE, DISBANDED
+    private CrewStatus crewStatus;  // ACTIVE, DISBANDED
 
-    @Column(name = "recruit_status", length = 20)
-    private String recruitStatus;  // RECRUITING, CLOSED
+    @Enumerated(EnumType.STRING)
+    @Column(name = "crew_recruit_status", length = 20)
+    private CrewRecruitStatus crewRecruitStatus;  // RECRUITING, CLOSED
 
     /**
      * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
@@ -69,19 +65,20 @@ public class Crew extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static Crew toEntity(String crewName, String crewDescription, String crewImageUrl,
-        String region, String distance, String activityTime, User user) {
+    public static Crew create(String crewName, String crewDescription, String crewImageUrl,
+                              String region, String distance, String averagePace, String activityTime, User user) {
         return Crew.builder()
-            .crewName(crewName)
-            .crewDescription(crewDescription)
-            .crewImageUrl(crewImageUrl)
-            .region(region)
-            .distance(distance)
-            .activityTime(activityTime)
-            .user(user)
-            .crewStatus("ACTIVE")
-            .recruitStatus("RECRUITING")
-            .build();
+                .crewName(crewName)
+                .crewDescription(crewDescription)
+                .crewImageUrl(crewImageUrl)
+                .region(region)
+                .distance(distance)
+                .averagePace(averagePace)
+                .activityTime(activityTime)
+                .user(user)
+                .crewStatus(CrewStatus.ACTIVE)
+                .crewRecruitStatus(CrewRecruitStatus.RECRUITING)
+                .build();
     }
 
     /**
@@ -90,13 +87,15 @@ public class Crew extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public void updateCrew(String crewName, String crewDescription, String crewImageUrl,
-        String region, String distance, String activityTime) {
-        this.crewName = crewName;
+    public void updateCrew(String crewDescription, String crewImageUrl,
+                           String region, String distance, String averagePace, String activityTime) {
         this.crewDescription = crewDescription;
-        this.crewImageUrl = crewImageUrl;
+        if (crewImageUrl != null) {
+            this.crewImageUrl = crewImageUrl;
+        }
         this.region = region;
         this.distance = distance;
+        this.averagePace = averagePace;
         this.activityTime = activityTime;
     }
 
@@ -106,7 +105,7 @@ public class Crew extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public void updateStatus(String crewStatus) {
+    public void updateStatus(CrewStatus crewStatus) {
         this.crewStatus = crewStatus;
     }
 
@@ -116,8 +115,11 @@ public class Crew extends BaseEntity {
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public void updateRecruitStatus(String recruitStatus) {
-        this.recruitStatus = recruitStatus;
+    public void updateRecruitStatus(CrewRecruitStatus crewRecruitStatus) {
+        if (this.crewStatus == CrewStatus.DISBANDED) {
+            throw new BusinessException(ErrorCode.CREW_ALREADY_DISBANDED);
+        }
+        this.crewRecruitStatus = crewRecruitStatus;
     }
 
     /**
@@ -127,6 +129,35 @@ public class Crew extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void softDelete() {
-        this.crewStatus = "DISBANDED";
+        if (this.crewStatus == CrewStatus.DISBANDED) {
+            throw new BusinessException(ErrorCode.CREW_ALREADY_DISBANDED);
+        }
+        this.crewStatus = CrewStatus.DISBANDED;
+        this.delete();
     }
+
+    /**
+     * @throws BusinessException 이미 해체된 크루인 경우
+     * @description : validateNotDisbanded - 해체되지 않은 크루인지 검증
+     * @filename : Crew
+     * @author : BoKyung
+     * @since : 25. 12. 17. 수요일
+     */
+    public void validateNotDisbanded() {
+        if (this.crewStatus == CrewStatus.DISBANDED) {
+            throw new BusinessException(ErrorCode.CREW_ALREADY_DISBANDED);
+        }
+    }
+
+    /**
+     * @description : isRecruiting - 모집중인지 확인
+     * @filename : Crew
+     * @author : BoKyung
+     * @since : 25. 12. 17. 수요일
+     */
+    public boolean isRecruiting() {
+        return this.crewRecruitStatus == CrewRecruitStatus.RECRUITING
+                && this.crewStatus == CrewStatus.ACTIVE;
+    }
+
 }

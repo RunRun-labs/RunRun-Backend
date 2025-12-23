@@ -1,7 +1,12 @@
 package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.user.entity.User;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import org.hibernate.annotations.SQLRestriction;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -15,8 +20,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
-
 /**
  * @author : BoKyung
  * @description : 크루 가입 신청 엔티티
@@ -55,8 +58,9 @@ public class CrewJoinRequest extends BaseEntity {
     @Column(name = "region", nullable = false, length = 100)
     private String region;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "join_status", nullable = false, length = 20)
-    private String joinStatus;  // PENDING, APPROVED, REJECTED, CANCELED
+    private JoinStatus joinStatus;  // PENDING, APPROVED, REJECTED, CANCELED
 
     /**
      * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
@@ -65,16 +69,16 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static CrewJoinRequest toEntity(Crew crew, User user, String introduction,
-        Integer distance, Integer pace, String region) {
+                                           Integer distance, Integer pace, String region) {
         return CrewJoinRequest.builder()
-            .crew(crew)
-            .user(user)
-            .introduction(introduction)
-            .distance(distance)
-            .pace(pace)
-            .region(region)
-            .joinStatus("PENDING")
-            .build();
+                .crew(crew)
+                .user(user)
+                .introduction(introduction)
+                .distance(distance)
+                .pace(pace)
+                .region(region)
+                .joinStatus(JoinStatus.PENDING)
+                .build();
     }
 
     /**
@@ -84,7 +88,8 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void approve() {
-        this.joinStatus = "APPROVED";
+        validatePending();
+        this.joinStatus = JoinStatus.APPROVED;
     }
 
     /**
@@ -94,7 +99,8 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void reject() {
-        this.joinStatus = "REJECTED";
+        validatePending();
+        this.joinStatus = JoinStatus.REJECTED;
     }
 
     /**
@@ -104,6 +110,21 @@ public class CrewJoinRequest extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void cancel() {
-        this.joinStatus = "CANCELED";
+        validatePending();
+        this.joinStatus = JoinStatus.CANCELED;
+        this.delete();
+    }
+
+    /**
+     * @throws BusinessException PENDING 상태가 아닌 경우
+     * @description : validatePending - PENDING 상태인지 검증
+     * @filename : CrewJoinRequest
+     * @author : BoKyung
+     * @since : 25. 12. 17. 수요일
+     */
+    private void validatePending() {
+        if (this.joinStatus != JoinStatus.PENDING) {
+            throw new BusinessException(ErrorCode.JOIN_REQUEST_NOT_PENDING);
+        }
     }
 }
