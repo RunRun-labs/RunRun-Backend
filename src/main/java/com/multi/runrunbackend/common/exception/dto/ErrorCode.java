@@ -62,7 +62,9 @@ public enum ErrorCode {
   INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "R009", "모임 날짜는 오늘부터 2주일 이내로만 설정 가능합니다."),
   RECRUIT_FULL(HttpStatus.BAD_REQUEST, "R010", "참여 인원이 다 찼습니다."),
   UNAUTHORIZED_HOST(HttpStatus.FORBIDDEN, "R011", "방장에게만 권한이 있습니다."),
-  RECRUIT_TIME_OVER(HttpStatus.BAD_REQUEST, "R012", "모집 신청 기간이 지났습니다.");
+  RECRUIT_TIME_OVER(HttpStatus.BAD_REQUEST, "R012", "모집 신청 기간이 지났습니다."),
+  NOT_ENOUGH_PARTICIPANTS(HttpStatus.BAD_REQUEST, "RO13", "참가자가 최소 1명은 더 있어야 출발할 수 있습니다."),
+  TOO_EARLY_TO_START(HttpStatus.BAD_REQUEST, "RO14", "매칭 확정은 모임 시간 3시간 전부터 가능합니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
