@@ -40,15 +40,12 @@ public class CrewJoinService {
     private final CrewUserRepository crewUserRepository;
     private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
-//    private final UserPointRepository userPointRepository;
-
-    private static final int JOIN_REQUEST_POINT = 100;
 
     /**
      * @param crewId  가입 신청할 크루 ID
      * @param loginId 가입 신청하는 회원 ID
      * @param reqDto  가입 신청 정보 (자기소개, 거리, 페이스, 지역)
-     * @description : 회원이 크루에 가입 신청(포인트 100P가 차감되며, 이미 가입했거나 대기중인 경우 예외 발생)
+     * @description : 회원이 크루에 가입 신청 (이미 가입했거나 대기중인 경우 예외 발생) TODO 포인트 구현시, 포인트 100P가 차감
      */
     @Transactional
     public void requestJoin(Long crewId, String loginId, CrewJoinReqDto reqDto) {
@@ -72,16 +69,6 @@ public class CrewJoinService {
             throw new BusinessException(ErrorCode.ALREADY_REQUESTED_JOIN);
         }
 
-//        // 포인트 조회 및 차감
-//        UserPoint userPoint = userPointRepository.findByUser(user)
-//                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-//
-//        if (userPoint.getTotalPoint() < JOIN_REQUEST_POINT) {
-//            throw new BusinessException(ErrorCode.INSUFFICIENT_POINTS);
-//        }
-
-//        userPoint.subtractPoint(JOIN_REQUEST_POINT);
-
         // 가입 신청 생성
         CrewJoinRequest joinRequest = reqDto.toEntity(crew, user);
         crewJoinRequestRepository.save(joinRequest);
@@ -92,7 +79,7 @@ public class CrewJoinService {
     /**
      * @param crewId  크루 ID
      * @param loginId 신청 취소하는 회원 ID
-     * @description : 신청자가 대기중인 가입 신청을 취소 (차감된 포인트 100P가 환불)
+     * @description : 신청자가 대기중인 가입 신청을 취소 TODO (포인트 구현시, 차감된 포인트 100P가 환불)
      */
     @Transactional
     public void cancelJoinRequest(Long crewId, String loginId) {
@@ -109,12 +96,6 @@ public class CrewJoinService {
 
         // 가입 신청 취소로 상태 변경
         joinRequest.cancel();
-
-//        // 포인트 환불
-//        UserPoint userPoint = userPointRepository.findByUser(user)
-//                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-//
-//        userPoint.addPoint(JOIN_REQUEST_POINT);
 
         log.info("크루 가입 신청 취소 완료 - crewId: {}, loginId: {}", crewId, loginId);
     }
@@ -192,7 +173,7 @@ public class CrewJoinService {
      * @param crewId        크루 ID
      * @param loginId       거절하는 크루장 로그인 ID
      * @param joinRequestId 거절할 가입 신청 ID
-     * @description : 크루장이 가입 신청을 거절 (포인트가 환불)
+     * @description : 크루장이 가입 신청을 거절 TODO (포인트 구현 시, 포인트가 환불 예정)
      */
     @Transactional
     public void rejectJoinRequest(Long crewId, String loginId, Long joinRequestId) {
@@ -216,12 +197,6 @@ public class CrewJoinService {
 
         // 거절 처리
         joinRequest.reject();
-
-//        // 포인트 환불
-//        UserPoint userPoint = userPointRepository.findByUser(joinRequest.getUser())
-//                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-//
-//        userPoint.addPoint(JOIN_REQUEST_POINT);
 
         log.info("크루 가입 거절 완료 - crewId: {}, rejectedUserId: {}",
                 crewId, joinRequest.getUser().getId());
