@@ -445,6 +445,22 @@ function handleNewMessage(sessionId, message) {
   room.lastMessageSender = message.senderName;
   room.lastMessageTime = message.createdAt || new Date().toISOString();
 
+  // ⭐ 준비 상태 변경 메시지 감지
+  if (message.messageType === 'SYSTEM' && 
+      (message.content.includes('준비완료') || message.content.includes('준비를 취소'))) {
+    console.log('⭐ 채팅방 목록: 준비 상태 변경 감지 -', message.content);
+    updateRoomReadyCount(sessionId);
+  }
+
+  // ⭐ 입장/퇴장 메시지 감지 (참여자 수 변경)
+  if (message.messageType === 'SYSTEM' && 
+      (message.content.includes('입장했습니다') || 
+       message.content.includes('퇴장했습니다') ||
+       message.content.includes('강퇴되었습니다'))) {
+    console.log('⭐ 채팅방 목록: 참여자 변경 감지 -', message.content);
+    updateRoomReadyCount(sessionId);
+  }
+
   // 채팅방 목록 재정렬 (최신 메시지가 맨 위로)
   chatRooms.sort((a, b) => {
     const timeA = a.lastMessageTime ? new Date(a.lastMessageTime) : null;
@@ -482,6 +498,12 @@ function updateChatRoomUI(room) {
     timeEl.textContent = formatTime(room.lastMessageTime);
   }
 
+  // ⭐ 준비 상태 배지 업데이트
+  const readyBadge = chatItem.querySelector('.chat-ready-badge');
+  if (readyBadge) {
+    readyBadge.textContent = `${room.readyCount}/${room.currentParticipants} 준비`;
+  }
+
   // unreadCount 뱃지 업데이트
   const footerRight = chatItem.querySelector('.chat-footer-right');
   if (!footerRight) return;
@@ -501,5 +523,45 @@ function updateChatRoomUI(room) {
     }
     unreadBadge.textContent = room.unreadCount > 99 ? '99+' : room.unreadCount;
     footerRight.appendChild(unreadBadge);
+  }
+}
+
+// ⭐ 특정 채팅방의 준비 상태 API 재호출
+async function updateRoomReadyCount(sessionId) {
+  try {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) return;
+
+    // 참여자 목록 API 호출
+    const response = await fetch(`/api/chat/sessions/${sessionId}/users`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    if (!response.ok) return;
+
+    const result = await response.json();
+    if (!result.success) return;
+
+    const participants = result.data;
+    const readyCount = participants.filter(p => p.isReady).length;
+    const currentParticipants = participants.length;
+
+    // chatRooms 배열에서 해당 방 찾아서 업데이트
+    const roomIndex = chatRooms.findIndex(room => room.sessionId === sessionId);
+    if (roomIndex !== -1) {
+      chatRooms[roomIndex].readyCount = readyCount;
+      chatRooms[roomIndex].currentParticipants = currentParticipants;
+      
+      console.log(`⭐ 채팅방 목록: 준비 상태 업데이트 sessionId=${sessionId}, ${readyCount}/${currentParticipants}`);
+      
+      // UI 업데이트
+      updateChatRoomUI(chatRooms[roomIndex]);
+    }
+  } catch (error) {
+    console.error('채팅방 목록: 준비 상태 업데이트 실패:', error);
   }
 }
