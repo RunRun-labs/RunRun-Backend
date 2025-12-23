@@ -1,6 +1,6 @@
 package com.multi.runrunbackend.domain.crew.dto.res;
 
-import com.multi.runrunbackend.domain.crew.entity.CrewRole;
+import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
