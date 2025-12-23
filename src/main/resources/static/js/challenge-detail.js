@@ -433,7 +433,9 @@ async function handleCancelChallenge(challengeId) {
         return;
     }
 
-    if (!confirm("정말 챌린지를 포기하시겠습니까?")) {
+    // 재확인 팝업
+    const confirmed = confirm("정말 챌린지를 포기하시겠습니까?\n\n포기한 챌린지는 다시 참여할 수 있습니다.");
+    if (!confirmed) {
         return;
     }
 
