@@ -51,14 +51,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 수정하기 버튼 클릭 이벤트
+    // 수정 버튼 클릭 이벤트
     if (editButton) {
         editButton.addEventListener("click", () => {
             handleEditChallenge(challengeId);
         });
     }
 
-    // 삭제하기 버튼 클릭 이벤트
+    // 삭제 버튼 클릭 이벤트
     if (deleteButton) {
         deleteButton.addEventListener("click", () => {
             handleDeleteChallenge(challengeId);
@@ -79,16 +79,77 @@ function extractChallengeIdFromUrl() {
 }
 
 /**
+ * JWT 토큰에서 사용자 역할 추출 (수정됨: 다양한 키 지원 및 디버깅 로그)
+ */
+function getUserRoleFromToken() {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+        return null;
+    }
+
+    try {
+        // JWT 토큰은 Base64로 인코딩된 3부분으로 구성: Header.Payload.Signature
+        const parts = accessToken.split(".");
+        if (parts.length !== 3) {
+            return null;
+        }
+
+        // Payload 부분 디코딩 (Base64 URL Safe)
+        const payload = parts[1];
+        // Base64 URL Safe 디코딩을 위해 패딩 추가 및 문자 변환
+        let base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+        while (base64.length % 4) {
+            base64 += "=";
+        }
+        const decodedPayload = JSON.parse(atob(base64));
+
+        console.log("[DEBUG] Decoded Token Payload:", decodedPayload);
+
+        // "auth", "role", "roles", "authorities" 필드 중 하나에서 역할 정보 추출 시도
+        const auth = decodedPayload.auth || decodedPayload.role || decodedPayload.roles || decodedPayload.authorities;
+
+        if (!auth) {
+            console.warn("[DEBUG] Token payload does not contain role information (keys: auth, role, roles, authorities)");
+            return null;
+        }
+
+        // 문자열인 경우 콤마로 구분하여 배열로 변환, 이미 배열인 경우 그대로 반환
+        let roles = [];
+        if (Array.isArray(auth)) {
+            roles = auth;
+        } else if (typeof auth === 'string') {
+            roles = auth.split(",").map(role => role.trim());
+        }
+
+        console.log("[DEBUG] Extracted Roles:", roles);
+        return roles;
+    } catch (error) {
+        console.error("JWT 토큰 디코딩 실패:", error);
+        return null;
+    }
+}
+
+/**
+ * 사용자가 관리자인지 확인 (수정됨: ROLE_ADMIN 및 ADMIN 체크)
+ */
+function isAdmin() {
+    const roles = getUserRoleFromToken();
+    if (!roles) {
+        return false;
+    }
+    // "ROLE_ADMIN" 또는 "ADMIN" 문자열이 포함되어 있는지 확인
+    const isAdminUser = roles.includes("ROLE_ADMIN") || roles.includes("ADMIN");
+    console.log("[DEBUG] Is Admin User?", isAdminUser);
+    return isAdminUser;
+}
+
+/**
  * 챌린지 상세 정보 로드
  */
 async function loadChallengeDetail(challengeId) {
     const accessToken = localStorage.getItem("accessToken");
 
     try {
-        // 관리자 권한 확인
-        const role = getRoleFromJwt(accessToken);
-        const isAdmin = role === "ROLE_ADMIN";
-
         // API 경로는 ChallengeController의 @RequestMapping("/challenges")를 따름
         const response = await fetch(`/challenges/${challengeId}`, {
             headers: accessToken
@@ -108,7 +169,7 @@ async function loadChallengeDetail(challengeId) {
             throw new Error("서버에서 받은 챌린지 정보가 비어있습니다.");
         }
 
-        renderChallengeDetail(challenge, isAdmin);
+        renderChallengeDetail(challenge);
     } catch (error) {
         console.error("챌린지 로드 실패:", error);
         alert(error.message || "챌린지 정보를 불러오는 중 오류가 발생했습니다.");
@@ -118,7 +179,7 @@ async function loadChallengeDetail(challengeId) {
 /**
  * 챌린지 상세 정보 렌더링
  */
-function renderChallengeDetail(challenge, isAdmin = false) {
+function renderChallengeDetail(challenge) {
     // 제목
     const titleEl = document.querySelector('[data-role="challenge-title"]');
     if (titleEl) {
@@ -131,7 +192,10 @@ function renderChallengeDetail(challenge, isAdmin = false) {
         if (challenge.imageUrl) {
             imageEl.src = challenge.imageUrl;
             imageEl.alt = challenge.title || "챌린지 이미지";
+
+            // [수정] 무한 루프 방지
             imageEl.onerror = function () {
+                this.onerror = null;
                 this.src = "/img/default-challenge.png";
             };
         } else {
@@ -160,57 +224,20 @@ function renderChallengeDetail(challenge, isAdmin = false) {
         participantTextEl.textContent = `${participantCount}명 참가`;
     }
 
-    // 남은 일수 계산
+    // 남은 일수 계산 및 메시지 표시 로직 개선
     const daysRemaining = calculateDaysRemaining(challenge.endDate);
     const daysMessageEl = document.querySelector('[data-role="days-message-text"]');
     if (daysMessageEl) {
-        if (daysRemaining >= 0) {
+        if (daysRemaining > 0) {
             daysMessageEl.textContent = `목표 달성 기간이 ${daysRemaining}일 남았어요!`;
+        } else if (daysRemaining === 0) {
+            daysMessageEl.textContent = "오늘이 챌린지 마지막 날입니다!";
         } else {
-            daysMessageEl.textContent = "챌린지가 종료되었습니다.";
+            daysMessageEl.textContent = "종료된 챌린지입니다.";
         }
     }
 
-    // 관리자일 경우 수정하기/삭제하기 버튼 표시
-    if (isAdmin) {
-        const joinBtn = document.querySelector('[data-role="join-button"]');
-        const cancelBtn = document.querySelector('[data-role="cancel-button"]');
-        const editBtn = document.querySelector('[data-role="edit-button"]');
-        const deleteBtn = document.querySelector('[data-role="delete-button"]');
-        const progressArea = document.querySelector('[data-role="progress-area"]');
-        const progressBarContainer = document.querySelector('[data-role="progress-bar-container"]');
-
-        // 일반 사용자용 버튼 숨김
-        if (joinBtn) {
-            joinBtn.hidden = true;
-            joinBtn.style.display = "none";
-        }
-        if (cancelBtn) {
-            cancelBtn.hidden = true;
-            cancelBtn.style.display = "none";
-        }
-        if (progressArea) {
-            progressArea.hidden = true;
-            progressArea.style.display = "none";
-        }
-        if (progressBarContainer) {
-            progressBarContainer.hidden = true;
-            progressBarContainer.style.display = "none";
-        }
-
-        // 관리자용 버튼 표시
-        if (editBtn) {
-            editBtn.hidden = false;
-            editBtn.style.display = "block";
-        }
-        if (deleteBtn) {
-            deleteBtn.hidden = false;
-            deleteBtn.style.display = "block";
-        }
-        return;
-    }
-
-    // 일반 사용자: 참여 상태에 따른 UI 표시
+    // 사용자 참여 상태에 따른 UI 표시
     const status = challenge.myStatus; // JOINED, IN_PROGRESS, COMPLETED, FAILED, CANCELED, null
 
     // 모든 버튼/영역 초기화 (숨김)
@@ -247,30 +274,50 @@ function renderChallengeDetail(challenge, isAdmin = false) {
         progressBarContainer.style.display = "none";
     }
 
-    if (status === "JOINED" || status === "IN_PROGRESS") {
-        // 1. 참여중: 진행 상황 표시 + 포기 버튼
-        if (progressArea) {
-            progressArea.hidden = false;
-            progressArea.style.display = "flex";
+    // 관리자인 경우: 수정하기/삭제하기 버튼 표시
+    if (isAdmin()) {
+        console.log("[DEBUG] Admin user detected. Showing edit/delete buttons.");
+        if (editBtn) {
+            editBtn.hidden = false;
+            editBtn.style.display = "block";
         }
-        if (progressBarContainer) {
-            progressBarContainer.hidden = false;
-            progressBarContainer.style.display = "block";
+        if (deleteBtn) {
+            deleteBtn.hidden = false;
+            deleteBtn.style.display = "block";
         }
-        showProgressArea(challenge);
-        if (cancelBtn) {
-            cancelBtn.hidden = false;
-            cancelBtn.style.display = "block";
-        }
-    } else if (status === "COMPLETED" || status === "FAILED") {
-        // 2. 완료/실패: 아무 버튼도 안 띄우거나 "완료됨" 표시
-        // progress area는 숨김 상태 유지
+        // 관리자여도 챌린지 상세 내용은 봐야 하므로 progress는 숨기고, 참여 버튼도 숨김
     } else {
-        // 3. 미참여 (null, CANCELED): 참여하기 버튼 표시 (단, 기간이 남았을 때만)
-        // progress area는 숨김 상태 유지
-        if (daysRemaining >= 0 && joinBtn) {
-            joinBtn.hidden = false;
-            joinBtn.style.display = "block";
+        // 일반 사용자인 경우: 기존 로직 유지
+        console.log("[DEBUG] Normal user detected.");
+
+        // [수정] 참여 기록이 있는 모든 상태(JOINED, IN_PROGRESS, COMPLETED, FAILED)에서 진행도 표시
+        if (status === "JOINED" || status === "IN_PROGRESS" || status === "COMPLETED" || status === "FAILED") {
+            if (progressArea) {
+                progressArea.hidden = false;
+                progressArea.style.display = "flex";
+            }
+            if (progressBarContainer) {
+                progressBarContainer.hidden = false;
+                progressBarContainer.style.display = "block";
+            }
+            showProgressArea(challenge);
+
+            // 단, 포기 버튼은 '진행 중'일 때만 표시 (완료/실패 시에는 포기 불가)
+            if (status === "JOINED" || status === "IN_PROGRESS") {
+                if (cancelBtn) {
+                    cancelBtn.hidden = false;
+                    cancelBtn.style.display = "block";
+                }
+            }
+        }
+
+        // 미참여(null) 또는 취소(CANCELED) 상태인 경우
+        else {
+            // 기간이 지난(0 미만) 챌린지에는 참여 버튼을 띄우지 않음
+            if (daysRemaining >= 0 && joinBtn) {
+                joinBtn.hidden = false;
+                joinBtn.style.display = "block";
+            }
         }
     }
 }
@@ -289,7 +336,7 @@ function showProgressArea(challenge) {
     let targetValue = challenge.targetValue || 0;
     const progressValue = challenge.progressValue || 0;
 
-    // [수정] TIME 타입인 경우 목표값을 '시간' 단위로 간주하여 '분'으로 변환
+    // TIME 타입인 경우 목표값을 '시간' 단위로 간주하여 '분'으로 변환
     if (challenge.challengeType === 'TIME') {
         targetValue = targetValue * 60;
     }
@@ -312,6 +359,13 @@ function showProgressArea(challenge) {
     const progressFillEl = document.querySelector('[data-role="progress-fill"]');
     if (progressFillEl) {
         progressFillEl.style.width = `${progressPercent}%`;
+
+        // [추가] 실패 시 빨간색 등으로 표시하고 싶다면 클래스 추가 (선택사항)
+        if (challenge.myStatus === "FAILED") {
+            progressFillEl.style.backgroundColor = "#ff4d4d"; // 예: 빨간색
+        } else if (challenge.myStatus === "COMPLETED") {
+            progressFillEl.style.backgroundColor = "#4caf50"; // 예: 초록색
+        }
     }
 }
 
@@ -327,7 +381,8 @@ function formatProgressValue(value, challengeType) {
         case "TIME":
             return formatTime(value);
         case "COUNT":
-            return `${Math.round(value)}일`;
+        case "ATTENDANCE":
+            return `${Math.round(value)}회`;
         default:
             return value.toString();
     }
@@ -368,14 +423,23 @@ function formatTime(minutes) {
 function calculateDaysRemaining(endDateString) {
     if (!endDateString) return -1;
 
+    // 종료일 (시간은 00:00:00 기준)
     const endDate = new Date(endDateString);
-    endDate.setHours(23, 59, 59, 999);
+    endDate.setHours(0, 0, 0, 0);
 
+    // 오늘 날짜 (시간은 00:00:00 기준)
     const today = new Date();
-    // today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
 
-    const diffTime = endDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // 차이 계산 (밀리초)
+    const diffTime = endDate.getTime() - today.getTime();
+
+    // 차이가 음수면 이미 지난 날짜 -> -1 반환
+    if (diffTime < 0) return -1;
+
+    // 차이가 0이면 오늘 -> 0 반환
+    // 차이가 양수면 남은 일수 -> 올림 처리 필요 없음 (시간이 00:00이므로 정확히 나누어 떨어짐)
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     return diffDays;
 }
@@ -433,9 +497,7 @@ async function handleCancelChallenge(challengeId) {
         return;
     }
 
-    // 재확인 팝업
-    const confirmed = confirm("정말 챌린지를 포기하시겠습니까?\n\n포기한 챌린지는 다시 참여할 수 있습니다.");
-    if (!confirmed) {
+    if (!confirm("정말 챌린지를 포기하시겠습니까?")) {
         return;
     }
 
@@ -472,54 +534,15 @@ async function handleCancelChallenge(challengeId) {
 }
 
 /**
- * JWT에서 역할(role) 추출
+ * 챌린지 수정하기 (관리자)
  */
-function getRoleFromJwt(token) {
-    if (!token || typeof token !== "string") return null;
-    const parts = token.split(".");
-    if (parts.length < 2) return null;
-
-    try {
-        const payloadJson = decodeBase64Url(parts[1]);
-        const payload = JSON.parse(payloadJson);
-
-        if (typeof payload.role === "string") return payload.role;
-        if (typeof payload.auth === "string") return payload.auth;
-
-        const authorities = payload.authorities || payload.roles;
-        if (Array.isArray(authorities) && typeof authorities[0] === "string") return authorities[0];
-
-        return null;
-    } catch {
-        return null;
-    }
+function handleEditChallenge(challengeId) {
+    // 챌린지 수정 페이지로 이동 (또는 모달 열기)
+    window.location.href = `/challenges/${challengeId}/edit`;
 }
 
 /**
- * Base64URL 디코딩
- */
-function decodeBase64Url(base64Url) {
-    let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    while (base64.length % 4) base64 += "=";
-
-    const binary = atob(base64);
-    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-    return new TextDecoder("utf-8").decode(bytes);
-}
-
-/**
- * 챌린지 수정하기
- */
-async function handleEditChallenge(challengeId) {
-    if (!challengeId) {
-        console.error("챌린지 ID가 없습니다.");
-        return;
-    }
-    window.location.href = `/challenge/${challengeId}/edit`;
-}
-
-/**
- * 챌린지 삭제하기
+ * 챌린지 삭제하기 (관리자)
  */
 async function handleDeleteChallenge(challengeId) {
     const accessToken = localStorage.getItem("accessToken");
@@ -528,7 +551,7 @@ async function handleDeleteChallenge(challengeId) {
         return;
     }
 
-    if (!confirm("정말 챌린지를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+    if (!confirm("정말 챌린지를 삭제하시겠습니까?\n삭제된 챌린지는 복구할 수 없습니다.")) {
         return;
     }
 
