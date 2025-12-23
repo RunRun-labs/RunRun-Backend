@@ -23,7 +23,7 @@ public interface RecruitUserRepository extends JpaRepository<RecruitUser, Long> 
 
   Optional<RecruitUser> findFirstByRecruitAndUserNotOrderByCreatedAtAsc(Recruit recruit, User user);
 
-  List<RecruitUser> findAllByRecruitIdAndIsDeletedFalse(Long recruitId);
+  List<RecruitUser> findAllByRecruitId(Long recruitId);
 }
 
 
