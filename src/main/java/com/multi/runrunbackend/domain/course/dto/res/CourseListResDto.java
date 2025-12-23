@@ -36,4 +36,8 @@ public class CourseListResDto {
     private OffsetDateTime createdAt;
     // DISTANCE 정렬/내 주변에서만 의미 있음
     private Double distM;
+
+    private Boolean isLiked;
+    private Boolean isFavorited;
+
 }
