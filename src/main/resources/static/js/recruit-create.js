@@ -15,6 +15,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function generateTimeOptions() {
     const timeSelect = document.getElementById("meetingTime");
+    
+    // 기존 옵션 모두 제거
+    timeSelect.innerHTML = "";
 
     const defaultOption = document.createElement("option");
     defaultOption.value = "";
@@ -23,8 +26,39 @@ document.addEventListener("DOMContentLoaded", () => {
     defaultOption.selected = true;
     timeSelect.appendChild(defaultOption);
 
+    // 선택된 날짜 확인
+    const selectedDate = document.getElementById("meetingDate").value;
+    const today = new Date().toISOString().split("T")[0];
+    
+    // 오늘 날짜인 경우, 현재 시간 + 1시간 이후만 표시
+    let minHour = 0;
+    let minMinute = 0;
+    
+    if (selectedDate === today) {
+      // 현재 시간 + 1시간 계산
+      const now = new Date();
+      const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000); // 1시간 후
+      minHour = oneHourLater.getHours();
+      minMinute = oneHourLater.getMinutes();
+      
+      // 30분 단위로 올림 처리 (예: 14:15 -> 14:30, 14:45 -> 15:00)
+      if (minMinute > 0 && minMinute <= 30) {
+        minMinute = 30;
+      } else if (minMinute > 30) {
+        minHour += 1;
+        minMinute = 0;
+      }
+    }
+
     for (let hour = 0; hour < 24; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
+        // 오늘 날짜인 경우, 현재 시간 + 1시간 이후만 활성화
+        if (selectedDate === today) {
+          if (hour < minHour || (hour === minHour && minute < minMinute)) {
+            continue; // 이 시간은 건너뛰기
+          }
+        }
+        
         const timeString = `${String(hour).padStart(2, "0")}:${String(
             minute).padStart(2, "0")}`;
         const option = document.createElement("option");
@@ -33,6 +67,16 @@ document.addEventListener("DOMContentLoaded", () => {
         timeSelect.appendChild(option);
       }
     }
+  }
+  
+  // 날짜 변경 시 시간 옵션 업데이트
+  function setupDateChangeListener() {
+    const dateInput = document.getElementById("meetingDate");
+    dateInput.addEventListener("change", () => {
+      // 시간 선택 초기화
+      document.getElementById("meetingTime").value = "";
+      generateTimeOptions();
+    });
   }
 
   function initMap() {
@@ -373,6 +417,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toISOString().split("T")[0];
   document.getElementById("meetingDate").setAttribute("min", today);
 
+  // 날짜 변경 리스너 설정
+  setupDateChangeListener();
+  
   generateTimeOptions();
   initMap();
 });

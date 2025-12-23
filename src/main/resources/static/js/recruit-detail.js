@@ -191,6 +191,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!isAuthor && isParticipant) {
+      // 매칭 확정(MATCHED)된 모집글에서는 참가 취소 버튼 표시하지 않음
+      const status = recruitData.status;
+      if (status && status === "MATCHED") {
+        // 매칭 확정된 경우 버튼 표시하지 않음
+        return;
+      }
+      
       actionButton.textContent = "참가 취소";
       actionButton.style.display = "block";
       actionButton.onclick = () => {
@@ -300,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        alert("러닝이 시작되었습니다.");
+        alert("매칭이 확정되었습니다");
         window.location.href = "/recruit";
       } else {
         alert(result.message || "매칭 확정 처리 중 오류가 발생했습니다.");
