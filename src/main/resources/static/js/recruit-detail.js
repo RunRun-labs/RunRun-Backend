@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let map = null;
   let marker = null;
   let infowindow = null;
+  let currentUserGender = null;
 
   const urlParams = new URLSearchParams(window.location.search);
   let recruitId = urlParams.get("recruitId");
@@ -33,9 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getGenderLimitText(genderLimit) {
     const genderMap = {
-      MALE: "남성",
-      FEMALE: "여성",
-      ANY: "무관",
+      M: "남성",
+      F: "여성",
+      BOTH: "무관",
     };
     return genderMap[genderLimit] || genderLimit;
   }
@@ -207,8 +208,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!isAuthor && !isParticipant) {
+      // 성별 제한 체크
+      const genderLimit = recruitData.genderLimit;
+      if (currentUserGender && genderLimit) {
+        // genderLimit이 "M"이면 여성(F) 사용자는 참가 불가
+        // genderLimit이 "F"이면 남성(M) 사용자는 참가 불가
+        // genderLimit이 "BOTH"이면 모든 사용자 참가 가능
+        if (genderLimit === "M" && currentUserGender !== "M") {
+          actionButton.textContent = "참가 불가";
+          actionButton.style.display = "block";
+          actionButton.disabled = true;
+          actionButton.style.opacity = "0.5";
+          actionButton.style.cursor = "not-allowed";
+          actionButton.onclick = () => {
+            alert("남성만 참가할 수 있는 모집글입니다.");
+          };
+          return;
+        }
+        if (genderLimit === "F" && currentUserGender !== "F") {
+          actionButton.textContent = "참가 불가";
+          actionButton.style.display = "block";
+          actionButton.disabled = true;
+          actionButton.style.opacity = "0.5";
+          actionButton.style.cursor = "not-allowed";
+          actionButton.onclick = () => {
+            alert("여성만 참가할 수 있는 모집글입니다.");
+          };
+          return;
+        }
+      }
+      
       actionButton.textContent = "참가하기";
       actionButton.style.display = "block";
+      actionButton.disabled = false;
+      actionButton.style.opacity = "1";
+      actionButton.style.cursor = "pointer";
       actionButton.onclick = async () => {
         try {
           const token = localStorage.getItem("accessToken");
@@ -328,8 +362,40 @@ document.addEventListener("DOMContentLoaded", () => {
     return null;
   }
 
+  // 현재 사용자 정보 가져오기
+  async function loadCurrentUser() {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        return; // 로그인하지 않은 경우 null 유지
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      };
+
+      const response = await fetch("/users", {
+        method: "GET",
+        headers: headers,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          currentUserGender = result.data.gender;
+        }
+      }
+    } catch (error) {
+      console.error("사용자 정보 로드 중 오류:", error);
+    }
+  }
+
   async function loadRecruitDetail() {
     try {
+      // 먼저 사용자 정보 로드
+      await loadCurrentUser();
+      
       const token = localStorage.getItem("accessToken");
       const headers = {
         "Content-Type": "application/json",

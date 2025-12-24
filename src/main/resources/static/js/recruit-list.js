@@ -224,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getGenderLimitText(genderLimit) {
-    const genderMap = {MALE: "남성", FEMALE: "여성", ANY: "전체"};
+    const genderMap = {M: "남성", F: "여성", BOTH: "무관"};
     return genderMap[genderLimit] || genderLimit;
   }
 
