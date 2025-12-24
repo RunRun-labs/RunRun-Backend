@@ -80,8 +80,7 @@ public class RecruitController {
       @PathVariable Long recruitId,
       @Valid @RequestBody RecruitUpdateReqDto request
   ) {
-    User user = getUser(principal);
-    recruitService.updateRecruit(recruitId, user, request);
+    recruitService.updateRecruit(recruitId, principal, request);
     return ResponseEntity.ok(ApiResponse.success("모집글 수정 성공", null));
   }
 

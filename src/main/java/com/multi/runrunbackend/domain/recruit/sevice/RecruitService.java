@@ -124,7 +124,8 @@ public class RecruitService {
   }
 
   @Transactional
-  public void updateRecruit(Long recruitId, User user, RecruitUpdateReqDto req) {
+  public void updateRecruit(Long recruitId, CustomUser principal, RecruitUpdateReqDto req) {
+    User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     if (!recruit.getUser().getId().equals(user.getId())) {
