@@ -5,6 +5,7 @@ import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
+import com.multi.runrunbackend.domain.recruit.constant.GenderLimit;
 import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
@@ -162,6 +163,18 @@ public class RecruitService {
       throw new ValidationException(ErrorCode.RECRUIT_TIME_OVER);
     }
 
+    if (recruit.getGenderLimit() != GenderLimit.BOTH) {
+      if (!recruit.getGenderLimit().name().equals(user.getGender())) {
+        throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
+      }
+    }
+
+    int userAge = calculateAge(user.getBirthDate());
+
+    if (userAge < recruit.getAgeMin() || userAge > recruit.getAgeMax()) {
+      throw new ValidationException(ErrorCode.AGE_RESTRICTION);
+    }
+
     RecruitUser recruitUser = RecruitUser.builder()
         .recruit(recruit)
         .user(user)
@@ -206,6 +219,13 @@ public class RecruitService {
       throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
     }
     return recruit;
+  }
+
+  private int calculateAge(java.time.LocalDate birthDate) {
+    if (birthDate == null) {
+      return 0;
+    }
+    return java.time.Period.between(birthDate, java.time.LocalDate.now()).getYears();
   }
 
 }
