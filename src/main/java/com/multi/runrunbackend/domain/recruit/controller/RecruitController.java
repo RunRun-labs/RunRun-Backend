@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.recruit.controller;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.response.ApiResponse;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitUpdateReqDto;
@@ -43,13 +44,13 @@ public class RecruitController {
 
   @PostMapping
   public ResponseEntity<ApiResponse> createRecruit(
-      @AuthenticationPrincipal UserDetails userDetails,
+      @AuthenticationPrincipal CustomUser principal,
       @Valid @RequestBody RecruitCreateReqDto request
   ) {
-    User user = getUser(userDetails);
+
     return ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(ApiResponse.success("모집글 생성 성공", recruitService.createRecruit(user, request)));
+        .body(ApiResponse.success("모집글 생성 성공", recruitService.createRecruit(principal, request)));
   }
 
   @GetMapping
@@ -64,23 +65,22 @@ public class RecruitController {
 
   @GetMapping("/{recruitId}")
   public ResponseEntity<ApiResponse> getRecruitDetail(
-      @AuthenticationPrincipal UserDetails userDetails,
+      @AuthenticationPrincipal CustomUser principal,
       @PathVariable Long recruitId
   ) {
-    User user = getUser(userDetails);
 
     return ResponseEntity.ok(
         ApiResponse.success("모집글 상세 조회 성공",
-            recruitService.getRecruitDetail(recruitId, user)));
+            recruitService.getRecruitDetail(recruitId, principal)));
   }
 
   @PutMapping("/{recruitId}")
   public ResponseEntity<ApiResponse> updateRecruit(
-      @AuthenticationPrincipal UserDetails userDetails,
+      @AuthenticationPrincipal CustomUser principal,
       @PathVariable Long recruitId,
       @Valid @RequestBody RecruitUpdateReqDto request
   ) {
-    User user = getUser(userDetails);
+    User user = getUser(principal);
     recruitService.updateRecruit(recruitId, user, request);
     return ResponseEntity.ok(ApiResponse.success("모집글 수정 성공", null));
   }
@@ -88,31 +88,29 @@ public class RecruitController {
 
   @DeleteMapping("/{recruitId}")
   public ResponseEntity<ApiResponse> deleteRecruit(
-      @AuthenticationPrincipal UserDetails userDetails,
+      @AuthenticationPrincipal CustomUser principal,
       @PathVariable Long recruitId
   ) {
-    User user = getUser(userDetails);
+    User user = getUser(principal);
     recruitService.deleteRecruit(recruitId, user);
     return ResponseEntity.ok(ApiResponse.success("모집글 삭제 성공", null));
   }
 
   @PostMapping("/{recruitId}/join")
   public ResponseEntity<ApiResponse> joinRecruit(
-      @AuthenticationPrincipal UserDetails userDetails,
+      @AuthenticationPrincipal CustomUser principal,
       @PathVariable Long recruitId
   ) {
-    User user = getUser(userDetails);
-    recruitService.joinRecruit(recruitId, user);
+    recruitService.joinRecruit(recruitId, principal);
     return ResponseEntity.ok(ApiResponse.success("모집글 참가 성공", null));
   }
 
   @DeleteMapping("/{recruitId}/join")
   public ResponseEntity<ApiResponse> leaveRecruit(
-      @AuthenticationPrincipal UserDetails userDetails,
+      @AuthenticationPrincipal CustomUser principal,
       @PathVariable Long recruitId
   ) {
-    User user = getUser(userDetails);
-    recruitService.leaveRecruit(recruitId, user);
+    recruitService.leaveRecruit(recruitId, principal);
     return ResponseEntity.ok(ApiResponse.success("모집글 참가 취소 성공", null));
   }
 
