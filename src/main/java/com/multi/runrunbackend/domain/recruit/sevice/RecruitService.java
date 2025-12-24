@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
 import com.multi.runrunbackend.domain.recruit.constant.GenderLimit;
 import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
@@ -49,7 +50,10 @@ public class RecruitService {
 
 
   @Transactional
-  public RecruitCreateResDto createRecruit(User user, RecruitCreateReqDto request) {
+  public RecruitCreateResDto createRecruit(CustomUser principal, RecruitCreateReqDto request) {
+
+    User user = getUser(principal);
+
     request.validate();
 
 //    Course course = null;
@@ -108,15 +112,13 @@ public class RecruitService {
   }
 
 
-  public RecruitDetailResDto getRecruitDetail(Long recruitId, User user) {
+  public RecruitDetailResDto getRecruitDetail(Long recruitId, CustomUser principal) {
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
-
+    User user = getUser(principal);
     Long userId = user.getId();
 
     boolean isParticipant = false;
-    if (user != null) {
-      isParticipant = recruitUserRepository.existsByRecruitAndUser(recruit, user);
-    }
+    isParticipant = recruitUserRepository.existsByRecruitAndUser(recruit, user);
 
     return RecruitDetailResDto.from(recruit, userId, isParticipant);
   }
@@ -148,7 +150,8 @@ public class RecruitService {
   }
 
   @Transactional
-  public void joinRecruit(Long recruitId, User user) {
+  public void joinRecruit(Long recruitId, CustomUser principal) {
+    User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     if (recruitUserRepository.existsByRecruitAndUser(recruit, user)) {
@@ -189,7 +192,8 @@ public class RecruitService {
   }
 
   @Transactional
-  public void leaveRecruit(Long recruitId, User user) {
+  public void leaveRecruit(Long recruitId, CustomUser principal) {
+    User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
@@ -226,6 +230,11 @@ public class RecruitService {
       return 0;
     }
     return java.time.Period.between(birthDate, java.time.LocalDate.now()).getYears();
+  }
+
+  private User getUser(CustomUser principle) {
+    return userRepository.findByLoginId(principle.getLoginId())
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
   }
 
 }
