@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/home.css"
+            th:href="@{/css/home.css}"
+    />
+</head>
+<body class="home-body">
+<main class="page home-page">
+    <!-- 헤더: RUNRUN 타이틀 + 알림 아이콘 -->
+    <header class="home-header">
+        <h1 class="home-logo">RUNRUN</h1>
+        <button
+                class="notification-button"
+                type="button"
+                data-role="notification-button"
+                aria-label="알림 페이지로 이동"
+        >
+            <svg class="bell-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                 xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 3 16 3 16H21C21 16 19 14.25 19 9C19 5.13 15.87 2 12 2Z"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 21C9 22.1 9.9 23 11 23H13C14.1 23 15 22.1 15 21" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="notification-badge" data-role="notification-badge" hidden>0</span>
+        </button>
+    </header>
+
+    <!-- 오늘의 러닝 통계 배너 -->
+    <section class="today-stats-section">
+        <div class="today-stats-header">
+            <h2 class="today-stats-title">Today</h2>
+            <div class="week-total-stats">
+                <span class="week-stat">Week <span data-role="week-distance">0.0</span>Km</span>
+                <span class="total-stat">Total <span data-role="total-distance">0.0</span>km</span>
+            </div>
+        </div>
+        <div class="today-stats-grid">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <img src="https://www.figma.com/api/mcp/asset/6865a41f-9a2e-4bcb-94e4-1174cd32e1ae" alt="Distance"
+                         class="stat-icon-img"/>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-value" data-role="today-distance">0.0<span class="stat-unit">Km</span></p>
+                    <p class="stat-desc">Distance</p>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <img src="https://www.figma.com/api/mcp/asset/47c0ef7c-1972-4b2a-9dc0-4391c385d92a" alt="Duration"
+                         class="stat-icon-img"/>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-value" data-role="today-duration">00:00</p>
+                    <p class="stat-desc">Duration</p>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <img src="https://www.figma.com/api/mcp/asset/422fee5a-a265-477c-b511-8e58f1f2cb3a" alt="Calories"
+                         class="stat-icon-img"/>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-value" data-role="today-calories">0<span class="stat-unit">kcal</span></p>
+                    <p class="stat-desc">Calories</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 요일별 러닝 통계 + 내 주변 코스 찾기 (한 줄 배치) -->
+    <section class="stats-course-container">
+        <!-- 왼쪽: 요일별 러닝 통계 + 러닝 통계 바로가기 -->
+        <div class="weekly-stats-section">
+            <button
+                    class="running-stats-button"
+                    type="button"
+                    data-role="running-stats-button"
+                    aria-label="러닝 통계 바로가기"
+            >
+                <svg class="calendar-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="4" width="14" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M3 8H17" stroke="currentColor" stroke-width="2"/>
+                    <path d="M7 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M13 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>런닝 통계 바로가기</span>
+            </button>
+            <div class="weekly-chart-container">
+                <div class="chart-bars" data-role="chart-bars">
+                    <!-- JS로 동적 생성 -->
+                </div>
+                <div class="chart-days">
+                    <span>Mo</span>
+                    <span>Tu</span>
+                    <span>We</span>
+                    <span>Th</span>
+                    <span>Fr</span>
+                    <span>Sa</span>
+                    <span>Su</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 오른쪽: 내 주변 코스 찾기 -->
+        <div class="course-find-section">
+            <button
+                    class="course-find-button"
+                    type="button"
+                    data-role="course-find-button"
+                    aria-label="내 주변 코스 찾기"
+            >
+                <div class="course-find-icon-wrapper">
+                    <div class="course-find-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2Z"
+                                  stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+                            <circle cx="12" cy="9" r="3" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="course-find-content">
+                    <h3 class="course-find-title">내 주변 코스 찾기</h3>
+                    <p class="course-find-desc">현재 위치 기반 러닝 코스</p>
+                </div>
+            </button>
+        </div>
+    </section>
+
+    <!-- 진행중인 챌린지 홍보 배너 -->
+    <section class="challenge-banner-section">
+        <div class="challenge-banner-container" data-role="challenge-banner-container">
+            <div class="challenge-banner-slider" data-role="challenge-banner-slider">
+                <!-- JS로 동적 생성 -->
+            </div>
+        </div>
+    </section>
+</main>
+
+<template id="bottomNavTemplate">
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+            <img
+                    src="/img/icons/chat.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+            <img
+                    src="/img/icons/feed.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>feed</span>
+        </a>
+        <a class="nav-item active" th:href="@{/}" href="/">
+            <img
+                    src="/img/icons/home.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+            <img
+                    src="/img/icons/match.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>match</span>
+        </a>
+        <a class="nav-item" th:href="@{/my}" href="/my">
+            <img
+                    src="/img/icons/my.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>my</span>
+        </a>
+    </nav>
+</template>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/home.js" th:src="@{/js/home.js}"></script>
+</body>
+</html>
