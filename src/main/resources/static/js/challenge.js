@@ -23,6 +23,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // 종료된 챌린지 보기 버튼 클릭 이벤트
+    const endChallengeButton = document.querySelector('[data-role="end-challenge-button"]');
+    if (endChallengeButton) {
+        endChallengeButton.addEventListener("click", () => {
+            window.location.href = "/challenge/end";
+        });
+    }
+
     loadChallenges();
 });
 
