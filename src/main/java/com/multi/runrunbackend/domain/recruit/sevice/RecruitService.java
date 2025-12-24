@@ -4,6 +4,8 @@ import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.match.service.MatchSessionService;
+import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitUpdateReqDto;
@@ -16,6 +18,7 @@ import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +43,7 @@ public class RecruitService {
   private final RecruitRepository recruitRepository;
   private final UserRepository userRepository;
   private final RecruitUserRepository recruitUserRepository;
+  private final MatchSessionService matchSessionService;
 //  private final CourseRepository courseRepository;
 
 
@@ -139,7 +143,7 @@ public class RecruitService {
       throw new ForbiddenException(ErrorCode.RECRUIT_DELETE_DENIED);
     }
 
-    recruit.delete();
+    recruitRepository.delete(recruit);
   }
 
   @Transactional
@@ -154,6 +158,10 @@ public class RecruitService {
       throw new ValidationException(ErrorCode.RECRUIT_FULL);
     }
 
+    if (LocalDateTime.now().plusHours(1).isAfter(recruit.getMeetingAt())) {
+      throw new ValidationException(ErrorCode.RECRUIT_TIME_OVER);
+    }
+
     RecruitUser recruitUser = RecruitUser.builder()
         .recruit(recruit)
         .user(user)
@@ -161,6 +169,10 @@ public class RecruitService {
     recruitUserRepository.save(recruitUser);
 
     recruit.increaseParticipants();
+
+    if (recruit.getCurrentParticipants().equals(recruit.getMaxParticipants())) {
+      matchSessionService.createOfflineSessionBySystem(recruit.getId());
+    }
   }
 
   @Transactional
@@ -177,7 +189,7 @@ public class RecruitService {
       if (nextLeader.isPresent()) {
         recruit.changeHost(nextLeader.get().getUser());
       } else {
-        recruit.delete();
+        recruitRepository.delete(recruit);
       }
     }
 
@@ -190,7 +202,7 @@ public class RecruitService {
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
-    if (recruit.getIsDeleted()) {
+    if (recruit.getStatus() == RecruitStatus.COMPLETED) {
       throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
     }
     return recruit;

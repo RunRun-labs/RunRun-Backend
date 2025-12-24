@@ -1,6 +1,6 @@
 package com.multi.runrunbackend.domain.course.entity;
 
-import com.multi.runrunbackend.common.entitiy.BaseSoftDeleteEntity;
+import com.multi.runrunbackend.common.entitiy.BaseTimeEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CourseFavorite extends BaseSoftDeleteEntity {
+public class CourseFavorite extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,4 +41,13 @@ public class CourseFavorite extends BaseSoftDeleteEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    public static CourseFavorite create(User user, Course course) {
+        CourseFavorite courseFavorite = new CourseFavorite();
+        courseFavorite.course = course;
+        courseFavorite.user = user;
+
+        return courseFavorite;
+
+    }
 }

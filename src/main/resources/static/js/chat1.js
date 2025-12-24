@@ -450,6 +450,30 @@ function connectWebSocket() {
       const message = JSON.parse(response.body);
       displayMessage(message);
 
+      // KICK 메시지 처리
+      if (message.messageType === 'KICK') {
+        // 내가 강퇴당한 경우
+        if (message.senderId == currentUser.id) {
+          alert('방장에 의해 강퇴되었습니다.');
+          
+          // 채팅방 목록으로 이동
+          if (stompClient) {
+            stompClient.disconnect();
+          }
+          window.location.href = '/chat';
+          return;
+        }
+        
+        // 다른 사람이 강퇴당한 경우 - 참여자 목록 갱신
+        setTimeout(() => {
+          loadParticipants(currentSession.id);
+          
+          if (isHost) {
+            checkAllReadyAndUpdateButton();
+          }
+        }, 300);
+      }
+
       // 시스템 메시지 수신 시 참여자 목록 자동 갱신
       if (message.messageType === 'SYSTEM') {
         // 입장, 퇴장, 준비완료 메시지일 때 참여자 정보 업데이트
@@ -550,7 +574,8 @@ function sendMessage() {
 function displayMessage(message, isPrevious = false) {
   const messagesDiv = document.getElementById('chat-messages');
 
-  if (message.messageType === 'SYSTEM') {
+  // 시스템 메시지 (SYSTEM, KICK 포함)
+  if (message.messageType === 'SYSTEM' || message.messageType === 'KICK') {
     const systemDiv = document.createElement('div');
     systemDiv.className = 'system-message';
     const p = document.createElement('p');
@@ -926,7 +951,10 @@ function renderParticipantList() {
     pace.textContent = `평균 페이스 ${participant.averagePace || '5:30'} /km`;
     info.appendChild(pace);
 
-    // 준비 상태
+    // 준비 상태 + 강퇴 버튼
+    const rightSection = document.createElement('div');
+    rightSection.className = 'participant-right-section';
+
     const readyStatus = document.createElement('div');
     readyStatus.className = 'participant-ready-status';
     const readyText = document.createElement('span');
@@ -938,11 +966,52 @@ function renderParticipantList() {
       readyText.textContent = '준비완료';
     }
     readyStatus.appendChild(readyText);
+    rightSection.appendChild(readyStatus);
+
+    // 강퇴 버튼 (방장이고, 자기 자신이 아닌 경우만)
+    if (isHost && !isCurrentUser) {
+      const kickBtn = document.createElement('button');
+      kickBtn.className = 'kick-btn';
+      kickBtn.textContent = '강퇴';
+      kickBtn.onclick = () => kickParticipant(participant.userId, participant.name);
+      rightSection.appendChild(kickBtn);
+    }
 
     item.appendChild(avatarWrapper);
     item.appendChild(info);
-    item.appendChild(readyStatus);
+    item.appendChild(rightSection);
 
     listContainer.appendChild(item);
   });
+}
+
+// ============================================
+// 강퇴 기능
+// ============================================
+
+async function kickParticipant(userId, userName) {
+  if (!confirm(`${userName}님을 강퇴하시겠습니까?`)) {
+    return;
+  }
+
+  try {
+    const response = await fetchWithAuth(`/api/chat/sessions/${currentSession.id}/kick/${userId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      alert(error.message || '강퇴에 실패했습니다.');
+      return;
+    }
+
+    console.log(`${userName}님을 강퇴했습니다.`);
+    
+    // 시스템 메시지가 WebSocket으로 전달되므로
+    // 참여자 목록은 자동으로 갱신됨
+    
+  } catch (error) {
+    console.error('강퇴 에러:', error);
+    alert('강퇴 중 오류가 발생했습니다.');
+  }
 }

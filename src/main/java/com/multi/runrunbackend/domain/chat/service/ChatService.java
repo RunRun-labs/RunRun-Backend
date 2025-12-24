@@ -1,5 +1,7 @@
 package com.multi.runrunbackend.domain.chat.service;
 
+import com.multi.runrunbackend.common.exception.custom.BadRequestException;
+import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
@@ -128,7 +130,7 @@ public class ChatService {
   @Transactional(readOnly = true)
   public Map<String, Object> getSessionDetail(Long sessionId) {
     MatchSession session = matchSessionRepository.findById(sessionId)
-        .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
     Map<String, Object> result = new HashMap<>();
     result.put("sessionId", session.getId());
@@ -161,7 +163,7 @@ public class ChatService {
 
     SessionUser sessionUser = sessionUserRepository.findBySessionIdAndUserId(sessionId,
             user.getId())
-        .orElseThrow(() -> new IllegalArgumentException("참가자를 찾을 수 없습니다."));
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_USER_NOT_FOUND));
 
     return sessionUser.getCreatedAt().toString();
   }
@@ -180,7 +182,7 @@ public class ChatService {
 
     SessionUser sessionUser = sessionUserRepository.findBySessionIdAndUserId(sessionId,
             user.getId())
-        .orElseThrow(() -> new IllegalArgumentException("참가자를 찾을 수 없습니다."));
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_USER_NOT_FOUND));
 
     boolean newReadyState = !sessionUser.isReady();
     sessionUserRepository.updateReadyStatus(sessionId, user.getId(), newReadyState);
@@ -213,26 +215,17 @@ public class ChatService {
     User user = getUserFromPrincipal(principal);
 
     MatchSession session = matchSessionRepository.findById(sessionId)
-        .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
-    Long hostId = null;
-    Recruit recruit = session.getRecruit();
-    if (recruit != null) {
-      hostId = recruit.getUser().getId();
-    } else {
-      List<SessionUser> users = sessionUserRepository.findActiveUsersBySessionId(sessionId);
-      if (!users.isEmpty()) {
-        hostId = users.get(0).getUser().getId();
-      }
-    }
+    Long hostId = getHostId(session);
 
     if (!user.getId().equals(hostId)) {
-      throw new IllegalArgumentException("방장만 런닝을 시작할 수 있습니다.");
+      throw new ForbiddenException(ErrorCode.NOT_SESSION_HOST);
     }
 
     Map<String, Object> readyStatus = checkAllReady(sessionId);
     if (!(Boolean) readyStatus.get("allReady")) {
-      throw new IllegalArgumentException("모든 참가자가 준비완료해야 합니다.");
+      throw new BadRequestException(ErrorCode.ALL_USERS_NOT_READY);
     }
 
     // 상태 변경
@@ -357,5 +350,73 @@ public class ChatService {
     } else {
       return String.format("%d분", minutes);
     }
+  }
+
+  /**
+   * 방장 ID 조회
+   */
+  private Long getHostId(MatchSession session) {
+    Recruit recruit = session.getRecruit();
+    if (recruit != null) {
+      return recruit.getUser().getId();
+    } else {
+      List<SessionUser> users = sessionUserRepository.findActiveUsersBySessionId(session.getId());
+      if (!users.isEmpty()) {
+        return users.get(0).getUser().getId();
+      }
+    }
+    throw new NotFoundException(ErrorCode.HOST_NOT_FOUND);
+  }
+
+  /**
+   * 참여자 강퇴 (방장만 가능)
+   */
+  @Transactional
+  public void kickUser(Long sessionId, Long targetUserId, CustomUser principal) {
+    User currentUser = getUserFromPrincipal(principal);
+
+    // 1. 세션 조회
+    MatchSession session = matchSessionRepository.findById(sessionId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+
+    // 2. 방장 권한 확인
+    Long hostId = getHostId(session);
+    if (!currentUser.getId().equals(hostId)) {
+      throw new ForbiddenException(ErrorCode.NOT_SESSION_HOST);
+    }
+
+    // 3. 자기 자신 강퇴 방지
+    if (currentUser.getId().equals(targetUserId)) {
+      throw new BadRequestException(ErrorCode.CANNOT_KICK_SELF);
+    }
+
+    // 4. 강퇴 대상 사용자 조회
+    User targetUser = userRepository.findById(targetUserId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+    // 5. 참여자인지 확인 및 이미 퇴장했는지 확인
+    SessionUser sessionUser = sessionUserRepository.findBySessionIdAndUserId(sessionId, targetUserId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_USER_NOT_FOUND));
+
+    if (sessionUser.getIsDeleted()) {
+      throw new BadRequestException(ErrorCode.USER_ALREADY_LEFT);
+    }
+
+    // 6. 강퇴 처리 (soft delete)
+    sessionUserRepository.softDeleteBySessionIdAndUserId(sessionId, targetUserId);
+
+    // 7. 강퇴 시스템 메시지 전송
+    ChatMessageDto kickMessage = ChatMessageDto.builder()
+        .sessionId(sessionId)
+        .senderName("SYSTEM")
+        .content(targetUser.getName() + "님이 강퇴되었습니다.")
+        .messageType("KICK")
+        .senderId(targetUserId)  // 강퇴된 사용자 ID
+        .build();
+
+    sendMessage(kickMessage);
+
+    log.info("사용자 강퇴: sessionId={}, hostId={}, kickedUserId={}",
+        sessionId, currentUser.getId(), targetUserId);
   }
 }
