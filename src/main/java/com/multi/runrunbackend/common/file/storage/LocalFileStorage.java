@@ -93,6 +93,11 @@ public class LocalFileStorage implements FileStorage {
         }
     }
 
+    @Override
+    public String toHttpsUrl(String key) {
+        return "";
+    }
+
     private String extractFileName(String url) {
         String clean = url.split("\\?")[0];
         int idx = clean.lastIndexOf('/');
