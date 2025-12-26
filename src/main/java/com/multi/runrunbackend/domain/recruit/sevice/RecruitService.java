@@ -56,6 +56,17 @@ public class RecruitService {
 
     request.validate();
 
+    if (request.getGenderLimit() != GenderLimit.BOTH) {
+      if (!request.getGenderLimit().name().equals(user.getGender())) {
+        throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
+      }
+    }
+
+    int hostAge = calculateAge(user.getBirthDate());
+    if (hostAge < request.getAgeMin() || hostAge > request.getAgeMax()) {
+      throw new ValidationException(ErrorCode.AGE_RESTRICTION);
+    }
+
 //    Course course = null;
 //    if (request.getCourseId() != null) {
 //      course = courseRepository.findById(request.getCourseId())
@@ -136,6 +147,19 @@ public class RecruitService {
       throw new ForbiddenException(ErrorCode.RECRUIT_HAS_PARTICIPANTS);
     }
 
+    req.validate();
+
+    if (req.getGenderLimit() != null && req.getGenderLimit() != GenderLimit.BOTH) {
+      if (!req.getGenderLimit().name().equals(user.getGender())) {
+        throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
+      }
+    }
+
+    int hostAge = calculateAge(user.getBirthDate());
+    if (hostAge < req.getAgeMin() || hostAge > req.getAgeMax()) {
+      throw new ValidationException(ErrorCode.AGE_RESTRICTION);
+    }
+    
     recruit.update(req);
   }
 
@@ -233,8 +257,8 @@ public class RecruitService {
     return java.time.Period.between(birthDate, java.time.LocalDate.now()).getYears();
   }
 
-  private User getUser(CustomUser principle) {
-    return userRepository.findByLoginId(principle.getLoginId())
+  private User getUser(CustomUser principal) {
+    return userRepository.findByLoginId(principal.getLoginId())
         .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
   }
 
