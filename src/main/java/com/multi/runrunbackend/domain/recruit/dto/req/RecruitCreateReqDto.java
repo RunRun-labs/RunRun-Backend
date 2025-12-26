@@ -6,6 +6,8 @@ import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.recruit.constant.GenderLimit;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import com.multi.runrunbackend.domain.user.entity.User;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -32,15 +34,20 @@ public class RecruitCreateReqDto {
   private String title;
 
   @NotBlank(message = "내용은 필수입니다.")
+  @Size(max = 500, message = "내용은 500자 이내여야 합니다")
   private String content;
 
   @NotBlank(message = "모임 장소는 필수입니다.")
   private String meetingPlace;
 
   @NotNull(message = "위도는 필수입니다.")
+  @DecimalMin(value = "-90.0", inclusive = true)
+  @DecimalMax(value = "90.0", inclusive = true)
   private Double latitude;
 
   @NotNull(message = "경도는 필수입니다.")
+  @DecimalMin(value = "-180.0", inclusive = true)
+  @DecimalMax(value = "180.0", inclusive = true)
   private Double longitude;
 
   @NotNull(message = "뛸 거리는 필수입니다.")
