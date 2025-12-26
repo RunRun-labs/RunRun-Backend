@@ -34,13 +34,16 @@
     <!-- 제목 -->
     <div class="form-group">
       <label for="title" class="form-label">제목</label>
-      <input
-          type="text"
-          id="title"
-          class="form-input"
-          placeholder="제목을 입력하세요"
-          maxlength="100"
-      />
+      <div class="input-wrapper">
+        <input
+            type="text"
+            id="title"
+            class="form-input"
+            placeholder="제목을 입력하세요"
+            maxlength="100"
+        />
+        <span id="titleCounter" class="char-counter">0/100</span>
+      </div>
     </div>
 
     <!-- 코스 -->
@@ -109,12 +112,16 @@
     <!-- 설명 -->
     <div class="form-group">
       <label for="content" class="form-label">설명</label>
-      <textarea
-          id="content"
-          class="form-textarea"
-          rows="5"
-          placeholder="모집글 설명을 입력하세요"
-      ></textarea>
+      <div class="textarea-wrapper">
+        <textarea
+            id="content"
+            class="form-textarea"
+            rows="5"
+            placeholder="모집글 설명을 입력하세요"
+            maxlength="500"
+        ></textarea>
+        <span id="contentCounter" class="char-counter">0/500</span>
+      </div>
     </div>
 
     <!-- 태그 선택 영역 -->

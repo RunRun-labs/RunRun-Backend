@@ -109,10 +109,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const result = await response.json();
 
-      if (result.success && result.data && result.data.content) {
-        const recruits = result.data.content;
-        displayRecruits(recruits);
-        displayMarkers(recruits);
+      if (result.success && result.data) {
+        // Slice 구조: result.data는 Slice 객체이므로 content 배열을 가져옴
+        const recruits = result.data.content || [];
+        if (recruits.length > 0) {
+          displayRecruits(recruits);
+          displayMarkers(recruits);
+        } else {
+          recruitList.innerHTML = "<p>모집글이 없습니다.</p>";
+        }
       } else {
         recruitList.innerHTML = "<p>모집글이 없습니다.</p>";
       }

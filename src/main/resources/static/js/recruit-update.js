@@ -523,7 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // 날짜와 시간을 LocalDateTime 형식으로 변환 (시간대 변환 없이)
+    // 날짜와 시간을 LocalDateTime 형식으로 변환
     // 형식: "YYYY-MM-DDTHH:mm:ss"
     const meetingAt = `${meetingDate}T${meetingTime}:00`;
 
@@ -531,17 +531,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const requestData = {
       title: title,
       content: content,
+      meetingAt: meetingAt,
       meetingPlace: meetingPlace,
       latitude: selectedLat,
       longitude: selectedLng,
-      maxParticipants: maxParticipants,
-      meetingAt: meetingAt,
       targetDistance: selectedTags.distance,
       targetPace: selectedTags.pace,
-      genderLimit: selectedTags.gender,
+      maxParticipants: maxParticipants,
+      genderLimit: selectedTags.gender, // M, F, BOTH
+      ageMin: ageRange.ageMin,
+      ageMax: ageRange.ageMax,
     };
 
-    // courseId가 있으면 추가
+    // courseId가 있으면 추가 (optional)
     if (selectedCourseId) {
       requestData.courseId = selectedCourseId;
     }

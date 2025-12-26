@@ -45,36 +45,43 @@ document.addEventListener("DOMContentLoaded", () => {
     if (ageMin === null || ageMin === undefined || ageMax === null || ageMax === undefined) {
       return "";
     }
-    
-    // 10대 이하 (0-19) 처리
-    if (ageMin === 0 && ageMax <= 19) {
-      return "10대 이하";
-    }
-    
-    const ageMinDecade = Math.floor(ageMin / 10) * 10;
-    const ageMaxDecade = Math.floor(ageMax / 10) * 10;
+    // ageMin과 ageMax를 직접 사용하여 "0세~100세" 형식으로 표시
+    return `${ageMin}세~${ageMax}세`;
+  }
 
-    // 70대 이상 (70-100) 처리
-    if (ageMaxDecade >= 70) {
-      if (ageMinDecade === 70) {
-        return "70대 이상";
-      } else {
-        return `${ageMinDecade}대~70대 이상`;
+  function formatPace(pace) {
+    if (!pace) return "-";
+    // 2:00/km 이하 또는 9:00/km 이상일 때 "이하", "이상" 붙이기
+    const paceMatch = pace.match(/^(\d{1,2}):(\d{2})$/);
+    if (paceMatch) {
+      const minutes = parseInt(paceMatch[1], 10);
+      const seconds = parseInt(paceMatch[2], 10);
+      
+      if (minutes === 2 && seconds === 0) {
+        return `${pace}/km 이하`;
+      } else if (minutes === 9 && seconds === 0) {
+        return `${pace}/km 이상`;
       }
     }
+    return `${pace}/km`;
+  }
 
-    if (ageMinDecade === ageMaxDecade) {
-      return `${ageMinDecade}대`;
-    } else {
-      return `${ageMinDecade}대~${ageMaxDecade}대`;
+  function formatDate(dateTimeString) {
+    if (!dateTimeString) {
+      return "";
     }
+    const date = new Date(dateTimeString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
 
   function initMap(latitude, longitude, meetingPlace) {
     const mapContainer = document.getElementById("map");
     const mapOption = {
       center: new kakao.maps.LatLng(latitude, longitude),
-      level: 3,
+      level: 4, // level 4는 약 500m
     };
 
     map = new kakao.maps.Map(mapContainer, mapOption);
@@ -128,8 +135,8 @@ document.addEventListener("DOMContentLoaded", () => {
         "targetDistance").textContent = `${targetDistance}km`;
 
     if (recruitData.targetPace) {
-      document.getElementById(
-          "targetPace").textContent = `${recruitData.targetPace}/km`;
+      document.getElementById("targetPace").textContent = formatPace(
+          recruitData.targetPace);
     } else {
       document.getElementById("targetPace").textContent = "-";
     }
@@ -154,6 +161,20 @@ document.addEventListener("DOMContentLoaded", () => {
           recruitData.ageMin, recruitData.ageMax);
     } else {
       document.getElementById("ageRange").textContent = "-";
+    }
+
+    // 작성자
+    if (recruitData.authorLoginId) {
+      document.getElementById("authorLoginId").textContent = recruitData.authorLoginId;
+    } else {
+      document.getElementById("authorLoginId").textContent = "-";
+    }
+
+    // 작성일자
+    if (recruitData.createdAt) {
+      document.getElementById("createdAt").textContent = formatDate(recruitData.createdAt);
+    } else {
+      document.getElementById("createdAt").textContent = "-";
     }
 
     document.getElementById("recruitContent").textContent = recruitData.content
@@ -183,10 +204,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (isAuthor && currentParticipants === 1) {
-      actionButton.textContent = "수정하기";
-      actionButton.style.display = "block";
-      actionButton.onclick = () => {
+      // 수정하기와 삭제하기 버튼 표시
+      const editDeleteButtons = document.getElementById("editDeleteButtons");
+      editDeleteButtons.style.display = "flex";
+      
+      const editButton = document.getElementById("editButton");
+      const deleteButton = document.getElementById("deleteButton");
+      
+      editButton.onclick = () => {
         window.location.href = `/recruit/${recruitId}/update`;
+      };
+      
+      deleteButton.onclick = () => {
+        if (confirm("정말로 이 모집글을 삭제하시겠습니까?")) {
+          deleteRecruit();
+        }
       };
       return;
     }
@@ -194,8 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!isAuthor && isParticipant) {
       // 매칭 확정(MATCHED)된 모집글에서는 참가 취소 버튼 표시하지 않음
       const status = recruitData.status;
-      if (status && status === "MATCHED") {
-        // 매칭 확정된 경우 버튼 표시하지 않음
+      if (status && (status === "MATCHED" || status === "COMPLETED")) {
+        // 매칭 확정 또는 완료된 경우 버튼 표시하지 않음
         return;
       }
       
@@ -262,11 +294,12 @@ document.addEventListener("DOMContentLoaded", () => {
             headers: headers,
           });
 
-          if (response.ok) {
+          const result = await response.json();
+
+          if (response.ok && result.success) {
             alert("참여가 완료되었습니다.");
             location.reload();
           } else {
-            const result = await response.json();
             alert(result.message || "참여 처리 중 오류가 발생했습니다.");
           }
         } catch (error) {
@@ -310,6 +343,40 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("참여 취소 처리 중 오류:", error);
       alert("참여 취소 처리 중 오류가 발생했습니다.");
+    }
+  }
+
+  // 모집글 삭제
+  async function deleteRecruit() {
+    try {
+      const token = localStorage.getItem("accessToken") || getCookie("accessToken");
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        window.location.href = "/login";
+        return;
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      };
+
+      const response = await fetch(`/api/recruit/${recruitId}`, {
+        method: "DELETE",
+        headers: headers,
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert("모집글이 삭제되었습니다.");
+        window.location.href = "/recruit";
+      } else {
+        alert(result.message || "모집글 삭제 중 오류가 발생했습니다.");
+      }
+    } catch (error) {
+      console.error("모집글 삭제 중 오류:", error);
+      alert("모집글 삭제 중 오류가 발생했습니다.");
     }
   }
 
@@ -415,8 +482,13 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(result.message || "모집글을 불러올 수 없습니다.");
       }
 
+      // ApiResponse 구조: { success: true, data: RecruitDetailResDto }
       const recruitData = result.data;
       console.log("API 응답 데이터:", recruitData);
+
+      if (!recruitData) {
+        throw new Error("모집글 데이터가 없습니다.");
+      }
 
       displayRecruitDetail(recruitData);
       renderActionButton(recruitData);
