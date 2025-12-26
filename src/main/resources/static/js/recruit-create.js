@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedLat = null;
   let selectedLng = null;
   let selectedCourseId = null;
+  let selectedAddress = null;
 
   const selectedTags = {
     distance: null,
@@ -14,39 +15,67 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function generateTimeOptions() {
-    const timeSelect = document.getElementById("meetingTime");
-    
-    // 기존 옵션 모두 제거
-    timeSelect.innerHTML = "";
+    const timeOptionContainer = document.getElementById("timeOptionContainer");
+    const timeInput = document.getElementById("meetingTime");
 
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.textContent = "시간 선택";
-    defaultOption.disabled = true;
-    defaultOption.selected = true;
-    timeSelect.appendChild(defaultOption);
+    if (!timeOptionContainer || !timeInput) {
+      return;
+    }
+
+    // 기존 칩 모두 제거
+    timeOptionContainer.innerHTML = "";
+
+    // 현재 선택된 시간 값 가져오기
+    const currentSelectedTime = timeInput.value;
 
     // 선택된 날짜 확인
     const selectedDate = document.getElementById("meetingDate").value;
-    const today = new Date().toISOString().split("T")[0];
-    
+
+    // 로컬 시간으로 오늘 날짜 문자열 생성 (toISOString 버그 방지)
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const today = `${year}-${month}-${day}`;
+
     // 오늘 날짜인 경우, 현재 시간 + 1시간 이후만 표시
     let minHour = 0;
     let minMinute = 0;
-    
+
     if (selectedDate === today) {
       // 현재 시간 + 1시간 계산
-      const now = new Date();
-      const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000); // 1시간 후
-      minHour = oneHourLater.getHours();
-      minMinute = oneHourLater.getMinutes();
-      
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+
+      // 1시간 후 계산
+      let oneHourLaterHour = currentHour;
+      let oneHourLaterMinute = currentMinute;
+
+      // 1시간 추가
+      oneHourLaterMinute += 60;
+      if (oneHourLaterMinute >= 60) {
+        oneHourLaterHour += Math.floor(oneHourLaterMinute / 60);
+        oneHourLaterMinute = oneHourLaterMinute % 60;
+      }
+      if (oneHourLaterHour >= 24) {
+        oneHourLaterHour = 23; // 최대 23시까지만
+        oneHourLaterMinute = 59;
+      }
+
+      minHour = oneHourLaterHour;
+      minMinute = oneHourLaterMinute;
+
       // 30분 단위로 올림 처리 (예: 14:15 -> 14:30, 14:45 -> 15:00)
       if (minMinute > 0 && minMinute <= 30) {
         minMinute = 30;
       } else if (minMinute > 30) {
         minHour += 1;
         minMinute = 0;
+      }
+
+      // 24시를 넘으면 다음 날로 넘어가므로 시간 옵션 생성 중단
+      if (minHour >= 24) {
+        return;
       }
     }
 
@@ -58,29 +87,99 @@ document.addEventListener("DOMContentLoaded", () => {
             continue; // 이 시간은 건너뛰기
           }
         }
-        
+
         const timeString = `${String(hour).padStart(2, "0")}:${String(
             minute).padStart(2, "0")}`;
-        const option = document.createElement("option");
-        option.value = timeString;
-        option.textContent = timeString;
-        timeSelect.appendChild(option);
+        const timeChip = document.createElement("button");
+        timeChip.type = "button";
+        timeChip.className = "time-chip";
+        timeChip.textContent = timeString;
+        timeChip.dataset.time = timeString;
+
+        // 이미 선택된 시간이면 selected 클래스 추가
+        if (currentSelectedTime === timeString) {
+          timeChip.classList.add("selected");
+        }
+
+        // 클릭 이벤트: 시간 선택
+        timeChip.addEventListener("click", () => {
+          // 모든 칩에서 selected 클래스 제거
+          document.querySelectorAll(".time-chip").forEach(chip => {
+            chip.classList.remove("selected");
+          });
+
+          // 선택된 칩에 selected 클래스 추가
+          timeChip.classList.add("selected");
+
+          // 메인 화면의 시간 입력창에 값 표시
+          timeInput.value = timeString;
+
+          // 0.2초 후 모달 닫기
+          setTimeout(() => {
+            closeTimeModal();
+          }, 200);
+        });
+
+        timeOptionContainer.appendChild(timeChip);
       }
     }
   }
-  
-  // 날짜 변경 시 시간 옵션 업데이트
+
   function setupDateChangeListener() {
     const dateInput = document.getElementById("meetingDate");
+    const timeInput = document.getElementById("meetingTime");
+
+    if (!dateInput || !timeInput) {
+      console.error("날짜/시간 입력 필드를 찾을 수 없습니다.");
+      return;
+    }
+
     dateInput.addEventListener("change", () => {
       // 시간 선택 초기화
-      document.getElementById("meetingTime").value = "";
+      timeInput.value = "";
       generateTimeOptions();
     });
   }
 
+  // [추가] 시간 모달 열기/닫기 로직
+  const timeModal = document.getElementById("timeBottomSheet");
+  const timeInput = document.getElementById("meetingTime");
+  const closeTimeModalBtn = document.getElementById("closeTimeModal");
+
+  // 모달 닫기 함수 (generateTimeOptions에서 호출됨)
+  function closeTimeModal() {
+    if (timeModal) {
+      timeModal.classList.remove("show");
+      document.body.style.overflow = "";
+    }
+  }
+
+  // 모달 요소가 존재할 때만 이벤트 연결
+  if (timeModal && timeInput) {
+    // 1. 입력창 클릭 시 모달 열기
+    timeInput.addEventListener("click", () => {
+      timeModal.classList.add("show");
+      document.body.style.overflow = "hidden";
+    });
+
+    // 2. 닫기 버튼 클릭 시 닫기
+    if (closeTimeModalBtn) {
+      closeTimeModalBtn.addEventListener("click", closeTimeModal);
+    }
+
+    // 3. 오버레이 클릭 시 닫기
+    const timeOverlay = timeModal.querySelector(".bottom-sheet-overlay");
+    if (timeOverlay) {
+      timeOverlay.addEventListener("click", closeTimeModal);
+    }
+  }
+
   function initMap() {
     const mapContainer = document.getElementById("map");
+    if (!mapContainer) {
+      return;
+    }
+
     const mapOption = {
       center: new kakao.maps.LatLng(37.5665, 126.9780),
       level: 3,
@@ -105,16 +204,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       geocoder.coord2Address(selectedLng, selectedLat, (result, status) => {
         if (status === kakao.maps.services.Status.OK) {
-
           const roadAddr = result[0].road_address;
-
           const jibunAddr = result[0].address;
 
           let detailAddress = "";
 
           if (roadAddr) {
             detailAddress = roadAddr.address_name;
-
             if (roadAddr.building_name) {
               detailAddress += ` (${roadAddr.building_name})`;
             }
@@ -122,11 +218,10 @@ document.addEventListener("DOMContentLoaded", () => {
             detailAddress = jibunAddr.address_name;
           }
 
-          document.getElementById("meetingPlace").value = detailAddress;
-
+          selectedAddress = detailAddress;
         } else {
           console.error("주소 변환 실패:", status);
-          document.getElementById("meetingPlace").value = "주소를 찾을 수 없습니다";
+          selectedAddress = "주소를 찾을 수 없습니다";
         }
       });
     });
@@ -146,104 +241,265 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // 지도 모달 열기/닫기
+  const locationModal = document.getElementById("locationBottomSheet");
+  const locationSummary = document.getElementById("locationSummary");
+  const closeLocationModalBtn = document.getElementById("closeLocationModal");
+  const confirmLocationModalBtn = document.getElementById(
+      "confirmLocationModal");
+
+  // 출발지 요약 뷰 업데이트 함수 (외부에서도 호출 가능하도록)
+  function updateLocationSummary() {
+    const placeholder = document.getElementById("locationPlaceholder");
+    const locationText = document.getElementById("locationText");
+
+    if (!placeholder || !locationText) {
+      return;
+    }
+
+    if (selectedAddress) {
+      placeholder.style.display = "none";
+      locationText.style.display = "block";
+      locationText.textContent = selectedAddress;
+    } else {
+      placeholder.style.display = "block";
+      locationText.style.display = "none";
+    }
+  }
+
+  if (locationModal && locationSummary && closeLocationModalBtn
+      && confirmLocationModalBtn) {
+    function openLocationModal() {
+      locationModal.classList.add("show");
+      document.body.style.overflow = "hidden";
+
+      // 지도가 이미 초기화되어 있으면 relayout
+      if (map) {
+        setTimeout(() => {
+          map.relayout();
+          if (selectedLat && selectedLng) {
+            const latlng = new kakao.maps.LatLng(selectedLat, selectedLng);
+            map.setCenter(latlng);
+          }
+        }, 100);
+      } else {
+        // 지도가 없으면 초기화
+        initMap();
+      }
+    }
+
+    function closeLocationModal() {
+      locationModal.classList.remove("show");
+      document.body.style.overflow = "";
+      updateLocationSummary();
+    }
+
+    locationSummary.addEventListener("click", openLocationModal);
+    closeLocationModalBtn.addEventListener("click", closeLocationModal);
+    confirmLocationModalBtn.addEventListener("click", () => {
+      if (!selectedLat || !selectedLng) {
+        showToast("지도에서 위치를 선택해주세요.", "error");
+        return;
+      }
+      closeLocationModal();
+    });
+
+    // 오버레이 클릭 시 모달 닫기
+    const locationOverlay = locationModal.querySelector(
+        ".bottom-sheet-overlay");
+    if (locationOverlay) {
+      locationOverlay.addEventListener("click", closeLocationModal);
+    }
+  } else {
+    console.error("지도 모달 요소를 찾을 수 없습니다.");
+  }
+
   document.getElementById("backBtn").addEventListener("click", () => {
     window.location.href = "/recruit";
   });
 
-  document.getElementById("courseSearchBtn").addEventListener("click", () => {
+  document.getElementById("course").addEventListener("click", () => {
     showToast("코스 조회 기능은 추후 구현 예정입니다.", "error");
   });
 
-  document.querySelectorAll('.chip[data-distance]').forEach((chip) => {
-    chip.addEventListener("click", () => {
+  // 모달 열기/닫기
+  const conditionModal = document.getElementById("conditionBottomSheet");
+  const conditionSummary = document.getElementById("conditionSummary");
+  const closeConditionModalBtn = document.getElementById("closeConditionModal");
+  const confirmConditionModalBtn = document.getElementById(
+      "confirmConditionModal");
 
-      document.querySelectorAll('.chip[data-distance]').forEach((c) => {
-        c.classList.remove("selected");
-      });
-      chip.classList.add("selected");
-      selectedTags.distance = parseFloat(chip.getAttribute("data-distance"));
+  if (conditionModal && conditionSummary && closeConditionModalBtn
+      && confirmConditionModalBtn) {
+    function openConditionModal() {
+      conditionModal.classList.add("show");
+      document.body.style.overflow = "hidden";
+      // 모달 열 때 현재 선택 상태 반영
+      updateChipSelection();
+    }
+
+    function closeConditionModal() {
+      conditionModal.classList.remove("show");
+      document.body.style.overflow = "";
+      // 모달 닫을 때 요약 뷰 업데이트
+      updateConditionSummary();
+    }
+
+    // 요약 박스 클릭 시 모달 열기
+    conditionSummary.addEventListener("click", openConditionModal);
+    closeConditionModalBtn.addEventListener("click", closeConditionModal);
+    confirmConditionModalBtn.addEventListener("click", closeConditionModal);
+
+    // 오버레이 클릭 시 모달 닫기
+    const conditionOverlay = conditionModal.querySelector(
+        ".bottom-sheet-overlay");
+    if (conditionOverlay) {
+      conditionOverlay.addEventListener("click", closeConditionModal);
+    }
+  } else {
+    console.error("러닝조건 모달 요소를 찾을 수 없습니다.");
+  }
+
+  // 오버레이 클릭 시 모달 닫기
+  conditionModal.querySelector(".bottom-sheet-overlay").addEventListener(
+      "click", closeConditionModal);
+
+  // 탭 전환
+  const tabButtons = document.querySelectorAll(".tab-button");
+  const tabPanels = document.querySelectorAll(".tab-panel");
+
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const targetTab = button.getAttribute("data-tab");
+
+      // 모든 탭 버튼과 패널 비활성화
+      tabButtons.forEach((btn) => btn.classList.remove("active"));
+      tabPanels.forEach((panel) => panel.classList.remove("active"));
+
+      // 선택된 탭 활성화
+      button.classList.add("active");
+      document.getElementById(`tab-${targetTab}`).classList.add("active");
     });
   });
 
-  document.querySelectorAll('.chip[data-pace]').forEach((chip) => {
-    chip.addEventListener("click", () => {
-      document.querySelectorAll('.chip[data-pace]').forEach((c) => {
-        c.classList.remove("selected");
-      });
-      chip.classList.add("selected");
-      // data-pace 속성에서 직접 가져오기 (이미 "분:초" 형식)
-      selectedTags.pace = chip.getAttribute("data-pace");
-    });
-  });
-
-  document.querySelectorAll('.chip[data-age]').forEach((chip) => {
-    chip.addEventListener("click", () => {
-      const age = parseInt(chip.getAttribute("data-age"));
-      const index = selectedTags.ages.indexOf(age);
-
-      if (index > -1) {
-        if (selectedTags.ages.length > 1) {
-          const sorted = [...selectedTags.ages].sort((a, b) => a - b);
-          if (age !== sorted[0] && age !== sorted[sorted.length - 1]) {
-            showToast("연속된 나이대 중간은 해제할 수 없습니다. 양 끝부터 해제해주세요.", "error");
-            return;
-          }
-        }
-
-        chip.classList.remove("selected");
-        selectedTags.ages.splice(index, 1);
-      } else {
-        if (selectedTags.ages.length > 0) {
-          const sorted = [...selectedTags.ages].sort((a, b) => a - b);
-          const min = sorted[0];
-          const max = sorted[sorted.length - 1];
-
-          const isConsecutive =
-              age === min - 10 ||
-              age === max + 10 ||
-              (age === 0 && min === 20) ||  // 10대 이하를 20대와 연속으로 선택
-              (age === 20 && max === 0) ||  // 20대를 10대 이하와 연속으로 선택
-              (age === 70 && max === 60) || // 70대 이상을 60대와 연속으로 선택
-              (age === 60 && min === 70);   // 60대를 70대 이상과 연속으로 선택
-
-          if (!isConsecutive) {
-            showToast("연속된 나이대만 선택할 수 있습니다.", "error");
-            return;
-          }
-        }
-
+  // 칩 선택 이벤트 리스너 (모달 내부)
+  function setupChipListeners() {
+    document.querySelectorAll('.chip[data-distance]').forEach((chip) => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll('.chip[data-distance]').forEach((c) => {
+          c.classList.remove("selected");
+        });
         chip.classList.add("selected");
-        selectedTags.ages.push(age);
-      }
-
-      selectedTags.ages.sort((a, b) => a - b);
-    });
-  });
-
-  function validateAndCleanAges() {
-    if (selectedTags.ages.length === 0) {
-      document.querySelectorAll('.chip[data-age]').forEach((chip) => {
-        chip.classList.remove("selected");
+        selectedTags.distance = parseFloat(chip.getAttribute("data-distance"));
+        // 실시간 요약 뷰 업데이트
+        updateConditionSummary();
       });
-      return;
-    }
+    });
 
-    const sorted = [...selectedTags.ages].sort((a, b) => a - b);
+    document.querySelectorAll('.chip[data-pace]').forEach((chip) => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll('.chip[data-pace]').forEach((c) => {
+          c.classList.remove("selected");
+        });
+        chip.classList.add("selected");
+        selectedTags.pace = chip.getAttribute("data-pace");
+        updateConditionSummary();
+      });
+    });
 
-    const validAges = [sorted[0]];
+    document.querySelectorAll('.chip[data-age]').forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const age = parseInt(chip.getAttribute("data-age"));
+        const index = selectedTags.ages.indexOf(age);
 
-    for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i] === sorted[i - 1] + 10) {
-        validAges.push(sorted[i]);
+        if (index > -1) {
+          if (selectedTags.ages.length > 1) {
+            const sorted = [...selectedTags.ages].sort((a, b) => a - b);
+            if (age !== sorted[0] && age !== sorted[sorted.length - 1]) {
+              showToast("연속된 나이대 중간은 해제할 수 없습니다. 양 끝부터 해제해주세요.", "error");
+              return;
+            }
+          }
+
+          chip.classList.remove("selected");
+          selectedTags.ages.splice(index, 1);
+        } else {
+          if (selectedTags.ages.length > 0) {
+            const sorted = [...selectedTags.ages].sort((a, b) => a - b);
+            const min = sorted[0];
+            const max = sorted[sorted.length - 1];
+
+            const isConsecutive =
+                age === min - 10 ||
+                age === max + 10 ||
+                (age === 0 && min === 20) ||
+                (age === 20 && max === 0) ||
+                (age === 70 && max === 60) ||
+                (age === 60 && min === 70);
+
+            if (!isConsecutive) {
+              showToast("연속된 나이대만 선택할 수 있습니다.", "error");
+              return;
+            }
+          }
+
+          chip.classList.add("selected");
+          selectedTags.ages.push(age);
+        }
+
+        selectedTags.ages.sort((a, b) => a - b);
+        updateConditionSummary();
+      });
+    });
+
+    document.querySelectorAll('.chip[data-gender]').forEach((chip) => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll('.chip[data-gender]').forEach((c) => {
+          c.classList.remove("selected");
+        });
+        chip.classList.add("selected");
+        selectedTags.gender = chip.getAttribute("data-gender");
+        updateConditionSummary();
+      });
+    });
+  }
+
+  // 칩 선택 상태를 모달에 반영
+  function updateChipSelection() {
+    // 거리
+    document.querySelectorAll('.chip[data-distance]').forEach((chip) => {
+      const distance = parseFloat(chip.getAttribute("data-distance"));
+      if (selectedTags.distance === distance) {
+        chip.classList.add("selected");
       } else {
-        break;
+        chip.classList.remove("selected");
       }
-    }
+    });
 
-    selectedTags.ages = validAges;
+    // 페이스
+    document.querySelectorAll('.chip[data-pace]').forEach((chip) => {
+      const pace = chip.getAttribute("data-pace");
+      if (selectedTags.pace === pace) {
+        chip.classList.add("selected");
+      } else {
+        chip.classList.remove("selected");
+      }
+    });
+
+    // 나이
     document.querySelectorAll('.chip[data-age]').forEach((chip) => {
       const age = parseInt(chip.getAttribute("data-age"));
-      if (validAges.includes(age)) {
+      if (selectedTags.ages.includes(age)) {
+        chip.classList.add("selected");
+      } else {
+        chip.classList.remove("selected");
+      }
+    });
+
+    // 성별
+    document.querySelectorAll('.chip[data-gender]').forEach((chip) => {
+      const gender = chip.getAttribute("data-gender");
+      if (selectedTags.gender === gender) {
         chip.classList.add("selected");
       } else {
         chip.classList.remove("selected");
@@ -251,15 +507,73 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  document.querySelectorAll('.chip[data-gender]').forEach((chip) => {
-    chip.addEventListener("click", () => {
-      document.querySelectorAll('.chip[data-gender]').forEach((c) => {
-        c.classList.remove("selected");
-      });
-      chip.classList.add("selected");
-      selectedTags.gender = chip.getAttribute("data-gender");
-    });
-  });
+  // 요약 뷰 업데이트
+  function updateConditionSummary() {
+    const summaryChips = document.getElementById("conditionSummaryChips");
+    const placeholder = document.querySelector(
+        "#conditionSummary .condition-summary-placeholder");
+    if (!summaryChips || !placeholder) {
+      return;
+    }
+    summaryChips.innerHTML = "";
+
+    const hasSelection = selectedTags.distance || selectedTags.pace ||
+        selectedTags.ages.length > 0 || selectedTags.gender;
+
+    if (hasSelection) {
+      placeholder.style.display = "none";
+      summaryChips.style.display = "flex";
+
+      if (selectedTags.distance) {
+        const chip = document.createElement("div");
+        chip.className = "condition-summary-chip";
+        chip.textContent = `${selectedTags.distance}km`;
+        summaryChips.appendChild(chip);
+      }
+
+      if (selectedTags.pace) {
+        const chip = document.createElement("div");
+        chip.className = "condition-summary-chip";
+        const paceText = selectedTags.pace === "2:00" ? "2:00/km 이하" :
+            selectedTags.pace === "9:00" ? "9:00/km 이상" :
+                `${selectedTags.pace}/km`;
+        chip.textContent = paceText;
+        summaryChips.appendChild(chip);
+      }
+
+      if (selectedTags.ages.length > 0) {
+        const sorted = [...selectedTags.ages].sort((a, b) => a - b);
+        const ageTexts = sorted.map(age => {
+          if (age === 0) {
+            return "10대 이하";
+          }
+          if (age === 70) {
+            return "70대 이상";
+          }
+          return `${age}대`;
+        });
+        const chip = document.createElement("div");
+        chip.className = "condition-summary-chip";
+        chip.textContent = ageTexts.join(", ");
+        summaryChips.appendChild(chip);
+      }
+
+      if (selectedTags.gender) {
+        const chip = document.createElement("div");
+        chip.className = "condition-summary-chip";
+        const genderText = selectedTags.gender === "M" ? "남성" :
+            selectedTags.gender === "F" ? "여성" : "무관";
+        chip.textContent = genderText;
+        summaryChips.appendChild(chip);
+      }
+    } else {
+      placeholder.style.display = "block";
+      summaryChips.style.display = "none";
+    }
+  }
+
+  // 초기화
+  setupChipListeners();
 
   function calculateAgeRange() {
     if (selectedTags.ages.length === 0) {
@@ -288,36 +602,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 에러 클래스 제거 함수
   function clearErrors() {
-    document.querySelectorAll('.form-input.error, .form-textarea.error, .tag-group.error').forEach(el => {
-      el.classList.remove('error');
-    });
+    document.querySelectorAll(
+        '.form-input.error, .form-textarea.error, .condition-summary.error, #locationSummary.error, #dateTimeSummary.error').forEach(
+        el => {
+          el.classList.remove('error');
+        });
   }
 
   // 에러 표시 함수
   function showError(element, message) {
     clearErrors();
-    
+
     if (element) {
       element.classList.add('error');
-      
+
       // 입력 필드인 경우
-      if (element.classList.contains('form-input') || element.classList.contains('form-textarea')) {
+      if (element.classList.contains('form-input')
+          || element.classList.contains('form-textarea')) {
         element.focus();
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.scrollIntoView({behavior: 'smooth', block: 'center'});
       }
-      // 태그 그룹인 경우
-      else if (element.classList.contains('tag-group')) {
-        // 태그 그룹의 첫 번째 칩으로 스크롤
-        const firstChip = element.querySelector('.chip');
-        if (firstChip) {
-          firstChip.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // 요약 박스인 경우 (출발지, 러닝조건)
+      else if (element.id === 'locationSummary' ||
+          element.id === 'conditionSummary') {
+        element.scrollIntoView({behavior: 'smooth', block: 'center'});
+        // 러닝조건 모달이 닫혀있으면 열기
+        if (element.id === 'conditionSummary') {
+          const conditionModal = document.getElementById(
+              "conditionBottomSheet");
+          if (conditionModal && !conditionModal.classList.contains('show')) {
+            const conditionSummary = document.getElementById(
+                "conditionSummary");
+            if (conditionSummary) {
+              conditionSummary.click();
+            }
+          }
+        }
+        // 출발지 모달이 닫혀있으면 열기
+        else if (element.id === 'locationSummary') {
+          const locationModal = document.getElementById("locationBottomSheet");
+          if (locationModal && !locationModal.classList.contains('show')) {
+            const locationSummary = document.getElementById("locationSummary");
+            if (locationSummary) {
+              locationSummary.click();
+            }
+          }
         }
       } else {
         // 일반 요소인 경우
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.scrollIntoView({behavior: 'smooth', block: 'center'});
       }
     }
-    
+
     showToast(message, 'error');
   }
 
@@ -359,68 +695,78 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("submitBtn").addEventListener("click", async () => {
     clearErrors();
-    
+
+    // 데이터 수집 (전역 변수 및 DOM 요소에서)
     const title = document.getElementById("title").value.trim();
     const content = document.getElementById("content").value.trim();
-    const maxParticipants = parseInt(
-        document.getElementById("maxParticipants").value);
-    const meetingDate = document.getElementById("meetingDate").value;
-    const meetingTime = document.getElementById("meetingTime").value;
-    const meetingPlace = document.getElementById("meetingPlace").value.trim();
+    const maxParticipantsInput = document.getElementById("maxParticipants");
+    const maxParticipants = maxParticipantsInput ? parseInt(
+        maxParticipantsInput.value) : null;
+    const meetingDateInput = document.getElementById("meetingDate");
+    const meetingTimeInput = document.getElementById("meetingTime");
+    const meetingDate = meetingDateInput ? meetingDateInput.value : null;
+    const meetingTime = meetingTimeInput ? meetingTimeInput.value : null;
 
     // 유효성 검사
     if (!title) {
-      showError(document.getElementById("title"), "제목을 입력해주세요.");
+      const titleInput = document.getElementById("title");
+      showError(titleInput, "제목을 입력해주세요.");
       return;
     }
 
     if (!content) {
-      showError(document.getElementById("content"), "설명을 입력해주세요.");
+      const contentTextarea = document.getElementById("content");
+      showError(contentTextarea, "설명을 입력해주세요.");
       return;
     }
 
-    if (!meetingPlace || !selectedLat || !selectedLng) {
-      showError(document.getElementById("meetingPlace"), "지도에서 출발지를 선택해주세요.");
+    if (!selectedAddress || !selectedLat || !selectedLng) {
+      const locationSummary = document.getElementById("locationSummary");
+      showError(locationSummary, "지도에서 출발지를 선택해주세요.");
       return;
     }
 
-    if (!maxParticipants || maxParticipants < 2) {
-      showError(document.getElementById("maxParticipants"), "최대 인원은 2명 이상이어야 합니다.");
+    if (!maxParticipants || maxParticipants < 2 || maxParticipants > 20) {
+      showError(maxParticipantsInput, "최대 인원은 2명 이상 20명 이하이어야 합니다.");
       return;
     }
 
     if (!meetingDate || !meetingTime) {
-      if (!meetingDate) {
-        showError(document.getElementById("meetingDate"), "출발 날짜를 선택해주세요.");
+      const dateInput = document.getElementById("meetingDate");
+      const timeInput = document.getElementById("meetingTime");
+      if (!meetingDate && dateInput) {
+        showError(dateInput, "모임 날짜를 선택해주세요.");
+      } else if (!meetingTime && timeInput) {
+        showError(timeInput, "모임 시간을 선택해주세요.");
       } else {
-        showError(document.getElementById("meetingTime"), "출발 시간을 선택해주세요.");
+        showToast("모임 일시를 선택해주세요.", "error");
       }
       return;
     }
 
     if (!selectedTags.distance) {
-      const distanceGroup = document.querySelector('.chip[data-distance]').closest('.tag-group');
-      showError(distanceGroup, "뛸 거리를 선택해주세요.");
+      const conditionSummary = document.getElementById("conditionSummary");
+      showError(conditionSummary, "뛸 거리를 선택해주세요.");
       return;
     }
 
     if (!selectedTags.pace) {
-      const paceGroup = document.querySelector('.chip[data-pace]').closest('.tag-group');
-      showError(paceGroup, "페이스를 선택해주세요.");
+      const conditionSummary = document.getElementById("conditionSummary");
+      showError(conditionSummary, "페이스를 선택해주세요.");
       return;
     }
 
     const ageRange = calculateAgeRange();
     if (ageRange.ageMin === null || ageRange.ageMin === undefined ||
         ageRange.ageMax === null || ageRange.ageMax === undefined) {
-      const ageGroup = document.querySelector('.chip[data-age]').closest('.tag-group');
-      showError(ageGroup, "나이대를 선택해주세요.");
+      const conditionSummary = document.getElementById("conditionSummary");
+      showError(conditionSummary, "나이대를 선택해주세요.");
       return;
     }
 
     if (!selectedTags.gender) {
-      const genderGroup = document.querySelector('.chip[data-gender]').closest('.tag-group');
-      showError(genderGroup, "성별을 선택해주세요.");
+      const conditionSummary = document.getElementById("conditionSummary");
+      showError(conditionSummary, "성별을 선택해주세요.");
       return;
     }
 
@@ -431,7 +777,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const requestData = {
       title: title,
       content: content,
-      meetingPlace: meetingPlace,
+      meetingPlace: selectedAddress,
       latitude: selectedLat,
       longitude: selectedLng,
       targetDistance: selectedTags.distance,
@@ -495,7 +841,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateCharCounter(inputElement, counterElement, maxLength) {
     const currentLength = inputElement.value.length;
     counterElement.textContent = `${currentLength}/${maxLength}`;
-    
+
     // 글자수에 따라 스타일 변경
     counterElement.classList.remove('warning', 'danger');
     if (currentLength === maxLength) {
@@ -509,11 +855,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const titleInput = document.getElementById("title");
   const titleCounter = document.getElementById("titleCounter");
   if (titleInput && titleCounter) {
-    titleInput.addEventListener('input', function() {
+    titleInput.addEventListener('input', function () {
       updateCharCounter(this, titleCounter, 100);
       this.classList.remove('error');
     });
-    titleInput.addEventListener('change', function() {
+    titleInput.addEventListener('change', function () {
       this.classList.remove('error');
     });
   }
@@ -522,11 +868,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const contentInput = document.getElementById("content");
   const contentCounter = document.getElementById("contentCounter");
   if (contentInput && contentCounter) {
-    contentInput.addEventListener('input', function() {
+    contentInput.addEventListener('input', function () {
       updateCharCounter(this, contentCounter, 500);
       this.classList.remove('error');
     });
-    contentInput.addEventListener('change', function() {
+    contentInput.addEventListener('change', function () {
       this.classList.remove('error');
     });
   }
@@ -534,10 +880,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // 입력 필드에서 에러 클래스 자동 제거
   document.querySelectorAll('.form-input, .form-textarea').forEach(input => {
     if (input.id !== 'title' && input.id !== 'content') {
-      input.addEventListener('input', function() {
+      input.addEventListener('input', function () {
         this.classList.remove('error');
       });
-      input.addEventListener('change', function() {
+      input.addEventListener('change', function () {
         this.classList.remove('error');
       });
     }
@@ -545,21 +891,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 칩 선택 시 에러 클래스 제거
   document.querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', function() {
-      const tagGroup = this.closest('.tag-group');
-      if (tagGroup) {
-        tagGroup.classList.remove('error');
+    chip.addEventListener('click', function () {
+      const conditionSummary = document.getElementById("conditionSummary");
+      if (conditionSummary) {
+        conditionSummary.classList.remove('error');
       }
     });
   });
 
-  const today = new Date().toISOString().split("T")[0];
+  // 로컬 시간으로 오늘 날짜 문자열 생성 (toISOString 버그 방지)
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const today = `${year}-${month}-${day}`;
   document.getElementById("meetingDate").setAttribute("min", today);
 
   // 날짜 변경 리스너 설정
   setupDateChangeListener();
-  
-  generateTimeOptions();
-  initMap();
-});
 
+  generateTimeOptions();
+
+  // 초기 요약 뷰 업데이트
+  updateConditionSummary();
+  updateLocationSummary();
+  updateDateTimeSummary();
+});

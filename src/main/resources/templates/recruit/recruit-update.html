@@ -23,8 +23,10 @@
 <main class="page">
   <header class="header">
     <button type="button" id="backBtn" class="back-button" aria-label="뒤로가기">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+           xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round"/>
       </svg>
     </button>
     <h1 class="header-title">모집글 수정</h1>
@@ -41,6 +43,7 @@
           placeholder="제목을 입력하세요"
           maxlength="100"
       />
+      <span id="titleCounter" class="char-counter">0/100</span>
     </div>
 
     <!-- 코스 -->
@@ -50,29 +53,36 @@
         <input
             type="text"
             id="course"
-            class="form-input"
+            class="form-input course-input"
             placeholder="코스를 선택하세요"
             readonly
         />
-        <button type="button" id="courseSearchBtn" class="course-search-button">조회</button>
+        <svg class="course-search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path
+              d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round"/>
+          <path d="M19 19L14.65 14.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"/>
+        </svg>
       </div>
     </div>
 
     <!-- 출발지 -->
     <div class="form-group">
-      <label for="meetingPlace" class="form-label">출발지</label>
-      <input
-          type="text"
-          id="meetingPlace"
-          class="form-input"
-          placeholder="지도에서 위치를 클릭하세요"
-          readonly
-      />
-    </div>
-
-    <!-- 카카오맵 -->
-    <div class="map-section">
-      <div id="map" class="map-container"></div>
+      <label class="form-label">출발지</label>
+      <div class="condition-summary" id="locationSummary">
+        <div class="condition-summary-content">
+          <div class="condition-summary-placeholder" id="locationPlaceholder">📍 장소를 선택해주세요</div>
+          <div class="condition-summary-text" id="locationText" style="display: none;"></div>
+        </div>
+        <svg class="condition-summary-chevron" width="20" height="20" viewBox="0 0 20 20"
+             fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
 
     <!-- 최대 인원 -->
@@ -84,25 +94,27 @@
           class="form-input"
           placeholder="최대 인원을 입력하세요"
           min="2"
+          max="20"
           value="2"
       />
     </div>
 
-    <!-- 출발시간 -->
+    <!-- 모임 일시 -->
     <div class="form-group">
-      <label class="form-label">출발시간</label>
+      <label class="form-label">모임 일시</label>
       <div class="datetime-group">
         <input
             type="date"
             id="meetingDate"
             class="form-input"
         />
-        <select
+        <input
+            type="text"
             id="meetingTime"
             class="form-input"
-        >
-          <!-- JavaScript로 30분 단위 옵션 생성 -->
-        </select>
+            placeholder="시간 선택"
+            readonly
+        />
       </div>
     </div>
 
@@ -114,14 +126,112 @@
           class="form-textarea"
           rows="5"
           placeholder="모집글 설명을 입력하세요"
+          maxlength="500"
       ></textarea>
+      <span id="contentCounter" class="char-counter">0/500</span>
     </div>
 
-    <!-- 태그 선택 영역 -->
-    <div class="tags-section">
-      <!-- 뛸 거리 -->
-      <div class="tag-group">
-        <label class="tag-label">뛸 거리</label>
+    <!-- 러닝 조건 선택 영역 -->
+    <div class="form-group">
+      <label class="form-label">러닝 조건</label>
+      <div class="condition-summary" id="conditionSummary">
+        <div class="condition-summary-content">
+          <div class="condition-summary-placeholder">조건을 선택해주세요</div>
+          <div class="condition-summary-chips" id="conditionSummaryChips"
+               style="display: none;"></div>
+        </div>
+        <svg class="condition-summary-chevron" width="20" height="20" viewBox="0 0 20 20"
+             fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- 수정 완료 버튼 (하단 고정) -->
+  <button type="button" id="submitBtn" class="submit-button">수정 완료</button>
+</main>
+
+<!-- 시간 선택 모달 (Bottom Sheet) -->
+<div id="timeBottomSheet" class="bottom-sheet">
+  <div class="bottom-sheet-overlay"></div>
+  <div class="bottom-sheet-content">
+    <!-- 헤더 -->
+    <div class="bottom-sheet-header">
+      <h2 class="bottom-sheet-title">모임 시간 선택</h2>
+      <button type="button" class="bottom-sheet-close" id="closeTimeModal">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 시간 옵션 컨테이너 -->
+    <div class="tab-content">
+      <div id="timeOptionContainer" class="time-option-container">
+        <!-- JavaScript로 시간 칩 생성 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 출발지 선택 모달 (Bottom Sheet) -->
+<div id="locationBottomSheet" class="bottom-sheet">
+  <div class="bottom-sheet-overlay"></div>
+  <div class="bottom-sheet-content">
+    <!-- 헤더 -->
+    <div class="bottom-sheet-header">
+      <h2 class="bottom-sheet-title">출발지 선택</h2>
+      <button type="button" class="bottom-sheet-close" id="closeLocationModal">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 지도 -->
+    <div class="map-section-modal">
+      <div id="map" class="map-container"></div>
+    </div>
+
+    <!-- 하단 버튼 -->
+    <div class="bottom-sheet-footer">
+      <button type="button" id="confirmLocationModal" class="confirm-button">선택 완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- 러닝 조건 설정 모달 (Bottom Sheet) -->
+<div id="conditionBottomSheet" class="bottom-sheet">
+  <div class="bottom-sheet-overlay"></div>
+  <div class="bottom-sheet-content">
+    <!-- 헤더 -->
+    <div class="bottom-sheet-header">
+      <h2 class="bottom-sheet-title">러닝 조건 설정</h2>
+      <button type="button" class="bottom-sheet-close" id="closeConditionModal">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 탭 네비게이션 -->
+    <div class="tab-navigation">
+      <button type="button" class="tab-button active" data-tab="distance">거리</button>
+      <button type="button" class="tab-button" data-tab="pace">페이스</button>
+      <button type="button" class="tab-button" data-tab="age">나이</button>
+      <button type="button" class="tab-button" data-tab="gender">성별</button>
+    </div>
+
+    <!-- 탭 콘텐츠 -->
+    <div class="tab-content">
+      <!-- 거리 탭 -->
+      <div class="tab-panel active" id="tab-distance">
         <div class="chip-container">
           <button type="button" class="chip" data-distance="3">3km</button>
           <button type="button" class="chip" data-distance="5">5km</button>
@@ -129,9 +239,8 @@
         </div>
       </div>
 
-      <!-- 페이스 -->
-      <div class="tag-group">
-        <label class="tag-label">페이스</label>
+      <!-- 페이스 탭 -->
+      <div class="tab-panel" id="tab-pace">
         <div class="chip-container">
           <button type="button" class="chip" data-pace="2:00">2:00/km 이하</button>
           <button type="button" class="chip" data-pace="3:00">3:00/km</button>
@@ -150,9 +259,8 @@
         </div>
       </div>
 
-      <!-- 나이대 -->
-      <div class="tag-group">
-        <label class="tag-label">나이대</label>
+      <!-- 나이 탭 -->
+      <div class="tab-panel" id="tab-age">
         <div class="chip-container">
           <button type="button" class="chip" data-age="0">10대 이하</button>
           <button type="button" class="chip" data-age="20">20대</button>
@@ -164,9 +272,8 @@
         </div>
       </div>
 
-      <!-- 성별 -->
-      <div class="tag-group">
-        <label class="tag-label">성별</label>
+      <!-- 성별 탭 -->
+      <div class="tab-panel" id="tab-gender">
         <div class="chip-container">
           <button type="button" class="chip" data-gender="M">남성</button>
           <button type="button" class="chip" data-gender="F">여성</button>
@@ -174,11 +281,13 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- 완료 버튼 (하단 고정) -->
-  <button type="button" id="submitBtn" class="submit-button">완료</button>
-</main>
+    <!-- 하단 버튼 -->
+    <div class="bottom-sheet-footer">
+      <button type="button" id="confirmConditionModal" class="confirm-button">설정 완료</button>
+    </div>
+  </div>
+</div>
 
 <div
     id="bottomNavMount"
@@ -188,4 +297,3 @@
 <script src="/js/recruit-update.js" th:src="@{/js/recruit-update.js}"></script>
 </body>
 </html>
-
