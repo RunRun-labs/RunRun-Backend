@@ -59,6 +59,7 @@ public class RecruitCreateReqDto {
 
   @NotNull(message = "최대 인원은 필수입니다.")
   @Min(value = 2, message = "모집 인원은 최소 2명 이상이어야 합니다.")
+  @Max(value = 20, message = "최대 인원은 20명을 초과할 수 없습니다.")
   private Integer maxParticipants;
 
   @NotNull(message = "최소 나이는 필수입니다.")
@@ -85,7 +86,14 @@ public class RecruitCreateReqDto {
       throw new ValidationException(ErrorCode.INVALID_AGE_RANGE);
     }
 
-    LocalDateTime oneWeekLater = LocalDateTime.now().plusWeeks(2);
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime oneHourLater = now.plusHours(1);
+
+    if (this.meetingAt.isBefore(oneHourLater)) {
+      throw new ValidationException(ErrorCode.INVALID_MEETING_TIME);
+    }
+
+    LocalDateTime oneWeekLater = now.plusWeeks(2);
     if (this.meetingAt.isAfter(oneWeekLater)) {
       throw new ValidationException(ErrorCode.INVALID_MEETING_TIME);
     }
