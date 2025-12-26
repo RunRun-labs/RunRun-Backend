@@ -171,6 +171,10 @@ public class RecruitService {
       throw new ForbiddenException(ErrorCode.RECRUIT_DELETE_DENIED);
     }
 
+    if (recruit.getCurrentParticipants() > 1) {
+      throw new ForbiddenException(ErrorCode.RECRUIT_HAS_PARTICIPANTS);
+    }
+
     recruitRepository.delete(recruit);
   }
 
