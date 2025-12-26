@@ -80,6 +80,10 @@ public class RecruitUpdateReqDto {
       throw new ValidationException(ErrorCode.INVALID_AGE_RANGE);
     }
 
+    LocalDateTime oneWeekLater = LocalDateTime.now().plusWeeks(2);
+    if (this.meetingAt.isAfter(oneWeekLater)) {
+      throw new ValidationException(ErrorCode.INVALID_MEETING_TIME);
+    }
   }
 
 
