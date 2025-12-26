@@ -94,11 +94,28 @@ public class RecruitService {
     Pageable dynamicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
         sort);
 
+    LocalDateTime startOfDay = null;
+    LocalDateTime endOfDay = null;
+
+    if (req.getDate() != null) {
+      startOfDay = req.getDate().atStartOfDay();
+      endOfDay = req.getDate().atTime(23, 59, 59);
+    }
+
+    Double searchRadius = req.getRadiusKm();
+
+    if (req.getRegion() != null && !req.getRegion().isEmpty()) {
+      searchRadius = null;
+    }
+
     Slice<Recruit> recruits = recruitRepository.findRecruitsWithFilters(
         req.getLatitude(),
         req.getLongitude(),
-        req.getRadiusKm(),
+        searchRadius,
         req.getKeyword(),
+        startOfDay,
+        endOfDay,
+        req.getRegion(),
         dynamicPageable
     );
 
@@ -159,7 +176,7 @@ public class RecruitService {
     if (hostAge < req.getAgeMin() || hostAge > req.getAgeMax()) {
       throw new ValidationException(ErrorCode.AGE_RESTRICTION);
     }
-    
+
     recruit.update(req);
   }
 
