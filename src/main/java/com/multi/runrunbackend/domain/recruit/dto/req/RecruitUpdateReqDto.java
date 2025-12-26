@@ -58,6 +58,7 @@ public class RecruitUpdateReqDto {
 
   @NotNull(message = "최대 인원은 필수입니다.")
   @Min(value = 2, message = "모집 인원은 최소 2명 이상이어야 합니다.")
+  @Max(value = 20, message = "최대 인원은 20명을 초과할 수 없습니다.")
   private Integer maxParticipants;
 
   @NotNull(message = "성별 제한은 필수입니다.")
