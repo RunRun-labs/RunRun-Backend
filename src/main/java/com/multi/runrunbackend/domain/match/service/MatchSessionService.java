@@ -1,5 +1,8 @@
 package com.multi.runrunbackend.domain.match.service;
 
+import static reactor.netty.http.HttpConnectionLiveness.log;
+
+import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
@@ -20,6 +23,7 @@ import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -133,5 +137,46 @@ public class MatchSessionService {
     return matchSession.getId();
   }
 
+  @Transactional
+  public Long createOnlineSession(Set<String> userIds, DistanceType distance, int avgDuration) {
+
+    double targetDistanceValue = convertToMeter(distance);
+
+    MatchSession session = MatchSession.builder()
+        .type(SessionType.ONLINE)
+        .targetDistance(targetDistanceValue)
+        .duration(avgDuration)
+        .status(SessionStatus.STANDBY)
+        .build();
+
+    matchSessionRepository.save(session);
+
+    for (String userIdStr : userIds) {
+      Long userId = Long.parseLong(userIdStr);
+      User user = userRepository.findById(userId)
+          .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+      SessionUser sessionUser = SessionUser.builder()
+          .matchSession(session)
+          .user(user)
+          .isReady(false)
+          .build();
+
+      sessionUserRepository.save(sessionUser);
+    }
+
+    log.info("온라인 매칭 DB 저장 완료 - SessionID: {}, 거리: {}m", session.getId(),
+        targetDistanceValue);
+    return session.getId();
+  }
+
+  private double convertToMeter(DistanceType distance) {
+    return switch (distance) {
+      case KM_3 -> 3000.0;
+      case KM_5 -> 5000.0;
+      case KM_10 -> 10000.0;
+      default -> 0.0;
+    };
+  }
 }
 
