@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   let map = null;
   let markers = [];
-  let infowindows = [];
+  let customOverlays = []; // InfoWindow 대신 CustomOverlay 사용
   let userLat = null;
   let userLng = null;
   let currentRadius = 3;
@@ -61,9 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function clearMarkers() {
     markers.forEach((marker) => marker.setMap(null));
-    infowindows.forEach((infowindow) => infowindow.close());
+    customOverlays.forEach((overlay) => overlay.setMap(null));
     markers = [];
-    infowindows = [];
+    customOverlays = [];
   }
 
   // [수정] 모집글 목록 로드 (토큰 로직 추가)
@@ -255,16 +255,38 @@ document.addEventListener("DOMContentLoaded", () => {
             parseFloat(recruit.latitude), parseFloat(recruit.longitude));
         const marker = new kakao.maps.Marker(
             {position: markerPosition, map: map});
-        const infowindow = new kakao.maps.InfoWindow({
-          content: `<div style="padding: 5px; font-size: 12px; color: #000;">${recruit.title}</div>`
+
+        // CustomOverlay를 위한 HTML 요소 생성
+        const tooltipContent = document.createElement('div');
+        tooltipContent.className = 'map-tooltip';
+        tooltipContent.textContent = recruit.title;
+        
+        // CustomOverlay 생성 (초기에는 숨김 상태)
+        const customOverlay = new kakao.maps.CustomOverlay({
+          position: markerPosition,
+          content: tooltipContent,
+          yAnchor: 2.2, // 마커 위에 표시 (값이 클수록 위로)
+          xAnchor: 0.5, // 중앙 정렬
+          zIndex: 1000
+        });
+
+        // 마커 호버 시 툴팁 표시
+        kakao.maps.event.addListener(marker, 'mouseover', () => {
+          customOverlay.setMap(map);
+        });
+
+        // 마커 호버 해제 시 툴팁 숨김
+        kakao.maps.event.addListener(marker, 'mouseout', () => {
+          customOverlay.setMap(null);
+        });
+
+        // 마커 클릭 시 즉시 상세 페이지로 이동
+        kakao.maps.event.addListener(marker, 'click', () => {
+          window.location.href = `/recruit/${recruit.recruitId}`;
         });
 
         markers.push(marker);
-        infowindows.push(infowindow);
-        kakao.maps.event.addListener(marker, "click", () => {
-          infowindows.forEach((iw) => iw.close());
-          infowindow.open(map, marker);
-        });
+        customOverlays.push(customOverlay);
         bounds.extend(markerPosition);
         hasValidMarker = true;
       }
