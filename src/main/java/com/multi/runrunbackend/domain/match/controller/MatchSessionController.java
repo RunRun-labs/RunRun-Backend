@@ -54,5 +54,12 @@ public class MatchSessionController {
     return ResponseEntity.ok(ApiResponse.successNoData("온라인 매칭 대기열에 등록되었습니다."));
   }
 
+  @GetMapping("/online/status")
+  public ResponseEntity<ApiResponse<OnlineMatchStatusResDto>> checkOnlineMatchStatus(
+      @AuthenticationPrincipal CustomUser principal
+  ) {
+    OnlineMatchStatusResDto response = matchingQueueService.checkMatchStatus(principal);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
   }
 }
