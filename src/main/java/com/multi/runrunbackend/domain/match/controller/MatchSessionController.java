@@ -61,5 +61,12 @@ public class MatchSessionController {
     OnlineMatchStatusResDto response = matchingQueueService.checkMatchStatus(principal);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
+
+  @PostMapping("/online/cancel")
+  public ResponseEntity<ApiResponse<Void>> cancelOnlineMatch(
+      @AuthenticationPrincipal CustomUser principal
+  ) {
+    matchingQueueService.removeQueue(principal);
+    return ResponseEntity.ok(ApiResponse.successNoData("매칭 대기가 취소되었습니다."));
   }
 }
