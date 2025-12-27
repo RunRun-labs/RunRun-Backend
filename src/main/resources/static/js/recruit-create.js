@@ -819,7 +819,15 @@ document.addEventListener("DOMContentLoaded", () => {
           window.location.href = "/recruit";
         }, 1500);
       } else {
-        showToast(result.message || "모집글 생성에 실패했습니다.", "error");
+        // 백엔드 에러 메시지를 사용자 친화적으로 변경
+        let errorMessage = result.message || "모집글 생성에 실패했습니다.";
+        // 에러 코드 또는 메시지로 확인
+        if (result.code === "RO16" || errorMessage.includes("참여 가능 성별이 아닙니다")) {
+          errorMessage = "본인의 성별과 다른 성별 제한은 설정할 수 없습니다.";
+        } else if (result.code === "RO15" || errorMessage.includes("참여 가능 나이가 아닙니다")) {
+          errorMessage = "본인의 나이가 포함된 연령대만 설정할 수 있습니다.";
+        }
+        showToast(errorMessage, "error");
         console.error("Error:", result);
       }
     } catch (error) {

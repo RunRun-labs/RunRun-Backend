@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let marker = null;
   let infowindow = null;
   let currentUserGender = null;
+  let currentUserAge = null;
 
   const urlParams = new URLSearchParams(window.location.search);
   let recruitId = urlParams.get("recruitId");
@@ -14,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!recruitId || recruitId === "recruit" || recruitId === "detail") {
     console.error("recruitId를 찾을 수 없습니다.");
+    // showToast는 아직 정의되지 않았으므로 alert 유지
     alert("모집글 ID를 찾을 수 없습니다.");
     window.location.href = "/recruit";
     return;
@@ -240,50 +242,65 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!isAuthor && !isParticipant) {
-      // 성별 제한 체크
-      const genderLimit = recruitData.genderLimit;
-      if (currentUserGender && genderLimit) {
-        // genderLimit이 "M"이면 여성(F) 사용자는 참가 불가
-        // genderLimit이 "F"이면 남성(M) 사용자는 참가 불가
-        // genderLimit이 "BOTH"이면 모든 사용자 참가 가능
-        if (genderLimit === "M" && currentUserGender !== "M") {
-          actionButton.textContent = "참가 불가";
-          actionButton.style.display = "block";
-          actionButton.disabled = true;
-          actionButton.style.opacity = "0.5";
-          actionButton.style.cursor = "not-allowed";
-          actionButton.onclick = () => {
-            alert("남성만 참가할 수 있는 모집글입니다.");
-          };
-          return;
-        }
-        if (genderLimit === "F" && currentUserGender !== "F") {
-          actionButton.textContent = "참가 불가";
-          actionButton.style.display = "block";
-          actionButton.disabled = true;
-          actionButton.style.opacity = "0.5";
-          actionButton.style.cursor = "not-allowed";
-          actionButton.onclick = () => {
-            alert("여성만 참가할 수 있는 모집글입니다.");
-          };
-          return;
-        }
-      }
-      
+      // 참가하기 버튼 - 항상 활성화 상태로 표시
       actionButton.textContent = "참가하기";
       actionButton.style.display = "block";
       actionButton.disabled = false;
       actionButton.style.opacity = "1";
       actionButton.style.cursor = "pointer";
+      
+      // data- 속성으로 조건 정보 저장
+      if (recruitData.ageMin !== null && recruitData.ageMin !== undefined) {
+        actionButton.setAttribute("data-age-min", recruitData.ageMin);
+      }
+      if (recruitData.ageMax !== null && recruitData.ageMax !== undefined) {
+        actionButton.setAttribute("data-age-max", recruitData.ageMax);
+      }
+      if (recruitData.genderLimit) {
+        actionButton.setAttribute("data-gender-limit", recruitData.genderLimit);
+      }
+      
+      // 클릭 이벤트 - 조건 검사 후 토스트 표시
       actionButton.onclick = async () => {
-        try {
-          const token = localStorage.getItem("accessToken");
-          if (!token) {
-            alert("로그인이 필요합니다.");
+        // Step 1: 프론트엔드 유효성 검사
+        const ageMin = actionButton.getAttribute("data-age-min");
+        const ageMax = actionButton.getAttribute("data-age-max");
+        const genderLimit = actionButton.getAttribute("data-gender-limit");
+        
+        // 로그인 체크
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          showToast("로그인이 필요합니다.", "error");
+          setTimeout(() => {
             window.location.href = "/login";
+          }, 1500);
+          return;
+        }
+        
+        // 성별 조건 체크
+        if (genderLimit && genderLimit !== "BOTH" && currentUserGender) {
+          if (genderLimit === "M" && currentUserGender !== "M") {
+            showToast("성별 조건이 맞지 않아 참여할 수 없습니다.", "error");
             return;
           }
-
+          if (genderLimit === "F" && currentUserGender !== "F") {
+            showToast("성별 조건이 맞지 않아 참여할 수 없습니다.", "error");
+            return;
+          }
+        }
+        
+        // 나이 조건 체크
+        if (ageMin && ageMax && currentUserAge !== null) {
+          const ageMinNum = parseInt(ageMin, 10);
+          const ageMaxNum = parseInt(ageMax, 10);
+          if (currentUserAge < ageMinNum || currentUserAge > ageMaxNum) {
+            showToast("참여 가능한 나이대가 아닙니다.", "error");
+            return;
+          }
+        }
+        
+        // Step 2: API 호출
+        try {
           const headers = {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
@@ -296,15 +313,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
           const result = await response.json();
 
+          // Step 3: API 에러 핸들링 (토스트로 처리)
           if (response.ok && result.success) {
-            alert("참여가 완료되었습니다.");
-            location.reload();
+            showToast("참여가 완료되었습니다.", "success");
+            setTimeout(() => {
+              location.reload();
+            }, 1500);
           } else {
-            alert(result.message || "참여 처리 중 오류가 발생했습니다.");
+            const errorMessage = result.message || "참여 처리 중 오류가 발생했습니다.";
+            showToast(errorMessage, "error");
           }
         } catch (error) {
           console.error("참여 처리 중 오류:", error);
-          alert("참여 처리 중 오류가 발생했습니다.");
+          showToast("참여 처리 중 오류가 발생했습니다.", "error");
         }
       };
       return;
@@ -317,8 +338,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const token = localStorage.getItem("accessToken") || getCookie(
           "accessToken");
       if (!token) {
-        alert("로그인이 필요합니다.");
-        window.location.href = "/login";
+        showToast("로그인이 필요합니다.", "error");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
         return;
       }
 
@@ -335,14 +358,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        alert("참여가 취소되었습니다.");
-        location.reload();
+        showToast("참여가 취소되었습니다.", "success");
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
       } else {
-        alert(result.message || "참여 취소 처리 중 오류가 발생했습니다.");
+        showToast(result.message || "참여 취소 처리 중 오류가 발생했습니다.", "error");
       }
     } catch (error) {
       console.error("참여 취소 처리 중 오류:", error);
-      alert("참여 취소 처리 중 오류가 발생했습니다.");
+      showToast("참여 취소 처리 중 오류가 발생했습니다.", "error");
     }
   }
 
@@ -351,8 +376,10 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const token = localStorage.getItem("accessToken") || getCookie("accessToken");
       if (!token) {
-        alert("로그인이 필요합니다.");
-        window.location.href = "/login";
+        showToast("로그인이 필요합니다.", "error");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
         return;
       }
 
@@ -369,14 +396,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        alert("모집글이 삭제되었습니다.");
-        window.location.href = "/recruit";
+        showToast("모집글이 삭제되었습니다.", "success");
+        setTimeout(() => {
+          window.location.href = "/recruit";
+        }, 1500);
       } else {
-        alert(result.message || "모집글 삭제 중 오류가 발생했습니다.");
+        showToast(result.message || "모집글 삭제 중 오류가 발생했습니다.", "error");
       }
     } catch (error) {
       console.error("모집글 삭제 중 오류:", error);
-      alert("모집글 삭제 중 오류가 발생했습니다.");
+      showToast("모집글 삭제 중 오류가 발생했습니다.", "error");
     }
   }
 
@@ -385,8 +414,10 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const token = localStorage.getItem("accessToken") || getCookie("accessToken");
       if (!token) {
-        alert("로그인이 필요합니다.");
-        window.location.href = "/login";
+        showToast("로그인이 필요합니다.", "error");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
         return;
       }
 
@@ -408,14 +439,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        alert("매칭이 확정되었습니다");
-        window.location.href = "/recruit";
+        showToast("매칭이 확정되었습니다", "success");
+        setTimeout(() => {
+          window.location.href = "/recruit";
+        }, 1500);
       } else {
-        alert(result.message || "매칭 확정 처리 중 오류가 발생했습니다.");
+        showToast(result.message || "매칭 확정 처리 중 오류가 발생했습니다.", "error");
       }
     } catch (error) {
       console.error("매칭 확정 처리 중 오류:", error);
-      alert("매칭 확정 처리 중 오류가 발생했습니다.");
+      showToast("매칭 확정 처리 중 오류가 발생했습니다.", "error");
     }
   }
 
@@ -427,6 +460,55 @@ document.addEventListener("DOMContentLoaded", () => {
       return parts.pop().split(";").shift();
     }
     return null;
+  }
+
+  // Toast 알림 표시
+  function showToast(message, type = 'error') {
+    // 기존 toast 제거
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    // Toast 컨테이너 생성 (없으면)
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    // Toast 메시지 생성
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    // 애니메이션을 위해 약간의 지연 후 show 클래스 추가
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+
+    // 3초 후 제거
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 3000);
+  }
+
+  // 생년월일로 나이 계산
+  function calculateAge(birthDate) {
+    if (!birthDate) return null;
+    const birth = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
   }
 
   // 현재 사용자 정보 가져오기
@@ -451,6 +533,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const result = await response.json();
         if (result.success && result.data) {
           currentUserGender = result.data.gender;
+          // 나이 계산
+          if (result.data.birthDate) {
+            currentUserAge = calculateAge(result.data.birthDate);
+          }
         }
       }
     } catch (error) {
@@ -494,7 +580,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderActionButton(recruitData);
     } catch (error) {
       console.error("모집글 상세 정보 로드 중 오류:", error);
-      alert("모집글을 불러오는 중 오류가 발생했습니다.");
+      showToast("모집글을 불러오는 중 오류가 발생했습니다.", "error");
     }
   }
 
