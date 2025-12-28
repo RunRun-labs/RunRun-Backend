@@ -39,7 +39,7 @@ public class Challenge extends BaseEntity {
     private Double targetValue;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(length = 500)
@@ -50,7 +50,7 @@ public class Challenge extends BaseEntity {
 
     @Column(nullable = false)
     private LocalDate endDate;
-    
+
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 
