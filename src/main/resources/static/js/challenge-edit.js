@@ -99,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function extractChallengeIdFromUrl() {
         const path = window.location.pathname;
-        const match = path.match(/\/challenge\/(\d+)\/edit/);
+        const match = path.match(/\/challenges?\/(\d+)\/edit/);
         return match ? match[1] : null;
     }
 
@@ -107,6 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const accessToken = localStorage.getItem("accessToken");
 
         try {
+            // 경로 주의: API는 /challenges/{id} (복수형)
             const response = await fetch(`/challenges/${challengeId}`, {
                 headers: accessToken
                     ? {Authorization: `Bearer ${accessToken}`}
@@ -172,7 +173,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const endDateInput = document.getElementById("endDate");
         if (startDateInput && challenge.startDate) {
             startDateInput.value = formatDateForInput(challenge.startDate);
-            startDateInput.min = new Date().toISOString().split("T")[0];
+            // 수정 시에는 시작일 최소값 제한을 풀거나, 기존 시작일로 유지
+            // startDateInput.min = new Date().toISOString().split("T")[0];
         }
         if (endDateInput && challenge.endDate) {
             endDateInput.value = formatDateForInput(challenge.endDate);
@@ -219,10 +221,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // 파일 크기 검증 (10MB 제한)
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        // 파일 크기 검증 (5MB 제한 - create와 동일하게 맞춤)
+        const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-            setMessage("이미지 파일 크기는 10MB 이하여야 합니다.", "error");
+            setMessage("이미지 파일 크기는 5MB 이하여야 합니다.", "error");
             return;
         }
 
@@ -258,6 +260,77 @@ document.addEventListener("DOMContentLoaded", () => {
         setMessage("");
     }
 
+    // [추가] 유효성 검사 함수
+    function validateForm(formData) {
+        // 1. 제목 검사
+        const title = formData.get("title")?.toString().trim();
+        if (!title || title.length < 2 || title.length > 50) {
+            setMessage("제목은 2자 이상 50자 이하여야 합니다.", "error");
+            return false;
+        }
+
+        // 2. 날짜 검사
+        const startDate = formData.get("startDate");
+        const endDate = formData.get("endDate");
+        if (!startDate || !endDate) {
+            setMessage("시작일과 종료일을 모두 입력해주세요.", "error");
+            return false;
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        // 날짜만 비교하기 위해 시간 초기화
+        start.setHours(0, 0, 0, 0);
+        end.setHours(0, 0, 0, 0);
+
+        // 수정 시에는 '시작일 >= 오늘' 조건을 강제하면 이미 진행중인 챌린지 수정이 불가능할 수 있음
+        // 따라서 종료일 >= 시작일 조건만 검사합니다.
+        if (end < start) {
+            setMessage("종료일은 시작일보다 나중이어야 합니다.", "error");
+            return false;
+        }
+
+        // 3. 설명 검사
+        const description = formData.get("description")?.toString().trim();
+        if (!description || description.length < 10 || description.length > 500) {
+            setMessage("상세정보는 10자 이상 500자 이하여야 합니다.", "error");
+            return false;
+        }
+
+        // 4. 챌린지 타입 검증
+        const challengeType = formData.get("challengeType");
+        if (!challengeType) {
+            setMessage("챌린지 타입을 선택해주세요.", "error");
+            return false;
+        }
+
+        // 5. 목표값 검증
+        const targetValueStr = formData.get("targetValue")?.toString().trim();
+        if (!targetValueStr) {
+            setMessage("목표값을 입력해주세요.", "error");
+            return false;
+        }
+
+        let targetValue = parseFloat(targetValueStr);
+        if (isNaN(targetValue) || targetValue <= 0) {
+            setMessage("목표값은 0보다 큰 숫자여야 합니다.", "error");
+            return false;
+        }
+
+        // [수정] TIME 타입인 경우 60을 곱해서(분 단위로 변환 후) 최대값 검사
+        let checkValue = targetValue;
+        if (challengeType === "TIME") {
+            checkValue = targetValue * 60;
+        }
+
+        if (checkValue > 12000) {
+            setMessage(`목표값이 너무 큽니다. (최대 ${challengeType === "TIME" ? (12000 / 60).toFixed(1) + "시간" : "12,000"})`, "error");
+            return false;
+        }
+
+        return true;
+    }
+
     async function handleFormSubmit(e) {
         e.preventDefault();
 
@@ -268,57 +341,22 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // 폼 데이터 수집
         const formData = new FormData(form);
 
-        // 제목 검증
-        const title = formData.get("title")?.toString().trim();
-        if (!title) {
-            setMessage("제목을 입력해주세요.", "error");
+        // [수정] 유효성 검사 실행
+        if (!validateForm(formData)) {
             return;
         }
 
-        // 날짜 검증
+        // 데이터 추출
+        const title = formData.get("title")?.toString().trim();
+        const challengeType = formData.get("challengeType");
+        let targetValue = parseFloat(formData.get("targetValue")?.toString().trim());
+        const description = formData.get("description")?.toString().trim();
         const startDate = formData.get("startDate");
         const endDate = formData.get("endDate");
-        if (!startDate || !endDate) {
-            setMessage("시작일과 종료일을 모두 입력해주세요.", "error");
-            return;
-        }
 
-        if (new Date(endDate) < new Date(startDate)) {
-            setMessage("종료일은 시작일보다 나중이어야 합니다.", "error");
-            return;
-        }
-
-        // 설명 검증
-        const description = formData.get("description")?.toString().trim();
-        if (!description) {
-            setMessage("상세정보를 입력해주세요.", "error");
-            return;
-        }
-
-        // 챌린지 타입 검증
-        const challengeType = formData.get("challengeType");
-        if (!challengeType) {
-            setMessage("챌린지 타입을 선택해주세요.", "error");
-            return;
-        }
-
-        // 목표값 검증
-        const targetValueStr = formData.get("targetValue")?.toString().trim();
-        if (!targetValueStr) {
-            setMessage("목표값을 입력해주세요.", "error");
-            return;
-        }
-
-        let targetValue = parseFloat(targetValueStr);
-        if (isNaN(targetValue) || targetValue <= 0) {
-            setMessage("목표값은 0보다 큰 숫자여야 합니다.", "error");
-            return;
-        }
-
-        // TIME 타입인 경우 시간을 분으로 변환
+        // TIME 타입인 경우 시간을 분으로 변환 (서버 전송용)
         if (challengeType === "TIME") {
             targetValue = targetValue * 60;
         }
@@ -337,7 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const requestBlob = new Blob([JSON.stringify(requestData)], {
             type: "application/json",
         });
-        formData.set("request", requestBlob);
+        formData.set("request", requestBlob); // 기존 값 덮어쓰기
 
         // 제출 버튼 비활성화
         if (submitButton) {
@@ -365,7 +403,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(errorMessage);
             }
 
-            const result = await response.json();
             setMessage("챌린지가 성공적으로 수정되었습니다!", "success");
 
             // 성공 후 챌린지 상세보기로 이동
@@ -387,10 +424,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!messageBox) return;
         messageBox.textContent = message;
         messageBox.hidden = !message;
-        messageBox.classList.remove("success");
+        messageBox.className = "message-box";
+        messageBox.classList.add(type);
+
+        // 스타일 적용 (create와 동일하게)
         if (type === "success") {
-            messageBox.classList.add("success");
+            messageBox.style.color = "#ccff00"; // 형광 그린
+            messageBox.style.backgroundColor = "rgba(186, 255, 41, 0.2)";
+        } else {
+            messageBox.style.color = "#ff4d4d"; // 빨강
+            messageBox.style.backgroundColor = "rgba(255, 59, 48, 0.1)";
         }
     }
 });
-
