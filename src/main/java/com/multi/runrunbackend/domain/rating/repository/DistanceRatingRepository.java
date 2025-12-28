@@ -1,7 +1,7 @@
 package com.multi.runrunbackend.domain.rating.repository;
 
 import com.multi.runrunbackend.common.constant.DistanceType;
-import com.multi.runrunbackend.domain.rating.Rating;
+import com.multi.runrunbackend.domain.rating.DistanceRating;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * @filename : RatinigRepository
  * @since : 2025-12-27 토요일
  */
-public interface RatingRepository extends JpaRepository<Rating, Long> {
+public interface DistanceRatingRepository extends JpaRepository<DistanceRating, Long> {
 
-  Optional<Rating> findByUserIdAndDistanceType(Long userId, DistanceType distanceType);
+  Optional<DistanceRating> findByUserIdAndDistanceType(Long userId, DistanceType distanceType);
 }
