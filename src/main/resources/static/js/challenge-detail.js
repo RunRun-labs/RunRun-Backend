@@ -447,19 +447,16 @@ function formatDate(dateString) {
 }
 
 /**
- * 시간 포맷팅 (분 단위를 시간:분으로)
+ * 시간 포맷팅 (분 단위를 시간으로 변환)
+ * 예: 90분 -> 1.5시간, 60분 -> 1시간
  */
 function formatTime(minutes) {
-    if (!minutes && minutes !== 0) return "0시간 0분";
-    const hours = Math.floor(minutes / 60);
-    const mins = Math.round(minutes % 60);
+    if (!minutes && minutes !== 0) return "0시간";
 
-    // 1시간 이상일 때: "20시간" 또는 "1시간 30분" 형식
-    if (hours > 0) {
-        return mins > 0 ? `${hours}시간 ${mins}분` : `${hours}시간`;
-    }
-    // 1시간 미만일 때: "0시간 30분" 형식으로 수정
-    return `0시간 ${mins}분`;
+    const hours = minutes / 60;
+    const formattedHours = parseFloat(hours.toFixed(1));
+
+    return `${formattedHours}시간`;
 }
 
 /**
@@ -670,4 +667,3 @@ function isSafeReferrerPath(expectedPath) {
         return false;
     }
 }
-
