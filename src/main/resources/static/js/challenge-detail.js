@@ -11,6 +11,27 @@ document.addEventListener("DOMContentLoaded", () => {
     // 뒤로가기 버튼 클릭 이벤트
     if (backButton) {
         backButton.addEventListener("click", () => {
+            const returnTo = getSafeReturnTo();
+
+            // 1) 명시적 returnTo가 있으면 최우선
+            if (returnTo) {
+                window.location.href = returnTo;
+                return;
+            }
+
+            // 2) referrer가 같은 origin이고, 종료 목록에서 왔으면 그쪽으로
+            if (isSafeReferrerPath("/challenge/end")) {
+                window.location.href = "/challenge/end";
+                return;
+            }
+
+            // 3) 일반적인 뒤로가기가 가능한 경우 history 사용
+            if (window.history.length > 1 && isSameOriginReferrer()) {
+                window.history.back();
+                return;
+            }
+
+            // 4) 폴백
             window.location.href = "/challenge";
         });
     }
@@ -150,7 +171,7 @@ async function loadChallengeDetail(challengeId) {
     const accessToken = localStorage.getItem("accessToken");
 
     try {
-
+        // API 경로는 ChallengeController의 @RequestMapping("/challenges")를 따름
         const response = await fetch(`/challenges/${challengeId}`, {
             headers: accessToken
                 ? {Authorization: `Bearer ${accessToken}`}
@@ -224,36 +245,29 @@ function renderChallengeDetail(challenge) {
         participantTextEl.textContent = `${participantCount}명 참가`;
     }
 
-    // 사용자 참여 상태
-    const status = challenge.myStatus; // JOINED, IN_PROGRESS, COMPLETED, FAILED, CANCELED, null
-
-    // [수정] 날짜 관련 메시지 로직 개선
-    // 1. JOINED 상태라면 시작일까지 남은 날짜 계산
-    // 2. 그 외에는 종료일까지 남은 날짜 계산
+    // 남은 일수 계산 및 메시지 표시 로직 개선
     const daysMessageEl = document.querySelector('[data-role="days-message-text"]');
     if (daysMessageEl) {
+        // [수정] 시작 날짜까지 남은 일수 계산
+        const daysToStart = calculateDaysRemaining(challenge.startDate);
         const daysRemaining = calculateDaysRemaining(challenge.endDate);
-        const daysToStart = calculateDaysRemaining(challenge.startDate); // 시작일까지 남은 날짜
 
-        if (status === "JOINED") {
-            // 시작 전 (JOINED 상태)
-            if (daysToStart > 0) {
-                daysMessageEl.textContent = `챌린지 시작까지 ${daysToStart}일 남았어요!`;
-            } else if (daysToStart === 0) {
-                daysMessageEl.textContent = "오늘 챌린지가 시작됩니다!";
+        // 아직 시작하지 않은 챌린지 (시작일이 미래)
+        // 참여 상태와 무관하게 시작 전이면 시작일까지 남은 시간 안내
+        if (daysToStart > 0) {
+            daysMessageEl.textContent = `챌린지 시작까지 ${daysToStart}일 남았어요!`;
+        } else if (daysToStart === 0) {
+            // 오늘 시작하는 챌린지라면 (이미 시작된 것으로 간주할 수도 있고, 오늘부터 시작이라고 알릴 수도 있음)
+            // 여기서는 오늘 시작일 때도 남은 기간을 보여주거나, 별도 문구 가능
+            // "오늘 챌린지가 시작됩니다!" 혹은 바로 남은 기간 표시
+            // 일반적으로 시작일 포함이므로 남은 기간 표시로 넘어감
+            if (daysRemaining >= 0) {
+                daysMessageEl.textContent = `목표 달성 기간이 ${daysRemaining}일 남았어요!`;
             } else {
-                // 이미 시작일이 지났는데 JOINED라면 (스케줄러 미동작 등 예외 상황)
-                // -> 일단 진행 중으로 간주하고 목표 달성 기간 표시
-                if (daysRemaining > 0) {
-                    daysMessageEl.textContent = `목표 달성 기간이 ${daysRemaining}일 남았어요!`;
-                } else if (daysRemaining === 0) {
-                    daysMessageEl.textContent = "오늘이 챌린지 마지막 날입니다!";
-                } else {
-                    daysMessageEl.textContent = "종료된 챌린지입니다.";
-                }
+                daysMessageEl.textContent = "종료된 챌린지입니다.";
             }
         } else {
-            // IN_PROGRESS, 미참여 등 나머지 상태
+            // 이미 시작된 챌린지
             if (daysRemaining > 0) {
                 daysMessageEl.textContent = `목표 달성 기간이 ${daysRemaining}일 남았어요!`;
             } else if (daysRemaining === 0) {
@@ -263,6 +277,9 @@ function renderChallengeDetail(challenge) {
             }
         }
     }
+
+    // 사용자 참여 상태에 따른 UI 표시
+    const status = challenge.myStatus; // JOINED, IN_PROGRESS, COMPLETED, FAILED, CANCELED, null
 
     // 모든 버튼/영역 초기화 (숨김)
     const joinBtn = document.querySelector('[data-role="join-button"]');
@@ -309,8 +326,9 @@ function renderChallengeDetail(challenge) {
             deleteBtn.hidden = false;
             deleteBtn.style.display = "block";
         }
+        // 관리자여도 챌린지 상세 내용은 봐야 하므로 progress는 숨기고, 참여 버튼도 숨김
     } else {
-        // 일반 사용자인 경우
+        // 일반 사용자인 경우: 기존 로직 유지
         console.log("[DEBUG] Normal user detected.");
 
         // [수정] 참여 기록이 있는 모든 상태(JOINED, IN_PROGRESS, COMPLETED, FAILED)에서 진행도 표시
@@ -384,15 +402,14 @@ function showProgressArea(challenge) {
     if (progressFillEl) {
         progressFillEl.style.width = `${progressPercent}%`;
 
-        // [추가] 실패 시 빨간색, 성공 시 초록색 표시
+        // [추가] 실패 시 빨간색 등으로 표시하고 싶다면 클래스 추가 (선택사항)
         if (challenge.myStatus === "FAILED") {
             progressFillEl.style.backgroundColor = "#ff4d4d"; // 예: 빨간색
         } else if (challenge.myStatus === "COMPLETED") {
             progressFillEl.style.backgroundColor = "#4caf50"; // 예: 초록색
         } else {
-            // 기본색 (CSS에서 지정된 색상으로 복구하고 싶다면 빈 문자열)
-            // 여기서는 인라인 스타일을 제거하거나 테마 색상을 지정해야 함
-            // progressFillEl.style.backgroundColor = "";
+            // 진행중일 때는 CSS에 정의된 기본 색상(형광 연두 등) 사용
+            progressFillEl.style.backgroundColor = "";
         }
     }
 }
@@ -446,22 +463,21 @@ function formatTime(minutes) {
 }
 
 /**
- * [수정] 남은 일수 계산 (날짜 차이)
- * targetDateString: 'YYYY-MM-DD' 형태
+ * 남은 일수 계산
  */
-function calculateDaysRemaining(targetDateString) {
-    if (!targetDateString) return -1;
+function calculateDaysRemaining(endDateString) {
+    if (!endDateString) return -1;
 
-    // 비교 대상 날짜 (시간은 00:00:00 기준)
-    const targetDate = new Date(targetDateString);
-    targetDate.setHours(0, 0, 0, 0);
+    // 종료일 (시간은 00:00:00 기준)
+    const endDate = new Date(endDateString);
+    endDate.setHours(0, 0, 0, 0);
 
     // 오늘 날짜 (시간은 00:00:00 기준)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // 차이 계산 (밀리초)
-    const diffTime = targetDate.getTime() - today.getTime();
+    const diffTime = endDate.getTime() - today.getTime();
 
     // 차이가 음수면 이미 지난 날짜 -> -1 반환
     if (diffTime < 0) return -1;
@@ -615,3 +631,43 @@ async function handleDeleteChallenge(challengeId) {
         }
     }
 }
+
+function getSafeReturnTo() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const raw = params.get("returnTo");
+        if (!raw) return null;
+
+        // open redirect 방지: 반드시 내부 상대경로만 허용
+        if (!raw.startsWith("/")) return null;
+        // 더 엄격히: 우리가 쓰는 경로만 허용 (필요시 목록 추가)
+        const allowed = new Set(["/challenge/end", "/challenge"]);
+        if (!allowed.has(raw)) return null;
+
+        return raw;
+    } catch {
+        return null;
+    }
+}
+
+function isSameOriginReferrer() {
+    try {
+        if (!document.referrer) return false;
+        const ref = new URL(document.referrer);
+        return ref.origin === window.location.origin;
+    } catch {
+        return false;
+    }
+}
+
+function isSafeReferrerPath(expectedPath) {
+    try {
+        if (!document.referrer) return false;
+        const ref = new URL(document.referrer);
+        if (ref.origin !== window.location.origin) return false;
+        return ref.pathname === expectedPath;
+    } catch {
+        return false;
+    }
+}
+

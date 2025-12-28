@@ -87,7 +87,9 @@ function createChallengeCard(challenge, sectionType) {
     card.setAttribute("data-challenge-id", challenge.id);
 
     card.addEventListener("click", () => {
-        window.location.href = `/challenge/${challenge.id}`;
+        // 종료 목록에서 상세로 이동한 경우, 복귀 경로를 함께 전달
+        const returnTo = encodeURIComponent("/challenge/end");
+        window.location.href = `/challenge/${challenge.id}?returnTo=${returnTo}`;
     });
 
     const thumb = document.createElement("div");
@@ -162,4 +164,3 @@ function getChallengeTypeLabel(type) {
     const labels = {DISTANCE: "거리형", TIME: "시간형", COUNT: "출석형"};
     return labels[type] || type;
 }
-
