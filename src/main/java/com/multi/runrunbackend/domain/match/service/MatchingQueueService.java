@@ -5,8 +5,8 @@ import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.dto.res.OnlineMatchStatusResDto;
-import com.multi.runrunbackend.domain.rating.Rating;
-import com.multi.runrunbackend.domain.rating.repository.RatingRepository;
+import com.multi.runrunbackend.domain.rating.DistanceRating;
+import com.multi.runrunbackend.domain.rating.repository.DistanceRatingRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MatchingQueueService {
 
   private final RedisTemplate<String, String> redisTemplate;
-  private final RatingRepository ratingRepository;
+  private final DistanceRatingRepository distanceRatingRepository;
   private final UserRepository userRepository;
   private static final String QUEUE_KEY_PREFIX = "matching_queue:";
   private static final String USER_STATUS_KEY_PREFIX = "user_queue_status:";
@@ -44,8 +44,8 @@ public class MatchingQueueService {
     Long userId = user.getId();
     removeQueue(principal);
 
-    int rating = ratingRepository.findByUserIdAndDistanceType(userId, distance)
-        .map(Rating::getCurrentRating)
+    int rating = distanceRatingRepository.findByUserIdAndDistanceType(userId, distance)
+        .map(DistanceRating::getCurrentRating)
         .orElse(1000);
 
     String queueKey = makeQueueKey(distance, targetCount);
