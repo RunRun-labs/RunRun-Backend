@@ -30,7 +30,7 @@ public class ChallengeReqDto {
 
     @NotNull(message = "목표값은 필수입니다.")
     @DecimalMin(value = "0.1", message = "목표값은 0보다 커야 합니다.")
-    @DecimalMax(value = "10000", message = "목표값이 너무 큽니다.")
+    @DecimalMax(value = "12000", message = "목표값이 너무 큽니다.")
     private Double targetValue;
 
     @NotBlank(message = "설명은 필수입니다.")
