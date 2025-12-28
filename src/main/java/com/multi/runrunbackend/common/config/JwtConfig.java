@@ -61,6 +61,7 @@ public class JwtConfig {
                 "/courseUpdate/**",
                 "/course_manual/**",
                 "/crews/new",
+                "/test/gps",
                 "/crews/**",
                 "/match/**",
                 "/recruit/**"
