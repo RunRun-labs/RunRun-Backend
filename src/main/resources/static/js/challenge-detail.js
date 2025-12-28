@@ -214,7 +214,6 @@ function renderChallengeDetail(challenge) {
             imageEl.src = challenge.imageUrl;
             imageEl.alt = challenge.title || "챌린지 이미지";
 
-            // [수정] 무한 루프 방지
             imageEl.onerror = function () {
                 this.onerror = null;
                 this.src = "/img/default-challenge.png";
@@ -248,32 +247,36 @@ function renderChallengeDetail(challenge) {
     // 남은 일수 계산 및 메시지 표시 로직 개선
     const daysMessageEl = document.querySelector('[data-role="days-message-text"]');
     if (daysMessageEl) {
-        // [수정] 시작 날짜까지 남은 일수 계산
-        const daysToStart = calculateDaysRemaining(challenge.startDate);
-        const daysRemaining = calculateDaysRemaining(challenge.endDate);
 
-        // 아직 시작하지 않은 챌린지 (시작일이 미래)
-        // 참여 상태와 무관하게 시작 전이면 시작일까지 남은 시간 안내
-        if (daysToStart > 0) {
-            daysMessageEl.textContent = `챌린지 시작까지 ${daysToStart}일 남았어요!`;
-        } else if (daysToStart === 0) {
-            // 오늘 시작하는 챌린지라면 (이미 시작된 것으로 간주할 수도 있고, 오늘부터 시작이라고 알릴 수도 있음)
-            // 여기서는 오늘 시작일 때도 남은 기간을 보여주거나, 별도 문구 가능
-            // "오늘 챌린지가 시작됩니다!" 혹은 바로 남은 기간 표시
-            // 일반적으로 시작일 포함이므로 남은 기간 표시로 넘어감
-            if (daysRemaining >= 0) {
-                daysMessageEl.textContent = `목표 달성 기간이 ${daysRemaining}일 남았어요!`;
-            } else {
-                daysMessageEl.textContent = "종료된 챌린지입니다.";
-            }
+        if (challenge.myStatus === "COMPLETED") {
+            daysMessageEl.textContent = "도전 성공했습니다! 🎉";
+        } else if (challenge.myStatus === "FAILED") {
+            daysMessageEl.textContent = "도전 실패했습니다! 😢";
         } else {
-            // 이미 시작된 챌린지
-            if (daysRemaining > 0) {
-                daysMessageEl.textContent = `목표 달성 기간이 ${daysRemaining}일 남았어요!`;
-            } else if (daysRemaining === 0) {
-                daysMessageEl.textContent = "오늘이 챌린지 마지막 날입니다!";
+
+            const daysToStart = calculateDaysRemaining(challenge.startDate);
+            const daysRemaining = calculateDaysRemaining(challenge.endDate);
+
+            // 아직 시작하지 않은 챌린지 (시작일이 미래)
+            // 참여 상태와 무관하게 시작 전이면 시작일까지 남은 시간 안내
+            if (daysToStart > 0) {
+                daysMessageEl.textContent = `챌린지 시작까지 ${daysToStart}일 남았어요!`;
+            } else if (daysToStart === 0) {
+
+                if (daysRemaining >= 0) {
+                    daysMessageEl.textContent = `목표 달성 기간이 ${daysRemaining}일 남았어요!`;
+                } else {
+                    daysMessageEl.textContent = "종료된 챌린지입니다.";
+                }
             } else {
-                daysMessageEl.textContent = "종료된 챌린지입니다.";
+                // 이미 시작된 챌린지
+                if (daysRemaining > 0) {
+                    daysMessageEl.textContent = `목표 달성 기간이 ${daysRemaining}일 남았어요!`;
+                } else if (daysRemaining === 0) {
+                    daysMessageEl.textContent = "오늘이 챌린지 마지막 날입니다!";
+                } else {
+                    daysMessageEl.textContent = "종료된 챌린지입니다.";
+                }
             }
         }
     }
