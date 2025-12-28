@@ -7,8 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const messageBox = document.getElementById("messageBox");
     const submitButton = document.getElementById("submitButton");
     const backBtn = document.querySelector(".back-button");
+    const imageUploadLabel = document.querySelector(".image-upload-label");
 
-    // 필드 순서 정의 (검증 순서 및 전체 검사 시 사용)
     const fieldOrder = [
         "title",
         "challengeType",
@@ -18,13 +18,15 @@ document.addEventListener("DOMContentLoaded", () => {
         "description"
     ];
 
-    // 에러 메시지를 표시할 DOM 요소 ID 매핑 (HTML에 해당 ID를 가진 요소가 없으면 JS에서 동적으로 처리하거나 추가 필요)
-    // 현재 HTML에는 해당 ID들이 없으므로, setMessage를 활용하거나 동적으로 생성하는 방식을 고려해야 합니다.
-    // 하지만 mypage-edit.js처럼 data-feedback 속성을 사용하는 것이 깔끔하므로,
-    // 여기서는 setFieldMessage 함수 내부에서 적절한 위치에 메시지를 띄우도록 처리하겠습니다.
-    // (기존 HTML 구조를 건드리지 않기 위해 input 바로 다음이나 적절한 위치를 찾습니다.)
 
-    // 검증 로직 정의
+    const errorElementMap = {
+        title: "titleError",
+        targetValue: "targetValueError",
+        startDate: "dateError",
+        endDate: "dateError",
+        description: "descError"
+    };
+
     const validators = {
         title: (value) => {
             if (!value) return "제목을 입력해주세요.";
@@ -41,10 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (isNaN(num) || num <= 0) return "목표값은 0보다 큰 숫자여야 합니다.";
 
             let maxLimit = 10000;
-            // TIME 타입이면 200시간(12000분) 제한
             if (allValues.challengeType === "TIME") {
-                maxLimit = 12000; // 200시간 * 60분
-                // 입력값(시간)을 분으로 환산하여 체크
+                maxLimit = 12000;
                 if (num * 60 > maxLimit) return "목표값이 너무 큽니다. (최대 200시간)";
             } else {
                 if (num > maxLimit) return "목표값이 너무 큽니다. (최대 10,000)";
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // 초기화 및 이벤트 바인딩
+
     if (backBtn) {
         backBtn.addEventListener("click", () => {
             window.location.href = "/challenge";
@@ -92,13 +92,13 @@ document.addEventListener("DOMContentLoaded", () => {
         removeImageButton.addEventListener("click", clearImagePreview);
     }
 
-    // 챌린지 타입 변경 이벤트
+
     const challengeTypeRadios = form?.querySelectorAll('input[name="challengeType"]');
     if (challengeTypeRadios) {
         challengeTypeRadios.forEach((radio) => {
             radio.addEventListener("change", () => {
                 updateTargetValueField(radio.value);
-                // 타입 변경 시 목표값 재검증
+
                 const values = collectFormValues(new FormData(form));
                 validateAndDecorateField("targetValue", values);
             });
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTargetValueField(selectedType);
     }
 
-    // 실시간 유효성 검사 활성화
+
     if (form) {
         enableRealtimeValidation(form);
 
@@ -115,6 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             const formData = new FormData(form);
             const values = collectFormValues(formData);
+
 
             const {valid, firstError} = validateAllFields(values);
             decorateAllFields(values);
@@ -128,7 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- Helper Functions ---
 
     function collectFormValues(formData) {
         return {
@@ -146,12 +146,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const input = form.querySelector(`[name="${name}"]`);
             if (!input) return;
 
-            // 입력 시마다 검증
             input.addEventListener("input", () => {
                 const values = collectFormValues(new FormData(form));
                 validateAndDecorateField(name, values);
             });
-            // 날짜 등 change 이벤트가 필요한 경우
             input.addEventListener("change", () => {
                 const values = collectFormValues(new FormData(form));
                 validateAndDecorateField(name, values);
@@ -200,11 +198,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function setInputState(input, state) {
         input.classList.remove("input-valid", "input-invalid");
-        input.style.borderColor = ""; // 인라인 스타일 초기화
+        input.style.borderColor = "";
 
         if (state === "invalid") {
             input.classList.add("input-invalid");
-            // CSS 파일에 .input-invalid가 없다면 여기서 직접 스타일 적용
             input.style.borderColor = "var(--error)";
         } else if (state === "valid" && input.value) {
             input.classList.add("input-valid");
@@ -213,16 +210,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function setFieldMessage(name, message) {
-        // 기존 HTML 구조상 별도의 에러 메시지 컨테이너가 없을 수 있으므로
-        // 동적으로 생성하거나 기존 구조 활용.
-        // 여기서는 간단하게 input 요소의 부모(form-group) 안에 .error-msg를 찾거나 생성합니다.
-
         const input = form.querySelector(`[name="${name}"]`);
         if (!input) return;
 
         let errorEl = null;
-        // 1. 이미 존재하는지 확인 (HTML상 형제 요소 등)
-        // input 바로 다음에 있는 .error-msg 찾기 시도
         let next = input.nextElementSibling;
         while (next) {
             if (next.classList.contains('error-msg')) {
@@ -232,13 +223,12 @@ document.addEventListener("DOMContentLoaded", () => {
             next = next.nextElementSibling;
         }
 
-        // 2. 없으면 생성 (input 부모 요소에 추가)
         if (!errorEl) {
             errorEl = document.createElement("div");
             errorEl.className = "error-msg";
             errorEl.style.fontSize = "12px";
             errorEl.style.marginTop = "4px";
-            // input 바로 뒤에 삽입
+
             input.parentNode.insertBefore(errorEl, input.nextSibling);
         }
 
@@ -249,7 +239,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- Business Logic ---
 
     async function submitForm(values) {
         const accessToken = localStorage.getItem("accessToken");
@@ -266,7 +255,6 @@ document.addEventListener("DOMContentLoaded", () => {
         setMessage("");
 
         try {
-            // TIME 타입 변환 (시간 -> 분)
             let targetVal = parseFloat(values.targetValue);
             if (values.challengeType === "TIME") {
                 targetVal = targetVal * 60;
@@ -316,7 +304,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- UI Helpers ---
 
     function updateTargetValueField(challengeType) {
         const targetValueLabel = document.getElementById("targetValueLabel");
@@ -365,6 +352,12 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.onload = (e) => {
             previewImage.src = e.target.result;
             imagePreview.hidden = false;
+
+
+            if (imageUploadLabel) {
+                imageUploadLabel.style.display = "none";
+            }
+
             setMessage("");
         };
         reader.readAsDataURL(file);
@@ -374,6 +367,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (imageInput) imageInput.value = "";
         if (previewImage) previewImage.src = "";
         if (imagePreview) imagePreview.hidden = true;
+
+
+        if (imageUploadLabel) {
+            imageUploadLabel.style.display = "block";
+        }
+
         setMessage("");
     }
 

@@ -2,14 +2,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("challengeEditForm");
     const imageInput = document.getElementById("imageFile");
     const imagePreview = document.getElementById("imagePreview");
-    const imagePlaceholder = document.getElementById("imagePlaceholder");
+
+
+    const imageUploadLabel = document.querySelector(".image-upload-label");
+
     const previewImage = document.getElementById("previewImage");
     const removeImageButton = document.getElementById("removeImage");
     const messageBox = document.getElementById("messageBox");
     const submitButton = document.getElementById("submitButton");
     const backBtn = document.querySelector(".back-button");
 
-    const fieldOrder = ["title", "challengeType", "targetValue", "startDate", "endDate", "description"];
+
+    const fieldOrder = [
+        "title",
+        "challengeType",
+        "targetValue",
+        "startDate",
+        "endDate",
+        "description"
+    ];
+
+
+    const errorElementMap = {
+        title: "titleError",
+        targetValue: "targetValueError",
+        startDate: "dateError",
+        endDate: "dateError",
+        description: "descError"
+    };
+
 
     const validators = {
         title: (value) => {
@@ -27,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (isNaN(num) || num <= 0) return "목표값은 0보다 큰 숫자여야 합니다.";
 
             let maxLimit = 10000;
+
             if (allValues.challengeType === "TIME") {
                 maxLimit = 12000;
                 if (num * 60 > maxLimit) return "목표값이 너무 큽니다. (최대 200시간)";
@@ -37,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         startDate: (value) => {
             if (!value) return "시작일을 선택해주세요.";
-            // 수정 시 과거 날짜 허용 여부는 정책에 따름
+
             return "";
         },
         endDate: (value, allValues) => {
@@ -57,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+
     const challengeId = extractChallengeIdFromUrl();
     if (!challengeId) {
         alert("잘못된 접근입니다.");
@@ -64,38 +87,51 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+
     if (backBtn) {
         backBtn.addEventListener("click", () => {
             window.location.href = `/challenge/${challengeId}`;
         });
     }
 
-    if (imageInput) imageInput.addEventListener("change", (e) => handleImageSelect(e.target.files[0]));
-    if (removeImageButton) removeImageButton.addEventListener("click", clearImagePreview);
+    if (imageInput) {
+        imageInput.addEventListener("change", (e) => handleImageSelect(e.target.files[0]));
+    }
+
+    if (removeImageButton) {
+        removeImageButton.addEventListener("click", clearImagePreview);
+    }
 
     loadChallengeData(challengeId);
+
 
     if (form) {
         enableRealtimeValidation(form);
 
+
         const challengeTypeRadios = form.querySelectorAll('input[name="challengeType"]');
-        challengeTypeRadios.forEach((radio) => {
-            radio.addEventListener("change", () => {
-                updateTargetValueField(radio.value);
-                const values = collectFormValues(new FormData(form));
-                validateAndDecorateField("targetValue", values);
+        if (challengeTypeRadios) {
+            challengeTypeRadios.forEach((radio) => {
+                radio.addEventListener("change", () => {
+                    updateTargetValueField(radio.value);
+
+                    const values = collectFormValues(new FormData(form));
+                    validateAndDecorateField("targetValue", values);
+                });
             });
-        });
+        }
 
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const formData = new FormData(form);
             const values = collectFormValues(formData);
 
+
             const {valid, firstError} = validateAllFields(values);
             decorateAllFields(values);
 
             if (!valid) {
+
                 if (firstError) setMessage(firstError, "error");
                 return;
             }
@@ -104,7 +140,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- Helper Functions ---
 
     function collectFormValues(formData) {
         return {
@@ -122,10 +157,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const input = form.querySelector(`[name="${name}"]`);
             if (!input) return;
 
+
             input.addEventListener("input", () => {
                 const values = collectFormValues(new FormData(form));
                 validateAndDecorateField(name, values);
             });
+
             input.addEventListener("change", () => {
                 const values = collectFormValues(new FormData(form));
                 validateAndDecorateField(name, values);
@@ -138,10 +175,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const {valid, message} = evaluateField(name, values);
         const input = form.querySelector(`[name="${name}"]`);
 
+
         if (input) {
             setInputState(input, valid ? "valid" : "invalid");
         }
+
+
         setFieldMessage(name, valid ? "" : message);
+
         return {valid, message};
     }
 
@@ -155,6 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function validateAllFields(values) {
         let allValid = true;
         let firstError = "";
+
         fieldOrder.forEach((name) => {
             const {valid, message} = evaluateField(name, values);
             if (!valid) {
@@ -162,6 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!firstError) firstError = message;
             }
         });
+
         return {valid: allValid, firstError};
     }
 
@@ -170,11 +213,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function setInputState(input, state) {
+
         input.classList.remove("input-valid", "input-invalid");
         input.style.borderColor = "";
 
+
         if (state === "invalid") {
             input.classList.add("input-invalid");
+
             input.style.borderColor = "var(--error)";
         } else if (state === "valid" && input.value) {
             input.classList.add("input-valid");
@@ -183,35 +229,47 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function setFieldMessage(name, message) {
-        const input = form.querySelector(`[name="${name}"]`);
-        if (!input) return;
 
         let errorEl = null;
-        let next = input.nextElementSibling;
-        while (next) {
-            if (next.classList.contains('error-msg')) {
-                errorEl = next;
-                break;
-            }
-            next = next.nextElementSibling;
+        if (errorElementMap[name]) {
+            errorEl = document.getElementById(errorElementMap[name]);
         }
 
         if (!errorEl) {
-            errorEl = document.createElement("div");
-            errorEl.className = "error-msg";
-            errorEl.style.fontSize = "12px";
-            errorEl.style.marginTop = "4px";
-            input.parentNode.insertBefore(errorEl, input.nextSibling);
+            const input = form.querySelector(`[name="${name}"]`);
+            if (input) {
+                let next = input.nextElementSibling;
+                while (next) {
+                    if (next.classList.contains('error-msg')) {
+                        errorEl = next;
+                        break;
+                    }
+                    next = next.nextElementSibling;
+                }
+            }
+        }
+
+
+        if (!errorEl) {
+            const input = form.querySelector(`[name="${name}"]`);
+            if (input) {
+                errorEl = document.createElement("div");
+                errorEl.className = "error-msg";
+                errorEl.style.fontSize = "12px";
+                errorEl.style.marginTop = "4px";
+
+                input.parentNode.insertBefore(errorEl, input.nextSibling);
+            }
         }
 
         if (errorEl) {
             errorEl.textContent = message;
+
             errorEl.style.display = message ? "block" : "none";
             errorEl.style.color = "var(--error)";
         }
     }
 
-    // --- Business Logic ---
 
     function extractChallengeIdFromUrl() {
         const path = window.location.pathname;
@@ -239,17 +297,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function fillFormWithChallengeData(challenge) {
+
         const titleInput = document.getElementById("title");
         if (titleInput) titleInput.value = challenge.title || "";
 
         const descriptionInput = document.getElementById("description");
         if (descriptionInput) descriptionInput.value = challenge.description || "";
 
+
         if (challenge.imageUrl) {
             previewImage.src = challenge.imageUrl;
             imagePreview.hidden = false;
-            if (imagePlaceholder) imagePlaceholder.hidden = true;
+
+            if (imageUploadLabel) {
+                imageUploadLabel.style.display = "none";
+            }
         }
+
 
         const type = challenge.challengeType || "DISTANCE";
         const typeRadio = form.querySelector(`input[name="challengeType"][value="${type}"]`);
@@ -264,6 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (type === "TIME" && val > 0) val = val / 60;
             targetInput.value = val;
         }
+
 
         const startInput = document.getElementById("startDate");
         const endInput = document.getElementById("endDate");
@@ -333,6 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+
     function formatDateForInput(dateString) {
         if (!dateString) return "";
         const date = new Date(dateString);
@@ -385,7 +451,9 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.onload = (e) => {
             previewImage.src = e.target.result;
             imagePreview.hidden = false;
-            if (imagePlaceholder) imagePlaceholder.hidden = true;
+            if (imageUploadLabel) {
+                imageUploadLabel.style.display = "none";
+            }
             setMessage("");
         };
         reader.readAsDataURL(file);
@@ -395,7 +463,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (imageInput) imageInput.value = "";
         if (previewImage) previewImage.src = "";
         if (imagePreview) imagePreview.hidden = true;
-        if (imagePlaceholder) imagePlaceholder.hidden = false;
+        if (imageUploadLabel) {
+            imageUploadLabel.style.display = "block";
+        }
         setMessage("");
     }
 
