@@ -62,6 +62,16 @@ public enum ErrorCode {
             "CH002",
             "해당 챌린지에 대한 권한이 없습니다."
     ),
+    CHALLENGE_CANNOT_UPDATE(
+            HttpStatus.BAD_REQUEST,
+            "CH003",
+            "진행 중이거나 참여자가 있는 챌린지의 주요 정보는 수정할 수 없습니다."
+    ),
+    CHALLENGE_CANNOT_DELETE(
+            HttpStatus.BAD_REQUEST,
+            "CH004",
+            "진행 중인 챌린지는 삭제할 수 없습니다."
+    ),
     /*==== 코스 ====*/
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS_001", "코스를 찾을 수 없습니다"),
 
