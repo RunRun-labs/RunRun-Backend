@@ -38,6 +38,8 @@ public class UserSetting extends BaseTimeEntity {
     @Column(name = "night_notification_enabled", nullable = false)
     private boolean nightNotificationEnabled = false;
 
+    @Column(name = "tts_interval", nullable = false)
+    private int ttsInterval = 1;
 
     public static UserSetting createDefault(User user) {
         UserSetting setting = new UserSetting();
