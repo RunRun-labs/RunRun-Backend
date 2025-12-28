@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | 설정</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Outfit:wght@600&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/setting.css"
+            th:href="@{/css/setting.css}"
+    />
+</head>
+<body class="settings-body">
+<main class="page settings-page">
+    <header class="settings-header">
+        <button class="back-button" type="button" aria-label="뒤로가기">
+            <svg width="40" height="33" viewBox="0 0 40 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 8L8 16.5L15 25" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h1 class="settings-title">설정</h1>
+    </header>
+
+    <section class="settings-menu">
+        <button class="settings-menu-item" data-role="notification-settings" type="button">
+            <div class="menu-item-icon">
+                <svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.5 7.5C16.71 7.5 12 12.21 12 18C12 23.79 10.5 28.5 10.5 28.5H34.5C34.5 28.5 33 23.79 33 18C33 12.21 28.29 7.5 22.5 7.5Z"
+                          stroke="#baff29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16.5 31.5C16.5 33.15 17.85 34.5 19.5 34.5H25.5C27.15 34.5 28.5 33.15 28.5 31.5"
+                          stroke="#baff29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="22.5" cy="18" r="1.5" fill="#baff29"/>
+                </svg>
+            </div>
+            <span class="menu-item-text">알림설정</span>
+        </button>
+
+        <button class="settings-menu-item" data-role="blocked-users" type="button">
+            <div class="menu-item-icon">
+                <svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="22.5" cy="22.5" r="15" stroke="#baff29" stroke-width="2"/>
+                    <path d="M15 22.5H30" stroke="#baff29" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <span class="menu-item-text">차단한 사용자 관리</span>
+        </button>
+
+        <button class="settings-menu-item" data-role="logout" type="button">
+            <div class="menu-item-icon">
+                <svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 12L12 18L18 24" stroke="#baff29" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                    <path d="M12 18H27" stroke="#baff29" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M27 12H30C31.65 12 33 13.35 33 15V30C33 31.65 31.65 33 30 33H27" stroke="#baff29"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <span class="menu-item-text">로그아웃</span>
+        </button>
+
+        <button class="settings-menu-item" data-role="account-delete" type="button">
+            <div class="menu-item-icon">
+                <svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.5 10V22.5M22.5 22.5V35M22.5 22.5H10M22.5 22.5H35" stroke="#baff29" stroke-width="2"
+                          stroke-linecap="round"/>
+                    <circle cx="22.5" cy="22.5" r="15" stroke="#baff29" stroke-width="2"/>
+                </svg>
+            </div>
+            <span class="menu-item-text">계정 탈퇴</span>
+        </button>
+
+        <button class="settings-menu-item" data-role="terms" type="button">
+            <div class="menu-item-icon">
+                <svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 10.5H33C34.65 10.5 36 11.85 36 13.5V31.5C36 33.15 34.65 34.5 33 34.5H12C10.35 34.5 9 33.15 9 31.5V13.5C9 11.85 10.35 10.5 12 10.5Z"
+                          stroke="#baff29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M15 18H30" stroke="#baff29" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M15 22.5H30" stroke="#baff29" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <span class="menu-item-text">약관/정책 확인</span>
+        </button>
+
+        <button class="settings-menu-item" data-role="tts-settings" type="button">
+            <div class="menu-item-icon">
+                <svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 15C18 18.31 20.69 21 24 21C27.31 21 30 18.31 30 15C30 11.69 27.31 9 24 9C20.69 9 18 11.69 18 15Z"
+                          stroke="#baff29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 30C12 25.5 17.5 22.5 24 22.5C30.5 22.5 36 25.5 36 30" stroke="#baff29" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <span class="menu-item-text">TTS 설정</span>
+        </button>
+    </section>
+</main>
+
+<!-- 알림 설정 모달 -->
+<div class="modal-overlay" data-role="notification-modal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">알림설정</h2>
+            <button class="modal-close" type="button" aria-label="닫기">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="setting-option">
+                <div class="setting-option-content">
+                    <span class="setting-option-label">알림 허용</span>
+                    <span class="setting-option-desc">알림 수신 여부를 설정합니다</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" data-role="notification-enabled"/>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-option">
+                <div class="setting-option-content">
+                    <span class="setting-option-label">야간 알림 수신</span>
+                    <span class="setting-option-desc">야간 시간대 알림 수신 여부를 설정합니다</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" data-role="night-notification-enabled"/>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-save-button" type="button" data-role="save-settings">저장</button>
+        </div>
+    </div>
+</div>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/setting.js" th:src="@{/js/setting.js}"></script>
+</body>
+</html>
+
