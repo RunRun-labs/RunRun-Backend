@@ -1,16 +1,7 @@
 package com.multi.runrunbackend.domain.user.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseTimeEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,10 +15,10 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(
-    name = "user_settings",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id"})
-    }
+        name = "user_settings",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"user_id"})
+        }
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -47,9 +38,6 @@ public class UserSetting extends BaseTimeEntity {
     @Column(name = "night_notification_enabled", nullable = false)
     private boolean nightNotificationEnabled = false;
 
-    @Column(name = "tts_interval", nullable = false)
-    private int ttsIntervalSec = 60;
-
 
     public static UserSetting createDefault(User user) {
         UserSetting setting = new UserSetting();
@@ -62,10 +50,5 @@ public class UserSetting extends BaseTimeEntity {
         this.nightNotificationEnabled = nightEnabled;
     }
 
-    public void updateTtsInterval(int intervalSec) {
-        if (intervalSec <= 0) {
-            throw new IllegalArgumentException("ttsIntervalSec must be positive");
-        }
-        this.ttsIntervalSec = intervalSec;
-    }
+
 }
