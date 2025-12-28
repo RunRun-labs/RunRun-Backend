@@ -60,3 +60,8 @@ mapbox:
     response-ms: ${MAPBOX_RESPONSE_TIMEOUT_MS}
   response:
     max-bytes: ${MAPBOX_RESPONSE_MAX_BYTES}
+
+coupon:
+  code:
+    single:
+      length: ${COUPON_SINGLE_CODE_LENGTH}
