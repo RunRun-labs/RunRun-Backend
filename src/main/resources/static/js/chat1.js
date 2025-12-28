@@ -1445,3 +1445,71 @@ function closeRunningResultModal() {
     modal.classList.remove('show');
   }
 }
+
+// ============================================
+// 런닝 에러 처리
+// ============================================
+
+let errorSubscription = null;
+
+/**
+ * 런닝 에러 메시지 처리
+ */
+function handleRunningError(error) {
+  console.error('❌ 서버 에러 수신:', error);
+  
+  // 에러 메시지 표시
+  let errorMessage = error.message || '알 수 없는 오류가 발생했습니다.';
+  
+  // 에러 코드에 따른 추가 처리
+  switch (error.errorCode) {
+    case 'SESSION_NOT_FOUND':
+      errorMessage += '\n세션을 찾을 수 없습니다. 페이지를 새로고침해주세요.';
+      break;
+    case 'USER_NOT_FOUND':
+      errorMessage += '\n사용자 정보를 찾을 수 없습니다.';
+      break;
+    case 'INVALID_REQUEST':
+      errorMessage += '\n잘못된 요청입니다.';
+      break;
+    case 'INTERNAL_SERVER_ERROR':
+      errorMessage += '\n서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      break;
+  }
+  
+  alert('⚠️ GPS 추적 오류\n\n' + errorMessage);
+  
+  // 심각한 에러인 경우 GPS 추적 중지
+  if (error.errorCode === 'SESSION_NOT_FOUND' || error.errorCode === 'INTERNAL_SERVER_ERROR') {
+    if (runningTracker && runningTracker.isTracking) {
+      console.log('🛑 심각한 에러로 인한 GPS 추적 중지');
+      runningTracker.stopTracking();
+      runningTracker = null;
+    }
+  }
+}
+
+/**
+ * 런닝 에러 구독
+ */
+function subscribeToRunningErrors() {
+  if (!stompClient || !stompClient.connected) {
+    console.error('❌ WebSocket 연결 없음 (에러 구독)');
+    return;
+  }
+  
+  // 이미 구독 중이면 중복 구독 방지
+  if (errorSubscription) {
+    console.log('⚠️ 이미 런닝 에러를 구독 중입니다');
+    return;
+  }
+  
+  errorSubscription = stompClient.subscribe(
+      `/sub/running/${currentSession.id}/errors`,
+      function (message) {
+        const error = JSON.parse(message.body);
+        handleRunningError(error);
+      });
+  
+  console.log('✅ 런닝 에러 구독 완료:', `/sub/running/${currentSession.id}/errors`);
+}
