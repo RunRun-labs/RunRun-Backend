@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/settings")
+@RequestMapping("users/settings")
 public class UserSettingController {
 
     private final UserSettingService userSettingService;

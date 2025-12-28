@@ -91,7 +91,7 @@ function attachMenuHandlers() {
                 closeNotificationModal();
             }
         });
-        
+
         // 모달 콘텐츠 클릭 시 닫히지 않도록
         const modalContent = modalOverlay.querySelector(".modal-content");
         if (modalContent) {
@@ -118,7 +118,7 @@ async function loadUserSettings() {
             return;
         }
 
-        const response = await fetch("/settings", {
+        const response = await fetch("/users/settings", {
             headers: {
                 "Authorization": `Bearer ${token}`
             }
@@ -187,7 +187,7 @@ async function saveUserSettings() {
         const notificationEnabled = notificationEnabledToggle?.checked || false;
         const nightNotificationEnabled = nightNotificationEnabledToggle?.checked || false;
 
-        const response = await fetch("/settings", {
+        const response = await fetch("/users/settings", {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
