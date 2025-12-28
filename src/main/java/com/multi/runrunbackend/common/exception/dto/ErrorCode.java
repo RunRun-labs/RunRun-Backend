@@ -207,7 +207,11 @@ public enum ErrorCode {
     MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
         "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
     MAPBOX_OVERLAY_EMPTY(HttpStatus.BAD_REQUEST, "M_002",
-        "썸네일 생성에 필요한 overlay 값이 비어있습니다.");
+        "썸네일 생성에 필요한 overlay 값이 비어있습니다."),
+    /*=====쿠폰=====*/
+    COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_001", "쿠폰을 찾을 수 없습니다"),
+    COUPON_CODE_DUPLICATE(HttpStatus.CONFLICT, "CPN_002", "쿠폰 코드가 중복입니다"),
+    COUPON_NOT_DRAFT(HttpStatus.FORBIDDEN, "CPN_003", "DRAFT 상태만 변경할 수 있습니다");
 
     private final HttpStatus httpStatus;
     private final String code;
