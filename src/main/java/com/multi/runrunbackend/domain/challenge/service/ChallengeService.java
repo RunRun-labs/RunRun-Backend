@@ -14,12 +14,12 @@ import com.multi.runrunbackend.domain.challenge.repository.ChallengeRepository;
 import com.multi.runrunbackend.domain.challenge.repository.UserChallengeRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -61,13 +61,33 @@ public class ChallengeService {
     }
 
     @Transactional
-    public void updateChallenge(Long challengeId, @Valid ChallengeReqDto req, MultipartFile imageFile, CustomUser principal) {
+    public void updateChallenge(Long challengeId, ChallengeReqDto req, MultipartFile imageFile, CustomUser principal) {
         validateAdminRole(principal);
-        User user = getUserByPrincipal(principal);
 
+        User user = getUserByPrincipal(principal);
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
 
+     
+        long participantCount = userChallengeRepository.countByChallengeId(challengeId);
+        boolean isStarted = !challenge.getStartDate().isAfter(LocalDate.now()); // 시작일 <= 오늘
+
+        if (participantCount > 0 || isStarted) {
+
+            if (!challenge.getTargetValue().equals(req.getTargetValue())) {
+                throw new InvalidRequestException(ErrorCode.CHALLENGE_CANNOT_UPDATE);
+            }
+
+            if (challenge.getChallengeType() != req.getChallengeType()) {
+                throw new InvalidRequestException(ErrorCode.CHALLENGE_CANNOT_UPDATE);
+            }
+
+            if (!challenge.getStartDate().equals(req.getStartDate()) ||
+                    !challenge.getEndDate().equals(req.getEndDate())) {
+                throw new InvalidRequestException(ErrorCode.CHALLENGE_CANNOT_UPDATE);
+            }
+            // 제목이나 설명은 수정 허용
+        }
 
         challenge.update(
                 req.getTitle(),
@@ -78,12 +98,8 @@ public class ChallengeService {
                 req.getEndDate()
         );
 
-
         if (imageFile != null && !imageFile.isEmpty()) {
             validateFile(imageFile);
-
-            if (challenge.getImageUrl() != null) fileStorage.delete(challenge.getImageUrl());
-
             String imageUrl = fileStorage.upload(imageFile, FileDomainType.CHALLENGE_IMAGE, challenge.getId());
             challenge.updateImageUrl(imageUrl);
         }
@@ -98,6 +114,18 @@ public class ChallengeService {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
 
+
+        LocalDate today = LocalDate.now();
+        boolean isInProgress = !challenge.getStartDate().isAfter(today) && !challenge.getEndDate().isBefore(today);
+
+        if (isInProgress) {
+            throw new InvalidRequestException(ErrorCode.CHALLENGE_CANNOT_DELETE);
+        }
+
+        long participantCount = userChallengeRepository.countByChallengeId(challengeId);
+        if (participantCount > 0) {
+            throw new InvalidRequestException(ErrorCode.CHALLENGE_CANNOT_DELETE);
+        }
 
         challenge.deleteChallenge();
     }
