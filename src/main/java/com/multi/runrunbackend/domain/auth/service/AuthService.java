@@ -3,7 +3,7 @@ package com.multi.runrunbackend.domain.auth.service;
 
 import static java.time.LocalDateTime.now;
 
-import com.multi.runrunbackend.common.exception.custom.DuplicateUsernameException;
+import com.multi.runrunbackend.common.exception.custom.DuplicateException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.jwt.dto.TokenDto;
@@ -42,7 +42,7 @@ public class AuthService {
     @Transactional
     public void signUp(UserSignUpDto userSignUpDto) {
         if (userRepository.findByLoginId(userSignUpDto.getLoginId()).isPresent()) {
-            throw new DuplicateUsernameException(ErrorCode.DUPLICATE_USER);
+            throw new DuplicateException(ErrorCode.DUPLICATE_USER);
         }
         String role = userSignUpDto.getLoginId().toLowerCase().contains("admin") ? "ROLE_ADMIN"
             : "ROLE_USER";
