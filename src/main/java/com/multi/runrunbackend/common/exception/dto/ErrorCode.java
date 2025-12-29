@@ -58,6 +58,8 @@ public enum ErrorCode {
     INVALID_JOIN_STATUS(HttpStatus.BAD_REQUEST, "CR017", "대기중 상태의 신청만 처리할 수 있습니다."),
     INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, "CR019", "포인트가 부족합니다."),  // 포인트 구현할 경우
     CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR020", "크루원을 찾을 수 없습니다."),
+    CREW_RECRUITMENT_CLOSED(HttpStatus.BAD_REQUEST, "CR021", "모집이 마감된 크루입니다."),
+    
 
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
