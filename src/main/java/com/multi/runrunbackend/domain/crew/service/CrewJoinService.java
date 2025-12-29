@@ -3,6 +3,8 @@ package com.multi.runrunbackend.domain.crew.service;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.crew.constant.CrewRecruitStatus;
 import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.crew.constant.JoinStatus;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewJoinReqDto;
@@ -42,20 +44,28 @@ public class CrewJoinService {
     private final UserRepository userRepository;
 
     /**
-     * @param crewId  가입 신청할 크루 ID
-     * @param loginId 가입 신청하는 회원 ID
-     * @param reqDto  가입 신청 정보 (자기소개, 거리, 페이스, 지역)
+     * @param crewId    가입 신청할 크루 ID
+     * @param principal 가입 신청하는 회원
+     * @param reqDto    가입 신청 정보 (자기소개, 거리, 페이스, 지역)
      * @description : 회원이 크루에 가입 신청 (이미 가입했거나 대기중인 경우 예외 발생) TODO 포인트 구현시, 포인트 100P가 차감
      */
     @Transactional
-    public void requestJoin(Long crewId, String loginId, CrewJoinReqDto reqDto) {
+    public void requestJoin(Long crewId, CustomUser principal, CrewJoinReqDto reqDto) {
         //크루 조회
         Crew crew = findCrewById(crewId);
 
         // 회원 조회
-        User user = findUserByLoginId(loginId);
+        User user = getUserOrThrow(principal);
 
-        // 이미 가입한 크루원인지 확인
+        // 모집 상태 확인 - 모집 마감이면 신청 불가
+        if (crew.getCrewRecruitStatus() == CrewRecruitStatus.CLOSED) {
+            throw new BusinessException(ErrorCode.CREW_RECRUITMENT_CLOSED);
+        }
+
+        // 1인 1크루 검증(다른 크루)
+        validateNotInAnotherCrew(user.getId());
+
+        // 이미 가입한 크루원인지 확인(해당 크루)
         boolean alreadyJoined = crewUserRepository.existsByCrewIdAndUserIdAndIsDeletedFalse(crewId, user.getId());
         if (alreadyJoined) {
             throw new BusinessException(ErrorCode.ALREADY_JOINED_CREW);
@@ -70,24 +80,32 @@ public class CrewJoinService {
         }
 
         // 가입 신청 생성
-        CrewJoinRequest joinRequest = reqDto.toEntity(crew, user);
+        CrewJoinRequest joinRequest = CrewJoinRequest.create(
+                crew,
+                user,
+                reqDto.getIntroduction(),
+                reqDto.getDistance(),
+                reqDto.getPace(),
+                reqDto.getRegion()
+        );
+
         crewJoinRequestRepository.save(joinRequest);
 
-        log.info("크루 가입 신청 완료 - crewId: {}, loginId: {}", crewId, loginId);
+        log.info("크루 가입 신청 완료 - crewId: {}, userId: {}", crewId, user.getId());
     }
 
     /**
-     * @param crewId  크루 ID
-     * @param loginId 신청 취소하는 회원 ID
+     * @param crewId    크루 ID
+     * @param principal 신청 취소하는 회원
      * @description : 신청자가 대기중인 가입 신청을 취소 TODO (포인트 구현시, 차감된 포인트 100P가 환불)
      */
     @Transactional
-    public void cancelJoinRequest(Long crewId, String loginId) {
+    public void cancelJoinRequest(Long crewId, CustomUser principal) {
         //크루 조회
         Crew crew = findCrewById(crewId);
 
         // 회원 조회
-        User user = findUserByLoginId(loginId);
+        User user = getUserOrThrow(principal);
 
         // 대기중인 가입 신청 조회
         CrewJoinRequest joinRequest = crewJoinRequestRepository.findByCrewAndUserAndJoinStatus(
@@ -97,29 +115,23 @@ public class CrewJoinService {
         // 가입 신청 취소로 상태 변경
         joinRequest.cancel();
 
-        log.info("크루 가입 신청 취소 완료 - crewId: {}, loginId: {}", crewId, loginId);
+        log.info("크루 가입 신청 취소 완료 - crewId: {}, userId: {}", crewId, user.getId());
     }
 
     /**
-     * @param crewId  크루 ID
-     * @param loginId 조회하는 크루장 ID
+     * @param crewId    크루 ID
+     * @param principal 조회하는 크루장
      * @description : 크루장이 대기중인 가입 신청 목록을 조회 (크루장 또는 부크루장만 조회 가능)
      */
-    public List<CrewJoinRequestResDto> getJoinRequestList(Long crewId, String loginId) {
+    public List<CrewJoinRequestResDto> getJoinRequestList(Long crewId, CustomUser principal) {
         //크루 조회
         Crew crew = findCrewById(crewId);
 
         // 회원 조회
-        User user = findUserByLoginId(loginId);
+        User user = getUserOrThrow(principal);
 
         // 크루장 또는 부크루장 권한 확인
-        CrewUser crewUser = crewUserRepository.findByCrewAndUserAndIsDeletedFalse(crew, user)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.CREW_MEMBER_NOT_FOUND));
-
-        if (!crewUser.getRole().equals(CrewRole.LEADER)
-                && !crewUser.getRole().equals(CrewRole.SUB_LEADER)) {
-            throw new BusinessException(ErrorCode.NOT_CREW_LEADER_OR_SUB_LEADER);
-        }
+        validateLeaderOrSubLeader(crew, user);
 
         // 대기중인 가입 신청 목록 조회
         List<CrewJoinRequest> joinRequests = crewJoinRequestRepository
@@ -127,23 +139,23 @@ public class CrewJoinService {
 
         // DTO로 변환하여 반환
         return joinRequests.stream()
-                .map(CrewJoinRequestResDto::toDto)
+                .map(CrewJoinRequestResDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     /**
      * @param crewId        크루 ID
-     * @param loginId       승인하는 크루장 로그인 ID
+     * @param principal     가입 신청하는 회원
      * @param joinRequestId 처리할 가입 신청 ID
      * @description : 크루장이 가입 신청을 승인 (승인 시 크루원으로 추가)
      */
     @Transactional
-    public void approveJoinRequest(Long crewId, String loginId, Long joinRequestId) {
+    public void approveJoinRequest(Long crewId, CustomUser principal, Long joinRequestId) {
         //크루 조회
         Crew crew = findCrewById(crewId);
 
         // 크루장 조회
-        User leader = findUserByLoginId(loginId);
+        User leader = getUserOrThrow(principal);
 
         // 크루장 또는 부크루장 권한 확인
         validateLeaderOrSubLeader(crew, leader);
@@ -160,9 +172,12 @@ public class CrewJoinService {
         // 승인 처리
         joinRequest.approve();
 
+        // 해당 사용자의 다른 크루 대기 중인 신청 모두 취소
+        cancelOtherPendingRequestsForUser(joinRequest.getUser().getId(), crewId);
+
         // 크루원으로 추가
-        CrewUser newCrewUser = CrewUser.toEntity(crew, joinRequest.getUser(), CrewRole.MEMBER);
-        crewUserRepository.save(newCrewUser);
+        CrewUser crewUser = CrewUser.create(crew, joinRequest.getUser(), CrewRole.MEMBER);
+        crewUserRepository.save(crewUser);
 
         log.info("크루 가입 승인 완료 - crewId: {}, newMemberId: {}",
                 crewId, joinRequest.getUser().getId());
@@ -171,17 +186,17 @@ public class CrewJoinService {
 
     /**
      * @param crewId        크루 ID
-     * @param loginId       거절하는 크루장 로그인 ID
+     * @param principal     가입 신청하는 회원
      * @param joinRequestId 거절할 가입 신청 ID
      * @description : 크루장이 가입 신청을 거절 TODO (포인트 구현 시, 포인트가 환불 예정)
      */
     @Transactional
-    public void rejectJoinRequest(Long crewId, String loginId, Long joinRequestId) {
+    public void rejectJoinRequest(Long crewId, CustomUser principal, Long joinRequestId) {
         // 크루 조회
         Crew crew = findCrewById(crewId);
 
         // 크루장 조회
-        User leader = findUserByLoginId(loginId);
+        User leader = getUserOrThrow(principal);
 
         // 크루장 또는 부크루장 권한 확인
         validateLeaderOrSubLeader(crew, leader);
@@ -203,17 +218,17 @@ public class CrewJoinService {
     }
 
     /**
-     * @param crewId  크루 ID
-     * @param loginId 탈퇴하려는 회원 로그인 ID
+     * @param crewId    크루 ID
+     * @param principal 가입 신청하는 회원
      * @description : 크루원이 크루 탈퇴 (승인된 크루원만 탈퇴 가능, 크루장은 탈퇴 불가 -> 위임 또는 해체 필요)
      */
     @Transactional
-    public void leaveCrew(Long crewId, String loginId) {
+    public void leaveCrew(Long crewId, CustomUser principal) {
         // 크루 조회
         Crew crew = findCrewById(crewId);
 
         // 회원 조회
-        User user = findUserByLoginId(loginId);
+        User user = getUserOrThrow(principal);
 
         // 크루원인지 확인
         CrewUser crewUser = crewUserRepository.findByCrewAndUserAndIsDeletedFalse(crew, user)
@@ -250,9 +265,13 @@ public class CrewJoinService {
     /**
      * 사용자 조회
      */
-    private User findUserByLoginId(String loginId) {
-        return userRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+    private User getUserOrThrow(CustomUser customUser) {
+        if (customUser == null || customUser.getUsername() == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        return userRepository.findByLoginId(customUser.getUsername())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
     /**
@@ -268,4 +287,37 @@ public class CrewJoinService {
         }
     }
 
+    /**
+     * 1인 1크루 검증 - 다른 크루에 이미 가입했는지 확인
+     */
+    private void validateNotInAnotherCrew(Long userId) {
+        boolean isInAnotherCrew = crewUserRepository
+                .existsByUserIdAndIsDeletedFalse(userId);
+
+        if (isInAnotherCrew) {
+            throw new BusinessException(ErrorCode.ALREADY_JOINED_CREW);
+        }
+    }
+
+    /**
+     * @description : 해당 사용자의 다른 크루 대기 중인 신청 모두 자동 취소
+     */
+    private void cancelOtherPendingRequestsForUser(Long userId, Long currentCrewId) {
+        // 해당 사용자의 대기 중인 신청 조회
+        List<CrewJoinRequest> otherPendingRequests = crewJoinRequestRepository
+                .findAllByUserIdAndJoinStatusAndIsDeletedFalse(userId, JoinStatus.PENDING);
+
+        // 현재 크루 제외하고 필터링
+        List<CrewJoinRequest> requestsToCancel = otherPendingRequests.stream()
+                .filter(request -> !request.getCrew().getId().equals(currentCrewId))
+                .collect(Collectors.toList());
+
+        // 취소 처리
+        requestsToCancel.forEach(CrewJoinRequest::cancel);
+
+        if (!requestsToCancel.isEmpty()) {
+            log.info("다른 크루 대기 신청 자동 취소 완료 - userId: {}, 취소된 신청 수: {}",
+                    userId, requestsToCancel.size());
+        }
+    }
 }
