@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     attachProfileEditHandler();
     attachProfileImageClickHandler();
     attachChallengeHandler();
+    attachSettingsHandler();
     loadMyBodyInfo();
 });
 
@@ -86,6 +87,15 @@ function attachChallengeHandler() {
 
     challengeBtn.addEventListener("click", () => {
         window.location.href = "/challenge";
+    });
+}
+
+function attachSettingsHandler() {
+    const settingsBtn = document.querySelector('[data-role="settings"]');
+    if (!settingsBtn) return;
+
+    settingsBtn.addEventListener("click", () => {
+        window.location.href = "/setting";
     });
 }
 
