@@ -1,6 +1,5 @@
 package com.multi.runrunbackend.domain.crew.controller;
 
-import com.multi.runrunbackend.common.jwt.provider.TokenProvider;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
@@ -31,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 public class CrewController {
 
     private final CrewService crewService;
-    private final TokenProvider tokenProvider;
 
     /**
      * @param reqDto 크루 생성 요청 DTO
@@ -39,47 +37,44 @@ public class CrewController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createCrew(
-            @AuthenticationPrincipal CustomUser customUser,
+            @AuthenticationPrincipal CustomUser principal,
             @Valid @RequestBody CrewCreateReqDto reqDto
     ) {
-        String loginId = customUser.getEmail();
-        Long crewId = crewService.createCrew(loginId, reqDto);
+        Long crewId = crewService.createCrew(principal, reqDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success("크루 생성 성공", crewId));
     }
 
     /**
-     * @param customUser 인증된 사용자 정보
-     * @param crewId     크루 ID
-     * @param reqDto     크루 수정 요청 DTO
+     * @param principal 인증된 사용자 정보
+     * @param crewId    크루 ID
+     * @param reqDto    크루 수정 요청 DTO
      * @description : 크루 수정
      */
     @PutMapping("/{crewId}")
     public ResponseEntity<ApiResponse<Void>> updateCrew(
-            @AuthenticationPrincipal CustomUser customUser,
+            @AuthenticationPrincipal CustomUser principal,
             @PathVariable Long crewId,
             @Valid @RequestBody CrewUpdateReqDto reqDto
     ) {
-        String loginId = customUser.getEmail();
-        crewService.updateCrew(crewId, loginId, reqDto);
+        crewService.updateCrew(crewId, principal, reqDto);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("크루 정보 수정 성공", null));
     }
 
     /**
-     * @param customUser 인증된 사용자 정보
-     * @param crewId     크루 ID
+     * @param principal 인증된 사용자 정보
+     * @param crewId    크루 ID
      * @description : 크루 삭제 (해체)
      */
     @DeleteMapping("/{crewId}")
     public ResponseEntity<ApiResponse<Void>> deleteCrew(
-            @AuthenticationPrincipal CustomUser customUser,
+            @AuthenticationPrincipal CustomUser principal,
             @PathVariable Long crewId
     ) {
-        String loginId = customUser.getEmail();
-        crewService.deleteCrew(crewId, loginId);
+        crewService.deleteCrew(crewId, principal);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("크루 해체 성공", null));
@@ -130,40 +125,34 @@ public class CrewController {
     }
 
     /**
-     * @param customUser 인증된 사용자 정보
-     * @param crewId     크루 ID
-     * @param reqDto     모집 상태 변경 요청 DTO
+     * @param principal 인증된 사용자 정보
+     * @param crewId    크루 ID
+     * @param reqDto    모집 상태 변경 요청 DTO
      * @description : 크루 모집 상태 변경
      */
     @PatchMapping("/{crewId}/status")
     public ResponseEntity<ApiResponse<Void>> updateRecruitStatus(
-            @AuthenticationPrincipal CustomUser customUser,
+            @AuthenticationPrincipal CustomUser principal,
             @PathVariable Long crewId,
             @Valid @RequestBody CrewStatusChangeReqDto reqDto
     ) {
-        String loginId = customUser.getEmail();
-        crewService.updateRecruitStatus(loginId, crewId, reqDto);
+        crewService.updateRecruitStatus(principal, crewId, reqDto);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("모집 상태 변경 성공", null));
     }
 
     /**
-     * @param crewId        크루 ID
-     * @param authorization JWT 토큰 (Authorization 헤더)
+     * @param crewId    크루 ID
+     * @param principal
      * @description : 특정 사용자가 특정 크루에 가입 신청한 상태를 조회
      */
     @GetMapping("/{crewId}/applied")
     public ResponseEntity<ApiResponse<CrewAppliedResDto>> getAppliedStatus(
             @PathVariable Long crewId,
-            @RequestHeader("Authorization") String authorization
+            @AuthenticationPrincipal CustomUser principal
     ) {
-        // JWT 토큰에서 loginId 추출
-        String jwt = tokenProvider.resolveToken(authorization);
-        String loginId = tokenProvider.getUserId(jwt);
-
-        // Service 호출하여 가입 신청 상태 조회
-        CrewAppliedResDto result = crewService.getAppliedStatus(crewId, loginId);
+        CrewAppliedResDto result = crewService.getAppliedStatus(crewId, principal);
 
         // 성공 응답 반환
         return ResponseEntity
