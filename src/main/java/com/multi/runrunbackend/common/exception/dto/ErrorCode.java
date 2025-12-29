@@ -216,7 +216,8 @@ public enum ErrorCode {
             "썸네일 생성에 필요한 overlay 값이 비어있습니다."),
 
     /* ===== 이용약관 ===== */
-    TERMS_ACCESS_DENIED(HttpStatus.FORBIDDEN, "T001", "약관 관리 권한이 없습니다.");
+    TERMS_ACCESS_DENIED(HttpStatus.FORBIDDEN, "T001", "약관 관리 권한이 없습니다."),
+    DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "T002", "이미 존재하는 약관 버전입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
