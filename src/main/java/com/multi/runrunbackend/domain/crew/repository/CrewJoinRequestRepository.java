@@ -45,13 +45,6 @@ public interface CrewJoinRequestRepository extends JpaRepository<CrewJoinRequest
 
     /**
      * @param crew       크루 엔티티
-     * @param joinStatus 가입 신청 상태
-     * @description : 특정 크루의 특정 상태인 가입 신청 개수를 조회
-     */
-    long countByCrewAndJoinStatusAndIsDeletedFalse(Crew crew, JoinStatus joinStatus);
-
-    /**
-     * @param crew       크루 엔티티
      * @param user       사용자 엔티티
      * @param joinStatus 가입 신청 상태 (PENDING, APPROVED 등)
      * @description : 특정 크루에 특정 사용자가 특정 상태로 신청한 내역을 조회
@@ -79,6 +72,20 @@ public interface CrewJoinRequestRepository extends JpaRepository<CrewJoinRequest
     Optional<CrewJoinRequest> findByCrewIdAndUserId(
             @Param("crewId") Long crewId,
             @Param("userId") Long userId
+    );
+
+    /**
+     * @param userId     사용자 ID
+     * @param joinStatus 가입 신청 상태
+     * @description : 특정 사용자의 특정 상태인 모든 가입 신청 목록 조회 (다른 크루 신청 취소용)
+     */
+    @Query("SELECT cjr FROM CrewJoinRequest cjr " +
+            "WHERE cjr.user.id = :userId " +
+            "AND cjr.joinStatus = :joinStatus " +
+            "AND cjr.isDeleted = false")
+    List<CrewJoinRequest> findAllByUserIdAndJoinStatusAndIsDeletedFalse(
+            @Param("userId") Long userId,
+            @Param("joinStatus") JoinStatus joinStatus
     );
 }
 
