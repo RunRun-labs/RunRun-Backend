@@ -10,6 +10,9 @@
 // ========================================
 let crewId = null;
 let joinRequests = [];
+let displayedRequests = [];
+let currentPage = 0;
+const PAGE_SIZE = 5;
 let isLoading = false;
 let hasMore = true;
 let pollingInterval = null;
@@ -82,31 +85,58 @@ function initEventListeners() {
 // 무한 스크롤 초기화
 // ========================================
 function initInfiniteScroll() {
-    const loadingSpinner = document.getElementById('loadingSpinner');
+    let timeout;
+    window.addEventListener('scroll', () => {
+        clearTimeout(timeout);
 
-    if (!loadingSpinner) {
-        console.warn('loadingSpinner 요소를 찾을 수 없습니다.');
-        return;
-    }
+        timeout = setTimeout(() => {
+            if (isLoading || !hasMore) return;
 
-    const observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && !isLoading && hasMore) {
-            console.log('스크롤 감지 - 추가 데이터 로딩');
-            loadJoinRequests();
-        }
-    }, {
-        rootMargin: '200px'
+            const scrollHeight = document.documentElement.scrollHeight;
+            const scrollTop = document.documentElement.scrollTop;
+            const clientHeight = document.documentElement.clientHeight;
+
+            if (scrollTop + clientHeight >= scrollHeight - 300) {
+                console.log('스크롤 감지 - 다음 페이지 렌더링');
+                renderNextPage();
+            }
+        }, 200);
     });
-
-    observer.observe(loadingSpinner);
 }
 
 // ========================================
 // 폴링으로 목록 새로고침
 // ========================================
 async function refreshJoinRequests() {
-    if (isLoading) return; // 중복 요청 방지
-    await loadJoinRequests();
+    const token = getAccessToken();
+    if (!token) return;
+
+    try {
+        const response = await fetch(`/api/crews/${crewId}/join-requests`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) return;
+
+        const result = await response.json();
+        const data = result && typeof result === 'object' ? (result.data || result) : null;
+
+        if (!data || !Array.isArray(data)) return;
+
+        // 새로운 신청이 있으면 알림
+        if (data.length > joinRequests.length) {
+            console.log('새로운 가입 신청이 있습니다!');
+        }
+
+        joinRequests = data;
+        updatePendingCount();
+
+    } catch (error) {
+        console.error('폴링 실패:', error);
+    }
 }
 
 function startPolling() {
@@ -147,6 +177,21 @@ async function loadJoinRequests() {
         });
 
         if (!response.ok) {
+            if (response.status === 403) {
+                const result = await response.json().catch(() => ({}));
+                const errorMessage = result?.message || result?.error || '';
+
+                if (errorMessage.includes('크루장') || errorMessage.includes('부크루장') || errorMessage.includes('권한')) {
+                    alert('가입 신청 목록은 크루장과 부크루장만 확인할 수 있습니다.');
+                } else {
+                    alert('접근 권한이 없습니다.\n크루장 또는 부크루장만 가입 신청 목록을 확인할 수 있습니다.');
+                }
+
+                // 크루 상세 페이지로 이동
+                window.location.href = `/crews/${crewId}`;
+                return;
+            }
+
             throw new Error('가입 신청 목록을 불러오지 못했습니다.');
         }
 
@@ -180,6 +225,10 @@ function renderJoinRequests(requests) {
 
     if (!listContainer) return;
 
+    joinRequests = requests;
+
+    currentPage = 0;
+    displayedRequests = [];
     listContainer.innerHTML = '';
 
     if (requests.length === 0) {
@@ -187,6 +236,7 @@ function renderJoinRequests(requests) {
         if (emptyState) {
             emptyState.style.display = 'flex';
         }
+        hasMore = false;
         return;
     }
 
@@ -194,13 +244,33 @@ function renderJoinRequests(requests) {
     if (emptyState) {
         emptyState.style.display = 'none';
     }
+    renderNextPage();
+}
 
-    if (listContainer.querySelectorAll('.join-request-card').length === 0) {
-        requests.forEach(request => {
-            const card = createJoinRequestCard(request);
-            listContainer.appendChild(card);
-        });
+function renderNextPage() {
+    const listContainer = document.getElementById('joinRequestList');
+    if (!listContainer) return;
+
+    // 현재 페이지의 시작/끝 인덱스
+    const start = currentPage * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const pageRequests = joinRequests.slice(start, end);
+
+    if (pageRequests.length === 0) {
+        hasMore = false;
+        return;
     }
+
+    // 페이지 데이터 렌더링
+    pageRequests.forEach(request => {
+        const card = createJoinRequestCard(request);
+        listContainer.appendChild(card);
+        displayedRequests.push(request);
+    });
+
+    // 다음 페이지 존재 여부
+    hasMore = end < joinRequests.length;
+    currentPage++;
 }
 
 // ========================================
@@ -216,19 +286,31 @@ function createJoinRequestCard(request) {
     const userName = request.userName || '사용자';
     const createdAt = request.createdAt ? formatDate(request.createdAt) : '';
     const introduction = request.introduction || '자기소개가 없습니다.';
+    const distanceText = mapDistance(request.distance); // CrewDistanceType -> "10km" 같은 표시값
+    const paceText = mapPace(request.pace);             // CrewPaceType -> "5'30\"/km" 같은 표시값
+    const regionText = request.region;                  // 필요하면 같이 노출
+
 
     card.innerHTML = `
-        <div class="join-request-card__profile">
-            <img src="${profileImageUrl}" 
-                 alt="프로필" 
-                 class="join-request-card__profile-image"
-                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMzAiIGZpbGw9IiNGNUY1RjUiLz48Y2lyY2xlIGN4PSIzMCIgY3k9IjI1IiByPSI4IiBmaWxsPSIjOTk5Ii8+PHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDIwIDMwSDQwQzQ1IDMwIDUwIDM1IDUwIDQwIiBmaWxsPSIjOTk5Ii8+PC9zdmc+'">
+          <div class="join-request-card__header">
+        <img src="${profileImageUrl}" 
+             alt="프로필" 
+             class="join-request-card__profile-image"
+             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMzAiIGZpbGw9IiNGNUY1RjUiLz48Y2lyY2xlIGN4PSIzMCIgY3k9IjI1IiByPSI4IiBmaWxsPSIjOTk5Ii8+PHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDIwIDMwSDQwQzQ1IDMwIDUwIDM1IDUwIDQwIiBmaWxsPSIjOTk5Ii8+PC9zdmc+'">
+        
+        <div class="join-request-card__info-wrapper">
             <p class="join-request-card__name">${escapeHtml(userName)}</p>
-            <p class="join-request-card__date">${createdAt}</p>
+            <span class="join-request-card__meta-item">희망거리: <b>${escapeHtml(distanceText)}</b></span>
+            
+            <p class="join-request-card__date">신청일: ${createdAt}</p>
+            <span class="join-request-card__meta-item">희망페이스: <b>${escapeHtml(paceText)}</b></span>
+            
+            <span class="join-request-card__meta-item meta-item-region">선호지역: <b>${escapeHtml(regionText)}</b></span>
         </div>
-        <div class="join-request-card__message">
-            <p>${escapeHtml(introduction)}</p>
-        </div>
+    </div>
+    <div class="join-request-card__message">
+        <p>${escapeHtml(introduction)}</p>
+    </div>
         <div class="join-request-card__actions">
             <button type="button" class="btn-reject" data-request-id="${request.joinRequestId}">
                 거절
@@ -453,6 +535,32 @@ async function handleReject(event) {
 // ========================================
 // 유틸리티 함수
 // ========================================
+
+const DISTANCE_LABEL = {
+    UNDER_3KM: '3km 미만',
+    KM_3: '3km',
+    KM_5: '5km',
+    KM_10: '10km',
+    OVER_10KM: '10km 이상',
+};
+
+function mapDistance(distanceEnum) {
+    const key = String(distanceEnum ?? '').trim();
+    return DISTANCE_LABEL[key] ?? key;
+}
+
+const PACE_LABEL = {
+    UNDER_3_MIN: '2분/km 이하',
+    MIN_3_TO_4: '3~4분/km',
+    MIN_5_TO_6: '5~6분/km',
+    MIN_7_TO_8: '7~8분/km',
+    OVER_9_MIN: '9분/km 이상',
+};
+
+function mapPace(paceEnum) {
+    const key = String(paceEnum ?? '').trim();
+    return PACE_LABEL[key] ?? key;
+}
 
 /**
  * 날짜 포맷팅 (yyyy.MM.dd)
