@@ -60,6 +60,9 @@ dependencies {
     implementation "org.n52.jackson:jackson-datatype-jts:2.0.0"
     implementation 'org.springframework.boot:spring-boot-jackson2'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    implementation platform("software.amazon.awssdk:bom:2.25.0")
+    implementation "software.amazon.awssdk:s3"
+    implementation "software.amazon.awssdk:auth"
 }
 
 tasks.named('test') {

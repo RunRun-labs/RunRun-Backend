@@ -26,19 +26,19 @@ async function fetchWithAuth(url, options = {}) {
     ...getAuthHeaders(),
     ...options.headers
   };
-  
+
   const response = await fetch(url, {
     ...options,
     headers
   });
-  
+
   // 401 Unauthorized면 로그인 페이지로 이동
   if (response.status === 401) {
     alert('로그인이 필요합니다.');
     window.location.href = '/login';
     throw new Error('Unauthorized');
   }
-  
+
   return response;
 }
 
@@ -47,7 +47,7 @@ async function getCurrentUser() {
   try {
     const response = await fetchWithAuth('/api/chat/me');
     const result = await response.json();
-    
+
     if (result.success) {
       return {
         id: result.data.userId,
@@ -88,17 +88,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   // 1. 로그인한 사용자 정보 조회
   const user = await getCurrentUser();
-  if (!user) return;
-  
+  if (!user) {
+    return;
+  }
+
   currentUser = user;
   console.log('현재 사용자:', currentUser);
 
   // 2. 세션 정보 조회
   await loadSessionInfo(params.sessionId);
-  
+
   // 3. 화면 업데이트
   updateChatRoomUI();
-  
+
   // 4. WebSocket 연결
   connectWebSocket();
 
@@ -106,9 +108,19 @@ document.addEventListener('DOMContentLoaded', async function () {
   setupEventListeners();
 
   // 6. 페이지 나갈 때 마지막 읽은 시간 업데이트
-  window.addEventListener('beforeunload', function() {
+  window.addEventListener('beforeunload', function () {
     updateLastReadTime(params.sessionId);
   });
+
+  // ⭐ 7. 런닝 중이면 자동으로 재개
+  if (currentSession.status === 'IN_PROGRESS') {
+    console.log('🔄 런닝 진행 중 감지 - 자동 재개');
+
+    // WebSocket 연결 대기 (1초)
+    setTimeout(() => {
+      resumeRunning();
+    }, 1000);
+  }
 });
 
 // ============================================
@@ -137,7 +149,8 @@ async function loadSessionInfo(sessionId) {
 
       // 입장 시점 조회
       try {
-        const joinedResponse = await fetchWithAuth(`/api/chat/sessions/${sessionId}/joined-at`);
+        const joinedResponse = await fetchWithAuth(
+            `/api/chat/sessions/${sessionId}/joined-at`);
         const joinedResult = await joinedResponse.json();
         if (joinedResult.success) {
           currentUserJoinedAt = joinedResult.data;
@@ -167,10 +180,12 @@ function updateChatRoomUI() {
   document.getElementById('group-name').textContent = title;
 
   // 세션 타입
-  document.getElementById('session-type-badge').textContent = `🏃 ${currentSession.type}`;
+  document.getElementById(
+      'session-type-badge').textContent = `🏃 ${currentSession.type}`;
 
   // 거리
-  document.getElementById('session-distance').textContent = `${currentSession.distance}km`;
+  document.getElementById(
+      'session-distance').textContent = `${currentSession.distance}km`;
 
   // 만남 시간
   const meetingTimeEl = document.getElementById('meeting-time');
@@ -192,7 +207,8 @@ function updateChatRoomUI() {
   }
 
   // 만남 장소
-  document.getElementById('meeting-place').textContent = currentSession.meetingPlace || '장소 미정';
+  document.getElementById(
+      'meeting-place').textContent = currentSession.meetingPlace || '장소 미정';
 
   // 참여자 수 업데이트
   loadParticipants(currentSession.id);
@@ -217,7 +233,7 @@ function formatDateTime(date) {
 // 마지막 읽은 시간 업데이트
 function updateLastReadTime(sessionId) {
   const token = localStorage.getItem('accessToken');
-  
+
   fetch(`/api/chat/sessions/${sessionId}/read`, {
     method: 'POST',
     headers: {
@@ -241,50 +257,52 @@ let participantsList = [];
 // 현재 사용자의 준비 상태 불러오기
 function loadUserReadyStatus() {
   fetchWithAuth(`/api/chat/sessions/${currentSession.id}/users`)
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        const currentUserData = result.data.find(u => u.userId == currentUser.id);
-        if (currentUserData) {
-          const isReady = currentUserData.isReady;
-          const readyButton = document.getElementById('ready-button');
-          if (readyButton) {
-            if (isReady) {
-              readyButton.classList.add('ready-active');
-              readyButton.textContent = '준비완료 취소';
-            } else {
-              readyButton.classList.remove('ready-active');
-              readyButton.textContent = '✓ 준비완료';
-            }
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      const currentUserData = result.data.find(u => u.userId == currentUser.id);
+      if (currentUserData) {
+        const isReady = currentUserData.isReady;
+        const readyButton = document.getElementById('ready-button');
+        if (readyButton) {
+          if (isReady) {
+            readyButton.classList.add('ready-active');
+            readyButton.textContent = '준비완료 취소';
+          } else {
+            readyButton.classList.remove('ready-active');
+            readyButton.textContent = '✓ 준비완료';
           }
         }
       }
-    })
-    .catch(error => console.error('준비 상태 조회 실패:', error));
+    }
+  })
+  .catch(error => console.error('준비 상태 조회 실패:', error));
 }
 
 // 참여자 목록 조회
 function loadParticipants(sessionId) {
   fetchWithAuth(`/api/chat/sessions/${sessionId}/users`)
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        participantsList = result.data;
-        const count = result.data.length;
-        document.getElementById('participant-count').textContent = `${count}명 참여중`;
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      participantsList = result.data;
+      const count = result.data.length;
+      document.getElementById(
+          'participant-count').textContent = `${count}명 참여중`;
 
-        // 준비 완료 수 업데이트
-        const readyCount = result.data.filter(p => p.isReady).length;
-        document.getElementById('ready-subtitle').textContent = `${readyCount}/${count}명 준비 완료`;
+      // 준비 완료 수 업데이트
+      const readyCount = result.data.filter(p => p.isReady).length;
+      document.getElementById(
+          'ready-subtitle').textContent = `${readyCount}/${count}명 준비 완료`;
 
-        // 모달이 열려있으면 목록 업데이트
-        const modal = document.getElementById('participant-modal-overlay');
-        if (modal && modal.classList.contains('show')) {
-          renderParticipantList();
-        }
+      // 모달이 열려있으면 목록 업데이트
+      const modal = document.getElementById('participant-modal-overlay');
+      if (modal && modal.classList.contains('show')) {
+        renderParticipantList();
       }
-    })
-    .catch(error => console.error('참여자 목록 조회 실패:', error));
+    }
+  })
+  .catch(error => console.error('참여자 목록 조회 실패:', error));
 }
 
 // ============================================
@@ -339,7 +357,8 @@ function setupEventListeners() {
   if (scrollButton && chatContainer) {
     function toggleScrollButton() {
       const isScrolledToBottom =
-        chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 50;
+          chatContainer.scrollHeight - chatContainer.scrollTop
+          <= chatContainer.clientHeight + 50;
       if (isScrolledToBottom) {
         scrollButton.classList.remove('show');
       } else {
@@ -421,6 +440,22 @@ function setupEventListeners() {
       }
     });
   }
+
+  // 런닝 결과 모달 닫기 버튼
+  const resultCloseBtn = document.getElementById('running-result-modal-close');
+  if (resultCloseBtn) {
+    resultCloseBtn.addEventListener('click', closeRunningResultModal);
+  }
+
+  // 런닝 결과 모달 오버레이 클릭 시 닫기
+  const resultOverlay = document.getElementById('running-result-modal-overlay');
+  if (resultOverlay) {
+    resultOverlay.addEventListener('click', function (e) {
+      if (e.target === resultOverlay) {
+        closeRunningResultModal();
+      }
+    });
+  }
 }
 
 // ============================================
@@ -434,7 +469,7 @@ function connectWebSocket() {
 
   // JWT 토큰을 WebSocket 헤더에 포함
   const token = localStorage.getItem('accessToken');
-  const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+  const headers = token ? {'Authorization': 'Bearer ' + token} : {};
 
   stompClient.connect(headers, function (frame) {
     console.log('WebSocket 연결 성공');
@@ -446,53 +481,100 @@ function connectWebSocket() {
     loadPreviousMessages();
 
     // 구독
-    stompClient.subscribe('/sub/chat/' + currentSession.id, function (response) {
-      const message = JSON.parse(response.body);
-      displayMessage(message);
+    stompClient.subscribe('/sub/chat/' + currentSession.id,
+        function (response) {
+          const message = JSON.parse(response.body);
+          displayMessage(message);
+          if (message.messageType === 'SYSTEM' &&
+              message.content &&
+              message.content.includes('런닝이 시작되었습니다')) {
 
-      // KICK 메시지 처리
-      if (message.messageType === 'KICK') {
-        // 내가 강퇴당한 경우
-        if (message.senderId == currentUser.id) {
-          alert('방장에 의해 강퇴되었습니다.');
-          
-          // 채팅방 목록으로 이동
-          if (stompClient) {
-            stompClient.disconnect();
-          }
-          window.location.href = '/chat';
-          return;
-        }
-        
-        // 다른 사람이 강퇴당한 경우 - 참여자 목록 갱신
-        setTimeout(() => {
-          loadParticipants(currentSession.id);
-          
-          if (isHost) {
-            checkAllReadyAndUpdateButton();
-          }
-        }, 300);
-      }
+            console.log('🏃 런닝 시작 감지 - 통계 구독 시작');
 
-      // 시스템 메시지 수신 시 참여자 목록 자동 갱신
-      if (message.messageType === 'SYSTEM') {
-        // 입장, 퇴장, 준비완료 메시지일 때 참여자 정보 업데이트
-        setTimeout(() => {
-          loadParticipants(currentSession.id);
-          
-          // 준비완료 메시지면 방장의 시작 버튼도 업데이트
-          if (isHost && (message.content.includes('준비완료') || message.content.includes('준비를 취소'))) {
-            checkAllReadyAndUpdateButton();
-          }
-        }, 300);
-      }
+            // 모든 참여자: 실시간 통계 구독
+            if (!isHost) {  // 방장은 이미 구독했으므로 제외
+              subscribeToRunningStats();
+              showRunningUI();
 
-      // 런닝 시작 메시지면 상태 업데이트
-      if (message.messageType === 'SYSTEM' && message.content.includes('런닝이 시작되었습니다')) {
-        currentSession.status = 'IN_PROGRESS';
-        updateControlBar();
-      }
-    });
+              // 세션 상태 업데이트
+              currentSession.status = 'IN_PROGRESS';
+              updateControlBar();
+            }
+          }
+
+          // KICK 메시지 처리
+          if (message.messageType === 'KICK') {
+            // 내가 강퇴당한 경우
+            if (message.senderId == currentUser.id) {
+              alert('방장에 의해 강퇴되었습니다.');
+
+              // 채팅방 목록으로 이동
+              if (stompClient) {
+                stompClient.disconnect();
+              }
+              window.location.href = '/chat';
+              return;
+            }
+
+            // 다른 사람이 강퇴당한 경우 - 참여자 목록 갱신
+            setTimeout(() => {
+              loadParticipants(currentSession.id);
+
+              if (isHost) {
+                checkAllReadyAndUpdateButton();
+              }
+            }, 300);
+          }
+
+          // 시스템 메시지 수신 시 참여자 목록 자동 갱신
+          if (message.messageType === 'SYSTEM') {
+            // 입장, 퇴장, 준비완료 메시지일 때 참여자 정보 업데이트
+            setTimeout(() => {
+              loadParticipants(currentSession.id);
+
+              // 준비완료 메시지면 방장의 시작 버튼도 업데이트
+              if (isHost && (message.content.includes('준비완료')
+                  || message.content.includes('준비를 취소'))) {
+                checkAllReadyAndUpdateButton();
+              }
+            }, 300);
+          }
+
+          // 런닝 시작 메시지면 상태 업데이트
+          if (message.messageType === 'SYSTEM' && message.content.includes(
+              '런닝이 시작되었습니다')) {
+            currentSession.status = 'IN_PROGRESS';
+            updateControlBar();
+          }
+
+          // 런닝 종료 메시지면 모든 참여자에게 결과 모달 표시
+          if (message.messageType === 'SYSTEM' && message.content.includes(
+              '런닝이 종료되었습니다')) {
+            console.log('🏁 런닝 종료 감지 - 결과 모달 표시');
+
+            // 세션 상태 업데이트
+            currentSession.status = 'COMPLETED';
+            updateControlBar();
+
+            // 테스트 패널 숨기기
+            const testPanel = document.getElementById('running-test-panel');
+            if (testPanel) {
+              testPanel.style.display = 'none';
+            }
+
+            // GPS 구독 해제 (참여자)
+            if (gpsSubscription) {
+              gpsSubscription.unsubscribe();
+              gpsSubscription = null;
+              console.log('🛑 GPS 구독 해제됨 (참여자)');
+            }
+
+            // 결과 모달 표시 (모든 참여자)
+            setTimeout(() => {
+              showRunningResultModal();
+            }, 500);
+          }
+        });
 
     // 입장 메시지 전송 제거 (채팅방 생성 시에만 백엔드에서 자동 전송)
     // stompClient.send('/pub/chat/enter', {}, JSON.stringify({
@@ -517,26 +599,26 @@ function loadPreviousMessages() {
   }
 
   fetchWithAuth(url)
-    .then(response => response.json())
-    .then(result => {
-      if (result.success && result.data.length > 0) {
-        result.data.forEach(message => {
-          displayMessage(message, true);
-        });
+  .then(response => response.json())
+  .then(result => {
+    if (result.success && result.data.length > 0) {
+      result.data.forEach(message => {
+        displayMessage(message, true);
+      });
 
-        // 스크롤을 맨 아래로
-        setTimeout(() => {
-          const chatContainer = document.querySelector('.chat-container');
-          if (chatContainer) {
-            chatContainer.scrollTo({
-              top: chatContainer.scrollHeight,
-              behavior: 'auto'
-            });
-          }
-        }, 100);
-      }
-    })
-    .catch(error => console.error('메시지 로드 실패:', error));
+      // 스크롤을 맨 아래로
+      setTimeout(() => {
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+          chatContainer.scrollTo({
+            top: chatContainer.scrollHeight,
+            behavior: 'auto'
+          });
+        }
+      }, 100);
+    }
+  })
+  .catch(error => console.error('메시지 로드 실패:', error));
 }
 
 // 메시지 전송
@@ -557,7 +639,7 @@ function sendMessage() {
   }));
 
   input.value = '';
-  
+
   // 메시지 전송 후 즉시 스크롤을 맨 아래로
   setTimeout(() => {
     const chatContainer = document.querySelector('.chat-container');
@@ -589,7 +671,8 @@ function displayMessage(message, isPrevious = false) {
     const isMyMessage = message.senderId == currentUser.id;
 
     const messageItem = document.createElement('div');
-    messageItem.className = `message-item ${isMyMessage ? 'message-right' : 'message-left'}`;
+    messageItem.className = `message-item ${isMyMessage ? 'message-right'
+        : 'message-left'}`;
 
     if (!isMyMessage) {
       // 아바타
@@ -610,7 +693,8 @@ function displayMessage(message, isPrevious = false) {
     }
 
     const bubble = document.createElement('div');
-    bubble.className = `message-bubble ${isMyMessage ? 'message-bubble-right' : 'message-bubble-left'}`;
+    bubble.className = `message-bubble ${isMyMessage ? 'message-bubble-right'
+        : 'message-bubble-left'}`;
     const text = document.createElement('p');
     text.className = 'message-text';
     text.textContent = message.content;
@@ -621,7 +705,8 @@ function displayMessage(message, isPrevious = false) {
       const time = document.createElement('p');
       time.className = 'message-time';
       const date = new Date(message.createdAt);
-      time.textContent = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      time.textContent = `${String(date.getHours()).padStart(2, '0')}:${String(
+          date.getMinutes()).padStart(2, '0')}`;
       contentWrapper.appendChild(time);
     }
 
@@ -652,77 +737,83 @@ function toggleReadyStatus() {
   fetchWithAuth(`/api/chat/sessions/${currentSession.id}/ready`, {
     method: 'POST'
   })
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        const isReady = result.data.isReady;
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      const isReady = result.data.isReady;
 
-        // 버튼 UI 업데이트
-        const readyButton = document.getElementById('ready-button');
-        if (readyButton) {
-          if (isReady) {
-            readyButton.classList.add('ready-active');
-            readyButton.textContent = '준비완료 취소';
-          } else {
-            readyButton.classList.remove('ready-active');
-            readyButton.textContent = '✓ 준비완료';
-          }
+      // 버튼 UI 업데이트
+      const readyButton = document.getElementById('ready-button');
+      if (readyButton) {
+        if (isReady) {
+          readyButton.classList.add('ready-active');
+          readyButton.textContent = '준비완료 취소';
+        } else {
+          readyButton.classList.remove('ready-active');
+          readyButton.textContent = '✓ 준비완료';
         }
+      }
 
-        // 시스템 메시지 전송
-        const message = isReady
+      // 시스템 메시지 전송
+      const message = isReady
           ? `${currentUser.name}님이 준비완료했습니다.`
           : `${currentUser.name}님이 준비를 취소했습니다.`;
 
-        stompClient.send('/pub/chat/message', {}, JSON.stringify({
-          sessionId: currentSession.id,
-          senderId: null,
-          senderName: 'SYSTEM',
-          content: message,
-          messageType: 'SYSTEM'
-        }));
+      stompClient.send('/pub/chat/message', {}, JSON.stringify({
+        sessionId: currentSession.id,
+        senderId: null,
+        senderName: 'SYSTEM',
+        content: message,
+        messageType: 'SYSTEM'
+      }));
 
-        // 런닝 시작 버튼 상태 업데이트 (방장이면)
-        if (isHost) {
-          checkAllReadyAndUpdateButton();
-        }
-      } else {
-        alert(result.message || '준비 상태 변경 실패');
+      // 런닝 시작 버튼 상태 업데이트 (방장이면)
+      if (isHost) {
+        checkAllReadyAndUpdateButton();
       }
-    })
-    .catch(error => {
-      console.error('준비 상태 변경 실패:', error);
-      alert('준비 상태 변경에 실패했습니다.');
-    });
+    } else {
+      alert(result.message || '준비 상태 변경 실패');
+    }
+  })
+  .catch(error => {
+    console.error('준비 상태 변경 실패:', error);
+    alert('준비 상태 변경에 실패했습니다.');
+  });
 }
 
 // 모두 준비완료 확인 및 런닝 시작 버튼 업데이트
 function checkAllReadyAndUpdateButton() {
   fetchWithAuth(`/api/chat/sessions/${currentSession.id}/all-ready`)
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        const allReady = result.data.allReady;
-        const startBtn = document.getElementById('start-running-btn');
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      const allReady = result.data.allReady;
+      const startBtn = document.getElementById('start-running-btn');
 
-        if (startBtn) {
-          if (allReady) {
-            startBtn.disabled = false;
-            startBtn.textContent = '🏃 런닝 시작';
-            startBtn.style.opacity = '1';
-          } else {
-            startBtn.disabled = true;
-            startBtn.textContent = `🏃 런닝 시작 (${result.data.readyCount}/${result.data.totalCount} 준비완료)`;
-            startBtn.style.opacity = '0.5';
-          }
+      if (startBtn) {
+        if (allReady) {
+          startBtn.disabled = false;
+          startBtn.textContent = '🏃 런닝 시작';
+          startBtn.style.opacity = '1';
+        } else {
+          startBtn.disabled = true;
+          startBtn.textContent = `🏃 런닝 시작 (${result.data.readyCount}/${result.data.totalCount} 준비완료)`;
+          startBtn.style.opacity = '0.5';
         }
       }
-    })
-    .catch(error => console.error('준비 상태 확인 실패:', error));
+    }
+  })
+  .catch(error => console.error('준비 상태 확인 실패:', error));
 }
 
-// 런닝 시작 (방장만, 모두 준비완료 시) - userId 제거
-function startRunning() {
+// ============================================
+// 런닝 추적 기능
+// ============================================
+
+let runningTracker = null;
+
+// 런닝 시작 (방장만, 모두 준비완료 시) - GPS 추적 포함
+async function startRunning() {
   if (!isHost) {
     alert('방장만 런닝을 시작할 수 있습니다.');
     return;
@@ -732,31 +823,52 @@ function startRunning() {
     return;
   }
 
-  fetchWithAuth(`/api/chat/sessions/${currentSession.id}/start`, {
-    method: 'POST'
-  })
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        currentSession.status = 'IN_PROGRESS';
-        updateControlBar();
+  try {
+    // 1. API 호출 - 런닝 상태 변경
+    const response = await fetchWithAuth(
+        `/api/chat/sessions/${currentSession.id}/start`, {
+          method: 'POST'
+        });
 
-        // 런닝 시작 시스템 메시지 전송
-        stompClient.send('/pub/chat/message', {}, JSON.stringify({
-          sessionId: currentSession.id,
-          senderId: null,
-          senderName: 'SYSTEM',
-          content: '🏃 런닝이 시작되었습니다! 모두 화이팅!',
-          messageType: 'SYSTEM'
-        }));
-      } else {
-        alert(result.message || '런닝 시작 실패');
-      }
-    })
-    .catch(error => {
-      console.error('런닝 시작 실패:', error);
-      alert('런닝 시작에 실패했습니다.');
-    });
+    if (!response.ok) {
+      const error = await response.json();
+      alert(error.message || '런닝 시작 실패');
+      return;
+    }
+
+    console.log('✅ 런닝 시작 API 호출 완료');
+
+    // 2. 세션 상태 업데이트
+    currentSession.status = 'IN_PROGRESS';
+    updateControlBar();
+
+    // 3. 방장만 GPS 추적 시작 (실제 GPS)
+    console.log('🎯 방장 - GPS 추적 시작 (실제 GPS)');
+    runningTracker = new RunningTracker(currentSession.id, currentUser.id,
+        stompClient, false);  // ⭐ false = 실제 GPS!
+    runningTracker.startTracking();
+
+    // 4. 모든 참여자: 실시간 통계 구독
+    subscribeToRunningStats();
+
+    // 5. 테스트 UI 표시
+    showRunningUI();
+
+    // 6. 런닝 시작 시스템 메시지 전송
+    stompClient.send('/pub/chat/message', {}, JSON.stringify({
+      sessionId: currentSession.id,
+      senderId: null,
+      senderName: 'SYSTEM',
+      content: '🏃 런닝이 시작되었습니다! 모두 화이팅!',
+      messageType: 'SYSTEM'
+    }));
+
+    alert('런닝이 시작되었습니다! 🏃\n📍 실제 GPS 추적 시작!');
+
+  } catch (error) {
+    console.error('런닝 시작 에러:', error);
+    alert('런닝 시작에 실패했습니다.');
+  }
 }
 
 // 런닝 취소 (세션 퇴장) - userId 제거
@@ -783,19 +895,19 @@ function cancelRunning() {
   fetchWithAuth(`/api/chat/sessions/${currentSession.id}/leave`, {
     method: 'DELETE'
   })
-    .then(response => response.json())
-    .then(result => {
-      setTimeout(() => {
-        if (stompClient) {
-          stompClient.disconnect();
-        }
-        alert('런닝을 취소했습니다.');
-        window.history.back();
-      }, 300);
-    })
-    .catch(error => {
-      console.error('퇴장 실패:', error);
-    });
+  .then(response => response.json())
+  .then(result => {
+    setTimeout(() => {
+      if (stompClient) {
+        stompClient.disconnect();
+      }
+      alert('런닝을 취소했습니다.');
+      window.history.back();
+    }, 300);
+  })
+  .catch(error => {
+    console.error('퇴장 실패:', error);
+  });
 }
 
 // ============================================
@@ -815,20 +927,20 @@ function leaveChatRoom() {
     fetchWithAuth(`/api/chat/sessions/${currentSession.id}/leave`, {
       method: 'DELETE'
     })
-      .then(response => response.json())
-      .then(result => {
-        console.log('퇴장 완료:', result);
-      })
-      .catch(error => {
-        console.error('퇴장 API 실패:', error);
-      })
-      .finally(() => {
-        // 3. WebSocket 연결 끊고 뒤로가기
-        setTimeout(() => {
-          stompClient.disconnect();
-          window.history.back();
-        }, 300);
-      });
+    .then(response => response.json())
+    .then(result => {
+      console.log('퇴장 완료:', result);
+    })
+    .catch(error => {
+      console.error('퇴장 API 실패:', error);
+    })
+    .finally(() => {
+      // 3. WebSocket 연결 끊고 뒤로가기
+      setTimeout(() => {
+        stompClient.disconnect();
+        window.history.back();
+      }, 300);
+    });
   } else {
     window.history.back();
   }
@@ -866,11 +978,11 @@ function renderParticipantList() {
   // 준비 완료 수 및 전체 인원 업데이트
   const readyCount = participantsList.filter(p => p.isReady).length;
   const totalCount = participantsList.length;
-  
+
   if (readyCountEl) {
     readyCountEl.textContent = readyCount;
   }
-  
+
   if (readyTotalEl) {
     readyTotalEl.textContent = `/${totalCount}명 준비완료`;
   }
@@ -973,7 +1085,8 @@ function renderParticipantList() {
       const kickBtn = document.createElement('button');
       kickBtn.className = 'kick-btn';
       kickBtn.textContent = '강퇴';
-      kickBtn.onclick = () => kickParticipant(participant.userId, participant.name);
+      kickBtn.onclick = () => kickParticipant(participant.userId,
+          participant.name);
       rightSection.appendChild(kickBtn);
     }
 
@@ -995,9 +1108,10 @@ async function kickParticipant(userId, userName) {
   }
 
   try {
-    const response = await fetchWithAuth(`/api/chat/sessions/${currentSession.id}/kick/${userId}`, {
-      method: 'DELETE'
-    });
+    const response = await fetchWithAuth(
+        `/api/chat/sessions/${currentSession.id}/kick/${userId}`, {
+          method: 'DELETE'
+        });
 
     if (!response.ok) {
       const error = await response.json();
@@ -1006,12 +1120,396 @@ async function kickParticipant(userId, userName) {
     }
 
     console.log(`${userName}님을 강퇴했습니다.`);
-    
+
     // 시스템 메시지가 WebSocket으로 전달되므로
     // 참여자 목록은 자동으로 갱신됨
-    
+
   } catch (error) {
     console.error('강퇴 에러:', error);
     alert('강퇴 중 오류가 발생했습니다.');
   }
+}
+
+// ============================================
+// 런닝 통계 구독 및 UI
+// ============================================
+
+let gpsSubscription = null;
+
+/**
+ * 실시간 런닝 통계 구독
+ */
+function subscribeToRunningStats() {
+  if (!stompClient || !stompClient.connected) {
+    console.error('❌ WebSocket 연결 없음');
+    return;
+  }
+
+  // 이미 구독 중이면 중복 구독 방지
+  if (gpsSubscription) {
+    console.log('⚠️ 이미 런닝 통계를 구독 중입니다');
+    return;
+  }
+
+  gpsSubscription = stompClient.subscribe(
+      `/sub/running/${currentSession.id}`,
+      function (message) {
+        const stats = JSON.parse(message.body);
+        console.log('📊 통계 수신:', stats);
+
+        updateRunningUI(stats);
+
+        // 목표 거리 도달 시 GPS 자동 중지
+        if (stats.remainingDistance <= 0 && runningTracker
+            && runningTracker.isTracking) {
+          console.log('🎯 목표 거리 도달! GPS 추적 중지');
+          finishRunning(true); // 자동 종료
+        }
+      });
+
+  console.log('✅ 런닝 통계 구독 완료:', `/sub/running/${currentSession.id}`);
+  subscribeToRunningErrors();
+}
+
+/**
+ * 런닝 UI 업데이트
+ */
+function updateRunningUI(stats) {
+  // 테스트 패널 요소들
+  const teamPaceEl = document.getElementById('test-pace');
+  const currentDistanceEl = document.getElementById('test-distance');
+  const remainingDistanceEl = document.getElementById('test-remaining');
+  const runningTimeEl = document.getElementById('test-time');
+  const segmentsEl = document.getElementById('test-segments');
+
+  // 팀 평균 페이스
+  if (teamPaceEl && stats.teamAveragePace) {
+    const paceMin = Math.floor(stats.teamAveragePace);
+    const paceSec = Math.round((stats.teamAveragePace - paceMin) * 60);
+    teamPaceEl.textContent = `${paceMin}:${String(paceSec).padStart(2,
+        '0')}/km`;
+  }
+
+  // 현재 거리
+  if (currentDistanceEl && stats.totalDistance !== undefined) {
+    currentDistanceEl.textContent = `${stats.totalDistance.toFixed(2)}km`;
+  }
+
+  // 남은 거리
+  if (remainingDistanceEl && stats.remainingDistance !== undefined) {
+    const remaining = Math.max(0, stats.remainingDistance);
+    remainingDistanceEl.textContent = `${remaining.toFixed(2)}km`;
+  }
+
+  // 런닝 시간
+  if (runningTimeEl && stats.totalRunningTime !== undefined) {
+    const hours = Math.floor(stats.totalRunningTime / 3600);
+    const minutes = Math.floor((stats.totalRunningTime % 3600) / 60);
+    const seconds = stats.totalRunningTime % 60;
+    runningTimeEl.textContent = `${String(hours).padStart(2, '0')}:${String(
+        minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  // km별 페이스 업데이트
+  if (segmentsEl && stats.segmentPaces && Object.keys(stats.segmentPaces).length
+      > 0) {
+    segmentsEl.innerHTML = ''; // 초기화
+
+    // Map → 배열 변환 후 표시
+    Object.entries(stats.segmentPaces).forEach(([km, pace]) => {
+      const segmentDiv = document.createElement('div');
+      segmentDiv.style.cssText = 'margin-bottom: 4px; font-size: 12px; color: #1F2937;';
+
+      const paceMin = Math.floor(pace);
+      const paceSec = Math.round((pace - paceMin) * 60);
+
+      segmentDiv.textContent = `${km}km: ${paceMin}:${String(paceSec).padStart(
+          2, '0')}/km`;
+      segmentsEl.appendChild(segmentDiv);
+    });
+  } else if (segmentsEl) {
+    segmentsEl.innerHTML = '<div style="font-size: 12px; color: #9CA3AF;">데이터 수신 대기 중...</div>';
+  }
+
+  console.log('📈 UI 업데이트:', {
+    pace: stats.teamAveragePace,
+    distance: stats.totalDistance,
+    remaining: stats.remainingDistance,
+    time: stats.totalRunningTime,
+    segments: stats.segmentPaces ? Object.keys(stats.segmentPaces).length : 0
+  });
+}
+
+/**
+ * 런닝 재개 (채팅방 다시 입장 시)
+ */
+function resumeRunning() {
+  if (!stompClient || !stompClient.connected) {
+    console.error('❌ WebSocket 연결 없음');
+    return;
+  }
+
+  console.log('🔄 런닝 재개 시작...');
+
+  // 1. 통계 구독 (모든 참여자)
+  subscribeToRunningStats();
+
+  // 2. UI 표시 (모든 참여자)
+  showRunningUI();
+
+  // 3. 방장이면 GPS 추적 재시작
+  if (isHost && !runningTracker) {
+    console.log('🎯 방장 - GPS 추적 재시작 (실제 GPS)');
+    runningTracker = new RunningTracker(currentSession.id, currentUser.id,
+        stompClient, false);  // ⭐ false = 실제 GPS!
+    runningTracker.startTracking();
+  }
+
+  console.log('✅ 런닝 재개 완료');
+}
+
+/**
+ * 런닝 UI 표시
+ */
+function showRunningUI() {
+  const testPanel = document.getElementById('running-test-panel');
+  if (testPanel) {
+    testPanel.style.display = 'block';
+    console.log('✅ 테스트 패널 표시');
+  }
+}
+
+/**
+ * 런닝 종료
+ */
+async function finishRunning(isAuto = false) {
+  if (!isHost && !isAuto) {
+    alert('방장만 런닝을 종료할 수 있습니다.');
+    return;
+  }
+
+  const confirmMessage = isAuto
+      ? '목표 거리에 도달했습니다! 런닝을 종료하시겠습니까?'
+      : '런닝을 종료하시겠습니까?';
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  try {
+    // 1. GPS 추적 중지
+    if (runningTracker) {
+      runningTracker.stopTracking();
+      console.log('🛑 GPS 추적 완전히 중지됨');
+      runningTracker = null;
+    }
+
+    // 2. GPS 구독 해제
+    if (gpsSubscription) {
+      gpsSubscription.unsubscribe();
+      gpsSubscription = null;
+      console.log('🛑 GPS 구독 해제됨');
+    }
+
+    // 3. API 호출 - 런닝 종료 (running_result 테이블에 저장)
+    const response = await fetchWithAuth(
+        `/api/running/sessions/${currentSession.id}/finish`, {
+          method: 'POST'
+        });
+
+    if (!response.ok) {
+      const error = await response.json();
+      alert(error.message || '런닝 종료 실패');
+      return;
+    }
+
+    // 4. 세션 상태 업데이트
+    currentSession.status = 'COMPLETED';
+    updateControlBar();
+
+    // 5. 테스트 패널 숨기기
+    const testPanel = document.getElementById('running-test-panel');
+    if (testPanel) {
+      testPanel.style.display = 'none';
+    }
+
+    // 6. 종료 시스템 메시지
+    stompClient.send('/pub/chat/message', {}, JSON.stringify({
+      sessionId: currentSession.id,
+      senderId: null,
+      senderName: 'SYSTEM',
+      content: '🏁 런닝이 종료되었습니다! 수고하셨습니다!',
+      messageType: 'SYSTEM'
+    }));
+
+    // 7. 런닝 결과 모달 표시
+    const result = await response.json();
+    if (result.success) {
+      showRunningResultModal();
+    }
+
+  } catch (error) {
+    console.error('런닝 종료 에러:', error);
+    alert('런닝 종료 중 오류가 발생했습니다.');
+  }
+}
+
+// ============================================
+// 런닝 결과 모달
+// ============================================
+
+/**
+ * 런닝 결과 모달 표시
+ */
+function showRunningResultModal() {
+  // 최종 런닝 결과 API 조회
+  fetchWithAuth(`/api/running/sessions/${currentSession.id}/result`)
+  .then(response => response.json())
+  .then(result => {
+    if (result.success && result.data) {
+      const data = result.data;
+
+      // 총 거리
+      document.getElementById('result-distance').textContent =
+          data.totalDistance ? data.totalDistance.toFixed(2) : '0.00';
+
+      // 소요 시간 (초 → 분:초)
+      const totalMinutes = Math.floor(data.totalTime / 60);
+      const totalSeconds = data.totalTime % 60;
+      document.getElementById('result-time').textContent =
+          `${totalMinutes}:${String(totalSeconds).padStart(2, '0')}`;
+
+      // 평균 페이스
+      if (data.avgPace) {
+        const paceMin = Math.floor(data.avgPace);
+        const paceSec = Math.round((data.avgPace - paceMin) * 60);
+        document.getElementById('result-pace').textContent =
+            `${paceMin}:${String(paceSec).padStart(2, '0')}`;
+      } else {
+        document.getElementById('result-pace').textContent = '--:--';
+      }
+
+      // 구간별 페이스
+      const segmentsDiv = document.getElementById('result-segments');
+      segmentsDiv.innerHTML = '';
+
+      if (data.splitPace && data.splitPace.length > 0) {
+        data.splitPace.forEach(segment => {
+          const segmentDiv = document.createElement('div');
+          segmentDiv.className = 'segment-item';
+
+          const kmLabel = document.createElement('span');
+          kmLabel.className = 'segment-km';
+          kmLabel.textContent = `${segment.km}km`;
+
+          const paceValue = document.createElement('span');
+          paceValue.className = 'segment-pace';
+          const min = Math.floor(segment.pace);
+          const sec = Math.round((segment.pace - min) * 60);
+          paceValue.textContent = `${min}:${String(sec).padStart(2, '0')}/km`;
+
+          segmentDiv.appendChild(kmLabel);
+          segmentDiv.appendChild(paceValue);
+          segmentsDiv.appendChild(segmentDiv);
+        });
+      } else {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.style.cssText = 'text-align: center; color: #9CA3AF; padding: 20px; font-size: 12px;';
+        emptyDiv.textContent = '구간 데이터 없음';
+        segmentsDiv.appendChild(emptyDiv);
+      }
+
+      // 모달 표시
+      const modal = document.getElementById('running-result-modal-overlay');
+      if (modal) {
+        modal.classList.add('show');
+      }
+
+    } else {
+      console.error('런닝 결과 조회 실패:', result.message);
+      alert('런닝 결과를 불러올 수 없습니다.');
+    }
+  })
+  .catch(error => {
+    console.error('런닝 결과 조회 에러:', error);
+    alert('런닝 결과를 불러오는 중 오류가 발생했습니다.');
+  });
+}
+
+/**
+ * 런닝 결과 모달 닫기
+ */
+function closeRunningResultModal() {
+  const modal = document.getElementById('running-result-modal-overlay');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+}
+
+// ============================================
+// 런닝 에러 처리
+// ============================================
+
+let errorSubscription = null;
+
+/**
+ * 런닝 에러 메시지 처리
+ */
+function handleRunningError(error) {
+  console.error('❌ 서버 에러 수신:', error);
+  
+  // 에러 메시지 표시
+  let errorMessage = error.message || '알 수 없는 오류가 발생했습니다.';
+  
+  // 에러 코드에 따른 추가 처리
+  switch (error.errorCode) {
+    case 'SESSION_NOT_FOUND':
+      errorMessage += '\n세션을 찾을 수 없습니다. 페이지를 새로고침해주세요.';
+      break;
+    case 'USER_NOT_FOUND':
+      errorMessage += '\n사용자 정보를 찾을 수 없습니다.';
+      break;
+    case 'INVALID_REQUEST':
+      errorMessage += '\n잘못된 요청입니다.';
+      break;
+    case 'INTERNAL_SERVER_ERROR':
+      errorMessage += '\n서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      break;
+  }
+  
+  alert('⚠️ GPS 추적 오류\n\n' + errorMessage);
+  
+  // 심각한 에러인 경우 GPS 추적 중지
+  if (error.errorCode === 'SESSION_NOT_FOUND' || error.errorCode === 'INTERNAL_SERVER_ERROR') {
+    if (runningTracker && runningTracker.isTracking) {
+      console.log('🛑 심각한 에러로 인한 GPS 추적 중지');
+      runningTracker.stopTracking();
+      runningTracker = null;
+    }
+  }
+}
+
+/**
+ * 런닝 에러 구독
+ */
+function subscribeToRunningErrors() {
+  if (!stompClient || !stompClient.connected) {
+    console.error('❌ WebSocket 연결 없음 (에러 구독)');
+    return;
+  }
+  
+  // 이미 구독 중이면 중복 구독 방지
+  if (errorSubscription) {
+    console.log('⚠️ 이미 런닝 에러를 구독 중입니다');
+    return;
+  }
+  
+  errorSubscription = stompClient.subscribe(
+      `/sub/running/${currentSession.id}/errors`,
+      function (message) {
+        const error = JSON.parse(message.body);
+        handleRunningError(error);
+      });
+  
+  console.log('✅ 런닝 에러 구독 완료:', `/sub/running/${currentSession.id}/errors`);
 }

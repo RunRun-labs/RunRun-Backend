@@ -199,4 +199,6 @@ public class ChatRestController {
     chatService.kickUser(sessionId, userId, principal);
     return ResponseEntity.ok(ApiResponse.success("사용자를 강퇴했습니다.", null));
   }
+
+
 }

@@ -43,41 +43,41 @@ import org.hibernate.type.SqlTypes;
 @Builder
 public class RunningResult extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
-    private Course course;
 
-    @Column(name = "total_distance", nullable = false, precision = 7, scale = 2)
-    private BigDecimal totalDistance;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "course_id")
+  private Course course;
 
-    @Column(name = "total_time", nullable = false)
-    private Integer totalTime;
+  @Column(name = "total_distance", nullable = false, precision = 7, scale = 2)
+  private BigDecimal totalDistance;
 
-    @Column(name = "avg_pace", nullable = false, precision = 6, scale = 2)
-    private BigDecimal avgPace;
+  @Column(name = "total_time", nullable = false)
+  private Integer totalTime;
 
-    @Column(name = "started_at", nullable = false)
-    private LocalDateTime startedAt;
+  @Column(name = "avg_pace", nullable = false, precision = 6, scale = 2)
+  private BigDecimal avgPace;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "run_status", nullable = false, length = 20)
-    private RunStatus runStatus;
+  @Column(name = "started_at", nullable = false)
+  private LocalDateTime startedAt;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "split_pace", nullable = false, columnDefinition = "jsonb")
-    private List<Map<String, Object>> splitPace;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "run_status", nullable = false, length = 20)
+  private RunStatus runStatus;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "running_type", nullable = false, length = 20)
-    private RunningType runningType;
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "split_pace", nullable = false, columnDefinition = "jsonb")
+  private List<Map<String, Object>> splitPace;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "running_type", nullable = false, length = 20)
+  private RunningType runningType;
 
 }

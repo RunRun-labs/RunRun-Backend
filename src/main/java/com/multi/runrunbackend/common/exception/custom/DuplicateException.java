@@ -2,9 +2,9 @@ package com.multi.runrunbackend.common.exception.custom;
 
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 
-public class DuplicateUsernameException extends CustomException {
+public class DuplicateException extends CustomException {
 
-    public DuplicateUsernameException(ErrorCode errorCode) {
+    public DuplicateException(ErrorCode errorCode) {
         super(errorCode);
     }
 }
