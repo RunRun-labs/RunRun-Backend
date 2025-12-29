@@ -67,9 +67,9 @@ public class CrewDetailResDto {
      * @param crew             크루 엔티티
      * @param memberCount      크루원 수
      * @param recentActivities 최근 활동 내역
-     * @description : toEntity : Entity → DTO 변환
+     * @description : formEntity : Entity → DTO 변환
      */
-    public static CrewDetailResDto toEntity(
+    public static CrewDetailResDto fromEntity(
             Crew crew,
             Long memberCount,
             List<CrewActivityResDto> recentActivities
