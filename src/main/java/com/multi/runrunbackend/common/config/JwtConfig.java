@@ -54,6 +54,7 @@ public class JwtConfig {
                                 "/myPage/**",
                                 "/course_auto/**",
                                 "/files/**",
+                                "/challenge/**",
                                 "/course",
                                 "/courseCreate",
                                 "/courseDetail/**",
