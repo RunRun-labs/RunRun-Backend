@@ -77,7 +77,7 @@ public class CrewJoinService {
                 crew, user, JoinStatus.PENDING
         );
         if (alreadyRequested) {
-            throw new BusinessException(ErrorCode.ALREADY_REQUESTED_JOIN);
+            throw new BusinessException(ErrorCode.ALREADY_REQUESTED);
         }
 
         // 가입 신청 생성
