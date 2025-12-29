@@ -187,4 +187,10 @@ public class PathController {
         return "terms/terms-detail";
     }
 
+    @GetMapping("/profile/{userId}")
+    public String userProfileView(@PathVariable Long userId, Model model) {
+        model.addAttribute("userId", userId);
+        return "user/user-profile";
+    }
+
 }
