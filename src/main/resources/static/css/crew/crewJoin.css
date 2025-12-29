@@ -10,9 +10,8 @@
 :root {
     --primary-color: #BAFF29;
     --primary-dark: #A0E020;
-    --danger-color: #FF4444;
-    --danger-dark: #E03030;
     --border-color: #BAFF29;
+    --border-light: rgba(186, 255, 41, 0.3);
     --error-color: #FF4444;
     --error-border: #FF4444;
     --text-primary: #1A1A1A;
@@ -48,7 +47,7 @@ body {
 }
 
 /* ========================================
-   헤더 (모집 마감 버튼 포함)
+   헤더
 ======================================== */
 .header {
     position: sticky;
@@ -79,26 +78,9 @@ body {
 }
 
 .header-title {
-    flex: 1;
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
-}
-
-.btn-close-recruit {
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--bg-white);
-    background-color: var(--danger-color);
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-close-recruit:hover {
-    background-color: var(--danger-dark);
 }
 
 /* ========================================
@@ -113,7 +95,7 @@ body {
 /* ========================================
    폼 스타일
 ======================================== */
-.crew-form {
+.crew-join-form {
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -123,6 +105,15 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.form-group--half {
+    flex: 1;
 }
 
 .form-label {
@@ -137,7 +128,7 @@ body {
     width: 100%;
     padding: 14px 16px;
     font-size: 14px;
-    border: 2px solid var(--border-color);
+    border: 2px solid var(--border-light);
     border-radius: 8px;
     background-color: var(--bg-white);
     color: var(--text-primary);
@@ -146,8 +137,7 @@ body {
 }
 
 .form-input::placeholder,
-.form-textarea::placeholder,
-.form-select option[value=""] {
+.form-textarea::placeholder {
     color: var(--text-placeholder);
 }
 
@@ -155,23 +145,20 @@ body {
 .form-textarea:focus,
 .form-select:focus {
     outline: none;
-    border-color: var(--primary-dark);
+    border-color: var(--border-color);
     box-shadow: 0 0 0 3px rgba(186, 255, 41, 0.1);
 }
 
-.form-input:disabled,
-.form-input[readonly],
+/* 읽기 전용 입력 필드 */
 .form-input--readonly {
     background-color: var(--bg-gray);
     color: var(--text-secondary);
     cursor: not-allowed;
-    opacity: 0.7;
+    border-color: #E5E5E5;
 }
 
-.form-input:disabled:focus,
-.form-input[readonly]:focus,
 .form-input--readonly:focus {
-    border-color: var(--border-color);
+    border-color: #E5E5E5;
     box-shadow: none;
 }
 
@@ -194,7 +181,7 @@ body {
     color: var(--error-color);
     font-size: 12px;
     font-weight: 500;
-    margin-top: 4px;
+    margin-top: -4px;
     min-height: 18px;
     display: block;
 }
@@ -203,110 +190,93 @@ body {
     display: none;
 }
 
+.form-guide {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 400;
+    margin-top: 4px;
+    display: block;
+}
+
+.char-count {
+    text-align: right;
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.char-count.over-limit {
+    color: #ff4444;
+    font-weight: bold;
+}
+
+/* ========================================
+   토스트
+======================================== */
+
 .form-textarea {
     resize: vertical;
     min-height: 100px;
     line-height: 1.5;
 }
 
-
-/* ========================================
-   단위 입력 (km)
-======================================== */
-.input-with-unit {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.input-with-unit .form-input {
-    padding-right: 50px;
-}
-
-.input-unit {
-    position: absolute;
-    right: 16px;
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: red;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
     font-size: 14px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 99999;
+}
+
+.toast.show {
+    opacity: 1 !important;
 }
 
 /* ========================================
-   이미지 업로드 (수정 모드)
+   미리보기 박스
 ======================================== */
-.image-upload-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.image-upload-btn {
+.preview-box {
     width: 100%;
     min-height: 120px;
-    border: 2px dashed var(--border-color);
+    padding: 16px;
+    border: 2px dashed var(--border-light);
     border-radius: 8px;
     background-color: var(--bg-white);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     gap: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
 }
 
-.image-upload-btn:hover {
-    background-color: rgba(186, 255, 41, 0.05);
-    border-color: var(--primary-dark);
-}
-
-.upload-text {
+.preview-box__placeholder {
     font-size: 14px;
-    color: var(--text-secondary);
+    color: var(--text-placeholder);
+    text-align: center;
+    margin: auto 0;
 }
 
-.image-preview {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.image-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.btn-edit-image {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    width: 40px;
-    height: 40px;
-    background-color: rgba(0, 0, 0, 0.6);
-    border: none;
-    border-radius: 50%;
+.preview-box__content {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.btn-edit-image:hover {
-    background-color: rgba(0, 0, 0, 0.8);
+.preview-box__item {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
 }
 
 /* ========================================
-   버튼 그룹
+   제출 버튼
 ======================================== */
-.button-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.form-actions {
     margin-top: 8px;
 }
 
@@ -337,139 +307,6 @@ body {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
-}
-
-.btn-cancel {
-    width: 100%;
-    padding: 16px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    background-color: var(--bg-gray);
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-cancel:hover {
-    background-color: #E5E5E5;
-}
-
-/* ========================================
-   모달
-======================================== */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 20px;
-}
-
-.modal-content {
-    background-color: var(--bg-white);
-    border-radius: 16px;
-    padding: 32px 24px;
-    max-width: 400px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.modal-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-align: center;
-}
-
-.modal-description {
-    font-size: 14px;
-    color: var(--text-secondary);
-    text-align: center;
-    line-height: 1.6;
-}
-
-.modal-buttons {
-    display: flex;
-    gap: 12px;
-}
-
-.btn-modal-cancel,
-.btn-modal-confirm {
-    flex: 1;
-    padding: 14px;
-    font-size: 15px;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-modal-cancel {
-    color: var(--text-secondary);
-    background-color: var(--bg-gray);
-}
-
-.btn-modal-cancel:hover {
-    background-color: #E5E5E5;
-}
-
-.btn-modal-confirm {
-    color: var(--bg-white);
-    background-color: var(--danger-color);
-}
-
-.btn-modal-confirm:hover {
-    background-color: var(--danger-dark);
-}
-
-/* ========================================
-   로딩 스피너
-======================================== */
-.loading-spinner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    z-index: 1000;
-}
-
-.spinner {
-    width: 48px;
-    height: 48px;
-    border: 4px solid rgba(186, 255, 41, 0.2);
-    border-top-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.loading-spinner p {
-    color: var(--bg-white);
-    font-size: 14px;
-    font-weight: 500;
 }
 
 /* ========================================
@@ -506,10 +343,6 @@ body {
     font-weight: 500;
 }
 
-.nav-item-active {
-    color: var(--text-primary);
-}
-
 .nav-item:hover {
     color: var(--text-primary);
 }
@@ -522,23 +355,21 @@ body {
         padding: 32px 40px 120px;
     }
 
-    .crew-form {
+    .crew-join-form {
         max-width: 600px;
         margin: 0 auto;
     }
 
     .form-input,
-    .form-textarea {
+    .form-textarea,
+    .form-select {
         font-size: 15px;
     }
 
-    .button-group {
-        flex-direction: row;
-    }
-
-    .btn-submit,
-    .btn-cancel {
-        flex: 1;
+    .btn-submit {
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
     }
 }
 
@@ -554,7 +385,8 @@ body {
         padding: 40px 60px 120px;
     }
 
-    .crew-form {
+    .crew-join-form {
         max-width: 700px;
     }
 }
+

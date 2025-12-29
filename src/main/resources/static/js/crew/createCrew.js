@@ -9,6 +9,8 @@
 // 전역 변수
 // ========================================
 let uploadedImageUrl = null;
+let toastTimer = null;
+let isSubmitting = false;
 // ========================================
 // 초기화
 // ========================================
@@ -19,19 +21,38 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ========================================
+// 글자 수 카운터 업데이트 함수
+// ========================================
+function updateCharCount(inputId, countId) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(countId);
+
+    if (input && counter) {
+        counter.textContent = input.value.length;
+    }
+}
+
+// ========================================
 // 실시간 Validation 초기화
 // ========================================
 function initLiveValidation() {
 
     const crewNameInput = document.getElementById('crewName');
     if (crewNameInput) {
-        crewNameInput.addEventListener('input', () => validateCrewName());
+        crewNameInput.addEventListener('input', () => {
+            validateCrewName();
+            updateCharCount('crewName', 'crewNameCount');
+        });
         crewNameInput.addEventListener('blur', () => validateCrewName());
+
     }
 
     const descriptionInput = document.getElementById('description');
     if (descriptionInput) {
-        descriptionInput.addEventListener('input', () => validateDescription());
+        descriptionInput.addEventListener('input', () => {
+            validateDescription();
+            updateCharCount('description', 'crewDescriptionCount');
+        });
         descriptionInput.addEventListener('blur', () => validateDescription());
         descriptionInput.addEventListener('focus', () => validatePreviousFields('description'));
     }
@@ -79,19 +100,30 @@ function initLiveValidation() {
 function validateCrewName() {
     const input = document.getElementById('crewName');
     const errorElement = document.getElementById('crewNameError');
-    const value = input.value.trim();
+    const charCount = document.getElementById('crewNameCount');
+    const value = input.value;
 
-    if (!value) {
+    if (!value.trim()) {
         showFieldError(input, errorElement, '크루명은 필수입니다.');
         return false;
     }
 
     if (value.length > 100) {
+
+        input.value = value.slice(0, 100);
         showFieldError(input, errorElement, '크루명은 100자 이내로 입력해주세요.');
+        if (charCount) {
+            charCount.parentElement.classList.add('over-limit');
+        }
+        showToast('크루명은 100자 이내로 입력해주세요.');
+
         return false;
     }
 
     clearFieldError(input, errorElement);
+    if (charCount) {
+        charCount.parentElement.classList.remove('over-limit');
+    }
     return true;
 }
 
@@ -138,16 +170,26 @@ function validateAllRequiredFieldsOnFocus() {
 function validateDescription() {
     const input = document.getElementById('description');
     const errorElement = document.getElementById('descriptionError');
+    const charCount = document.getElementById('crewDescriptionCount');
     if (!input || !errorElement) return true;
 
-    const value = input.value.trim();
+    const value = input.value;
 
     if (value.length > 500) {
+
+        input.value = value.slice(0, 500);
         showFieldError(input, errorElement, '크루 소개글은 500자 이내로 입력해주세요.');
+        if (charCount) {
+            charCount.parentElement.classList.add('over-limit');
+        }
+        showToast('크루 소개글은 500자 이내로 입력해주세요.');
         return false;
     }
 
     clearFieldError(input, errorElement);
+    if (charCount) {
+        charCount.parentElement.classList.remove('over-limit');
+    }
     return true;
 }
 
@@ -158,13 +200,15 @@ function validateActivityRegion() {
 
     const value = input.value.trim();
 
-    if (!value) {
+    if (!value.trim()) {
         showFieldError(input, errorElement, '활동 지역은 필수입니다.');
         return false;
     }
 
     if (value.length > 100) {
+        input.value = value.slice(0, 100);
         showFieldError(input, errorElement, '활동 지역은 100자 이내로 입력해주세요.');
+        showToast('활동 지역은 100자 이내로 입력해주세요.');
         return false;
     }
 
@@ -177,15 +221,17 @@ function validateRegularMeetingTime() {
     const errorElement = document.getElementById('regularMeetingTimeError');
     if (!input || !errorElement) return true;
 
-    const value = input.value.trim();
+    const value = input.value;
 
-    if (!value) {
+    if (!value.trim()) {
         showFieldError(input, errorElement, '정기 모임 일시는 필수입니다.');
         return false;
     }
 
     if (value.length > 100) {
+        input.value = value.slice(0, 100);
         showFieldError(input, errorElement, '정기 모임 일시는 100자 이내로 입력해주세요.');
+        showToast('정기 모임 일시는 100자 이내로 입력해주세요.');
         return false;
     }
 
@@ -239,18 +285,22 @@ function validateImage() {
 function showFieldError(inputElement, errorElement, message) {
     if (inputElement) {
         inputElement.classList.add('error');
+        inputElement.style.borderColor = 'red';
     }
     if (errorElement) {
         errorElement.textContent = message;
+        errorElement.style.display = 'block';
     }
 }
 
 function clearFieldError(inputElement, errorElement) {
     if (inputElement) {
         inputElement.classList.remove('error');
+        inputElement.style.borderColor = '';
     }
     if (errorElement) {
         errorElement.textContent = '';
+        errorElement.style.display = 'none';
     }
 }
 
@@ -262,12 +312,25 @@ function initializeForm() {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        e.stopPropagation();
+
+        if (isSubmitting) {
+            console.log('이미 제출 중입니다.');
+            return;
+        }
 
         if (!validateForm()) {
             return;
         }
 
-        await createCrew();
+        isSubmitting = true;
+        console.log('크루 생성 시작');
+        try {
+            await createCrew();
+        } catch (error) {
+            console.error('크루 생성 실패:', error);
+            isSubmitting = false;
+        }
     });
 }
 
@@ -276,18 +339,70 @@ function initializeForm() {
 // ========================================
 function validateForm() {
     let isValid = true;
+    let firstErrorField = null;
+    let errorCount = 0;
 
-    if (!validateCrewName()) isValid = false;
+    // 모든 필드 검증
+    if (!validateCrewName()) {
+        isValid = false;
+        errorCount++;
+        if (!firstErrorField) firstErrorField = document.getElementById('crewName');
+    }
 
-    if (!validateDescription()) isValid = false;
+    if (!validateDescription()) {
+        isValid = false;
+        errorCount++;
+        if (!firstErrorField) firstErrorField = document.getElementById('description');
+    }
 
-    if (!validateRunningDistance()) isValid = false;
+    if (!validateRunningDistance()) {
+        isValid = false;
+        errorCount++;
+        if (!firstErrorField) firstErrorField = document.getElementById('runningDistance');
+    }
 
-    if (!validateAveragePace()) isValid = false;
+    if (!validateAveragePace()) {
+        isValid = false;
+        errorCount++;
+        if (!firstErrorField) firstErrorField = document.getElementById('averagePace');
+    }
 
-    if (!validateActivityRegion()) isValid = false;
+    if (!validateActivityRegion()) {
+        isValid = false;
+        errorCount++;
+        if (!firstErrorField) firstErrorField = document.getElementById('activityRegion');
+    }
 
-    if (!validateRegularMeetingTime()) isValid = false;
+    if (!validateRegularMeetingTime()) {
+        isValid = false;
+        errorCount++;
+        if (!firstErrorField) firstErrorField = document.getElementById('regularMeetingTime');
+    }
+
+    // 검증 실패 시 토스트 + 스크롤
+    if (!isValid) {
+        console.log(`폼 검증 실패 - ${errorCount}개 항목 확인 필요`);
+
+        if (errorCount === 1) {
+            showToast('입력 항목을 확인해주세요.');
+        } else {
+            showToast(`${errorCount}개 항목을 확인해주세요.`);
+        }
+
+        // 첫 번째 에러 필드로 스크롤
+        if (firstErrorField) {
+            firstErrorField.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            setTimeout(() => {
+                firstErrorField.focus();
+            }, 300);
+        }
+    } else {
+        console.log('폼 검증 성공');
+    }
 
     return isValid;
 }
@@ -438,6 +553,7 @@ async function createCrew() {
     } catch (error) {
         console.error('크루 생성 에러:', error);
         showError(error.message || '크루 생성에 실패했습니다.');
+        throw error;
     } finally {
         showLoading(false);
     }
@@ -482,4 +598,32 @@ function getAccessToken() {
     }
 
     return token;
+}
+
+function showToast(message, duration = 2000) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        `;
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        toast.style.opacity = '0';
+    }, duration);
 }

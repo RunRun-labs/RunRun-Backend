@@ -98,6 +98,24 @@ body {
     margin-left: var(--spacing-md);
 }
 
+/* 가입 신청 버튼(초록색) */
+.btn-action--join {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* 가입 취소 버튼(빨간색) */
+.btn-action--cancel {
+    background-color: #f44336;
+    color: white;
+}
+
+/* 가입 탈퇴 버튼(회색) */
+.btn-action--leave {
+    background-color: #9E9E9E;
+    color: white;
+}
+
 /* =========================
    메인 컨텐츠 영역
    ========================= */
@@ -180,6 +198,7 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: var(--spacing-md);
+    min-width: 0;
 }
 
 .crew-info__title {
@@ -188,6 +207,9 @@ body {
     color: var(--text-primary);
     flex: 1;
     margin-right: var(--spacing-md);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: keep-all;
 }
 
 .crew-info__leader {
@@ -234,6 +256,9 @@ body {
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
     margin-bottom: var(--spacing-sm);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: keep-all;
 }
 
 .crew-info__location .icon {
@@ -305,6 +330,8 @@ section {
     line-height: 1.8;
     color: var(--text-secondary);
     white-space: pre-wrap;
+    word-break: break-all;
+    overflow-wrap: break-word;
 }
 
 /* =========================
@@ -327,6 +354,9 @@ section {
     font-size: var(--font-size-md);
     font-weight: 500;
     color: var(--text-primary);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: keep-all;
 }
 
 .schedule-card__time svg {
@@ -437,6 +467,15 @@ section {
 
 .btn-action--cancel:hover {
     background-color: var(--danger-dark);
+}
+
+.btn-action--leave {
+    background-color: #999999;
+    color: #FFFFFF;
+}
+
+.btn-action--leave:hover {
+    background-color: #777777;
 }
 
 .btn-action:disabled {
