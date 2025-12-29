@@ -40,7 +40,6 @@ public class JwtConfig {
                 .sessionManagement(
                         sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 ).authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/files/**").permitAll()
                         .requestMatchers(
                                 "/auth/**",
                                 "/login",
@@ -50,6 +49,8 @@ public class JwtConfig {
                                 "/public/**",
                                 "/error",
                                 "/img/**",
+                                "/chat/**",
+                                "/ws/**",
                                 "/myPage/**",
                                 "/challenge/**",
                                 "/course_auto/**",
@@ -59,17 +60,22 @@ public class JwtConfig {
                                 "/courseCreate",
                                 "/courseDetail/**",
                                 "/courseUpdate/**",
-                                "/course_manual/**"
+                                "/course_manual/**",
+                                "/crews/new",
+                                "/crews/**",
+                                "/match/**",
+                                "/recruit/**",
+                                "/tts-test"
                         ).permitAll()
                         .requestMatchers(
                                 PathRequest.toStaticResources().atCommonLocations()
                         ).permitAll()
                         .anyRequest().authenticated()
 
-            ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                    .accessDeniedHandler(jwtAccessDeniedHandler));
+                ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
+                        UsernamePasswordAuthenticationFilter.class).exceptionHandling(
+                        exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                .accessDeniedHandler(jwtAccessDeniedHandler));
 
         return http.build();
 

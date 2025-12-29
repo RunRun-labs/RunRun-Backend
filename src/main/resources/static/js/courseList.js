@@ -34,6 +34,7 @@ let currentFilters = {
   lng: null,
   radiusM: 1500, // default: 1.5km
 };
+const DEFAULT_PAGE_SIZE = 5;
 
 // ==========================
 // Get JWT Token
@@ -114,9 +115,9 @@ async function loadCourseList(reset = false) {
     if (currentCursor) {
       params.append("cursor", currentCursor);
     }
-    params.append("size", "20");
+    params.append("size", String(DEFAULT_PAGE_SIZE));
 
-    const url = `/api/routes${
+    const url = `/api/courses${
       params.toString() ? "?" + params.toString() : ""
     }`;
     console.log("Fetching courses from:", url);
@@ -269,14 +270,14 @@ function createCourseCard(course) {
     </div>
     <div class="course-thumbnail-wrapper">
       <div class="course-actions">
-        <button class="action-icon heart-icon" type="button" aria-label="좋아요" onclick="event.stopPropagation();">
+        <button class="action-icon heart-icon ${course.isLiked ? "active" : ""}" type="button" aria-label="좋아요" onclick="event.stopPropagation();">
           <img
               src="http://localhost:3845/assets/9af0c1d4ec1d966c7ec0b9ad1664f0fb4dc60971.svg"
               alt="하트 아이콘"
           />
           <span class="action-count">${course.likeCount || 0}</span>
         </button>
-        <button class="action-icon star-icon" type="button" aria-label="즐겨찾기" onclick="event.stopPropagation();">
+        <button class="action-icon star-icon ${course.isFavorited ? "active" : ""}" type="button" aria-label="즐겨찾기" onclick="event.stopPropagation();">
           <img
               src="http://localhost:3845/assets/a153ec3dff46ec34044b8bce0977bd3c5e0e43d7.svg"
               alt="별 아이콘"
@@ -332,20 +333,33 @@ function escapeHtml(text) {
 // Event Listeners
 // ==========================
 
-// Search
-if (searchButton) {
+function initSearchListeners() {
+  if (!searchButton || !searchInput) {
+    return;
+  }
+
   searchButton.addEventListener("click", () => {
     currentFilters.keyword = searchInput.value.trim() || null;
     loadCourseList(true);
   });
-}
 
-if (searchInput) {
   searchInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       currentFilters.keyword = searchInput.value.trim() || null;
       loadCourseList(true);
     }
+  });
+
+  let searchDebounceTimer = null;
+  searchInput.addEventListener("input", () => {
+    const nextKeyword = searchInput.value.trim();
+    if (searchDebounceTimer) {
+      clearTimeout(searchDebounceTimer);
+    }
+    searchDebounceTimer = setTimeout(() => {
+      currentFilters.keyword = nextKeyword || null;
+      loadCourseList(true);
+    }, 300);
   });
 }
 
@@ -608,6 +622,7 @@ if (courseContent) {
 // ==========================
 function init() {
   initDOMElements();
+  initSearchListeners();
 
   if (!courseListContainer) {
     console.error("courseList container not found!");

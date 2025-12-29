@@ -6,6 +6,7 @@ import com.multi.runrunbackend.domain.course.constant.CourseRegisterType;
 import com.multi.runrunbackend.domain.course.constant.CourseSortType;
 import com.multi.runrunbackend.domain.course.dto.req.CourseCreateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseListReqDto;
+import com.multi.runrunbackend.domain.course.dto.req.CourseSirenReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CourseUpdateReqDto;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
@@ -20,6 +21,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +46,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/routes")
+@RequestMapping("/api/courses")
 public class CourseController {
 
 
@@ -77,7 +79,7 @@ public class CourseController {
         @AuthenticationPrincipal CustomUser principal,
 
         @RequestParam(required = false) String keyword,
-        @RequestParam(required = false) CourseRegisterType registerType,
+        @RequestParam(required = false) List<CourseRegisterType> registerType,
         @RequestParam(required = false) Boolean nearby,
 
         @RequestParam(required = false)
@@ -142,6 +144,67 @@ public class CourseController {
 
         return ResponseEntity.ok(
             ApiResponse.success("코스 삭제 성공"));
+    }
+
+    @PostMapping("/like/{course_id}")
+    public ResponseEntity<ApiResponse> likeCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        courseService.likeCourse(principal, courseId);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 좋아요 성공")
+        );
+    }
+
+    @DeleteMapping("/like/{course_id}")
+    public ResponseEntity<ApiResponse> unLikeCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        courseService.unLikeCourse(principal, courseId);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 좋아요 삭제")
+        );
+    }
+
+    @PostMapping("/favorite/{course_id}")
+    public ResponseEntity<ApiResponse> favoriteCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        courseService.favoriteCourse(principal, courseId);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 즐겨찾기 성공")
+        );
+    }
+
+    @DeleteMapping("/favorite/{course_id}")
+    public ResponseEntity<ApiResponse> unFavoriteCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        courseService.unFavoriteCourse(principal, courseId);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 즐겨찾기 삭제")
+        );
+    }
+
+    @PostMapping("/siren/{course_id}")
+    public ResponseEntity<ApiResponse> sirenCourse(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId,
+        @Valid @RequestBody CourseSirenReqDto req) {
+        courseService.sirenCourse(principal, courseId, req);
+
+        return ResponseEntity.ok(
+            ApiResponse.successNoData("코스 신고하기 성공")
+        );
+
     }
 
 }

@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.course.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseSoftDeleteEntity;
+import com.multi.runrunbackend.domain.course.dto.req.CourseSirenReqDto;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
     name = "course_siren",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"course_id", "reporter_id"})
+    uniqueConstraints = @UniqueConstraint(columnNames = {"course_id", "user_id"})
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -45,4 +46,13 @@ public class CourseSiren extends BaseSoftDeleteEntity {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    public static CourseSiren create(User user, Course course, CourseSirenReqDto req) {
+        CourseSiren courseSiren = new CourseSiren();
+        courseSiren.course = course;
+        courseSiren.user = user;
+        courseSiren.description = req.getDescription();
+
+        return courseSiren;
+    }
 }

@@ -1,0 +1,624 @@
+/* =========================
+   기본 설정 & 리셋
+   ========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* 컬러 시스템 */
+    --primary-color: #BAFF29;
+    --primary-dark: #A3E024;
+    --danger-color: #FF4444;
+    --danger-dark: #E63939;
+    --bg-color: #FFFFFF;
+    --bg-secondary: #F8F8F8;
+    --card-bg: #F0FFC7;
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --text-tertiary: #999999;
+    --border-color: #E0E0E0;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+
+    /* 간격 시스템 */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    /* 폰트 시스템 */
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-md: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 20px;
+    --font-size-xxl: 24px;
+
+    /* 레이아웃 */
+    --header-height: 56px;
+    --footer-height: 80px;
+    --nav-height: 64px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Helvetica', 'Arial', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================
+   헤더 영역
+   ========================= */
+.crew-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    background-color: var(--bg-color);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 100;
+}
+
+.btn-back {
+    background: none;
+    border: none;
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    transition: opacity 0.2s;
+}
+
+.btn-back:hover {
+    opacity: 0.7;
+}
+
+.btn-back:active {
+    opacity: 0.5;
+}
+
+.header-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-left: var(--spacing-md);
+}
+
+/* =========================
+   메인 컨텐츠 영역
+   ========================= */
+.crew-detail-main {
+    padding-top: var(--header-height);
+    padding-bottom: calc(var(--footer-height) + var(--nav-height));
+    min-height: 100vh;
+}
+
+/* =========================
+   크루 히어로 섹션 (이미지)
+   ========================= */
+.crew-hero {
+    position: relative;
+    width: 100%;
+    background-color: var(--bg-secondary);
+}
+
+.crew-hero__image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    overflow: hidden;
+    background-color: #E8E8E8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 이미지 로드 실패 시 기본 아이콘 */
+.crew-hero__image-wrapper::after {
+    content: '🏃';
+    font-size: 120px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.2;
+}
+
+.crew-hero__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: relative;
+    z-index: 1;
+}
+
+.crew-hero__badge {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    box-shadow: var(--shadow-md);
+}
+
+.crew-hero__badge--recruiting {
+    background-color: var(--primary-color);
+    color: var(--text-primary);
+}
+
+.crew-hero__badge--closed {
+    background-color: #FFE5E5;
+    color: var(--danger-color);
+}
+
+/* =========================
+   크루 기본 정보
+   ========================= */
+.crew-info {
+    padding: var(--spacing-lg) var(--spacing-md);
+    background-color: var(--card-bg);
+}
+
+.crew-info__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+}
+
+.crew-info__title {
+    font-size: var(--font-size-xxl);
+    font-weight: 700;
+    color: var(--text-primary);
+    flex: 1;
+    margin-right: var(--spacing-md);
+}
+
+.crew-info__leader {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    border-radius: 50%;
+}
+
+.btn-icon:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+}
+
+.btn-favorite.active {
+    color: var(--danger-color);
+}
+
+.btn-favorite.active svg path {
+    fill: currentColor;
+}
+
+.crew-info__location {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.crew-info__location .icon {
+    color: var(--text-tertiary);
+}
+
+.crew-info__running {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    margin-top: var(--spacing-xs);
+}
+
+.running-info__item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.running-info__item .icon {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.running-info__label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.running-info__value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* =========================
+   공통 섹션 스타일
+   ========================= */
+section {
+    padding: var(--spacing-lg) var(--spacing-md);
+    border-bottom: 8px solid var(--bg-secondary);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+.title-icon {
+    font-size: 20px;
+}
+
+/* =========================
+   크루 소개 섹션
+   ========================= */
+.crew-description {
+    background-color: var(--bg-color);
+}
+
+.description-text {
+    font-size: var(--font-size-md);
+    line-height: 1.8;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+}
+
+/* =========================
+   정기 러닝 일정 섹션
+   ========================= */
+.crew-schedule {
+    background-color: var(--bg-color);
+}
+
+.schedule-card {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+}
+
+.schedule-card__time {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.schedule-card__time svg {
+    color: var(--primary-color);
+}
+
+/* =========================
+   최근 활동 섹션
+   ========================= */
+.crew-activities {
+    background-color: var(--bg-color);
+    border-bottom: none;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.activity-card {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.activity-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.activity-card__badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background-color: var(--primary-color);
+    border-radius: 12px;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+}
+
+.activity-card__title {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.activity-card__date {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+}
+
+/* =========================
+   하단 액션 버튼 영역
+   ========================= */
+.crew-footer {
+    position: fixed;
+    bottom: var(--nav-height);
+    left: 0;
+    right: 0;
+    padding: var(--spacing-md);
+    background-color: var(--bg-color);
+    border-top: 1px solid var(--border-color);
+    z-index: 90;
+}
+
+.btn-action {
+    width: 100%;
+    height: 56px;
+    border: none;
+    border-radius: 12px;
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-action:active {
+    transform: scale(0.98);
+}
+
+.btn-action--join {
+    background-color: var(--primary-color);
+    color: var(--text-primary);
+}
+
+.btn-action--join:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-action--cancel {
+    background-color: var(--danger-color);
+    color: #FFFFFF;
+}
+
+.btn-action--cancel:hover {
+    background-color: var(--danger-dark);
+}
+
+.btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =========================
+   하단 네비게이션
+   ========================= */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    background-color: var(--bg-color);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: var(--spacing-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-xs);
+    transition: color 0.2s;
+}
+
+.nav-item svg {
+    stroke: currentColor;
+}
+
+.nav-item--active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.nav-item:hover {
+    color: var(--text-primary);
+}
+
+/* =========================
+   반응형 디자인
+   ========================= */
+
+/* 태블릿 (768px 이상) */
+@media (min-width: 768px) {
+    .crew-detail-main {
+        max-width: 768px;
+        margin: 0 auto;
+    }
+
+    .crew-hero__image-wrapper {
+        height: 360px;
+    }
+
+    section {
+        padding: var(--spacing-xl) var(--spacing-lg);
+    }
+
+    .crew-footer {
+        max-width: 768px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+/* 데스크탑 (1024px 이상) */
+@media (min-width: 1024px) {
+    .crew-detail-main {
+        max-width: 1024px;
+    }
+
+    .crew-hero__image-wrapper {
+        height: 400px;
+    }
+
+    .crew-footer {
+        max-width: 1024px;
+    }
+
+    .activity-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-lg);
+    }
+}
+
+/* 큰 데스크탑 (1440px 이상) */
+@media (min-width: 1440px) {
+    .crew-detail-main {
+        max-width: 1200px;
+    }
+
+    .crew-footer {
+        max-width: 1200px;
+    }
+
+    .activity-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* =========================
+   접근성 개선
+   ========================= */
+button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.activity-card:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* =========================
+   다크모드 지원 (선택사항)
+   ========================= */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #121212;
+        --bg-secondary: #1E1E1E;
+        --card-bg: #2C2C2C;
+        --text-primary: #FFFFFF;
+        --text-secondary: #B0B0B0;
+        --text-tertiary: #808080;
+        --border-color: #2C2C2C;
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+    }
+
+    .crew-hero__image-wrapper {
+        background-color: #1E1E1E;
+    }
+}
+
+/* =========================
+   로딩 및 애니메이션
+   ========================= */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.activity-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* 스켈레톤 로딩 (선택사항) */
+.skeleton {
+    background: linear-gradient(
+            90deg,
+            var(--bg-secondary) 25%,
+            var(--border-color) 50%,
+            var(--bg-secondary) 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}

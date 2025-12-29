@@ -3,7 +3,6 @@ package com.multi.runrunbackend.common.jwt.provider;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
-import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -45,16 +44,13 @@ public class TokenProvider {
     private final Key SKEY;
     private final String ISSUER;
     private final RedisTemplate<String, String> redisTemplate;
-    private final UserRepository userRepository;
 
     //application.yml 에 정의해놓은 jwt.secret 값을 가져와서 JWT 를 만들 때 사용하는 암호화 키값을 생성
-    public TokenProvider(JwtProvider jwtProvider, RedisTemplate<String, String> redisTemplate,
-        UserRepository userRepository) {
+    public TokenProvider(JwtProvider jwtProvider, RedisTemplate<String, String> redisTemplate) {
         this.jwtProvider = jwtProvider;
         SKEY = jwtProvider.getSecretKey();
         ISSUER = jwtProvider.getIssuer();
         this.redisTemplate = redisTemplate;
-        this.userRepository = userRepository;
 
     }
 
@@ -67,7 +63,11 @@ public class TokenProvider {
         Date tokenExpiresIn = new Date();
         if (code.equals("A")) {
             tokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
-            claims.put(AUTHORITIES_KEY, String.join(",", roles)); // List<String> -> 콤마로 구분된 문자열
+            List<String> normalized = roles.stream()
+                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                .toList();
+
+            claims.put(AUTHORITIES_KEY, String.join(",", normalized));
         } else {
             tokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRE_TIME);
 
@@ -135,19 +135,30 @@ public class TokenProvider {
     public Authentication getAuthentication(String jwt) {
 
         Claims claims = parseClames(jwt);
-        if (claims.get(AUTHORITIES_KEY) == null) {
-            throw new RuntimeException("권한 정보가 없는 토큰입니당");
+
+        Object authObj = claims.get(AUTHORITIES_KEY);
+        if (authObj == null) {
+            throw new RuntimeException("권한 정보가 없는 토큰입니다.");
         }
+        List<String> roles = Arrays.stream(authObj.toString().split(","))
+            .map(String::trim)
+            .filter(s -> !s.isBlank())
+            .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r) // ✅ 안전장치
+            .toList();
+
         Collection<? extends GrantedAuthority> authorities =
-            Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
+            roles.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-        log.info("[TokenProvider] authorities : {}", authorities);
+
+        Long userId = claims.get("userId", Long.class);
 
         CustomUser customUser = new CustomUser();
         customUser.setEmail(claims.getSubject());
         customUser.setLoginId(claims.getSubject());
         customUser.setAuthorities(authorities);
+        customUser.setUserId(userId);
+        customUser.setRoles(roles);
         return new UsernamePasswordAuthenticationToken(customUser, "", authorities);
     }
 

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 채팅</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <link rel="stylesheet" href="/css/chat-list.css" th:href="@{/css/chat-list.css}">
+</head>
+<body>
+<main class="page">
+  <!-- 헤더 -->
+  <header class="chat-header">
+    <div class="header-top">
+      <h1 class="page-title">채팅</h1>
+      <div class="header-actions">
+        <button class="header-icon-btn" type="button" aria-label="알림">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 2C8.89543 2 8 2.89543 8 4V5.5C8 6.32843 7.32843 7 6.5 7H4C3.44772 7 3 7.44772 3 8V16C3 16.5523 3.44772 17 4 17H16C16.5523 17 17 16.5523 17 16V8C17 7.44772 16.5523 7 16 7H13.5C12.6716 7 12 6.32843 12 5.5V4C12 2.89543 11.1046 2 10 2Z" fill="#111827"/>
+          </svg>
+        </button>
+        <button class="header-icon-btn" type="button" aria-label="설정">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12C11.1046 12 12 11.1046 12 10C12 8.89543 11.1046 8 10 8C8.89543 8 8 8.89543 8 10C8 11.1046 8.89543 12 10 12Z" fill="#111827"/>
+            <path d="M10 6C10.5523 6 11 5.55228 11 5C11 4.44772 10.5523 4 10 4C9.44772 4 9 4.44772 9 5C9 5.55228 9.44772 6 10 6Z" fill="#111827"/>
+            <path d="M10 16C10.5523 16 11 15.5523 11 15C11 14.4477 10.5523 14 10 14C9.44772 14 9 14.4477 9 15C9 15.5523 9.44772 16 10 16Z" fill="#111827"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 검색바 -->
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="#757575" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M19 19L14.65 14.65" stroke="#757575" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="채팅방 검색"
+          aria-label="채팅방 검색"
+        />
+      </div>
+    </div>
+    
+    <!-- 필터 버튼 -->
+    <div class="filter-container">
+      <button class="filter-btn active" data-filter="all">
+        <span>전체</span>
+        <span class="filter-count">8</span>
+      </button>
+      <button class="filter-btn" data-filter="offline">
+        <span>오프라인</span>
+        <span class="filter-count">5</span>
+      </button>
+      <button class="filter-btn" data-filter="online">
+        <span>온라인 배틀</span>
+        <span class="filter-count">2</span>
+      </button>
+      <button class="filter-btn" data-filter="crew">
+        <span>크루</span>
+        <span class="filter-count">1</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 다음 러닝까지 카드 -->
+  <div class="next-running-card">
+    <div class="next-running-content">
+      <p class="next-running-label">다음 러닝까지</p>
+      <h2 class="next-running-time">2시간 30분</h2>
+      <p class="next-running-info">한강 러닝 크루 · 여의도</p>
+    </div>
+    <div class="next-running-right">
+      <div class="next-running-avatar">
+        <span class="avatar-emoji">♂️</span>
+      </div>
+      <div class="next-running-distance">5km</div>
+    </div>
+  </div>
+
+  <!-- 채팅방 리스트 -->
+  <div class="chat-list" id="chat-list">
+    <!-- 채팅방 아이템들이 여기에 동적으로 추가됨 -->
+  </div>
+</main>
+
+<!-- 아래바 -->
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/chat-list.js" th:src="@{/js/chat-list.js}"></script>
+</body>
+</html>
+

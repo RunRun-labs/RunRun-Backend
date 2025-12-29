@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 모집글 상세보기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/recruit-detail.css" th:href="@{/css/recruit-detail.css}">
+  <script
+      type="text/javascript"
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=8b23243ecce1d67f7d49784724586afa&libraries=services,clusterer">
+  </script>
+</head>
+<body>
+<main class="page">
+  <!-- 헤더 -->
+  <header class="header">
+    <button type="button" id="backButton" class="back-button" aria-label="뒤로가기">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+           xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <h1 class="header-title">모집글 상세보기</h1>
+  </header>
+
+  <!-- 코스 이미지 (있을 때만 표시) -->
+  <div id="courseImageSection" class="course-image-section" style="display: none;">
+    <img id="courseImage" src="" alt="코스 이미지">
+  </div>
+
+  <!-- 제목 섹션 -->
+  <section class="title-section">
+    <h1 id="recruitTitle" class="recruit-title"></h1>
+  </section>
+
+  <!-- 카카오맵 섹션 -->
+  <section class="map-section">
+    <div id="map" class="map-container"></div>
+  </section>
+
+  <!-- 상세 정보 섹션 -->
+  <section class="detail-section">
+    <div class="detail-grid">
+      <!-- 일시 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">일시</span>
+          <span id="meetingAt" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 목표 거리 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">목표 거리</span>
+          <span id="targetDistance" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 페이스 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">페이스</span>
+          <span id="targetPace" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 모집 인원 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">모집 인원</span>
+          <span id="participants" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 성별 제한 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">성별</span>
+          <span id="genderLimit" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 나이 제한 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">나이</span>
+          <span id="ageRange" class="detail-value"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 설명 섹션 -->
+  <section class="description-section">
+    <h2 class="section-title">상세 설명</h2>
+    <p id="recruitContent" class="description-content"></p>
+  </section>
+
+  <!-- 액션 버튼 섹션 -->
+  <div class="action-button-section">
+    <button id="actionButton" type="button" class="action-button" style="display: none;"></button>
+    <p id="actionDisabledText" class="action-disabled-text" style="display: none;"></p>
+    <button id="startRunningButton" type="button" class="action-button"
+            style="display: none; background: #baff29;">매칭 확정
+    </button>
+  </div>
+</main>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/recruit-detail.js" th:src="@{/js/recruit-detail.js}"></script>
+</body>
+</html>
