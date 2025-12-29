@@ -90,8 +90,7 @@ public class RecruitController {
       @AuthenticationPrincipal CustomUser principal,
       @PathVariable Long recruitId
   ) {
-    User user = getUser(principal);
-    recruitService.deleteRecruit(recruitId, user);
+    recruitService.deleteRecruit(recruitId, principal);
     return ResponseEntity.ok(ApiResponse.success("모집글 삭제 성공", null));
   }
 

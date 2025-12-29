@@ -181,7 +181,8 @@ public class RecruitService {
   }
 
   @Transactional
-  public void deleteRecruit(Long recruitId, User user) {
+  public void deleteRecruit(Long recruitId, CustomUser principal) {
+    User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     if (!recruit.getUser().getId().equals(user.getId())) {
@@ -273,7 +274,7 @@ public class RecruitService {
 
   private int calculateAge(java.time.LocalDate birthDate) {
     if (birthDate == null) {
-      return 0;
+      throw new ValidationException(ErrorCode.BIRTHDATE_REQUIRED);
     }
     return java.time.Period.between(birthDate, java.time.LocalDate.now()).getYears();
   }
