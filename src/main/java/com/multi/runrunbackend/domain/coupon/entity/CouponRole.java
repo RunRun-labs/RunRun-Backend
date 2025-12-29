@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.coupon.entity;
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.coupon.constant.CouponTriggerEvent;
 import com.multi.runrunbackend.domain.coupon.dto.req.CouponRoleCreateReqDto;
+import com.multi.runrunbackend.domain.coupon.dto.req.CouponRoleUpdateReqDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,6 +19,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 /**
  * @author : kyungsoo
@@ -30,6 +32,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "coupon_role")
+@SQLRestriction("is_deleted = false")
 public class CouponRole extends BaseEntity {
 
     @Id
@@ -67,5 +70,20 @@ public class CouponRole extends BaseEntity {
         role.conditionValue = req.getConditionValue();
 
         return role;
+    }
+
+    public void update(CouponRoleUpdateReqDto req, Coupon coupon) {
+        this.name = req.getName();
+        this.coupon = coupon;
+        this.triggerEvent = req.getTriggerEvent();
+        this.conditionValue = req.getConditionValue();
+    }
+
+    public void delete() {
+        this.isDeleted = true;
+    }
+    
+    public void isActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }
