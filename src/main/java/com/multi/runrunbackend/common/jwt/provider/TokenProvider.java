@@ -3,7 +3,6 @@ package com.multi.runrunbackend.common.jwt.provider;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
-import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -34,29 +33,26 @@ import org.springframework.stereotype.Component;
 public class TokenProvider {
 
 
-  private static final String AUTHORITIES_KEY = "auth";  // 클레임에서 권한정보담을키\
-  @Value("${jwt.access-token-expire-time}")
-  private long ACCESS_TOKEN_EXPIRE_TIME;
+    private static final String AUTHORITIES_KEY = "auth";  // 클레임에서 권한정보담을키\
+    @Value("${jwt.access-token-expire-time}")
+    private long ACCESS_TOKEN_EXPIRE_TIME;
 
-  @Value("${jwt.refresh-token-expire-time}")
-  private long REFRESH_TOKEN_EXPIRE_TIME;
+    @Value("${jwt.refresh-token-expire-time}")
+    private long REFRESH_TOKEN_EXPIRE_TIME;
 
-  private final JwtProvider jwtProvider;  // JwtProvider 의존성 추가
-  private final Key SKEY;
-  private final String ISSUER;
-  private final RedisTemplate<String, String> redisTemplate;
-  private final UserRepository userRepository;
+    private final JwtProvider jwtProvider;  // JwtProvider 의존성 추가
+    private final Key SKEY;
+    private final String ISSUER;
+    private final RedisTemplate<String, String> redisTemplate;
 
     //application.yml 에 정의해놓은 jwt.secret 값을 가져와서 JWT 를 만들 때 사용하는 암호화 키값을 생성
-    public TokenProvider(JwtProvider jwtProvider, RedisTemplate<String, String> redisTemplate,
-        UserRepository userRepository) {
+    public TokenProvider(JwtProvider jwtProvider, RedisTemplate<String, String> redisTemplate) {
         this.jwtProvider = jwtProvider;
         SKEY = jwtProvider.getSecretKey();
         ISSUER = jwtProvider.getIssuer();
         this.redisTemplate = redisTemplate;
-        this.userRepository = userRepository;
 
-  }
+    }
 
     public String generateToken(String memberId, List<String> roles, String code, Long userId) {
         Claims claims = Jwts
@@ -67,11 +63,15 @@ public class TokenProvider {
         Date tokenExpiresIn = new Date();
         if (code.equals("A")) {
             tokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
-            claims.put(AUTHORITIES_KEY, String.join(",", roles)); // List<String> -> 콤마로 구분된 문자열
+            List<String> normalized = roles.stream()
+                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                .toList();
+
+            claims.put(AUTHORITIES_KEY, String.join(",", normalized));
         } else {
             tokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRE_TIME);
 
-    }
+        }
 
         String token = Jwts.builder()
             .setIssuer(ISSUER)
@@ -91,8 +91,8 @@ public class TokenProvider {
                 memberId, REFRESH_TOKEN_EXPIRE_TIME / 60000);
         }
 
-    return token;
-  }
+        return token;
+    }
 
     public boolean validateToken(String token) {
         try {
@@ -103,8 +103,8 @@ public class TokenProvider {
                 .build()
                 .parseClaimsJws(token);
 
-      log.info("[TokenProvider] JWT 토큰이 유효합니다.");
-      return true;
+            log.info("[TokenProvider] JWT 토큰이 유효합니다.");
+            return true;
 
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             log.error("[TokenProvider] 잘못된 JWT 서명입니다. 토큰: {}", token, e);
@@ -114,51 +114,62 @@ public class TokenProvider {
                 e.getClaims().getExpiration(), e);
             throw new TokenException(ErrorCode.EXPIRED_TOKEN);
 
-    } catch (UnsupportedJwtException e) {
-      log.error("[TokenProvider] 지원되지 않는 JWT 토큰입니다. 토큰: {}", token, e);
-      throw new TokenException(ErrorCode.UNAUTHORIZED);
+        } catch (UnsupportedJwtException e) {
+            log.error("[TokenProvider] 지원되지 않는 JWT 토큰입니다. 토큰: {}", token, e);
+            throw new TokenException(ErrorCode.UNAUTHORIZED);
 
-    } catch (IllegalArgumentException e) {
-      log.error("[TokenProvider] JWT 토큰이 잘못되었습니다. 토큰: {}", token, e);
-      throw new TokenException(ErrorCode.TOKEN_BAD_REQUEST);
+        } catch (IllegalArgumentException e) {
+            log.error("[TokenProvider] JWT 토큰이 잘못되었습니다. 토큰: {}", token, e);
+            throw new TokenException(ErrorCode.TOKEN_BAD_REQUEST);
+        }
     }
-  }
 
-  public LocalDateTime getRefreshTokenExpiry() {
-    LocalDateTime now = LocalDateTime.now();
+    public LocalDateTime getRefreshTokenExpiry() {
+        LocalDateTime now = LocalDateTime.now();
 
-    LocalDateTime reTokenExpiry = now.plus(REFRESH_TOKEN_EXPIRE_TIME, ChronoUnit.MILLIS);
+        LocalDateTime reTokenExpiry = now.plus(REFRESH_TOKEN_EXPIRE_TIME, ChronoUnit.MILLIS);
 
-    return reTokenExpiry;
-  }
+        return reTokenExpiry;
+    }
 
-  public Authentication getAuthentication(String jwt) {
+    public Authentication getAuthentication(String jwt) {
 
         Claims claims = parseClames(jwt);
-        if (claims.get(AUTHORITIES_KEY) == null) {
-            throw new RuntimeException("권한 정보가 없는 토큰입니당");
+
+        Object authObj = claims.get(AUTHORITIES_KEY);
+        if (authObj == null) {
+            throw new RuntimeException("권한 정보가 없는 토큰입니다.");
         }
+        List<String> roles = Arrays.stream(authObj.toString().split(","))
+            .map(String::trim)
+            .filter(s -> !s.isBlank())
+            .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r) // ✅ 안전장치
+            .toList();
+
         Collection<? extends GrantedAuthority> authorities =
-            Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
+            roles.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-        log.info("[TokenProvider] authorities : {}", authorities);
+
+        Long userId = claims.get("userId", Long.class);
 
         CustomUser customUser = new CustomUser();
         customUser.setEmail(claims.getSubject());
         customUser.setLoginId(claims.getSubject());
         customUser.setAuthorities(authorities);
+        customUser.setUserId(userId);
+        customUser.setRoles(roles);
         return new UsernamePasswordAuthenticationToken(customUser, "", authorities);
     }
 
-  public Claims parseClames(String jwt) {
-    try {
-      return Jwts.parserBuilder().setSigningKey(SKEY).build().parseClaimsJws(jwt).getBody();
-    } catch (ExpiredJwtException e) {
-      return e.getClaims();
-    }
+    public Claims parseClames(String jwt) {
+        try {
+            return Jwts.parserBuilder().setSigningKey(SKEY).build().parseClaimsJws(jwt).getBody();
+        } catch (ExpiredJwtException e) {
+            return e.getClaims();
+        }
 
-  }
+    }
 
     public String getUserId(String token) {
         return Jwts.parserBuilder().setSigningKey(SKEY).build().parseClaimsJws(token).getBody()
@@ -175,21 +186,21 @@ public class TokenProvider {
     }
 
 
-  public String resolveToken(String token) {
-    // Bearer 접두어가 있는 경우 제거하고 순수한 토큰 반환
-    if (token != null && token.startsWith("Bearer ")) {
-      return token.substring(7);
-    }
-    return token;
-  }
-
-  public String extractMemberId(HttpServletRequest request) {
-    String bearerToken = request.getHeader("Authorization");
-    if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-      throw new TokenException(ErrorCode.MISSING_AUTHORIZATION_HEADER);
+    public String resolveToken(String token) {
+        // Bearer 접두어가 있는 경우 제거하고 순수한 토큰 반환
+        if (token != null && token.startsWith("Bearer ")) {
+            return token.substring(7);
+        }
+        return token;
     }
 
-    String jwt = resolveToken(bearerToken);
-    return getUserId(jwt);
-  }
+    public String extractMemberId(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
+            throw new TokenException(ErrorCode.MISSING_AUTHORIZATION_HEADER);
+        }
+
+        String jwt = resolveToken(bearerToken);
+        return getUserId(jwt);
+    }
 }

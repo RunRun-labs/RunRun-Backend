@@ -12,6 +12,20 @@ public interface FileStorage {
         Long refId
     );
 
+    default String uploadIfChanged(
+        MultipartFile file,
+        FileDomainType domainType,
+        Long refId,
+        String existingUrl
+    ) {
+        if (file == null || file.isEmpty()) {
+            return existingUrl;
+        }
+        return upload(file, domainType, refId);
+    }
+
+    String toHttpsUrl(String key);
+
 
     default void delete(String fileUrl) {
     }
