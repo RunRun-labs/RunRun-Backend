@@ -36,8 +36,7 @@ function attachMenuHandlers() {
     // 차단한 사용자 관리
     if (blockedUsersBtn) {
         blockedUsersBtn.addEventListener("click", () => {
-            // TODO: 차단한 사용자 관리 페이지로 이동
-            alert("차단한 사용자 관리 기능은 준비 중입니다.");
+            window.location.href = "/setting/blocked-users";
         });
     }
 
