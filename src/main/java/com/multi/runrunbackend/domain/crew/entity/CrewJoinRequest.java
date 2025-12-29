@@ -55,23 +55,17 @@ public class CrewJoinRequest extends BaseEntity {
     @Column(name = "join_status", nullable = false, length = 20)
     private JoinStatus joinStatus;  // PENDING, APPROVED, REJECTED, CANCELED
 
-    /**
-     * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
-     * @filename : CrewJoinRequest
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
-     */
-    public static CrewJoinRequest toEntity(Crew crew, User user, String introduction,
-                                           CrewDistanceType distance, CrewPaceType pace, String region) {
-        return CrewJoinRequest.builder()
-                .crew(crew)
-                .user(user)
-                .introduction(introduction)
-                .distance(distance)
-                .pace(pace)
-                .region(region)
-                .joinStatus(JoinStatus.PENDING)
-                .build();
+    public static CrewJoinRequest create(Crew crew, User user, String introduction,
+                                         CrewDistanceType distance, CrewPaceType pace, String region) {
+        CrewJoinRequest request = new CrewJoinRequest();
+        request.crew = crew;
+        request.user = user;
+        request.introduction = introduction;
+        request.distance = distance;
+        request.pace = pace;
+        request.region = region;
+        request.joinStatus = JoinStatus.PENDING;
+        return request;
     }
 
     /**
