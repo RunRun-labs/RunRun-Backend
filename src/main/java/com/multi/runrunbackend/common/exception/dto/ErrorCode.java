@@ -30,9 +30,15 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_102", "유효하지 않은 리프레시 토큰입니다."),
     FILE_UPLOAD_FAILED(
 
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "F001",
-        "파일 업로드에 실패했습니다."
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "F001",
+            "파일 업로드에 실패했습니다."
+    ),
+    /*===== 사용자 차단 =====*/
+    SELF_BLOCK_NOT_ALLOWED(
+            HttpStatus.BAD_REQUEST,
+            "BLOCK_001",
+            "자기 자신을 차단할 수 없습니다."
     ),
 
     /* ===== 크루 관련 ===== */
@@ -50,132 +56,132 @@ public enum ErrorCode {
     JOIN_REQUEST_NOT_PENDING(HttpStatus.BAD_REQUEST, "CR012", "대기 상태의 요청만 처리할 수 있습니다."),
     ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR013", "이미 가입 신청한 크루입니다."),
     CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014",
-        "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
+            "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
-        HttpStatus.BAD_REQUEST,
-        "F002",
-        "업로드할 파일이 비어 있습니다."
+            HttpStatus.BAD_REQUEST,
+            "F002",
+            "업로드할 파일이 비어 있습니다."
     ),
     FILE_NOT_IMAGE(
-        HttpStatus.BAD_REQUEST,
-        "F003",
-        "이미지 파일만 업로드할 수 있습니다."
+            HttpStatus.BAD_REQUEST,
+            "F003",
+            "이미지 파일만 업로드할 수 있습니다."
     ),
     FILE_SIZE_EXCEEDED(
-        HttpStatus.BAD_REQUEST,
-        "F004",
-        "파일 크기가 제한을 초과했습니다."
+            HttpStatus.BAD_REQUEST,
+            "F004",
+            "파일 크기가 제한을 초과했습니다."
     ),
 
     /*==== TMAP====*/
 
     ROUTE_DISTANCE_EXCEEDED(
-        HttpStatus.BAD_REQUEST,
-        "ROUTE_001",
-        "요청한 경로 거리가 허용 범위를 초과했습니다."
+            HttpStatus.BAD_REQUEST,
+            "ROUTE_001",
+            "요청한 경로 거리가 허용 범위를 초과했습니다."
     ),
 
     ROUTE_END_POINT_REQUIRED(
-        HttpStatus.BAD_REQUEST,
-        "ROUTE_002",
-        "도착 좌표(endLat, endLng)는 필수입니다."
+            HttpStatus.BAD_REQUEST,
+            "ROUTE_002",
+            "도착 좌표(endLat, endLng)는 필수입니다."
     ),
 
     ROUTE_DISTANCE_INVALID(
-        HttpStatus.BAD_REQUEST,
-        "ROUTE_003",
-        "요청 거리 값이 올바르지 않습니다."
+            HttpStatus.BAD_REQUEST,
+            "ROUTE_003",
+            "요청 거리 값이 올바르지 않습니다."
     ),
 
     ROUTE_INVALID_POINTS(
-        HttpStatus.BAD_REQUEST,
-        "ROUTE_004",
-        "경로 포인트는 최소 2개 이상 필요합니다."
+            HttpStatus.BAD_REQUEST,
+            "ROUTE_004",
+            "경로 포인트는 최소 2개 이상 필요합니다."
     ),
 
     ROUTE_NO_VALID_SEGMENT(
-        HttpStatus.BAD_REQUEST,
-        "ROUTE_005",
-        "유효한 경로 구간을 생성할 수 없습니다."
+            HttpStatus.BAD_REQUEST,
+            "ROUTE_005",
+            "유효한 경로 구간을 생성할 수 없습니다."
     ),
     INVALID_ROUTE_PATH(
-        HttpStatus.BAD_REQUEST,
-        "COURSE_400_001",
-        "코스 경로 형식이 올바르지 않습니다"
+            HttpStatus.BAD_REQUEST,
+            "COURSE_400_001",
+            "코스 경로 형식이 올바르지 않습니다"
     ),
 
 
     /*==== 경로 ====*/
     TMAP_API_FAILED(
-        HttpStatus.BAD_GATEWAY,
-        "EXT_001",
-        "TMAP 경로 API 호출에 실패했습니다."
+            HttpStatus.BAD_GATEWAY,
+            "EXT_001",
+            "TMAP 경로 API 호출에 실패했습니다."
     ),
 
     TMAP_EMPTY_RESPONSE(
-        HttpStatus.BAD_GATEWAY,
-        "EXT_002",
-        "TMAP API 응답이 비어있습니다."
+            HttpStatus.BAD_GATEWAY,
+            "EXT_002",
+            "TMAP API 응답이 비어있습니다."
     ),
 
     TMAP_NO_ROUTE(
-        HttpStatus.BAD_GATEWAY,
-        "EXT_003",
-        "TMAP에서 유효한 경로를 반환하지 않았습니다."
+            HttpStatus.BAD_GATEWAY,
+            "EXT_003",
+            "TMAP에서 유효한 경로를 반환하지 않았습니다."
     ),
     /*=====코스 서치 ====*/
     COURSE_SEARCH_LAT_LNG_REQUIRED(
-        HttpStatus.BAD_REQUEST,
-        "CRS_S_001",
-        "nearby 검색 또는 거리순 정렬에는 위도(lat)와 경도(lng)가 필수입니다."
+            HttpStatus.BAD_REQUEST,
+            "CRS_S_001",
+            "nearby 검색 또는 거리순 정렬에는 위도(lat)와 경도(lng)가 필수입니다."
     ),
 
     COURSE_SEARCH_INVALID_DISTANCE_BUCKET(
-        HttpStatus.BAD_REQUEST,
-        "CRS_S_002",
-        "거리 필터 값이 올바르지 않습니다."
+            HttpStatus.BAD_REQUEST,
+            "CRS_S_002",
+            "거리 필터 값이 올바르지 않습니다."
     ),
 
     COURSE_SEARCH_INVALID_ENUM(
-        HttpStatus.BAD_REQUEST,
-        "CRS_S_003",
-        "검색 조건 값이 올바르지 않습니다."
+            HttpStatus.BAD_REQUEST,
+            "CRS_S_003",
+            "검색 조건 값이 올바르지 않습니다."
     ),
 
     COURSE_SEARCH_MAPPING_FAILED(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "CRS_S_004",
-        "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "CRS_S_004",
+            "코스 목록 조회 중 데이터 처리 오류가 발생했습니다."
     ),
 
     /*==== 코스 ====*/
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS_001", "코스를 찾을 수 없습니다"),
 
     COURSE_FORBIDDEN(
-        HttpStatus.FORBIDDEN,
-        "CRS_002",
-        "해당 코스에 대한 권한이 없습니다."
+            HttpStatus.FORBIDDEN,
+            "CRS_002",
+            "해당 코스에 대한 권한이 없습니다."
     ),
 
     COURSE_IMAGE_TOO_LARGE(
-        HttpStatus.BAD_REQUEST,
-        "CRS_003",
-        "이미지 파일 용량이 너무 큽니다."
+            HttpStatus.BAD_REQUEST,
+            "CRS_003",
+            "이미지 파일 용량이 너무 큽니다."
     ),
     COURSE_NOT_ACTIVE(HttpStatus.FORBIDDEN, "CRS_004", "코스가 ACTIVE 상태가 아닙니다"),
     ALREADY_LIKED_COURSE(HttpStatus.CONFLICT, "CRS_005", "이미 좋아요한 코스입니다"),
     COURSE_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "CRS_006", "사용할 수 없는 코스입니다"),
     CANNOT_LIKE_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_007",
-        "본인의 코스는 좋아요할 수 없습니다"),
+            "본인의 코스는 좋아요할 수 없습니다"),
     COURSELIKE_NOT_FOUND(
-        HttpStatus.NOT_FOUND, "CRS_008", "해당 좋아요를 찾을 수 없습니다"),
+            HttpStatus.NOT_FOUND, "CRS_008", "해당 좋아요를 찾을 수 없습니다"),
     NOT_LIKED(HttpStatus.BAD_REQUEST, "CRS_009", "좋아요를 누르지 않은 코스입니다"),
     ALREADY_FAVORITE_COURSE(HttpStatus.CONFLICT, "CRS_010", "이미 즐겨찾기한 코스입니다"),
     CANNOT_FAVORITE_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_011",
-        "본인의 코스는 즐겨찾기할 수 없습니다"),
+            "본인의 코스는 즐겨찾기할 수 없습니다"),
     FAVORITE_NOT_FOUND(
-        HttpStatus.NOT_FOUND, "CRS_012", "해당 즐겨찾기를 찾을 수 없습니다"),
+            HttpStatus.NOT_FOUND, "CRS_012", "해당 즐겨찾기를 찾을 수 없습니다"),
     NOT_FAVORITE(HttpStatus.BAD_REQUEST, "CRS_013", "즐겨찾기를 누르지 않은 코스입니다"),
     CANNOT_SIREN_OWN_COURSE(HttpStatus.BAD_REQUEST, "CRS_014", "본인의 코스는 신고할 수 없습니다"),
     ALREADY_SIREN_COURSE(HttpStatus.CONFLICT, "CRS_015", "이미 신고한 코스입니다"),
@@ -205,9 +211,9 @@ public enum ErrorCode {
     HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다."),
     /*=====MAPBOX =====*/
     MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
-        "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
+            "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
     MAPBOX_OVERLAY_EMPTY(HttpStatus.BAD_REQUEST, "M_002",
-        "썸네일 생성에 필요한 overlay 값이 비어있습니다.");
+            "썸네일 생성에 필요한 overlay 값이 비어있습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
