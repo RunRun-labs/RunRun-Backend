@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.user.controller;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
+import com.multi.runrunbackend.domain.user.dto.res.UserProfileResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
 import com.multi.runrunbackend.domain.user.service.UserService;
 import jakarta.validation.Valid;
@@ -39,6 +40,17 @@ public class UserController {
     ) {
         UserResDto res = userService.getUser(principal);
         return ResponseEntity.ok(ApiResponse.success("내 정보 조회 성공", res));
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<UserProfileResDto>> getUserProfile(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        UserProfileResDto res = userService.getUserProfile(userId, principal);
+        return ResponseEntity.ok(
+                ApiResponse.success("사용자 프로필 조회 성공", res)
+        );
     }
 
     @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
