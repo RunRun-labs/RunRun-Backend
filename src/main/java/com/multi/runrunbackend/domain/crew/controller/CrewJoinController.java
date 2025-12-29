@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.crew.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewJoinReqDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewJoinRequestResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewUserResDto;
@@ -172,4 +173,30 @@ public class CrewJoinController {
         );
     }
 
+    /**
+     * @param crewId    크루 ID
+     * @param userId    권한을 변경할 사용자 ID
+     * @param role      변경할 역할 (SUB_LEADER, STAFF, MEMBER)
+     * @param principal 크루장 (권한 변경 요청자)
+     * @description : 크루장이 크루원의 권한을 변경 (부크루장, 운영진 임명 또는 해제)
+     */
+    @PatchMapping("/{crewId}/users/{userId}/role")
+    public ResponseEntity<ApiResponse<Void>> updateUserRole(
+            @Parameter(description = "크루 ID", required = true)
+            @PathVariable Long crewId,
+
+            @Parameter(description = "권한을 변경할 사용자 ID", required = true)
+            @PathVariable Long userId,
+
+            @Parameter(description = "변경할 역할", required = true)
+            @RequestParam CrewRole role,
+
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        crewJoinService.updateUserRole(crewId, userId, role, principal);
+
+        return ResponseEntity.ok(
+                ApiResponse.successNoData("권한이 변경되었습니다.")
+        );
+    }
 }
