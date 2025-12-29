@@ -633,11 +633,11 @@ body {
 
 /* 모바일 (768px 이하) */
 @media (max-width: 768px) {
-    .crew-description {
-        white-space: normal; /* 줄바꿈 허용 */
-        word-break: break-word; /* 긴 단어 자동 줄바꿈 */
+    .crew-card__description {
+        white-space: normal;
+        word-break: break-word;
         line-height: 1.5;
-        -webkit-line-clamp: 3; /* 최대 3줄 */
+        -webkit-line-clamp: 3;
         display: -webkit-box;
         -webkit-box-orient: vertical;
         overflow: hidden;
