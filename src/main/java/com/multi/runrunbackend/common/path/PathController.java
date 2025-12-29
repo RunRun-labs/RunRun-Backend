@@ -94,6 +94,33 @@ public class PathController {
         return "mypage/mypage-edit";
     }
 
+    @GetMapping("/challenge")
+    public String challengeView() {
+        return "challenge/challenge";
+    }
+
+    @GetMapping("/challenge/{id}")
+    public String challengeDetailView(@PathVariable Long id, Model model) {
+        model.addAttribute("challengeId", id);
+        return "challenge/challenge-detail";
+    }
+
+    @GetMapping("/challenge/create")
+    public String challengeCreateView() {
+        return "challenge/challenge-create";
+    }
+
+    @GetMapping("/challenge/{id}/edit")
+    public String challengeEditView(@PathVariable Long id, Model model) {
+        model.addAttribute("challengeId", id);
+        return "challenge/challenge-edit";
+    }
+
+    @GetMapping("/challenge/end")
+    public String challengeEndView() {
+        return "challenge/challenge-end";
+    }
+
     @GetMapping("/course_auto")
     public String testView() {
         return "courseAuto";
@@ -116,8 +143,8 @@ public class PathController {
 
     @GetMapping("/courseDetail/{course_id}")
     public String courseDetailView(
-        @PathVariable(name = "course_id") Long courseId,
-        Model model
+            @PathVariable(name = "course_id") Long courseId,
+            Model model
     ) {
 
         model.addAttribute("courseId", courseId);
@@ -126,8 +153,8 @@ public class PathController {
 
     @GetMapping("/courseUpdate/{course_id}")
     public String courseUpdateView(
-        @PathVariable(name = "course_id") Long courseId,
-        Model model
+            @PathVariable(name = "course_id") Long courseId,
+            Model model
     ) {
 
         model.addAttribute("courseId", courseId);
