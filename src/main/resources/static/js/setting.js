@@ -72,8 +72,7 @@ function attachMenuHandlers() {
     // 계정 탈퇴
     if (accountDeleteBtn) {
         accountDeleteBtn.addEventListener("click", () => {
-            // TODO: 계정 탈퇴 기능 구현
-            alert("계정 탈퇴 기능은 준비 중입니다.");
+            openAccountDeleteModal();
         });
     }
 
@@ -170,6 +169,50 @@ function attachMenuHandlers() {
         });
     }
 
+    // 계정 탈퇴 모달 닫기
+    const accountDeleteModalCloseBtn = document.querySelector('[data-role="close-account-delete-modal"]');
+    if (accountDeleteModalCloseBtn) {
+        accountDeleteModalCloseBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAccountDeleteModal();
+        });
+    }
+
+    // 계정 탈퇴 모달 배경 클릭 시 닫기
+    const accountDeleteModalOverlay = document.querySelector('[data-role="account-delete-modal"]');
+    if (accountDeleteModalOverlay) {
+        accountDeleteModalOverlay.addEventListener("click", (e) => {
+            if (e.target === accountDeleteModalOverlay) {
+                closeAccountDeleteModal();
+            }
+        });
+
+        // 모달 콘텐츠 클릭 시 닫히지 않도록
+        const accountDeleteModalContent = accountDeleteModalOverlay.querySelector(".modal-content");
+        if (accountDeleteModalContent) {
+            accountDeleteModalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+        }
+    }
+
+    // 계정 탈퇴 취소 버튼
+    const cancelDeleteBtn = document.querySelector('[data-role="cancel-delete"]');
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener("click", () => {
+            closeAccountDeleteModal();
+        });
+    }
+
+    // 계정 탈퇴 확인 버튼
+    const confirmDeleteBtn = document.querySelector('[data-role="confirm-delete"]');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", async () => {
+            await handleAccountDelete();
+        });
+    }
+
     // 설정 저장
     if (saveSettingsBtn) {
         saveSettingsBtn.addEventListener("click", async () => {
@@ -241,6 +284,76 @@ function closeTermsModal() {
     if (modal) {
         modal.setAttribute("hidden", "hidden");
         document.body.style.overflow = "";
+    }
+}
+
+// 계정 탈퇴 모달 열기
+function openAccountDeleteModal() {
+    const modal = document.querySelector('[data-role="account-delete-modal"]');
+    if (modal) {
+        modal.removeAttribute("hidden");
+        document.body.style.overflow = "hidden";
+    }
+}
+
+// 계정 탈퇴 모달 닫기
+function closeAccountDeleteModal() {
+    const modal = document.querySelector('[data-role="account-delete-modal"]');
+    if (modal) {
+        modal.setAttribute("hidden", "hidden");
+        document.body.style.overflow = "";
+    }
+}
+
+// 계정 탈퇴 처리
+async function handleAccountDelete() {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            window.location.href = "/login";
+            return;
+        }
+
+        const confirmBtn = document.querySelector('[data-role="confirm-delete"]');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = "처리 중...";
+        }
+
+        const response = await fetch("/users", {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                alert("로그인이 필요합니다.");
+                window.location.href = "/login";
+                return;
+            }
+            const error = await response.json();
+            throw new Error(error?.message || "계정 탈퇴 실패");
+        }
+
+        // 성공 시 로컬 스토리지 정리
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userId");
+
+        alert("회원 탈퇴가 완료되었습니다.");
+        window.location.href = "/login";
+    } catch (error) {
+        console.error("Failed to delete account:", error);
+        alert(error.message || "계정 탈퇴 중 오류가 발생했습니다.");
+        
+        const confirmBtn = document.querySelector('[data-role="confirm-delete"]');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "예";
+        }
     }
 }
 

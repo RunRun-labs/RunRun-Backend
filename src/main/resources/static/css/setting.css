@@ -295,6 +295,7 @@ body {
     border-top: 1px solid var(--stroke);
     display: flex;
     justify-content: flex-end;
+    gap: 12px;
 }
 
 .modal-save-button {
@@ -354,6 +355,68 @@ body {
 .terms-option-item svg {
     color: var(--text-muted);
     flex-shrink: 0;
+}
+
+/* 계정 탈퇴 확인 모달 스타일 */
+.delete-confirm-message {
+    font-family: "Outfit", "Noto Sans KR", sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-strong);
+    margin: 0 0 8px 0;
+    text-align: center;
+}
+
+.delete-warning-message {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+    text-align: center;
+}
+
+.modal-cancel-button {
+    padding: 10px 24px;
+    border: 1px solid var(--stroke);
+    background: var(--bg);
+    color: var(--text-strong);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.modal-cancel-button:hover {
+    background: #fafafa;
+}
+
+.modal-cancel-button:active {
+    transform: scale(0.98);
+}
+
+.modal-confirm-button {
+    padding: 10px 24px;
+    border: none;
+    background: var(--error);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.modal-confirm-button:hover {
+    background: #e63333;
+}
+
+.modal-confirm-button:active {
+    transform: scale(0.98);
+}
+
+.modal-confirm-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* 하단 네비게이션 */

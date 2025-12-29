@@ -177,6 +177,29 @@
     </div>
 </div>
 
+<!-- 계정 탈퇴 확인 모달 -->
+<div class="modal-overlay" data-role="account-delete-modal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">계정 탈퇴</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-account-delete-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="delete-confirm-message">정말 탈퇴 하시겠습니까?</p>
+            <p class="delete-warning-message">탈퇴하시면 모든 데이터가 삭제되며 복구할 수 없습니다.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-cancel-button" type="button" data-role="cancel-delete">아니오</button>
+            <button class="modal-confirm-button" type="button" data-role="confirm-delete">예</button>
+        </div>
+    </div>
+</div>
+
 <div
         id="bottomNavMount"
         th:replace="~{common/bottom-nav :: bottomNav}"
