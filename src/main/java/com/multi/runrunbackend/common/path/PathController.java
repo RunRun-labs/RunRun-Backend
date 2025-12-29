@@ -4,6 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class PathController {
@@ -131,6 +132,11 @@ public class PathController {
     @GetMapping("/setting/blocked-users")
     public String blockedUsersView() {
         return "setting/blocked-users";
+    }
+
+    @GetMapping("/terms/view")
+    public String termsView(@RequestParam(defaultValue = "SERVICE") String type, Model model) {
+        return "terms/terms-detail";
     }
 
 }
