@@ -116,6 +116,8 @@ public class Recruit extends BaseTimeEntity {
     this.targetDistance = req.getTargetDistance();
     this.targetPace = req.getTargetPace();
     this.maxParticipants = req.getMaxParticipants();
+    this.ageMin = req.getAgeMin();
+    this.ageMax = req.getAgeMax();
 
     if (req.getGenderLimit() != null) {
       this.genderLimit = req.getGenderLimit();

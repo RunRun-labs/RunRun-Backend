@@ -14,8 +14,9 @@
       rel="stylesheet"
   />
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-  <link rel="stylesheet" href="/css/chat1.css" th:href="@{/css/chat1.css}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="/js/running-tracker.js" th:src="@{/js/running-tracker.js}"></script>
+<link rel="stylesheet" href="/css/chat1.css" th:href="@{/css/chat1.css}">
 </head>
 <body>
 <div class="chat-page">
@@ -34,12 +35,6 @@
         </div>
       </div>
       <div class="header-right">
-        <button class="header-icon-btn" type="button" aria-label="참여자 목록" id="participant-list-btn">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" fill="white"/>
-            <path d="M10 12C5.58172 12 2 13.7909 2 16V20H18V16C18 13.7909 14.4183 12 10 12Z" fill="white"/>
-          </svg>
-        </button>
         <button class="header-icon-btn" type="button" aria-label="더보기" id="more-menu-btn">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="10" cy="4" r="1.5" fill="white"/>
@@ -114,6 +109,42 @@
     </div>
   </div>
 
+  <!-- 📍 실시간 GPS 통계 패널 -->
+  <div id="running-test-panel" style="display: none; position: fixed; top: 80px; right: 20px; background: white; border: 2px solid #10B981; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; max-width: 300px;">
+    <div style="background: #10B981; color: white; padding: 8px 12px; border-radius: 8px; margin: -20px -20px 15px -20px; font-weight: bold; text-align: center;">
+      📍 실시간 GPS 추적
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+      <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">팀 평균 페이스</div>
+      <div style="font-size: 32px; font-weight: bold; color: #10B981;" id="test-pace">--:--</div>
+      <div style="font-size: 12px; color: #9CA3AF;">/km</div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+      <div>
+        <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">현재 거리</div>
+        <div style="font-size: 24px; font-weight: bold; color: #1F2937;"><span id="test-distance">0.00</span> km</div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">남은 거리</div>
+        <div style="font-size: 24px; font-weight: bold; color: #EF4444;"><span id="test-remaining">5.00</span> km</div>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+      <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">런닝 시간</div>
+      <div style="font-size: 20px; font-weight: bold; color: #1F2937;" id="test-time">00:00:00</div>
+    </div>
+    
+    <div style="border-top: 1px solid #E5E7EB; padding-top: 15px;">
+      <div style="font-size: 12px; color: #6B7280; margin-bottom: 8px;">km별 페이스</div>
+      <div id="test-segments" style="font-size: 13px; color: #4B5563;">
+        <div>데이터 수신 대기 중...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- 메시지 입력 영역 -->
   <div class="message-input-area">
     <button class="attach-button" type="button" aria-label="첨부">
@@ -143,6 +174,64 @@
         <path d="M18 2L9 11M18 2L12 18L9 11M18 2L2 8L9 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
+  </div>
+</div>
+
+<!-- 런닝 결과 모달 -->
+<div class="participant-modal-overlay" id="running-result-modal-overlay">
+  <div class="running-result-modal">
+    <div class="result-modal-header">
+      <h2 class="result-modal-title">🏆 런닝 결과</h2>
+      <button class="result-modal-close" type="button" id="running-result-modal-close" aria-label="닫기">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4L4 12M4 4L12 12" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- 스크롤 가능한 컨텐츠 영역 -->
+    <div class="result-modal-content">
+      <!-- 축하 메시지 -->
+      <div class="result-celebration">
+        <div class="celebration-emoji">🎉</div>
+        <h3 class="celebration-title">완주 축하합니다!</h3>
+        <p class="celebration-subtitle">수고하셨습니다</p>
+      </div>
+      
+      <!-- 주요 통계 -->
+      <div class="result-main-stats">
+        <div class="stat-grid">
+          <div class="stat-item">
+            <div class="stat-label">총 거리</div>
+            <div class="stat-value stat-distance" id="result-distance">0.00</div>
+            <div class="stat-unit">km</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">소요 시간</div>
+            <div class="stat-value stat-time" id="result-time">0:00</div>
+            <div class="stat-unit">분:초</div>
+          </div>
+        </div>
+        <div class="stat-pace-box">
+          <div class="stat-label">평균 페이스</div>
+          <div class="stat-value stat-pace" id="result-pace">0:00</div>
+          <div class="stat-unit">/km</div>
+        </div>
+      </div>
+      
+      <!-- 구간별 페이스 -->
+      <div class="result-segments-section">
+        <h3 class="segments-title">📊 구간별 페이스</h3>
+        <div id="result-segments" class="segments-list">
+          <!-- 구간별 데이터가 여기에 추가됨 -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- 닫기 버튼 (하단 고정) -->
+    <div class="result-modal-footer">
+      <button class="result-close-button" type="button" onclick="closeRunningResultModal()">확인</button>
+    </div>
   </div>
 </div>
 

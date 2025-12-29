@@ -69,4 +69,12 @@ public class MatchSession extends BaseEntity {
   @Column(nullable = false)
   private Integer duration;
 
+    /**
+     * 세션 상태 업데이트
+     * @param status 새로운 상태
+     */
+    public void updateStatus(SessionStatus status) {
+        this.status = status;
+    }
+
 }

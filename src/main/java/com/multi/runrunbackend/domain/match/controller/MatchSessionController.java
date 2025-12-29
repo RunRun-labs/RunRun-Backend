@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.match.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.dto.req.MatchConfirmReqDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchConfirmResDto;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
@@ -8,7 +9,6 @@ import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,11 +31,11 @@ public class MatchSessionController {
   @PostMapping("/confirm")
   public ResponseEntity<ApiResponse<MatchConfirmResDto>> confirmMatch(
       @RequestBody MatchConfirmReqDto reqDto,
-      @AuthenticationPrincipal UserDetails userDetails
+      @AuthenticationPrincipal CustomUser principal
   ) {
     Long sessionId = matchSessionService.createOfflineSession(
         reqDto.getRecruitId(),
-        userDetails
+        principal
     );
     return ResponseEntity.ok(ApiResponse.success(new MatchConfirmResDto(sessionId)));
   }
