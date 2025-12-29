@@ -542,13 +542,19 @@ function initLiveValidation() {
 
     const crewNameInput = document.getElementById('crewName');
     if (crewNameInput) {
-        crewNameInput.addEventListener('input', () => validateCrewName());
+        crewNameInput.addEventListener('input', () => {
+            validateCrewName();
+            updateCharCount('crewName', 'crewNameCount');
+        });
         crewNameInput.addEventListener('blur', () => validateCrewName());
     }
 
     const descriptionInput = document.getElementById('description');
     if (descriptionInput) {
-        descriptionInput.addEventListener('input', () => validateDescription());
+        descriptionInput.addEventListener('input', () => {
+            validateDescription();
+            updateCharCount('description', 'crewDescriptionCount');
+        });
         descriptionInput.addEventListener('blur', () => validateDescription());
         descriptionInput.addEventListener('focus', () => validatePreviousFields('description'));
     }
@@ -803,45 +809,6 @@ function clearFieldError(inputElement, errorElement) {
         errorElement.classList.remove('visible');
     }
 }
-
-// ========================================
-// 이벤트 리스너
-// ========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // 크루명
-    const crewNameInput = document.getElementById('crewName');
-    if (crewNameInput) {
-        crewNameInput.addEventListener('input', () => {
-            validateCrewName();
-            updateCharCount('crewName', 'crewNameCount');
-        });
-        crewNameInput.addEventListener('blur', () => validateCrewName());
-    }
-
-    // 크루 소개글
-    const descriptionInput = document.getElementById('description');
-    if (descriptionInput) {
-        descriptionInput.addEventListener('input', () => {
-            validateDescription();
-            updateCharCount('description', 'crewDescriptionCount');
-        });
-        descriptionInput.addEventListener('blur', () => validateDescription());
-    }
-
-    // 활동 지역
-    const activityRegionInput = document.getElementById('activityRegion');
-    if (activityRegionInput) {
-        activityRegionInput.addEventListener('input', () => validateActivityRegion());
-        activityRegionInput.addEventListener('blur', () => validateActivityRegion());
-    }
-
-    // 정기 모임 시간
-    const regularMeetingTimeInput = document.getElementById('regularMeetingTime');
-    if (regularMeetingTimeInput) {
-        regularMeetingTimeInput.addEventListener('input', () => validateRegularMeetingTime());
-        regularMeetingTimeInput.addEventListener('blur', () => validateRegularMeetingTime());
-    }
-});
 
 // ========================================
 // Toast 함수
