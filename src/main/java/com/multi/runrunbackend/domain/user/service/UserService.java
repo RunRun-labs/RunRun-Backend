@@ -54,6 +54,14 @@ public class UserService {
         updateProfileImage(req, file, user);
     }
 
+    public void deleteUser(CustomUser principal) {
+        User user = getUserByPrincipal(principal);
+        if (user.isDeleted()) {
+            throw new DuplicateUsernameException(ErrorCode.USER_ALREADY_DELETED);
+        }
+        user.deleteAccount();
+    }
+
 
     private User getUserByPrincipal(CustomUser principal) {
         if (principal == null) {

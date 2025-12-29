@@ -1,11 +1,9 @@
 package com.multi.runrunbackend.domain.user.controller;
 
-import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
-import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import com.multi.runrunbackend.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +31,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
     private final UserService userService;
-    private final FileStorage fileStorage;
-    private final UserRepository userRepository;
 
 
     @GetMapping
@@ -55,6 +51,16 @@ public class UserController {
 
         userService.updateUser(req, file, principal);
         return ResponseEntity.ok(ApiResponse.success("프로필 수정 성공", null));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> withdraw(
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        userService.deleteUser(principal);
+        return ResponseEntity.ok(
+                ApiResponse.success("회원 탈퇴가 완료되었습니다.", null)
+        );
     }
 
 }
