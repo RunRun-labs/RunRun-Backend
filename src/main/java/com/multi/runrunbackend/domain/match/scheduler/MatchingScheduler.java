@@ -2,11 +2,9 @@ package com.multi.runrunbackend.domain.match.scheduler;
 
 import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
+import com.multi.runrunbackend.domain.match.service.MatchingQueueService;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -15,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -31,127 +29,219 @@ import org.springframework.stereotype.Component;
 public class MatchingScheduler {
 
   private final RedisTemplate<String, String> redisTemplate;
-  private final MatchSessionService matchSessionService;
   private final RedissonClient redissonClient;
+  private final MatchSessionService matchSessionService;
+  private final MatchingQueueService matchingQueueService;
 
+  private static final int[] TARGET_COUNTS = {2, 3, 4};
+  private static final int MAX_GAP = 200;
+  private static final long LOCK_LEASE_SECONDS = 15;
+  private static final long FIXED_DELAY_MS = 3000;
 
   private static final String QUEUE_KEY_PREFIX = "matching_queue:";
   private static final String USER_STATUS_KEY_PREFIX = "user_queue_status:";
-  private static final String TICKET_KEY_PREFIX = "match_ticket:";
+  private static final String LOCK_PREFIX = "lock:";
   private static final String WAIT_START_PREFIX = "user_wait_start:";
 
-  private static final int MAX_RATING_GAP = 200;
+  private static final int WINDOW_FACTOR = 6;
+  private static final int MAX_STARTS = 5;
 
-  @Scheduled(fixedDelay = 1000)
-  public void processMatching() {
+  private static final String MATCH_POP_SCRIPT = """
+        local queueKey = KEYS[1]
+        local targetCount = tonumber(ARGV[1])
+        local maxGap = tonumber(ARGV[2])
+        local statusPrefix = ARGV[3]
+        local windowFactor = tonumber(ARGV[4])
+        local maxStarts = tonumber(ARGV[5])
+      
+        local windowSize = targetCount * windowFactor
+        if windowSize < targetCount then windowSize = targetCount end
+      
+        local rows = redis.call('ZRANGE', queueKey, 0, windowSize - 1, 'WITHSCORES')
+        if (rows == nil or #rows == 0) then
+          return nil
+        end
+      
+        local candIds = {}
+        local candScores = {}
+      
+        for i = 1, #rows, 2 do
+          local userId = rows[i]
+          local score = tonumber(rows[i + 1])
+          local statusKey = statusPrefix .. userId
+      
+          if (redis.call('EXISTS', statusKey) == 0) then
+            redis.call('ZREM', queueKey, userId) -- 좀비 즉시 제거
+          else
+            table.insert(candIds, userId)
+            table.insert(candScores, score)
+          end
+        end
+      
+        if (#candIds < targetCount) then
+          return nil
+        end
+      
+        local maxStartIndex = #candIds - targetCount + 1
+        local tries = maxStarts
+        if tries > maxStartIndex then tries = maxStartIndex end
+      
+        for startIndex = 1, tries do
+          local minScore = candScores[startIndex]
+          local maxScore = candScores[startIndex]
+      
+          for j = startIndex + 1, startIndex + targetCount - 1 do
+            local s = candScores[j]
+            if s < minScore then minScore = s end
+            if s > maxScore then maxScore = s end
+          end
+      
+          if ((maxScore - minScore) <= maxGap) then
+            -- 통과: pop
+            local out = {}
+            for j = startIndex, startIndex + targetCount - 1 do
+              redis.call('ZREM', queueKey, candIds[j])
+              out[#out + 1] = candIds[j] .. '|' .. tostring(candScores[j])
+            end
+            return out
+          end
+        end
+      
+        return nil
+      """;
+
+  @Scheduled(fixedDelay = FIXED_DELAY_MS)
+  public void runMatching() {
     for (DistanceType distance : DistanceType.values()) {
-      for (int targetCount = 2; targetCount <= 4; targetCount++) {
-        tryMatch(distance, targetCount);
+      for (int targetCount : TARGET_COUNTS) {
+        String queueKey = makeQueueKey(distance, targetCount);
+        tryMatch(queueKey, distance, targetCount);
       }
     }
   }
 
-  private void tryMatch(DistanceType distance, int targetCount) {
-    String queueKey = QUEUE_KEY_PREFIX + distance.name() + ":" + targetCount;
-
-    String lockKey = "lock:" + queueKey;
+  private void tryMatch(String queueKey, DistanceType distance, int targetCount) {
+    String lockKey = LOCK_PREFIX + queueKey;
     RLock lock = redissonClient.getLock(lockKey);
 
+    boolean locked = false;
     try {
-      boolean acquired = lock.tryLock(0, 5, TimeUnit.SECONDS);
-      if (!acquired) {
-        log.debug("락 획득 실패 - Queue: {}", queueKey);
+      locked = lock.tryLock(0, LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
+      if (!locked) {
         return;
       }
 
-      Set<TypedTuple<String>> candidates = redisTemplate.opsForZSet()
-          .rangeWithScores(queueKey, 0, targetCount - 1);
-
-      if (candidates == null || candidates.size() < targetCount) {
+      List<UserWithScore> picked = popCandidatesAtomically(queueKey, targetCount, MAX_GAP);
+      if (picked.isEmpty()) {
         return;
       }
 
-      List<TypedTuple<String>> list = new ArrayList<>(candidates);
+      List<Long> userIds = picked.stream().map(UserWithScore::userId).toList();
 
-      double minRating = Optional.ofNullable(list.get(0).getScore()).orElse(0.0);
-      double maxRating = Optional.ofNullable(list.get(list.size() - 1).getScore()).orElse(0.0);
+      Set<String> userIdSet = userIds.stream().map(String::valueOf).collect(Collectors.toSet());
 
-      if ((maxRating - minRating) > MAX_RATING_GAP) {
-        return;
-      }
+      int avgDuration = computeAvgWaitMinutes(userIds);
 
-      String[] userIds = list.stream().map(TypedTuple::getValue).toArray(String[]::new);
+      try {
+        Long sessionId = matchSessionService.createOnlineSession(
+            userIdSet,
+            distance,
+            avgDuration
+        );
+        matchingQueueService.issueMatchTickets(sessionId, userIds);
 
-      Long removedCount = redisTemplate.opsForZSet().remove(queueKey, (Object[]) userIds);
+        matchingQueueService.cleanupAfterMatched(userIds);
 
-      if (removedCount != null && removedCount == targetCount) {
-        handleSuccess(list, distance, queueKey);
+        log.info("매칭 성공 - Queue: {}, distance: {}, targetCount: {}, sessionId: {}, users: {}",
+            queueKey, distance, targetCount, sessionId, userIds);
 
-      } else {
-        log.warn("매칭 실패: 타겟 {}명 중 {}명만 삭제됨. 복구 시도.", targetCount, removedCount);
-        rollbackToQueue(list, queueKey);
+      } catch (Exception e) {
+        rollbackToQueueSafe(queueKey, picked);
+        log.error("매칭 처리 실패(복구 수행) - Queue: {}, users: {}", queueKey, userIds, e);
       }
 
     } catch (InterruptedException e) {
-      log.error("락 획득 중 인터럽트 발생", e);
+      Thread.currentThread().interrupt();
+      log.error("매칭 락 획득 중 인터럽트 - Queue: {}", queueKey, e);
     } finally {
-      if (lock.isHeldByCurrentThread()) {
+      if (locked && lock.isHeldByCurrentThread()) {
         lock.unlock();
       }
     }
   }
 
-  private void handleSuccess(List<TypedTuple<String>> userTuples, DistanceType distance,
-      String queueKey) {
-    Long sessionId = null;
+  @SuppressWarnings("unchecked")
+  private List<UserWithScore> popCandidatesAtomically(String queueKey, int targetCount,
+      int maxGap) {
+    List<String> result = (List<String>) redisTemplate.execute(
+        new DefaultRedisScript<>(MATCH_POP_SCRIPT, List.class),
+        List.of(queueKey),
+        String.valueOf(targetCount),
+        String.valueOf(maxGap),
+        USER_STATUS_KEY_PREFIX,
+        String.valueOf(WINDOW_FACTOR),
+        String.valueOf(MAX_STARTS)
+    );
 
-    try {
-      Set<String> matchedUsers = userTuples.stream()
-          .map(TypedTuple::getValue)
-          .collect(Collectors.toSet());
-
-      long currentTime = System.currentTimeMillis();
-      long totalWaitTimeMs = 0;
-
-      for (String userIdStr : matchedUsers) {
-        String startTimeStr = redisTemplate.opsForValue().get(WAIT_START_PREFIX + userIdStr);
-        if (startTimeStr != null) {
-          totalWaitTimeMs += (currentTime - Long.parseLong(startTimeStr));
-        }
-      }
-      int avgDuration = (int) ((totalWaitTimeMs / matchedUsers.size()) / 1000);
-
-      sessionId = matchSessionService.createOnlineSession(matchedUsers, distance, avgDuration);
-
-    } catch (Exception e) {
-      log.error("DB 세션 생성 실패. 유저를 대기열로 복구합니다.", e);
-      rollbackToQueue(userTuples, queueKey);
-      return;
+    if (result == null || result.isEmpty()) {
+      return List.of();
     }
 
-    try {
-      for (TypedTuple<String> tuple : userTuples) {
-        String userIdStr = tuple.getValue();
-        Long userId = Long.parseLong(userIdStr);
+    return result.stream()
+        .filter(Objects::nonNull)
+        .filter(s -> s.contains("|"))
+        .map(s -> {
+          String[] parts = s.split("\\|");
+          Long userId = Long.parseLong(parts[0]);
+          int score = (int) Double.parseDouble(parts[1]);
+          return new UserWithScore(userId, score);
+        })
+        .toList();
+  }
 
-        redisTemplate.opsForValue()
-            .set(TICKET_KEY_PREFIX + userId, sessionId.toString(), Duration.ofMinutes(1));
-
-        redisTemplate.delete(USER_STATUS_KEY_PREFIX + userId);
-        redisTemplate.delete(WAIT_START_PREFIX + userId);
+  private void rollbackToQueueSafe(String queueKey, List<UserWithScore> picked) {
+    for (UserWithScore u : picked) {
+      String statusKey = USER_STATUS_KEY_PREFIX + u.userId();
+      Boolean exists = redisTemplate.hasKey(statusKey);
+      if (Boolean.TRUE.equals(exists)) {
+        redisTemplate.opsForZSet().add(queueKey, u.userId().toString(), u.score());
       }
-
-      log.info("매칭 성사 완료 - 세션ID: {}", sessionId);
-
-    } catch (Exception e) {
-      log.error("매칭은 성공했으나 Redis 티켓 발행/정리 중 오류 발생. SessionID: {}", sessionId, e);
     }
   }
 
-  private void rollbackToQueue(List<TypedTuple<String>> list, String queueKey) {
-    Set<TypedTuple<String>> tuples = new HashSet<>(list);
-    redisTemplate.opsForZSet().add(queueKey, tuples);
-    log.info("대기열 일괄 복구 완료: {}명", tuples.size());
+  private String makeQueueKey(DistanceType distance, int targetCount) {
+    return QUEUE_KEY_PREFIX + distance.name() + ":" + targetCount;
+  }
+
+  private record UserWithScore(Long userId, int score) {
+
+  }
+
+  private int computeAvgWaitMinutes(List<Long> userIds) {
+    long now = System.currentTimeMillis();
+
+    long sumMinutes = 0L;
+    int counted = 0;
+
+    for (Long userId : userIds) {
+      String ts = redisTemplate.opsForValue().get(WAIT_START_PREFIX + userId);
+      if (ts == null) {
+        continue;
+      }
+
+      try {
+        long start = Long.parseLong(ts);
+        long waitedMs = Math.max(0L, now - start);
+        sumMinutes += TimeUnit.MILLISECONDS.toMinutes(waitedMs);
+        counted++;
+      } catch (NumberFormatException ignore) {
+      }
+    }
+
+    if (counted == 0) {
+      return 0;
+    }
+
+    return (int) (sumMinutes / counted);
   }
 }
-
