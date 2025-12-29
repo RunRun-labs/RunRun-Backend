@@ -3,7 +3,27 @@ document.addEventListener("DOMContentLoaded", () => {
     attachBackButtonHandler();
     attachMenuHandlers();
     loadUserSettings();
+    
+    // URL 파라미터 확인하여 약관 모달 자동 열기
+    checkAndOpenTermsModal();
 });
+
+// URL 파라미터 확인하여 약관 모달 자동 열기
+function checkAndOpenTermsModal() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const openTermsModal = urlParams.get('openTermsModal');
+    
+    if (openTermsModal === 'true') {
+        // URL에서 파라미터 제거 (히스토리 정리)
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+        
+        // 약관 모달 열기
+        setTimeout(() => {
+            openTermsModal();
+        }, 100);
+    }
+}
 
 // 뒤로가기 버튼
 function attachBackButtonHandler() {
@@ -60,8 +80,7 @@ function attachMenuHandlers() {
     // 약관/정책 확인
     if (termsBtn) {
         termsBtn.addEventListener("click", () => {
-            // TODO: 약관/정책 페이지로 이동
-            alert("약관/정책 확인 기능은 준비 중입니다.");
+            openTermsModal();
         });
     }
 
@@ -73,31 +92,82 @@ function attachMenuHandlers() {
         });
     }
 
-    // 모달 닫기
-    if (modalCloseBtn) {
-        modalCloseBtn.addEventListener("click", (e) => {
+    // 알림 설정 모달 닫기
+    const notificationModalCloseBtn = document.querySelector('[data-role="close-notification-modal"]');
+    if (notificationModalCloseBtn) {
+        notificationModalCloseBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
             closeNotificationModal();
         });
     }
 
-    // 모달 배경 클릭 시 닫기
-    const modalOverlay = document.querySelector('[data-role="notification-modal"]');
-    if (modalOverlay) {
-        modalOverlay.addEventListener("click", (e) => {
-            if (e.target === modalOverlay) {
+    // 알림 설정 모달 배경 클릭 시 닫기
+    const notificationModalOverlay = document.querySelector('[data-role="notification-modal"]');
+    if (notificationModalOverlay) {
+        notificationModalOverlay.addEventListener("click", (e) => {
+            if (e.target === notificationModalOverlay) {
                 closeNotificationModal();
             }
         });
 
         // 모달 콘텐츠 클릭 시 닫히지 않도록
-        const modalContent = modalOverlay.querySelector(".modal-content");
+        const modalContent = notificationModalOverlay.querySelector(".modal-content");
         if (modalContent) {
             modalContent.addEventListener("click", (e) => {
                 e.stopPropagation();
             });
         }
+    }
+
+    // 약관/정책 모달 닫기
+    const termsModalCloseBtn = document.querySelector('[data-role="close-terms-modal"]');
+    if (termsModalCloseBtn) {
+        termsModalCloseBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeTermsModal();
+        });
+    }
+
+    // 약관/정책 모달 배경 클릭 시 닫기
+    const termsModalOverlay = document.querySelector('[data-role="terms-modal"]');
+    if (termsModalOverlay) {
+        termsModalOverlay.addEventListener("click", (e) => {
+            if (e.target === termsModalOverlay) {
+                closeTermsModal();
+            }
+        });
+
+        // 모달 콘텐츠 클릭 시 닫히지 않도록
+        const termsModalContent = termsModalOverlay.querySelector(".modal-content");
+        if (termsModalContent) {
+            termsModalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+        }
+    }
+
+    // 약관 옵션 클릭 핸들러
+    const termsServiceBtn = document.querySelector('[data-role="terms-service"]');
+    if (termsServiceBtn) {
+        termsServiceBtn.addEventListener("click", () => {
+            window.location.href = "/terms/view?type=SERVICE";
+        });
+    }
+
+    const termsPrivacyBtn = document.querySelector('[data-role="terms-privacy"]');
+    if (termsPrivacyBtn) {
+        termsPrivacyBtn.addEventListener("click", () => {
+            window.location.href = "/terms/view?type=PRIVACY";
+        });
+    }
+
+    const termsMarketingBtn = document.querySelector('[data-role="terms-marketing"]');
+    if (termsMarketingBtn) {
+        termsMarketingBtn.addEventListener("click", () => {
+            window.location.href = "/terms/view?type=MARKETING";
+        });
     }
 
     // 설정 저장
@@ -150,6 +220,24 @@ function openNotificationModal() {
 // 알림 설정 모달 닫기
 function closeNotificationModal() {
     const modal = document.querySelector('[data-role="notification-modal"]');
+    if (modal) {
+        modal.setAttribute("hidden", "hidden");
+        document.body.style.overflow = "";
+    }
+}
+
+// 약관/정책 모달 열기
+function openTermsModal() {
+    const modal = document.querySelector('[data-role="terms-modal"]');
+    if (modal) {
+        modal.removeAttribute("hidden");
+        document.body.style.overflow = "hidden";
+    }
+}
+
+// 약관/정책 모달 닫기
+function closeTermsModal() {
+    const modal = document.querySelector('[data-role="terms-modal"]');
     if (modal) {
         modal.setAttribute("hidden", "hidden");
         document.body.style.overflow = "";

@@ -110,7 +110,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2 class="modal-title">알림설정</h2>
-            <button class="modal-close" type="button" aria-label="닫기">
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-notification-modal">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                           stroke-linejoin="round"/>
@@ -141,6 +141,41 @@
         </div>
         <div class="modal-footer">
             <button class="modal-save-button" type="button" data-role="save-settings">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- 약관/정책 확인 모달 -->
+<div class="modal-overlay" data-role="terms-modal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">약관/정책 확인</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-terms-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <button class="terms-option-item" type="button" data-role="terms-service">
+                <span class="terms-option-label">서비스 이용약관</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="terms-option-item" type="button" data-role="terms-privacy">
+                <span class="terms-option-label">개인정보 처리방침</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="terms-option-item" type="button" data-role="terms-marketing">
+                <span class="terms-option-label">마케팅 정보</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
     </div>
 </div>
