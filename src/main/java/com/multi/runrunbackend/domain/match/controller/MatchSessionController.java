@@ -2,9 +2,9 @@ package com.multi.runrunbackend.domain.match.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
-import com.multi.runrunbackend.domain.match.dto.req.MatchConfirmReqDto;
+import com.multi.runrunbackend.domain.match.dto.req.OfflineMatchConfirmReqDto;
 import com.multi.runrunbackend.domain.match.dto.req.OnlineMatchJoinReqDto;
-import com.multi.runrunbackend.domain.match.dto.res.MatchConfirmResDto;
+import com.multi.runrunbackend.domain.match.dto.res.OfflineMatchConfirmResDto;
 import com.multi.runrunbackend.domain.match.dto.res.OnlineMatchStatusResDto;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
 import com.multi.runrunbackend.domain.match.service.MatchingQueueService;
@@ -35,15 +35,15 @@ public class MatchSessionController {
   private final MatchingQueueService matchingQueueService;
 
   @PostMapping("/offline/confirm")
-  public ResponseEntity<ApiResponse<MatchConfirmResDto>> confirmMatch(
+  public ResponseEntity<ApiResponse<OfflineMatchConfirmResDto>> confirmMatch(
       @AuthenticationPrincipal UserDetails userDetails,
-      @RequestBody MatchConfirmReqDto reqDto
+      @RequestBody OfflineMatchConfirmReqDto reqDto
   ) {
     Long sessionId = matchSessionService.createOfflineSession(
         reqDto.getRecruitId(),
         userDetails
     );
-    return ResponseEntity.ok(ApiResponse.success(new MatchConfirmResDto(sessionId)));
+    return ResponseEntity.ok(ApiResponse.success(new OfflineMatchConfirmResDto(sessionId)));
   }
 
   @PostMapping("/online/join")
