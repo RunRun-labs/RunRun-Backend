@@ -21,7 +21,8 @@ public class OnlineMatchJoinReqDto {
   @NotNull(message = "목표 거리는 필수입니다.")
   private DistanceType distance;
 
+  @NotNull(message = "참여 인원은 필수입니다.")
   @Min(value = 2, message = "최소 인원은 2명입니다.")
   @Max(value = 4, message = "최대 인원은 4명입니다.")
-  private int participantCount;
+  private Integer participantCount;
 }
