@@ -128,4 +128,9 @@ public class PathController {
         return "setting/setting";
     }
 
+    @GetMapping("/setting/blocked-users")
+    public String blockedUsersView() {
+        return "setting/blocked-users";
+    }
+
 }
