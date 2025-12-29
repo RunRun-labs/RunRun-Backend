@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -144,9 +145,9 @@ public class MatchingScheduler {
   }
 
   private void rollbackToQueue(List<TypedTuple<String>> list, String queueKey) {
-    for (TypedTuple<String> tuple : list) {
-      redisTemplate.opsForZSet().add(queueKey, tuple.getValue(), tuple.getScore());
-    }
+    Set<TypedTuple<String>> tuples = new HashSet<>(list);
+    redisTemplate.opsForZSet().add(queueKey, tuples);
+    log.info("대기열 일괄 복구 완료: {}명", tuples.size());
   }
 }
 
