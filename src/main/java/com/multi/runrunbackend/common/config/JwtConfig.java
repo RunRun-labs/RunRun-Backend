@@ -65,7 +65,18 @@ public class JwtConfig {
                     "/crews/**",
                     "/match/**",
                     "/recruit/**",
-                    "/tts-test"
+                    "/tts-test",
+                    "/admin/coupon/create",
+                    "/admin/coupon/inquiry",
+                    "/admin/coupon/update/**",
+                    "/admin/coupon/select",
+                    "/admin/coupon-role/inquiry",
+                    "/admin/coupon-role/create",
+                    "/admin/coupon-role/update/**",
+                    "/coupon/my",
+                    "/coupon/event",
+                    "/api/admin/coupons/public/**"
+
                 ).permitAll()
                 .requestMatchers(
                     PathRequest.toStaticResources().atCommonLocations()
