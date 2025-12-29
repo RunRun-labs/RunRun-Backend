@@ -53,7 +53,6 @@ function initLiveValidation() {
             validateDescription();
             updateCharCount('description', 'crewDescriptionCount');
         });
-        descriptionInput.addEventListener('input', () => validateDescription());
         descriptionInput.addEventListener('blur', () => validateDescription());
         descriptionInput.addEventListener('focus', () => validatePreviousFields('description'));
     }
@@ -599,18 +598,6 @@ function getAccessToken() {
     }
 
     return token;
-}
-
-// ========================================
-// 글자 수 카운터 업데이트 함수
-// ========================================
-function updateCharCount(inputId, countId) {
-    const input = document.getElementById(inputId);
-    const counter = document.getElementById(countId);
-
-    if (input && counter) {
-        counter.textContent = input.value.length;
-    }
 }
 
 function showToast(message, duration = 2000) {

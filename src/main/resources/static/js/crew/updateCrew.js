@@ -789,7 +789,7 @@ function showFieldError(inputElement, errorElement, message) {
     }
     if (errorElement) {
         errorElement.textContent = message;
-        errorElement.style.display = 'block';
+        errorElement.classList.add('visible');
     }
 }
 
@@ -800,7 +800,7 @@ function clearFieldError(inputElement, errorElement) {
     }
     if (errorElement) {
         errorElement.textContent = '';
-        errorElement.style.display = 'none';
+        errorElement.classList.remove('visible');
     }
 }
 

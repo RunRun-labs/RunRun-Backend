@@ -388,14 +388,6 @@ body {
     color: #FF4444;
 }
 
-.crew-card__badge--pending {
-    background-color: #FFE08C;
-    color: #5A4100;
-    position: absolute;
-    top: 12px;
-    right: 12px;
-}
-
 .crew-card__description {
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
@@ -472,8 +464,8 @@ body {
 
 /* 참여중 배지 */
 .crew-card__badge--approved {
-    background-color: #4CAF50;
-    color: white;
+    background-color: white;
+    color: #5A4100;
     padding: 4px 12px;
     border-radius: 12px;
     font-size: 12px;
@@ -483,8 +475,8 @@ body {
 
 /* 요청중 배지 (기존) */
 .crew-card__badge--pending {
-    background-color: #FFC107;
-    color: #333;
+    background-color: white;
+    color: #5A4100;
     padding: 4px 12px;
     border-radius: 12px;
     font-size: 12px;

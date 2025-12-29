@@ -35,7 +35,7 @@ public interface CrewActivityRepository extends CrudRepository<CrewActivity, Lon
     /**
      * @param crewId 크루 ID
      * @return 참여 횟수 합계
-     * @description : 특정 크루원의 총 참여 횟수 계산
+     * @description :  특정 크루의 전체 참여 횟수 합계를 계산
      */
     @Query("SELECT COALESCE(SUM(ca.participationCnt), 0) " +
             "FROM CrewActivity ca " +

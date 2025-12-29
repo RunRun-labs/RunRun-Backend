@@ -127,7 +127,7 @@ async function loadCrewData() {
                 isApplied = false;
             }
             try {
-                console.log('🔍 다른 크루 가입 여부 확인 시작...');
+                console.log('다른 크루 가입 여부 확인 시작');
 
                 const crewsRes = await fetch('/api/crews', {method: 'GET', headers});
                 if (crewsRes.ok) {
@@ -171,7 +171,7 @@ async function loadCrewData() {
 
                                 if (state === 'APPROVED') {
                                     foundApprovedCrew = true;
-                                    console.log('✅ APPROVED 크루 발견!', crew.crewId, crew.crewName);
+                                    console.log('APPROVED 크루 발견!', crew.crewId, crew.crewName);
                                     break; // 하나만 찾으면 됨
                                 }
                             }
@@ -181,7 +181,7 @@ async function loadCrewData() {
                     }
 
                     hasJoinedCrew = foundApprovedCrew;
-                    console.log('🎯 최종 hasJoinedCrew:', hasJoinedCrew);
+                    console.log('최종 hasJoinedCrew:', hasJoinedCrew);
 
                 } else {
                     console.warn('크루 목록 API 실패:', crewsRes.status);

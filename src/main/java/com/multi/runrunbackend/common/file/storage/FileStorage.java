@@ -24,6 +24,8 @@ public interface FileStorage {
         return upload(file, domainType, refId);
     }
 
+    String toHttpsUrl(String key);
+
 
     default void delete(String fileUrl) {
     }

@@ -66,6 +66,7 @@ public class CrewJoinService {
         validateNotInAnotherCrew(user.getId());
 
         // 이미 가입한 크루원인지 확인(해당 크루)
+        // TODO: 현재는 1인 1크루 정책으로 인해 항상 false이나, 향후 변경 시를 대비해 유지하는 걸로 판단
         boolean alreadyJoined = crewUserRepository.existsByCrewIdAndUserIdAndIsDeletedFalse(crewId, user.getId());
         if (alreadyJoined) {
             throw new BusinessException(ErrorCode.ALREADY_JOINED_CREW);
@@ -168,6 +169,9 @@ public class CrewJoinService {
         if (!joinRequest.getCrew().getId().equals(crewId)) {
             throw new BusinessException(ErrorCode.JOIN_REQUEST_NOT_FOUND);
         }
+
+        // 승인 시점에 다시 1인 1크루 정책 확인 (동시성 이슈 방지)
+        validateNotInAnotherCrew(joinRequest.getUser().getId());
 
         // 승인 처리
         joinRequest.approve();

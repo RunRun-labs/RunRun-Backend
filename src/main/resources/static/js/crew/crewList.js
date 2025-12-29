@@ -74,8 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastCard = crewListContainer.querySelector('.crew-card:last-child');
         if (lastCard) {
             const lastCrewId = lastCard.dataset.crewId;
-            console.log('마지막 크루 ID:', lastCrewId);
-            currentCursor = lastCrewId;
+            if (lastCrewId && lastCrewId.trim()) {
+                console.log('마지막 크루 ID:', lastCrewId);
+                currentCursor = lastCrewId;
+            } else {
+                console.warn('마지막 카드에 유효한 crew-id가 없음');
+            }
         }
     }
 });
@@ -653,12 +657,12 @@ function setStatusBadge(crewId, state) {
         badge = document.createElement('span');
         badge.className = 'crew-card__badge crew-card__badge--approved';
         badge.setAttribute('data-status-badge', 'approved');
-        badge.textContent = '🔴참여중';
+        badge.innerHTML = '<span aria-hidden="true">🔴</span>참여중';
     } else if (state === 'PENDING') {
         badge = document.createElement('span');
         badge.className = 'crew-card__badge crew-card__badge--pending';
         badge.setAttribute('data-status-badge', 'pending');
-        badge.textContent = '🔵요청중';
+        badge.innerHTML = '<span aria-hidden="true">🔵</span>요청중';
     }
 
     if (badge) {
