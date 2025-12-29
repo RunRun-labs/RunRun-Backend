@@ -60,7 +60,7 @@ dependencies {
     implementation "org.n52.jackson:jackson-datatype-jts:2.0.0"
     implementation 'org.springframework.boot:spring-boot-jackson2'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-    implementation 'org.redisson:redisson-spring-boot-starter:3.24.3'
+    implementation 'org.redisson:redisson:3.41.0'
 }
 
 tasks.named('test') {
