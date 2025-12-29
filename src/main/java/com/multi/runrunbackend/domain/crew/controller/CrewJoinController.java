@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewJoinReqDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewJoinRequestResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewUserResDto;
 import com.multi.runrunbackend.domain.crew.service.CrewJoinService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -149,6 +150,25 @@ public class CrewJoinController {
 
         return ResponseEntity.ok(
                 ApiResponse.successNoData("크루에서 탈퇴되었습니다.")
+        );
+    }
+
+    /**
+     * @param crewId    크루 ID
+     * @param principal 조회하는 사용자
+     * @description : 크루원 목록 조회 (해당 크루의 크루원만 조회 가능)
+     */
+    @GetMapping("/{crewId}/users")
+    public ResponseEntity<ApiResponse<List<CrewUserResDto>>> getCrewUserList(
+            @Parameter(description = "크루 ID", required = true)
+            @PathVariable Long crewId,
+
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        List<CrewUserResDto> crewUsers = crewJoinService.getCrewUserList(crewId, principal);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("크루원 목록 조회 성공", crewUsers)
         );
     }
 
