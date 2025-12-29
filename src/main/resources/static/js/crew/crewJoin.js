@@ -12,6 +12,18 @@ let crewId = null;
 let crewName = '';
 
 // ========================================
+// 글자 수 카운터 업데이트 함수
+// ========================================
+function updateCharCount(inputId, countId) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(countId);
+
+    if (input && counter) {
+        counter.textContent = input.value.length;
+    }
+}
+
+// ========================================
 // 초기화
 // ========================================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -202,41 +214,10 @@ function initLiveValidation() {
     // 자기소개 (선택사항, 최대 100자)
     const introductionInput = document.getElementById('introduction');
     if (introductionInput) {
-        // 입력 전에 100자 제한 체크 (beforeinput으로 즉시 차단)
-        introductionInput.addEventListener('beforeinput', (e) => {
-            const currentValue = introductionInput.value;
-            const inputType = e.inputType;
-
-            if (inputType === 'insertText' || inputType === 'insertCompositionText' ||
-                inputType === 'insertFromPaste' || inputType === 'insertFromDrop') {
-                const newText = e.data || '';
-                const selectionStart = introductionInput.selectionStart || 0;
-                const selectionEnd = introductionInput.selectionEnd || 0;
-                const textBefore = currentValue.substring(0, selectionStart);
-                const textAfter = currentValue.substring(selectionEnd);
-                const newValue = textBefore + newText + textAfter;
-
-                if (newValue.length > 100) {
-                    e.preventDefault();
-
-                    const allowedLength = 100 - (textBefore.length + textAfter.length);
-                    if (allowedLength > 0) {
-                        const allowedText = newText.substring(0, allowedLength);
-                        introductionInput.value = textBefore + allowedText + textAfter;
-                        introductionInput.setSelectionRange(textBefore.length + allowedText.length, textBefore.length + allowedText.length);
-                    }
-
-                    showToast('자기소개는 100자 이내로 입력해주세요.');
-                    validateIntroduction();
-                    return;
-                }
-            }
-        });
-
         introductionInput.addEventListener('input', () => {
             validateIntroduction();
+            updateCharCount('introduction', 'introductionCount');
         });
-
         introductionInput.addEventListener('blur', () => {
             validateIntroduction();
         });
@@ -254,43 +235,16 @@ function initLiveValidation() {
     if (paceSelect) {
         paceSelect.addEventListener('change', () => validatePace());
         paceSelect.addEventListener('blur', () => validatePace());
+        paceSelect.addEventListener('focus', () => validatePreviousFields('pace'));
     }
 
     // 위치 (필수, 최대 100자)
     const regionInput = document.getElementById('region');
     if (regionInput) {
-        // 입력 전에 100자 제한 체크 (beforeinput으로 즉시 차단)
-        regionInput.addEventListener('beforeinput', (e) => {
-            const currentValue = regionInput.value;
-            const inputType = e.inputType;
-
-            if (inputType === 'insertText' || inputType === 'insertCompositionText' ||
-                inputType === 'insertFromPaste' || inputType === 'insertFromDrop') {
-                const newText = e.data || '';
-                const selectionStart = regionInput.selectionStart || 0;
-                const selectionEnd = regionInput.selectionEnd || 0;
-                const textBefore = currentValue.substring(0, selectionStart);
-                const textAfter = currentValue.substring(selectionEnd);
-                const newValue = textBefore + newText + textAfter;
-
-                if (newValue.length > 100) {
-                    e.preventDefault();
-
-                    const allowedLength = 100 - (textBefore.length + textAfter.length);
-                    if (allowedLength > 0) {
-                        const allowedText = newText.substring(0, allowedLength);
-                        regionInput.value = textBefore + allowedText + textAfter;
-                        regionInput.setSelectionRange(textBefore.length + allowedText.length, textBefore.length + allowedText.length);
-                    }
-
-                    showToast('러닝 희망 장소는 100자 이내로 입력해주세요.');
-                    validateRegion();
-                    return;
-                }
-            }
+        regionInput.addEventListener('input', () => {
+            validateRegion();
+            updateCharCount('region', 'regionCount');
         });
-
-        regionInput.addEventListener('input', () => validateRegion());
         regionInput.addEventListener('blur', () => validateRegion());
         regionInput.addEventListener('focus', () => validatePreviousFields('region'));
     }
@@ -330,6 +284,7 @@ function validatePreviousFields(currentField) {
 function validateIntroduction() {
     const input = document.getElementById('introduction');
     const errorElement = document.getElementById('introductionError');
+    const charCount = document.getElementById('introductionCount');
     if (!input || !errorElement) return true;
 
     const value = input.value;
@@ -338,12 +293,18 @@ function validateIntroduction() {
 
         input.value = value.slice(0, 100);
 
-        showFieldError(select, errorElement, '자기소개는 100자 이내로 입력해주세요.');
-
+        showFieldError(input, errorElement, '자기소개는 100자 이내로 입력해주세요.');
+        if (charCount) {
+            charCount.parentElement.classList.add('over-limit');
+        }
+        showToast('자기소개는 100자 이내로 입력해주세요.');
         return false;
     }
 
     clearFieldError(input, errorElement);
+    if (charCount) {
+        charCount.parentElement.classList.remove('over-limit');
+    }
     return true;
 }
 
@@ -386,31 +347,32 @@ function validatePace() {
 function validateRegion() {
     const input = document.getElementById('region');
     const errorElement = document.getElementById('regionError');
+    const charCount = document.getElementById('regionCount');
     if (!input || !errorElement) return true;
 
     const value = input.value;
 
-    if (value.length >= 100) {
+    if (value.length > 100) {
 
-        showFieldError(select, errorElement, '러닝 희망 장소는 100자 이내로 입력해주세요.');
-
-        input.value = value.substring(0, 100);
+        input.value = value.slice(0, 100);
+        showFieldError(input, errorElement, '러닝 희망 장소는 100자 이내로 입력해주세요.');
+        if (charCount) {
+            charCount.parentElement.classList.add('over-limit');
+        }
+        showToast('러닝 희망 장소는 100자 이내로 입력해주세요.');
 
         return false;
     }
 
-    if (!value) {
-        showFieldError(input, errorElement, '러닝 희망 장소를 입력해주세요.');
-        return false;
-    }
-
-    const trimmedValue = value.trim();
-    if (!trimmedValue) {
+    if (!value.trim()) {
         showFieldError(input, errorElement, '러닝 희망 장소를 입력해주세요.');
         return false;
     }
 
     clearFieldError(input, errorElement);
+    if (charCount) {
+        charCount.parentElement.classList.remove('over-limit');
+    }
     return true;
 }
 
@@ -501,6 +463,7 @@ function showFieldError(inputElement, errorElement, message) {
 function clearFieldError(inputElement, errorElement) {
     if (inputElement) {
         inputElement.classList.remove('error');
+        inputElement.style.borderColor = '';
     }
     if (errorElement) {
         errorElement.textContent = '';

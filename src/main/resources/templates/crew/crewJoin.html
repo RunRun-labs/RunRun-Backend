@@ -47,8 +47,10 @@
                         class="form-textarea"
                         placeholder="자기소개를 100자 이내로 입력해주세요."
                         rows="4"
-                        maxlength="100"
                 ></textarea>
+                <div class="char-count">
+                    <span id="introductionCount">0</span>/100
+                </div>
                 <p class="error-text" id="introductionError"></p>
                 <p class="form-guide">한 줄 소개를 적으면 승인 확률이 높아요</p>
             </div>
@@ -99,8 +101,11 @@
                         name="region"
                         class="form-input"
                         placeholder="러닝 희망 장소를 입력하세요. (예: 서울 종로구)"
-                        maxlength="100"
+                        required
                 >
+                <div class="char-count">
+                    <span id="regionCount">0</span>/100
+                </div>
                 <p class="error-text" id="regionError"></p>
             </div>
 
