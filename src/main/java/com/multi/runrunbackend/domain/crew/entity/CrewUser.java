@@ -38,44 +38,18 @@ public class CrewUser extends BaseEntity {
     @Column(name = "role", nullable = false, length = 20)
     private CrewRole role;  // LEADER, SUB_LEADER, STAFF, MEMBER
 
-    @Column(name = "participation_count", nullable = false)
-    private Integer participationCount;
-
-
     /**
-     * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
+     * @description : create - 크루원 엔티티 생성 정적 팩토리 메서드
      * @filename : CrewUser
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static CrewUser toEntity(Crew crew, User user, CrewRole role) {
-        return CrewUser.builder()
-                .crew(crew)
-                .user(user)
-                .role(role)
-                .participationCount(0)
-                .build();
-    }
-
-    /**
-     * @description : updateRole - 크루원 권한 변경
-     * @filename : CrewUser
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
-     */
-    public void updateRole(CrewRole role) {
-
-        this.role = role;
-    }
-
-    /**
-     * @description : incrementParticipationCount - 참여 횟수 증가
-     * @filename : CrewUser
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
-     */
-    public void incrementParticipationCount() {
-        this.participationCount++;
+    public static CrewUser create(Crew crew, User user, CrewRole role) {
+        CrewUser crewUser = new CrewUser();
+        crewUser.crew = crew;
+        crewUser.user = user;
+        crewUser.role = role;
+        return crewUser;
     }
 
     /**
