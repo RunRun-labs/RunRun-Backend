@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.term.service;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
+import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.term.constant.TermsType;
@@ -42,9 +43,12 @@ public class TermsService {
     public void createTerms(TermsReqDto req, CustomUser principal) {
         validateAdminRole(principal);
 
-        // 엔티티의 from 메서드를 사용하여 생성
-        Terms terms = Terms.toEntity(req);
 
+        if (termsRepository.existsByTypeAndVersion(req.getType(), req.getVersion())) {
+            throw new ValidationException(ErrorCode.DUPLICATE_TERMS_VERSION);
+        }
+
+        Terms terms = Terms.toEntity(req);
         termsRepository.save(terms);
     }
 
