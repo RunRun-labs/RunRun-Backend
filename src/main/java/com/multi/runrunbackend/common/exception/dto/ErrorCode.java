@@ -44,6 +44,8 @@ public enum ErrorCode {
     ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR013", "이미 가입 신청한 크루입니다."),
     CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014",
         "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
+
+    /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
 
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -213,7 +215,11 @@ public enum ErrorCode {
     TTSVOICE_NOT_FOUND(HttpStatus.NOT_FOUND, "T_001", "해당 보이스 타입을 찾을 수 없습니다"),
     TTS_CUE_CODE_INVALID(HttpStatus.BAD_REQUEST, "T_002", "큐 코드가 비어있거나 없습니다."),
     TTS_VOICE_PACK_PREFIX_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "T_003",
-        "보이스팩 S3 prefix 설정이 올바르지 않습니다.");
+        "보이스팩 S3 prefix 설정이 올바르지 않습니다."),
+    /*=====쿠폰=====*/
+    COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_001", "쿠폰을 찾을 수 없습니다"),
+    COUPON_CODE_DUPLICATE(HttpStatus.CONFLICT, "CPN_002", "쿠폰 코드가 중복입니다"),
+    COUPON_NOT_DRAFT(HttpStatus.FORBIDDEN, "CPN_003", "DRAFT 상태만 변경할 수 있습니다");
 
 
     private final HttpStatus httpStatus;

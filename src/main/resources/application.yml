@@ -73,3 +73,8 @@ tts:
   presign:
     ttl-seconds: ${TTS_PRESIGN_TTL_SECONDS}
 
+
+coupon:
+  code:
+    single:
+      length: ${COUPON_SINGLE_CODE_LENGTH}
