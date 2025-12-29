@@ -15,7 +15,7 @@ import java.util.Optional;
  */
 public interface TermsRepository extends JpaRepository<Terms, Long> {
 
-    // 특정 타입의 약관 중 가장 최근에 생성된(ID가 가장 큰) 약관 조회
     Optional<Terms> findTopByTypeOrderByIdDesc(TermsType type);
 
+    boolean existsByTypeAndVersion(TermsType type, String version);
 }
