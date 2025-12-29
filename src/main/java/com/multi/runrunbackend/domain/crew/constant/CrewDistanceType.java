@@ -16,7 +16,7 @@ public enum CrewDistanceType {
     KM_3("3km"),
     KM_5("5km"),
     KM_10("10km"),
-    OVER_10KM("10km 이상");
+    OVER_10KM("10km 초과");
 
     private final String description;
 }
