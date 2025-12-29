@@ -3,12 +3,15 @@ package com.multi.runrunbackend.common.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.multi.runrunbackend.domain.chat.service.RedisSubscriber;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
@@ -18,6 +21,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 @EnableCaching
 public class RedisConfig {
+
+  @Value("${spring.data.redis.host}")
+  private String host;
+
+  @Value("${spring.data.redis.port}")
+  private int port;
 
   @Bean
   public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -44,8 +53,7 @@ public class RedisConfig {
   }
 
   /**
-   * PatternTopic - Redis Pub/Sub에서 사용할 채널 패턴 정의
-   * chat:* 패턴으로 모든 세션 채널 수신
+   * PatternTopic - Redis Pub/Sub에서 사용할 채널 패턴 정의 chat:* 패턴으로 모든 세션 채널 수신
    */
   @Bean
   public PatternTopic chatTopic() {
@@ -80,6 +88,15 @@ public class RedisConfig {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
     return mapper;
+  }
+
+  @Bean
+  public RedissonClient redissonClient() {
+    Config config = new Config();
+    config.useSingleServer()
+        .setAddress("redis://" + host + ":" + port);
+
+    return Redisson.create(config);
   }
 
 }
