@@ -141,6 +141,10 @@ public class MatchSessionService {
   @Transactional
   public Long createOnlineSession(Set<String> userIds, DistanceType distance, int avgDuration) {
 
+    if (userIds == null || userIds.isEmpty()) {
+      throw new ValidationException(ErrorCode.NOT_ENOUGH_PARTICIPANTS);
+    }
+
     double targetDistanceValue = convertToKiloMeter(distance);
 
     MatchSession session = MatchSession.builder()
