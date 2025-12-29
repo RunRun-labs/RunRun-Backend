@@ -11,6 +11,7 @@ let isApplied = false; // 신청 여부
 let joinStatus = null; // 가입 신청 상태 (PENDING, APPROVED, REJECTED, CANCELED)
 let isFavorite = false;
 let pollingInterval = null; // 폴링 인터벌 ID
+let hasJoinedCrew = false;
 
 const joinBtn = document.getElementById('joinBtn');
 const favoriteBtn = document.getElementById('favoriteBtn');
@@ -125,10 +126,76 @@ async function loadCrewData() {
                 joinStatus = null;
                 isApplied = false;
             }
+            try {
+                console.log('🔍 다른 크루 가입 여부 확인 시작...');
+
+                const crewsRes = await fetch('/api/crews', {method: 'GET', headers});
+                if (crewsRes.ok) {
+                    const crewsJson = await crewsRes.json();
+                    console.log('크루 목록 API 응답:', crewsJson);
+
+                    const crewsData = crewsJson.data || crewsJson;
+
+                    // 크루 목록 추출
+                    let crewsList = [];
+                    if (Array.isArray(crewsData)) {
+                        crewsList = crewsData;
+                    } else if (crewsData.crews && Array.isArray(crewsData.crews)) {
+                        crewsList = crewsData.crews;
+                    }
+
+                    console.log('크루 목록:', crewsList.length, '개');
+
+                    // APPROVED 상태인 다른 크루 찾기
+                    let foundApprovedCrew = false;
+
+                    for (const crew of crewsList) {
+                        // 현재 보고 있는 크루는 제외
+                        if (crew.crewId == crewId) {
+                            console.log('  현재 크루 제외:', crew.crewId, crew.crewName);
+                            continue;
+                        }
+
+                        try {
+                            const appliedRes = await fetch(`/api/crews/${crew.crewId}/applied`, {
+                                method: 'GET',
+                                headers
+                            });
+
+                            if (appliedRes.ok) {
+                                const appliedJson = await appliedRes.json();
+                                const appliedData = appliedJson.data || appliedJson;
+                                const state = appliedData?.crewJoinState;
+
+                                console.log(`  크루 ${crew.crewId} (${crew.crewName}) 상태:`, state);
+
+                                if (state === 'APPROVED') {
+                                    foundApprovedCrew = true;
+                                    console.log('✅ APPROVED 크루 발견!', crew.crewId, crew.crewName);
+                                    break; // 하나만 찾으면 됨
+                                }
+                            }
+                        } catch (e) {
+                            console.warn(`  크루 ${crew.crewId} applied 조회 실패:`, e);
+                        }
+                    }
+
+                    hasJoinedCrew = foundApprovedCrew;
+                    console.log('🎯 최종 hasJoinedCrew:', hasJoinedCrew);
+
+                } else {
+                    console.warn('크루 목록 API 실패:', crewsRes.status);
+                    hasJoinedCrew = false;
+                }
+            } catch (e) {
+                console.error('크루 목록 조회 실패:', e);
+                hasJoinedCrew = false;
+            }
         } else {
             // 로그인하지 않은 경우
             joinStatus = null;
             isApplied = false;
+            hasJoinedCrew = false;
         }
 
         updateButtonUI();
@@ -295,6 +362,20 @@ function handleJoinCrew() {
 
     if (!crewId) {
         alert('크루 ID를 찾을 수 없습니다.');
+        return;
+    }
+
+    // 모집 마감 여부 확인
+    const closedBadge = document.getElementById('recruitmentBadgeClosed');
+    const isRecruitingClosed = closedBadge && closedBadge.style.display !== 'none';
+
+    if (isRecruitingClosed) {
+        alert('크루 모집이 마감되었습니다.');
+        return;
+    }
+
+    if (hasJoinedCrew) {
+        alert('이미 가입한 크루가 있습니다.\n1인 1크루만 가입 가능합니다.');
         return;
     }
 
@@ -472,6 +553,9 @@ function updateButtonUI() {
 
     console.log('updateButtonUI 호출 - joinStatus:', joinStatus, 'isApplied:', isApplied);
 
+    const closedBadge = document.getElementById('recruitmentBadgeClosed');
+    const isRecruitingClosed = closedBadge && closedBadge.style.display !== 'none';
+
     joinBtn.classList.remove('btn-action--join', 'btn-action--cancel', 'btn-action--leave');
 
     // 가입 상태에 따라 버튼 텍스트, 색상, 동작 설정
@@ -494,10 +578,19 @@ function updateButtonUI() {
         case 'CANCELED':
         case null:
         default:
-            joinBtn.textContent = '가입 신청';
-            joinBtn.classList.add('btn-action--join');
-            joinBtn.style.display = 'flex';
-            console.log('버튼 상태: 가입 신청 (초록색) - 이동: /crews/' + crewId + '/join');
+            if (isRecruitingClosed) {
+                joinBtn.textContent = '모집 마감';
+                joinBtn.classList.add('btn-action--leave'); // 회색
+                joinBtn.style.display = 'flex';
+                joinBtn.disabled = true;
+                console.log('버튼 상태: 모집 마감 (비활성화)');
+            } else {
+                joinBtn.textContent = '가입 신청';
+                joinBtn.classList.add('btn-action--join');
+                joinBtn.style.display = 'flex';
+                joinBtn.disabled = false;
+                console.log('버튼 상태: 가입 신청');
+            }
             break;
     }
 }

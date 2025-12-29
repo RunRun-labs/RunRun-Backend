@@ -198,6 +198,7 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: var(--spacing-md);
+    min-width: 0;
 }
 
 .crew-info__title {
@@ -206,6 +207,9 @@ body {
     color: var(--text-primary);
     flex: 1;
     margin-right: var(--spacing-md);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: keep-all;
 }
 
 .crew-info__leader {
@@ -252,6 +256,9 @@ body {
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
     margin-bottom: var(--spacing-sm);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: keep-all;
 }
 
 .crew-info__location .icon {
@@ -323,6 +330,8 @@ section {
     line-height: 1.8;
     color: var(--text-secondary);
     white-space: pre-wrap;
+    word-break: break-all;
+    overflow-wrap: break-word;
 }
 
 /* =========================
@@ -345,6 +354,9 @@ section {
     font-size: var(--font-size-md);
     font-weight: 500;
     color: var(--text-primary);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: keep-all;
 }
 
 .schedule-card__time svg {
