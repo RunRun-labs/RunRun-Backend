@@ -140,7 +140,7 @@ public class MatchSessionService {
   @Transactional
   public Long createOnlineSession(Set<String> userIds, DistanceType distance, int avgDuration) {
 
-    double targetDistanceValue = convertToMeter(distance);
+    double targetDistanceValue = convertToKiloMeter(distance);
 
     MatchSession session = MatchSession.builder()
         .type(SessionType.ONLINE)
@@ -170,7 +170,7 @@ public class MatchSessionService {
     return session.getId();
   }
 
-  private double convertToMeter(DistanceType distance) {
+  private double convertToKiloMeter(DistanceType distance) {
     return switch (distance) {
       case KM_3 -> 3.0;
       case KM_5 -> 5.0;
