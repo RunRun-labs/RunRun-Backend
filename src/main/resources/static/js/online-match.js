@@ -128,11 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 매칭 시작 처리
   async function handleMatchStart() {
     isMatching = true;
-    matchingOverlay.style.display = "flex";
     startButton.disabled = true;
-
-    // 상태 초기화
-    resetMatchUI();
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -161,7 +157,46 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(result?.message || "매칭 신청에 실패했습니다.");
       }
 
-      // 폴링 시작
+      // 응답에 sessionId가 있으면 이미 참여 중인 방이 있음 - 안내 화면 표시 후 리다이렉트
+      // 백엔드가 이미 매칭된 경우 result.data에 Long 타입의 SessionId를 바로 담아서 보냄 (객체가 아님)
+      if (result?.data) {
+        const sessionId = result.data;
+        
+        // 1. matchingOverlay를 display: flex로 보여준다
+        matchingOverlay.style.display = "flex";
+        
+        // 2. resetMatchUI()를 호출해서 초기화한다
+        resetMatchUI();
+        
+        // 3. statusTitle의 텍스트를 "참여 중인 매칭이 존재합니다"로 변경한다
+        if (statusTitle) statusTitle.textContent = "참여 중인 매칭이 존재합니다";
+        
+        // 4. statusSubtitle의 텍스트를 "기존 배틀방으로 이동합니다..."로 변경한다
+        if (statusSubtitle) {
+          statusSubtitle.textContent = "기존 배틀방으로 이동합니다...";
+          statusSubtitle.style.display = "block";
+        }
+        
+        // 5. cancelButton은 숨긴다 (display: none)
+        if (cancelButton) cancelButton.style.display = "none";
+        
+        // 6. 로딩 애니메이션이나 프로필 등 불필요한 요소는 가려준다
+        const radarContainer = document.querySelector(".radar-container");
+        if (radarContainer) radarContainer.style.display = "none";
+        if (opponentProfiles) opponentProfiles.style.display = "none";
+        if (connectionLines) connectionLines.style.display = "none";
+        
+        // 7. 약 2초(setTimeout) 뒤에 리다이렉트한다
+        setTimeout(() => {
+          window.location.href = `/match/online/confirmed?sessionId=${sessionId}`;
+        }, 2000);
+        
+        return;
+      }
+
+      // sessionId가 없으면 대기 화면 표시 및 폴링 시작
+      matchingOverlay.style.display = "flex";
+      resetMatchUI();
       startPolling();
     } catch (error) {
       console.error("매칭 시작 오류:", error);
