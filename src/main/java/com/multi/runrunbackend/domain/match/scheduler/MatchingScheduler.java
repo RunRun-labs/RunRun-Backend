@@ -58,36 +58,40 @@ public class MatchingScheduler {
     RLock lock = redissonClient.getLock(lockKey);
 
     try {
-      if (lock.tryLock(0, 5, TimeUnit.SECONDS)) {
-
-        Set<TypedTuple<String>> candidates = redisTemplate.opsForZSet()
-            .rangeWithScores(queueKey, 0, targetCount - 1);
-
-        if (candidates == null || candidates.size() < targetCount) {
-          return;
-        }
-
-        List<TypedTuple<String>> list = new ArrayList<>(candidates);
-
-        double minRating = Optional.ofNullable(list.get(0).getScore()).orElse(0.0);
-        double maxRating = Optional.ofNullable(list.get(list.size() - 1).getScore()).orElse(0.0);
-
-        if ((maxRating - minRating) > MAX_RATING_GAP) {
-          return;
-        }
-
-        String[] userIds = list.stream().map(TypedTuple::getValue).toArray(String[]::new);
-
-        Long removedCount = redisTemplate.opsForZSet().remove(queueKey, (Object[]) userIds);
-
-        if (removedCount != null && removedCount == targetCount) {
-          handleSuccess(list, distance, queueKey);
-
-        } else {
-          log.warn("매칭 실패: 타겟 {}명 중 {}명만 삭제됨. 복구 시도.", targetCount, removedCount);
-          rollbackToQueue(list, queueKey);
-        }
+      boolean acquired = lock.tryLock(0, 5, TimeUnit.SECONDS);
+      if (!acquired) {
+        log.debug("락 획득 실패 - Queue: {}", queueKey);
+        return;
       }
+
+      Set<TypedTuple<String>> candidates = redisTemplate.opsForZSet()
+          .rangeWithScores(queueKey, 0, targetCount - 1);
+
+      if (candidates == null || candidates.size() < targetCount) {
+        return;
+      }
+
+      List<TypedTuple<String>> list = new ArrayList<>(candidates);
+
+      double minRating = Optional.ofNullable(list.get(0).getScore()).orElse(0.0);
+      double maxRating = Optional.ofNullable(list.get(list.size() - 1).getScore()).orElse(0.0);
+
+      if ((maxRating - minRating) > MAX_RATING_GAP) {
+        return;
+      }
+
+      String[] userIds = list.stream().map(TypedTuple::getValue).toArray(String[]::new);
+
+      Long removedCount = redisTemplate.opsForZSet().remove(queueKey, (Object[]) userIds);
+
+      if (removedCount != null && removedCount == targetCount) {
+        handleSuccess(list, distance, queueKey);
+
+      } else {
+        log.warn("매칭 실패: 타겟 {}명 중 {}명만 삭제됨. 복구 시도.", targetCount, removedCount);
+        rollbackToQueue(list, queueKey);
+      }
+
     } catch (InterruptedException e) {
       log.error("락 획득 중 인터럽트 발생", e);
     } finally {
