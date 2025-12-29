@@ -221,7 +221,17 @@ public enum ErrorCode {
     COUPON_CODE_DUPLICATE(HttpStatus.CONFLICT, "CPN_002", "쿠폰 코드가 중복입니다"),
     COUPON_NOT_DRAFT(HttpStatus.FORBIDDEN, "CPN_003", "DRAFT 상태만 변경할 수 있습니다"),
     /*=====쿠폰 정책=====*/
-    COUPON_ROLE_DUPLICATE(HttpStatus.CONFLICT, "CPN_004", "쿠폰 정책이 중복입니다");
+    COUPON_ROLE_DUPLICATE(HttpStatus.CONFLICT, "CPN_004", "쿠폰 정책이 중복입니다"),
+    COUPON_NOT_ACTIVE(HttpStatus.FORBIDDEN, "CPN_005", "쿠폰이 활성호 상태가 아닙니다"),
+    COUPON_NOT_STARTED(HttpStatus.BAD_REQUEST, "CPN_006", "쿠폰이 시작일이 되지 않았습니다"),
+    COUPON_EXPIRED(HttpStatus.BAD_REQUEST, "CPN_007", "쿠폰이 만료되었습니다"),
+    COUPON_ALREADY_ISSUED(HttpStatus.BAD_REQUEST, "CPN_008", "쿠폰이 이미 발행되었습니다"),
+    COUPON_SOLD_OUT(HttpStatus.BAD_REQUEST, "CPN_009", "쿠폰이 소진되었습니다"),
+    COUPON_ISSUE_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_010", "발행된 쿠폰을 찾을 수 없습니다"),
+    COUPON_ISSUE_FORBIDDEN(HttpStatus.FORBIDDEN, "CPN_011", "본인의 발행된 쿠폰이 아닙니다"),
+    COUPON_ISSUE_NOT_AVAILABLE(HttpStatus.FORBIDDEN, "CPN_012", "사용할 수 있는 쿠폰 상태가 아닙니다"),
+    COUPON_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_013", "쿠폰 정책을 찾을 수 없습니다"),
+    COUPON_ROLE_ACTIVE(HttpStatus.BAD_REQUEST, "CPN_014", "쿠폰 정책이 활성화 상태입니다");
 
 
     private final HttpStatus httpStatus;
