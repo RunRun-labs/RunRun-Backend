@@ -213,7 +213,10 @@ public enum ErrorCode {
     MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
             "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
     MAPBOX_OVERLAY_EMPTY(HttpStatus.BAD_REQUEST, "M_002",
-            "썸네일 생성에 필요한 overlay 값이 비어있습니다.");
+            "썸네일 생성에 필요한 overlay 값이 비어있습니다."),
+
+    /* ===== 이용약관 ===== */
+    TERMS_ACCESS_DENIED(HttpStatus.FORBIDDEN, "T001", "약관 관리 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
