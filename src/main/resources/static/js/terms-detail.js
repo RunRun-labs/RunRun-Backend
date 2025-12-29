@@ -5,7 +5,37 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         console.error("약관 타입을 찾을 수 없습니다.");
     }
+    
+    // 뒤로가기 버튼 핸들러
+    attachBackButtonHandler();
+    
+    // 헤더 제목 업데이트
+    updateHeaderTitle();
 });
+
+// 뒤로가기 버튼 핸들러
+function attachBackButtonHandler() {
+    const backButton = document.querySelector(".back-button");
+    if (backButton) {
+        backButton.addEventListener("click", () => {
+            // 설정 페이지로 이동하면서 약관 모달 열기 상태로 전달
+            window.location.href = "/setting?openTermsModal=true";
+        });
+    }
+}
+
+// 헤더 제목 업데이트
+function updateHeaderTitle() {
+    const headerTitle = document.getElementById("headerTitle");
+    if (headerTitle && typeof typeParam !== 'undefined') {
+        const titleMap = {
+            'SERVICE': '서비스 이용약관',
+            'PRIVACY': '개인정보 처리방침',
+            'MARKETING': '마케팅 정보'
+        };
+        headerTitle.textContent = titleMap[typeParam] || '약관';
+    }
+}
 
 async function loadTerms(type) {
     const contentEl = document.getElementById("termsContent");
