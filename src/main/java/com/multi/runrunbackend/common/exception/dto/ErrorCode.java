@@ -38,27 +38,23 @@ public enum ErrorCode {
     /* ===== 크루 관련 ===== */
     CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR001", "크루를 찾을 수 없습니다."),
     CREW_ALREADY_EXISTS(HttpStatus.CONFLICT, "CR002", "이미 존재하는 크루명입니다."),
-    CREW_ALREADY_DISBANDED(HttpStatus.BAD_REQUEST, "CR003", "이미 해체된 크루입니다."),
+    CREW_ALREADY_DISBANDED(HttpStatus.CONFLICT, "CR003", "이미 해체된 크루입니다."),
     NOT_CREW_LEADER(HttpStatus.FORBIDDEN, "CR004", "크루장만 수정/삭제할 수 있습니다."),
     NOT_CREW_LEADER_OR_SUB_LEADER(HttpStatus.FORBIDDEN, "CR005", "크루장 또는 부크루장만 처리할 수 있습니다."),
     ALREADY_CREW_LEADER(HttpStatus.CONFLICT, "CR006", "이미 크루를 생성하셨습니다. 하나의 크루만 생성 가능합니다."),
     NOT_PREMIUM_MEMBER(HttpStatus.FORBIDDEN, "CR007", "프리미엄 멤버십 회원만 크루를 생성할 수 있습니다."),
     INVALID_CREW_STATUS(HttpStatus.BAD_REQUEST, "CR008", "유효하지 않은 크루 상태입니다."),
-    CREW_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "CR009", "모집중인 크루가 아닙니다."),
-    ALREADY_CREW_MEMBER(HttpStatus.CONFLICT, "CR010", "이미 가입된 크루입니다."),
-    JOIN_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "CR011", "가입 신청을 찾을 수 없습니다."),
-    JOIN_REQUEST_NOT_PENDING(HttpStatus.BAD_REQUEST, "CR012", "대기 상태의 요청만 처리할 수 있습니다."),
-    ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR013", "이미 가입 신청한 크루입니다."),
-    CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014",
+    ALREADY_CREW_MEMBER(HttpStatus.CONFLICT, "CR009", "이미 가입된 크루입니다."),
+    JOIN_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "CR010", "가입 신청을 찾을 수 없습니다."),
+    JOIN_REQUEST_NOT_PENDING(HttpStatus.CONFLICT, "CR011", "대기 상태의 요청만 처리할 수 있습니다."),
+    ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR012", "이미 가입 신청한 크루입니다."),
+    CANNOT_LEAVE_AS_LEADER(HttpStatus.CONFLICT, "CR013",
             "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
 
     /* ===== 크루 가입 ===== */
-    ALREADY_JOINED_CREW(HttpStatus.BAD_REQUEST, "CR015", "이미 가입한 크루가 있습니다."),
-    ALREADY_REQUESTED_JOIN(HttpStatus.BAD_REQUEST, "CR016", "이미 가입 신청한 크루입니다."),
-    INVALID_JOIN_STATUS(HttpStatus.BAD_REQUEST, "CR017", "대기중 상태의 신청만 처리할 수 있습니다."),
-    INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, "CR018", "포인트가 부족합니다."),  // 포인트 구현할 경우
-    CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR019", "크루원을 찾을 수 없습니다."),
-    CREW_RECRUITMENT_CLOSED(HttpStatus.BAD_REQUEST, "CR020", "모집이 마감된 크루입니다."),
+    ALREADY_JOINED_CREW(HttpStatus.CONFLICT, "CR014", "이미 가입한 크루가 있습니다."),
+    CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR015", "크루원을 찾을 수 없습니다."),
+    CREW_RECRUITMENT_CLOSED(HttpStatus.CONFLICT, "CR016", "모집이 마감된 크루입니다."),
 
 
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
