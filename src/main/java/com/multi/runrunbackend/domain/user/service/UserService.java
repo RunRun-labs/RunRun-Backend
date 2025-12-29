@@ -1,16 +1,15 @@
 package com.multi.runrunbackend.domain.user.service;
 
-import com.multi.runrunbackend.common.exception.custom.DuplicateException;
-import com.multi.runrunbackend.common.exception.custom.FileUploadException;
-import com.multi.runrunbackend.common.exception.custom.NotFoundException;
-import com.multi.runrunbackend.common.exception.custom.TokenException;
+import com.multi.runrunbackend.common.exception.custom.*;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
+import com.multi.runrunbackend.domain.user.dto.res.UserProfileResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
 import com.multi.runrunbackend.domain.user.entity.User;
+import com.multi.runrunbackend.domain.user.repository.UserBlockRepository;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,12 +26,13 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserBlockRepository userBlockRepository;
     private final FileStorage fileStorage;
     private static final long MAX_PROFILE_IMAGE_SIZE = 1L * 1024 * 1024;
+
 
     @Transactional(readOnly = true)
     public UserResDto getUser(CustomUser principal) {
@@ -40,6 +40,25 @@ public class UserService {
         return UserResDto.from(user);
     }
 
+    @Transactional(readOnly = true)
+    public UserProfileResDto getUserProfile(
+            Long targetUserId,
+            CustomUser principal
+    ) {
+        User viewer = getUserByPrincipal(principal);
+
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+
+        if (userBlockRepository.existsByBlockerAndBlockedUser(viewer, target)) {
+            throw new ForbiddenException(ErrorCode.USER_BLOCKED);
+        }
+
+        return UserProfileResDto.from(target);
+    }
+
+    @Transactional
     public void updateUser(UserUpdateReqDto req, MultipartFile file, CustomUser principal) {
         User user = getUserByPrincipal(principal);
 
@@ -49,6 +68,7 @@ public class UserService {
         updateProfileImage(req, file, user);
     }
 
+    @Transactional
     public void deleteUser(CustomUser principal) {
         User user = getUserByPrincipal(principal);
         if (user.isDeleted()) {
