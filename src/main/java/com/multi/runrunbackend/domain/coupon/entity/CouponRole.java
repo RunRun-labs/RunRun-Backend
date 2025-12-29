@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.coupon.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.coupon.constant.CouponTriggerEvent;
+import com.multi.runrunbackend.domain.coupon.dto.req.CouponRoleCreateReqDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -35,15 +36,17 @@ public class CouponRole extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "name", nullable = false)
+    private String name;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coupon_id", nullable = false)
     private Coupon coupon;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "trigger_event", nullable = false, length = 50)
+    @Column(name = "trigger_event", nullable = false)
     private CouponTriggerEvent triggerEvent;
 
-    // null 가능
     private Integer conditionValue;
 
     @Column(name = "is_active", nullable = false)
@@ -54,5 +57,15 @@ public class CouponRole extends BaseEntity {
         if (this.isActive == null) {
             this.isActive = true;
         }
+    }
+
+    public static CouponRole create(CouponRoleCreateReqDto req, Coupon coupon) {
+        CouponRole role = new CouponRole();
+        role.name = req.getName();
+        role.coupon = coupon;
+        role.triggerEvent = req.getTriggerEvent();
+        role.conditionValue = req.getConditionValue();
+
+        return role;
     }
 }
