@@ -28,8 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
         handleCancel();
       } else {
         window.history.length > 1
-          ? window.history.back()
-          : (window.location.href = "/match");
+            ? window.history.back()
+            : (window.location.href = "/match");
       }
     });
   }
@@ -42,8 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // 같은 타입의 다른 버튼들 비활성화
       document
-        .querySelectorAll(`.option-card[data-type="${type}"]`)
-        .forEach((btn) => btn.classList.remove("active"));
+      .querySelectorAll(`.option-card[data-type="${type}"]`)
+      .forEach((btn) => btn.classList.remove("active"));
 
       // 선택한 버튼 활성화
       button.classList.add("active");
@@ -72,7 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 매칭 시작
   if (startButton) {
     startButton.addEventListener("click", async () => {
-      if (startButton.disabled || isMatching) return;
+      if (startButton.disabled || isMatching) {
+        return;
+      }
 
       await handleMatchStart();
     });
@@ -161,36 +163,46 @@ document.addEventListener("DOMContentLoaded", () => {
       // 백엔드가 이미 매칭된 경우 result.data에 Long 타입의 SessionId를 바로 담아서 보냄 (객체가 아님)
       if (result?.data) {
         const sessionId = result.data;
-        
+
         // 1. matchingOverlay를 display: flex로 보여준다
         matchingOverlay.style.display = "flex";
-        
+
         // 2. resetMatchUI()를 호출해서 초기화한다
         resetMatchUI();
-        
+
         // 3. statusTitle의 텍스트를 "참여 중인 매칭이 존재합니다"로 변경한다
-        if (statusTitle) statusTitle.textContent = "참여 중인 매칭이 존재합니다";
-        
+        if (statusTitle) {
+          statusTitle.textContent = "참여 중인 매칭이 존재합니다";
+        }
+
         // 4. statusSubtitle의 텍스트를 "기존 배틀방으로 이동합니다..."로 변경한다
         if (statusSubtitle) {
           statusSubtitle.textContent = "기존 배틀방으로 이동합니다...";
           statusSubtitle.style.display = "block";
         }
-        
+
         // 5. cancelButton은 숨긴다 (display: none)
-        if (cancelButton) cancelButton.style.display = "none";
-        
+        if (cancelButton) {
+          cancelButton.style.display = "none";
+        }
+
         // 6. 로딩 애니메이션이나 프로필 등 불필요한 요소는 가려준다
         const radarContainer = document.querySelector(".radar-container");
-        if (radarContainer) radarContainer.style.display = "none";
-        if (opponentProfiles) opponentProfiles.style.display = "none";
-        if (connectionLines) connectionLines.style.display = "none";
-        
+        if (radarContainer) {
+          radarContainer.style.display = "none";
+        }
+        if (opponentProfiles) {
+          opponentProfiles.style.display = "none";
+        }
+        if (connectionLines) {
+          connectionLines.style.display = "none";
+        }
+
         // 7. 약 2초(setTimeout) 뒤에 리다이렉트한다
         setTimeout(() => {
           window.location.href = `/match/online/confirmed?sessionId=${sessionId}`;
         }, 2000);
-        
+
         return;
       }
 
@@ -207,14 +219,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 매칭 UI 초기화
   function resetMatchUI() {
-    if (statusTitle) statusTitle.textContent = "SEARCHING FOR PLAYERS...";
-    if (statusSubtitle) statusSubtitle.textContent = "Finding users with similar skill and latency.";
-    if (matchFoundSection) matchFoundSection.style.display = "none";
-    if (countdownText) countdownText.textContent = "";
-    if (opponentProfiles) opponentProfiles.innerHTML = "";
-    if (connectionLines) connectionLines.style.display = "none";
-    if (cancelButton) cancelButton.style.display = "block";
-    
+    if (statusTitle) {
+      statusTitle.textContent = "SEARCHING FOR PLAYERS...";
+    }
+    if (statusSubtitle) {
+      statusSubtitle.textContent = "Finding users with similar skill and latency.";
+    }
+    if (matchFoundSection) {
+      matchFoundSection.style.display = "none";
+    }
+    if (countdownText) {
+      countdownText.textContent = "";
+    }
+    if (opponentProfiles) {
+      opponentProfiles.innerHTML = "";
+    }
+    if (connectionLines) {
+      connectionLines.style.display = "none";
+    }
+    if (cancelButton) {
+      cancelButton.style.display = "block";
+    }
+
     // 기존 타임아웃 정리
     if (matchFoundTimeout) {
       clearTimeout(matchFoundTimeout);
@@ -231,10 +257,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // 즉시 한 번 호출
     checkMatchStatus();
 
-    // 1초 간격으로 폴링
-    pollingInterval = setInterval(() => {
-      checkMatchStatus();
-    }, 1000);
   }
 
   // 매칭 상태 확인
@@ -270,7 +292,8 @@ document.addEventListener("DOMContentLoaded", () => {
         showMatchFound(result?.data);
         return; // 함수 종료하여 추가 폴링 방지
       } else if (status === "WAITING") {
-        // 대기 중 - 계속 폴링
+        // 대기 중 - 다음 폴링 예약
+        pollingInterval = setTimeout(() => checkMatchStatus(), 1000);
         return;
       } else if (status === "NONE" || !status) {
         // 매칭 없음 또는 에러
@@ -289,7 +312,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 폴링 중지
   function stopPolling() {
     if (pollingInterval) {
-      clearInterval(pollingInterval);
+      clearTimeout(pollingInterval);
       pollingInterval = null;
     }
     isMatching = false;
@@ -298,39 +321,50 @@ document.addEventListener("DOMContentLoaded", () => {
   // MATCH FOUND 연출
   function showMatchFound(matchData) {
     const sessionId = matchData?.sessionId;
-    
+
     // 상태 텍스트 변경
-    if (statusTitle) statusTitle.textContent = "";
-    if (statusSubtitle) statusSubtitle.style.display = "none";
-    if (matchFoundSection) matchFoundSection.style.display = "block";
-    if (cancelButton) cancelButton.style.display = "none";
+    if (statusTitle) {
+      statusTitle.textContent = "";
+    }
+    if (statusSubtitle) {
+      statusSubtitle.style.display = "none";
+    }
+    if (matchFoundSection) {
+      matchFoundSection.style.display = "block";
+    }
+    if (cancelButton) {
+      cancelButton.style.display = "none";
+    }
 
     // API 응답에서 상대방 정보 가져오기 (participants 배열이 있다고 가정)
     const participants = matchData?.participants || [];
-    const opponentCount = participants.length > 0 ? participants.length - 1 : (selectedParticipant || 2) - 1;
-    
+    const opponentCount = participants.length > 0 ? participants.length - 1
+        : (selectedParticipant || 2) - 1;
+
     // 상대방 프로필 생성
     if (opponentProfiles) {
       opponentProfiles.innerHTML = "";
-      
+
       // 각도 계산 (원형 배치) - 시작 각도를 -90도로 설정하여 상단부터 시작
       const angleStep = (360 / opponentCount) * (Math.PI / 180);
       const startAngle = -90 * (Math.PI / 180); // 상단부터 시작
       // 반경을 최대한 크게 설정 (radar-container 크기의 약 85% 정도로 최외곽에 배치)
       const radius = 255; // 중심으로부터의 거리 (픽셀 단위) - 최외곽에 배치
       const containerSize = 300; // radar-container의 대략적인 크기 (픽셀)
-      
+
       let opponentIndex = 0;
       for (let i = 0; i < participants.length; i++) {
         const participant = participants[i];
         // 본인은 제외 (userId로 비교하거나, 첫 번째가 본인이라고 가정)
-        if (i === 0) continue; // 첫 번째가 본인이라고 가정
-        
+        if (i === 0) {
+          continue;
+        } // 첫 번째가 본인이라고 가정
+
         const angle = startAngle + angleStep * opponentIndex;
         // 퍼센트로 변환 (radar-container 기준)
         const x = 50 + (radius / containerSize) * 50 * Math.cos(angle);
         const y = 50 + (radius / containerSize) * 50 * Math.sin(angle);
-        
+
         const opponentDiv = document.createElement("div");
         opponentDiv.className = "opponent-profile";
         opponentDiv.style.left = `${x}%`;
@@ -338,7 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
         opponentDiv.style.animationDelay = `${opponentIndex * 0.15}s`;
         opponentDiv.dataset.initialX = x;
         opponentDiv.dataset.initialY = y;
-        
+
         const img = document.createElement("img");
         if (participant?.profileImageUrl) {
           img.src = participant.profileImageUrl;
@@ -349,26 +383,28 @@ document.addEventListener("DOMContentLoaded", () => {
         img.onerror = () => {
           img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Ccircle cx='30' cy='30' r='30' fill='%231a1f2e'/%3E%3Ccircle cx='30' cy='20' r='10' fill='%23baff29'/%3E%3Cpath d='M10 50 Q10 40 30 40 Q50 40 50 50' fill='%23baff29'/%3E%3C/svg%3E";
         };
-        
+
         const label = document.createElement("div");
         label.className = "opponent-label";
         const tier = participant?.tier || "토끼"; // 기본 티어
-        label.innerHTML = `<span class="opponent-name">${participant?.name || `Player ${opponentIndex + 1}`}</span><span class="opponent-tier">${tier}</span>`;
-        
+        label.innerHTML = `<span class="opponent-name">${participant?.name
+        || `Player ${opponentIndex
+        + 1}`}</span><span class="opponent-tier">${tier}</span>`;
+
         opponentDiv.appendChild(img);
         opponentDiv.appendChild(label);
         opponentProfiles.appendChild(opponentDiv);
-        
+
         opponentIndex++;
       }
-      
+
       // 상대방이 없으면 기본 프로필 생성
       if (opponentIndex === 0) {
         for (let i = 0; i < opponentCount; i++) {
           const angle = startAngle + angleStep * i;
           const x = 50 + (radius / containerSize) * 50 * Math.cos(angle);
           const y = 50 + (radius / containerSize) * 50 * Math.sin(angle);
-          
+
           const opponentDiv = document.createElement("div");
           opponentDiv.className = "opponent-profile";
           opponentDiv.style.left = `${x}%`;
@@ -376,15 +412,16 @@ document.addEventListener("DOMContentLoaded", () => {
           opponentDiv.style.animationDelay = `${i * 0.15}s`;
           opponentDiv.dataset.initialX = x;
           opponentDiv.dataset.initialY = y;
-          
+
           const img = document.createElement("img");
           img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Ccircle cx='30' cy='30' r='30' fill='%231a1f2e'/%3E%3Ccircle cx='30' cy='20' r='10' fill='%23baff29'/%3E%3Cpath d='M10 50 Q10 40 30 40 Q50 40 50 50' fill='%23baff29'/%3E%3C/svg%3E";
           img.alt = "상대방";
-          
+
           const label = document.createElement("div");
           label.className = "opponent-label";
-          label.innerHTML = `<span class="opponent-name">Player ${i + 1}</span><span class="opponent-tier">토끼</span>`;
-          
+          label.innerHTML = `<span class="opponent-name">Player ${i
+          + 1}</span><span class="opponent-tier">토끼</span>`;
+
           opponentDiv.appendChild(img);
           opponentDiv.appendChild(label);
           opponentProfiles.appendChild(opponentDiv);
@@ -396,19 +433,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (connectionLines) {
       connectionLines.style.display = "block";
       connectionLines.innerHTML = "";
-      
+
       // 연결선용 각도 계산 (상대방 프로필과 동일한 계산)
       const angleStep = (360 / opponentCount) * (Math.PI / 180);
       const startAngle = -90 * (Math.PI / 180);
       const radius = 255; // 프로필과 동일한 반경
       const containerSize = 300;
-      
+
       for (let i = 0; i < opponentCount; i++) {
         const angle = startAngle + angleStep * i;
         const x2 = 50 + (radius / containerSize) * 50 * Math.cos(angle);
         const y2 = 50 + (radius / containerSize) * 50 * Math.sin(angle);
-        
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg",
+            "line");
         line.setAttribute("class", "connection-line");
         line.setAttribute("x1", "50%");
         line.setAttribute("y1", "50%");
@@ -428,7 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (countdownText) {
       countdownText.textContent = countdown;
     }
-    
+
     countdownInterval = setInterval(() => {
       countdown--;
       if (countdownText) {
@@ -438,11 +476,11 @@ document.addEventListener("DOMContentLoaded", () => {
           countdownText.textContent = "";
         }
       }
-      
+
       if (countdown <= 0) {
         clearInterval(countdownInterval);
         countdownInterval = null;
-        
+
         // 페이지 이동
         if (sessionId) {
           window.location.href = `/match/online/confirmed?sessionId=${sessionId}`;
@@ -460,12 +498,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const profiles = document.querySelectorAll(".opponent-profile");
     const centerX = 50; // 중심 X 위치 (%)
     const centerY = 50; // 중심 Y 위치 (%)
-    
+
     profiles.forEach((profile, index) => {
       setTimeout(() => {
         const initialX = parseFloat(profile.style.left);
         const initialY = parseFloat(profile.style.top);
-        
+
         // 애니메이션 시작
         profile.style.transition = "transform 1.5s ease-in, opacity 1.5s ease-in";
         profile.style.transform = `translate(calc(${centerX}% - ${initialX}%), calc(${centerY}% - ${initialY}%)) scale(0.2)`;
@@ -480,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
     isMatching = false;
     updateStartButton();
     resetMatchUI();
-    
+
     // 타임아웃 정리
     if (matchFoundTimeout) {
       clearTimeout(matchFoundTimeout);
@@ -501,7 +539,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 매칭 취소 처리
   async function handleCancel() {
-    if (!isMatching) return;
+    if (!isMatching) {
+      return;
+    }
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -545,6 +585,12 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("beforeunload", () => {
     if (pollingInterval) {
       clearInterval(pollingInterval);
+    }
+    if (isMatching) {
+      const token = localStorage.getItem("accessToken");
+      navigator.sendBeacon("/api/match/online/cancel", JSON.stringify({
+        headers: {"Authorization": `Bearer ${token}`}
+      }));
     }
   });
 });
