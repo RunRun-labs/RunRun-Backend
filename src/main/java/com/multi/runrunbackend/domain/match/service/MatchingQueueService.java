@@ -90,8 +90,6 @@ public class MatchingQueueService {
 
     if (sessionId != null) {
 
-      redisTemplate.delete(ticketKey);
-
       log.info("매칭 티켓 소모 완료 - User: {}, SessionID: {}", userId, sessionId);
 
       return OnlineMatchStatusResDto.builder()
