@@ -42,7 +42,7 @@ public class UserController {
     }
 
     @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<ApiResponse<Void>> updateUser(
+    public ResponseEntity<ApiResponse> updateUser(
 
             @RequestPart(value = "request") @Valid UserUpdateReqDto req,
             @RequestPart(value = "file", required = false) MultipartFile file,

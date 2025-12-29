@@ -5,6 +5,8 @@ import com.multi.runrunbackend.domain.coupon.constant.CouponBenefitType;
 import com.multi.runrunbackend.domain.coupon.constant.CouponChannel;
 import com.multi.runrunbackend.domain.coupon.constant.CouponCodeType;
 import com.multi.runrunbackend.domain.coupon.constant.CouponStatus;
+import com.multi.runrunbackend.domain.coupon.dto.req.CouponCreateReqDto;
+import com.multi.runrunbackend.domain.coupon.dto.req.CouponUpdateReqDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,10 +16,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 /**
  * @author : kyungsoo
@@ -29,7 +33,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "coupon")
+@Table(
+    name = "coupon",
+    uniqueConstraints = @UniqueConstraint(name = "uk_coupon_code", columnNames = "code")
+)
+@SQLRestriction("status <> 'DELETED'")
 public class Coupon extends BaseTimeEntity {
 
     @Id
@@ -42,28 +50,24 @@ public class Coupon extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    /**
-     * null 이면 무제한
-     *
-     */
     private Integer quantity;
 
     @Column(nullable = false)
     private Integer issuedCount;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String code;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "code_type", nullable = false, length = 30)
+    @Column(name = "code_type", nullable = false)
     private CouponCodeType codeType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false)
     private CouponChannel channel;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "benefit_type", nullable = false, length = 30)
+    @Column(name = "benefit_type", nullable = false)
     private CouponBenefitType benefitType;
 
     @Column(nullable = false)
@@ -75,11 +79,8 @@ public class Coupon extends BaseTimeEntity {
     @Column(name = "end_at", nullable = false)
     private LocalDateTime endAt;
 
-    @Column(name = "auto_issue", nullable = false)
-    private Boolean autoIssue;
-
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false)
     private CouponStatus status;
 
     @PrePersist
@@ -93,4 +94,41 @@ public class Coupon extends BaseTimeEntity {
         }
     }
 
+    public static Coupon create(CouponCreateReqDto req, String code) {
+        Coupon coupon = new Coupon();
+
+        coupon.name = req.getName();
+        coupon.description = req.getDescription();
+        coupon.quantity = req.getQuantity();
+        coupon.codeType = req.getCodeType();
+        coupon.channel = req.getChannel();
+        coupon.benefitType = req.getBenefitType();
+        coupon.benefitValue = req.getBenefitValue();
+        coupon.startAt = req.getStartAt();
+        coupon.endAt = req.getEndAt();
+        coupon.code = code;
+
+        return coupon;
+
+    }
+
+
+    public void update(CouponUpdateReqDto req) {
+        this.name = req.getName();
+        this.description = req.getDescription();
+        this.quantity = req.getQuantity();
+        this.codeType = req.getCodeType();
+        this.channel = req.getChannel();
+        this.benefitType = req.getBenefitType();
+        this.benefitValue = req.getBenefitValue();
+        this.startAt = req.getStartAt();
+        this.endAt = req.getEndAt();
+    }
+
+    public void delete() {
+        if (this.status == CouponStatus.DELETED) {
+            return;
+        }
+        this.status = CouponStatus.DELETED;
+    }
 }

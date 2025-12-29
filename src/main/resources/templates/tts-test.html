@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>RUNRUN TTS Presigned URL Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 24px;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    label {
+      font-size: 13px;
+      color: #333;
+    }
+
+    input, select, button, textarea {
+      font-size: 14px;
+    }
+
+    input, select, textarea {
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+
+    button {
+      padding: 9px 12px;
+      border: 1px solid #444;
+      border-radius: 10px;
+      background: #111;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .danger {
+      color: #b00020;
+    }
+
+    .ok {
+      color: #0a7f2e;
+    }
+
+    .list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .item {
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .itemHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .pill {
+      background: #f3f3f3;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .split {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<h2>RUNRUN TTS Presigned URL 테스트</h2>
+<p class="muted">
+  목적: 백엔드에서 presigned URL을 받아서 브라우저에서 바로 재생되는지 확인.
+  <br/>권장: 이 파일을 Spring static으로 올려 <b>http://localhost:8080/tts-test.html</b> 로 접속(CORS 회피).
+</p>
+
+<div class="card">
+  <div class="row">
+    <div>
+      <label>API Base</label><br/>
+      <input id="apiBase" style="width: 320px" value="" placeholder="비워두면 현재 도메인(같은 서버)"/>
+      <div class="muted">예: http://localhost:8080 (다른 포트면 CORS 설정 필요)</div>
+    </div>
+
+    <div>
+      <label>voicePackId</label><br/>
+      <input id="voicePackId" type="number" min="1" value="1" style="width: 120px"/>
+    </div>
+
+    <div>
+      <label>TTL(초)</label><br/>
+      <input id="ttlSeconds" type="number" min="60" value="7200" style="width: 120px"/>
+      <div class="muted">백엔드 TTL 고정이면 무시될 수 있음</div>
+    </div>
+
+    <div>
+      <label>JWT localStorage key</label><br/>
+      <input id="jwtKey" style="width: 180px" value="accessToken" placeholder="예: accessToken"/>
+      <div class="muted">localStorage에 저장된 키 이름</div>
+    </div>
+
+    <div style="align-self:end">
+      <button id="btnLoadPacks">보이스팩 목록 불러오기</button>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top: 10px;">
+    <div style="flex: 1;">
+      <label>현재 JWT (localStorage에서 읽음)</label>
+      <div id="jwtPreview" class="mono muted" style="margin-top: 6px;"></div>
+    </div>
+    <div style="align-self:end">
+      <button id="btnRefreshJwt">JWT 다시 읽기</button>
+      <button id="btnSetJwt">테스트용 JWT 저장</button>
+      <button id="btnClearJwt">JWT 삭제</button>
+    </div>
+  </div>
+
+  <div id="packsArea" style="margin-top: 12px;"></div>
+</div>
+
+<div class="split">
+  <div class="card">
+    <h3 style="margin-top:0">1) Batch로 URL 맵 받기</h3>
+    <p class="muted">
+      러닝 시작 시점에 cues(여러 개) presigned URL을 한 번에 받아오는 플로우.
+    </p>
+
+    <div class="row">
+      <div style="min-width: 320px;">
+        <label>cues 선택 (비우면 전체)</label><br/>
+        <select id="cuesSelect" multiple size="10" style="width: 100%; max-width: 520px;"></select>
+        <div class="muted">Ctrl/⌘ 로 다중 선택</div>
+      </div>
+
+      <div style="align-self:end">
+        <button id="btnFetchBatch">Batch 발급</button>
+      </div>
+    </div>
+
+    <div id="batchMeta" class="muted" style="margin-top: 12px;"></div>
+    <div id="batchList" class="list" style="margin-top: 12px;"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">2) 단건 presigned URL 받기</h3>
+    <p class="muted">테스트/디버깅용</p>
+
+    <div class="row">
+      <div style="min-width: 240px;">
+        <label>cue</label><br/>
+        <select id="oneCue" style="width: 100%; max-width: 320px;"></select>
+      </div>
+
+      <div style="align-self:end">
+        <button id="btnFetchOne">단건 발급</button>
+        <button id="btnPlayOne" disabled>재생</button>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <label>발급된 URL</label>
+      <div id="oneUrl" class="mono muted" style="margin-top: 6px;"></div>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <label>상태</label>
+      <div id="status" class="muted" style="margin-top: 6px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ====== 설정 ======
+  const CUES = [
+    "ARRIVED_DESTINATION",
+    "COUNTDOWN_1",
+    "COUNTDOWN_2",
+    "COUNTDOWN_3",
+    "DIST_DONE_1KM",
+    "DIST_DONE_2KM",
+    "DIST_DONE_3KM",
+    "DIST_DONE_4KM",
+    "DIST_DONE_5KM",
+    "DIST_DONE_6KM",
+    "END_RUN",
+    "MOTIVATE_GOOD_JOB",
+    "START_RUN"
+  ];
+
+  let currentAudio = null;
+  let lastOneUrl = null;
+
+  // ====== DOM ======
+  const apiBaseEl = document.getElementById("apiBase");
+  const voicePackIdEl = document.getElementById("voicePackId");
+  const ttlSecondsEl = document.getElementById("ttlSeconds");
+
+  const jwtKeyEl = document.getElementById("jwtKey");
+  const jwtPreviewEl = document.getElementById("jwtPreview");
+  const btnRefreshJwt = document.getElementById("btnRefreshJwt");
+  const btnSetJwt = document.getElementById("btnSetJwt");
+  const btnClearJwt = document.getElementById("btnClearJwt");
+
+  const btnLoadPacks = document.getElementById("btnLoadPacks");
+  const packsArea = document.getElementById("packsArea");
+
+  const cuesSelect = document.getElementById("cuesSelect");
+  const btnFetchBatch = document.getElementById("btnFetchBatch");
+  const batchMeta = document.getElementById("batchMeta");
+  const batchList = document.getElementById("batchList");
+
+  const oneCue = document.getElementById("oneCue");
+  const btnFetchOne = document.getElementById("btnFetchOne");
+  const btnPlayOne = document.getElementById("btnPlayOne");
+  const oneUrl = document.getElementById("oneUrl");
+  const statusEl = document.getElementById("status");
+
+  // ====== init ======
+  function initCueOptions() {
+    cuesSelect.innerHTML = "";
+    oneCue.innerHTML = "";
+
+    for (const cue of CUES) {
+      const opt1 = document.createElement("option");
+      opt1.value = cue;
+      opt1.textContent = cue;
+      cuesSelect.appendChild(opt1);
+
+      const opt2 = document.createElement("option");
+      opt2.value = cue;
+      opt2.textContent = cue;
+      oneCue.appendChild(opt2);
+    }
+    oneCue.value = "START_RUN";
+  }
+
+  initCueOptions();
+
+  // ====== utils ======
+  function apiBase() {
+    const v = (apiBaseEl.value || "").trim();
+    return v.length ? v.replace(/\/+$/, "") : ""; // 빈 값이면 same-origin
+  }
+
+  function setStatus(msg, kind = "muted") {
+    statusEl.className = kind;
+    statusEl.textContent = msg;
+  }
+
+  function stopCurrent() {
+    if (currentAudio) {
+      try {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      } catch (_) {
+      }
+      currentAudio = null;
+    }
+  }
+
+  function getJwtKey() {
+    const k = (jwtKeyEl.value || "").trim();
+    return k.length ? k : "accessToken";
+  }
+
+  function getJwt() {
+    const key = getJwtKey();
+    const t = localStorage.getItem(key);
+    return (t && t.trim().length) ? t.trim() : null;
+  }
+
+  function refreshJwtPreview() {
+    const key = getJwtKey();
+    const t = localStorage.getItem(key);
+    if (!t) {
+      jwtPreviewEl.textContent = `(없음) localStorage["${key}"]`;
+      return;
+    }
+    const short = t.length > 180 ? (t.slice(0, 180) + " ...") : t;
+    jwtPreviewEl.textContent = `localStorage["${key}"] = ${short}`;
+  }
+
+  async function tryFetchJson(url, options) {
+    const jwt = getJwt();
+
+    const headers = new Headers(options?.headers || {});
+    headers.set("Accept", "application/json");
+    if (jwt) {
+      headers.set("Authorization", `Bearer ${jwt}`);
+    }
+
+    const res = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch (_) {
+    }
+
+    if (!res.ok) {
+      const msg = json?.message || json?.error || text || `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return json ?? {};
+  }
+
+  function selectedCues() {
+    return Array.from(cuesSelect.selectedOptions).map(o => o.value);
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+  }
+
+  // ====== API calls ======
+  async function loadVoicePacks() {
+    packsArea.innerHTML = "";
+    setStatus("보이스팩 목록 불러오는 중...");
+
+    const url = `${apiBase()}/api/tts/voice-packs`;
+    try {
+      const json = await tryFetchJson(url, {method: "GET"});
+      const packs = json?.data ?? [];
+      if (!packs.length) {
+        packsArea.innerHTML = `<div class="muted">보이스팩이 없습니다. (DB에 TtsVoicePack 넣었는지 확인)</div>`;
+        setStatus("보이스팩 0개", "muted");
+        return;
+      }
+
+      const html = packs.map(p => {
+        return `
+          <div class="item">
+            <div class="itemHead">
+              <div>
+                <b>#${p.id}</b> <span class="pill">${p.voiceType}</span> <span class="pill">${p.lang}</span>
+                <div class="muted">${p.displayName}</div>
+              </div>
+              <button onclick="window.__setVoicePack(${p.id})">이 ID로 선택</button>
+            </div>
+            <div class="mono muted">bucket=${escapeHtml(p.s3Bucket)}</div>
+            <div class="mono muted">prefix=${escapeHtml(p.baseS3Prefix)}</div>
+          </div>
+        `;
+      }).join("");
+
+      packsArea.innerHTML = `<div class="list">${html}</div>`;
+      setStatus(`보이스팩 ${packs.length}개 로드 완료`, "ok");
+    } catch (e) {
+      packsArea.innerHTML = `<div class="danger">실패: ${escapeHtml(e.message)}</div>`;
+      setStatus(`보이스팩 로드 실패: ${e.message}`, "danger");
+    }
+  }
+
+  window.__setVoicePack = (id) => {
+    voicePackIdEl.value = String(id);
+    setStatus(`voicePackId=${id} 선택됨`, "ok");
+  };
+
+  async function fetchBatch() {
+    stopCurrent();
+    batchList.innerHTML = "";
+    batchMeta.textContent = "";
+    setStatus("Batch presign 요청 중...");
+
+    const voicePackId = Number(voicePackIdEl.value);
+    const ttlSeconds = Number(ttlSecondsEl.value);
+    const cues = selectedCues(); // empty => 전체
+
+    if (!voicePackId || voicePackId < 1) {
+      setStatus("voicePackId가 올바르지 않습니다.", "danger");
+      return;
+    }
+
+    const pathUrl = `${apiBase()}/api/tts/voice-packs/${voicePackId}/presigned-urls`;
+    const bodyPath = {
+      cues: cues.length ? cues : null,
+      ttlSeconds: ttlSeconds
+    };
+
+    const legacyUrl = `${apiBase()}/api/tts/presigned/batch`;
+    const bodyLegacy = {
+      voicePackId,
+      cues: cues.length ? cues : null,
+      ttlSeconds: ttlSeconds
+    };
+
+    let json;
+    try {
+      json = await tryFetchJson(pathUrl, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(bodyPath)
+      });
+    } catch (e1) {
+      try {
+        json = await tryFetchJson(legacyUrl, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(bodyLegacy)
+        });
+      } catch (e2) {
+        setStatus(`Batch 실패: ${e1.message} / fallback도 실패: ${e2.message}`, "danger");
+        return;
+      }
+    }
+
+    const data = json?.data;
+    const urls = data?.urls || {};
+    const entries = Object.entries(urls);
+
+    batchMeta.innerHTML = `
+      <div><b>voicePackId:</b> ${data?.voicePackId ?? voicePackId}</div>
+      <div><b>expiresInSeconds:</b> ${data?.expiresInSeconds ?? "?"}</div>
+      <div><b>expiresAt:</b> ${data?.expiresAt ?? "(백엔드 응답에 없으면 생략 가능)"}</div>
+      <div class="muted">※ 실제 만료는 presigned URL 서명에 들어있는 Expires가 결정됨</div>
+    `;
+
+    if (!entries.length) {
+      batchList.innerHTML = `<div class="muted">urls가 비었습니다. (응답 포맷/서버 로직 확인)</div>`;
+      setStatus("Batch 응답은 받았는데 urls가 없음", "danger");
+      return;
+    }
+
+    const order = new Map(CUES.map((c, idx) => [c, idx]));
+    entries.sort((a, b) => (order.get(a[0]) ?? 9999) - (order.get(b[0]) ?? 9999));
+
+    batchList.innerHTML = entries.map(([cue, url]) => {
+      const safeUrl = String(url || "");
+      return `
+        <div class="item">
+          <div class="itemHead">
+            <div><b>${cue}</b></div>
+            <div class="row" style="gap:8px;">
+              <button onclick="window.__play('${cue}')">재생</button>
+              <button onclick="window.__copy('${cue}')">URL 복사</button>
+            </div>
+          </div>
+          <div class="mono muted" id="url_${cue}">${escapeHtml(safeUrl)}</div>
+        </div>
+      `;
+    }).join("");
+
+    window.__ttsUrlMap = urls;
+    setStatus(`Batch 완료: ${entries.length}개 URL`, "ok");
+  }
+
+  async function fetchOne() {
+    stopCurrent();
+    lastOneUrl = null;
+    oneUrl.textContent = "";
+    btnPlayOne.disabled = true;
+
+    setStatus("단건 presign 요청 중...");
+
+    const voicePackId = Number(voicePackIdEl.value);
+    const cue = oneCue.value;
+
+    if (!voicePackId || voicePackId < 1) {
+      setStatus("voicePackId가 올바르지 않습니다.", "danger");
+      return;
+    }
+
+    const url = `${apiBase()}/api/tts/presigned/one?voicePackId=${encodeURIComponent(
+        voicePackId)}&cue=${encodeURIComponent(cue)}`;
+
+    try {
+      const json = await tryFetchJson(url, {method: "GET"});
+      const data = json?.data || {};
+      lastOneUrl = data.url;
+      if (!lastOneUrl) {
+        setStatus("응답에 url이 없습니다.", "danger");
+        return;
+      }
+      oneUrl.textContent = lastOneUrl;
+      btnPlayOne.disabled = false;
+      setStatus(`단건 발급 완료: ${cue}`, "ok");
+    } catch (e) {
+      setStatus(`단건 발급 실패: ${e.message}`, "danger");
+    }
+  }
+
+  function playUrl(url) {
+    stopCurrent();
+    if (!url) {
+      return;
+    }
+
+    const audio = new Audio(url);
+    currentAudio = audio;
+
+    setStatus("재생 시도 중...");
+    audio.addEventListener("canplay", () => setStatus("재생 준비 완료", "ok"), {once: true});
+    audio.addEventListener("ended", () => setStatus("재생 종료", "muted"), {once: true});
+    audio.addEventListener("error", () => setStatus("오디오 로드/재생 에러(만료/403/CORS 등 확인)", "danger"),
+        {once: true});
+
+    audio.play()
+    .then(() => setStatus("재생 중", "ok"))
+    .catch((err) => setStatus(`재생 실패(브라우저 정책/네트워크): ${err?.message || err}`, "danger"));
+  }
+
+  window.__play = (cue) => {
+    const map = window.__ttsUrlMap || {};
+    const url = map[cue];
+    if (!url) {
+      setStatus(`URL 없음: 먼저 Batch 발급하거나 단건 발급하세요. cue=${cue}`, "danger");
+      return;
+    }
+    playUrl(url);
+  };
+
+  window.__copy = async (cue) => {
+    const el = document.getElementById(`url_${cue}`);
+    const txt = el ? el.textContent : "";
+    if (!txt) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(txt);
+      setStatus(`URL 복사됨: ${cue}`, "ok");
+    } catch (_) {
+      setStatus("클립보드 복사 실패(브라우저 권한)", "danger");
+    }
+  };
+
+  // ====== JWT helper buttons ======
+  btnRefreshJwt.addEventListener("click", () => {
+    refreshJwtPreview();
+    const jwt = getJwt();
+    if (!jwt) {
+      setStatus(`JWT 없음: localStorage["${getJwtKey()}"]`, "danger");
+    } else {
+      setStatus("JWT 다시 읽음(헤더에 Bearer로 전송됨)", "ok");
+    }
+  });
+
+  btnSetJwt.addEventListener("click", () => {
+    const key = getJwtKey();
+    const v = prompt(`localStorage["${key}"]에 저장할 JWT를 입력하세요 (Bearer 없이 토큰만)`);
+    if (v && v.trim().length) {
+      localStorage.setItem(key, v.trim());
+      refreshJwtPreview();
+      setStatus("JWT 저장 완료", "ok");
+    }
+  });
+
+  btnClearJwt.addEventListener("click", () => {
+    const key = getJwtKey();
+    localStorage.removeItem(key);
+    refreshJwtPreview();
+    setStatus("JWT 삭제 완료", "muted");
+  });
+
+  // ====== events ======
+  btnLoadPacks.addEventListener("click", () => {
+    refreshJwtPreview();
+    loadVoicePacks();
+  });
+  btnFetchBatch.addEventListener("click", () => {
+    refreshJwtPreview();
+    fetchBatch();
+  });
+  btnFetchOne.addEventListener("click", () => {
+    refreshJwtPreview();
+    fetchOne();
+  });
+  btnPlayOne.addEventListener("click", () => playUrl(lastOneUrl));
+
+  // initial
+  refreshJwtPreview();
+  const initialJwt = getJwt();
+  if (!initialJwt) {
+    setStatus(`준비 완료. JWT 없음: localStorage["${getJwtKey()}"] 를 설정하면 Authorization 헤더로 전송됨`,
+        "muted");
+  } else {
+    setStatus("준비 완료. 모든 API 요청에 Authorization: Bearer <JWT> 붙어서 나감", "ok");
+  }
+</script>
+</body>
+</html>

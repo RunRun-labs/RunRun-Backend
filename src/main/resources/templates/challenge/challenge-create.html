@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | Challenge Create</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/challenge-create.css"
+            th:href="@{/css/challenge-create.css}"
+    />
+</head>
+<body class="challenge-create-body">
+<main class="page challenge-create-page">
+    <button class="back-button" type="button" aria-label="챌린지 목록으로 돌아가기">
+        <img
+                th:src="@{/img/icons/back.png}"
+                src="/img/icons/back.png"
+                alt="뒤로가기 아이콘"
+        />
+    </button>
+
+    <header class="challenge-create-header">
+        <h1 class="challenge-create-title">챌린지 등록하기</h1>
+    </header>
+
+    <form id="challengeCreateForm" class="challenge-create-form" enctype="multipart/form-data">
+        <!-- 제목 -->
+        <div class="form-group">
+            <label class="form-label" for="title">제목</label>
+            <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    class="form-input"
+                    placeholder="챌린지 제목을 입력하세요"
+                    required
+            />
+        </div>
+
+        <!-- 이미지 업로드 -->
+        <div class="form-group">
+            <label class="form-label">이미지</label>
+            <div class="image-upload-container">
+                <input
+                        type="file"
+                        id="imageFile"
+                        name="file"
+                        accept="image/*"
+                        class="image-upload-input"
+                />
+                <label for="imageFile" class="image-upload-label">
+                    <div class="image-upload-placeholder">
+                        <svg class="camera-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5.33333C9.10457 5.33333 10 6.22876 10 7.33333C10 8.4379 9.10457 9.33333 8 9.33333C6.89543 9.33333 6 8.4379 6 7.33333C6 6.22876 6.89543 5.33333 8 5.33333Z"
+                                  fill="currentColor"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                  d="M5.33333 2.66667C4.59695 2.66667 4 3.26362 4 4V10.6667C4 11.403 4.59695 12 5.33333 12H10.6667C11.403 12 12 11.403 12 10.6667V4C12 3.26362 11.403 2.66667 10.6667 2.66667H9.33333L8.66667 2H7.33333L6.66667 2.66667H5.33333ZM5.33333 4H10.6667V10.6667H5.33333V4Z"
+                                  fill="currentColor"/>
+                        </svg>
+                        <span class="image-upload-text">이미지 넣기</span>
+                    </div>
+                </label>
+                <div class="image-preview" id="imagePreview" hidden>
+                    <img id="previewImage" src="" alt="미리보기"/>
+                    <button type="button" class="image-remove-button" id="removeImage" aria-label="이미지 제거">×</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 챌린지 타입 -->
+        <div class="form-group">
+            <label class="form-label">챌린지 타입</label>
+            <div class="challenge-type-container">
+                <label class="challenge-type-option">
+                    <input
+                            type="radio"
+                            name="challengeType"
+                            value="DISTANCE"
+                            class="challenge-type-radio"
+                            checked
+                    />
+                    <span class="challenge-type-label">거리형</span>
+                </label>
+                <label class="challenge-type-option">
+                    <input
+                            type="radio"
+                            name="challengeType"
+                            value="TIME"
+                            class="challenge-type-radio"
+                    />
+                    <span class="challenge-type-label">시간형</span>
+                </label>
+                <label class="challenge-type-option">
+                    <input
+                            type="radio"
+                            name="challengeType"
+                            value="COUNT"
+                            class="challenge-type-radio"
+                    />
+                    <span class="challenge-type-label">출석형</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 목표값 -->
+        <div class="form-group">
+            <label class="form-label" for="targetValue">
+                <span id="targetValueLabel">목표 거리</span>
+            </label>
+            <div class="target-value-container">
+                <input
+                        type="number"
+                        id="targetValue"
+                        name="targetValue"
+                        class="form-input target-value-input"
+                        placeholder="0"
+                        min="0"
+                        step="0.1"
+                        required
+                />
+                <span class="target-value-unit" id="targetValueUnit">km</span>
+            </div>
+        </div>
+
+        <!-- 날짜 범위 -->
+        <div class="form-group">
+            <label class="form-label">기간</label>
+            <div class="date-range-container">
+                <input
+                        type="date"
+                        id="startDate"
+                        name="startDate"
+                        class="form-input date-input"
+                        required
+                />
+                <span class="date-separator">~</span>
+                <input
+                        type="date"
+                        id="endDate"
+                        name="endDate"
+                        class="form-input date-input"
+                        required
+                />
+            </div>
+        </div>
+
+        <!-- 상세정보 -->
+        <div class="form-group">
+            <label class="form-label" for="description">상세정보</label>
+            <textarea
+                    id="description"
+                    name="description"
+                    class="form-textarea"
+                    placeholder="챌린지에 대한 상세 정보를 입력하세요"
+                    rows="6"
+                    required
+            ></textarea>
+        </div>
+
+
+        <!-- 메시지 영역 -->
+        <div class="message-box" id="messageBox" hidden></div>
+
+        <!-- 제출 버튼 -->
+        <button type="submit" class="submit-button" id="submitButton">
+            챌린지 등록하기
+        </button>
+    </form>
+</main>
+
+<template id="bottomNavTemplate">
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+            <img
+                    src="/img/icons/chat.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+            <img
+                    src="/img/icons/feed.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>feed</span>
+        </a>
+        <a class="nav-item" th:href="@{/}" href="/">
+            <img
+                    src="/img/icons/home.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+            <img
+                    src="/img/icons/match.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>match</span>
+        </a>
+        <a class="nav-item" th:href="@{/my}" href="/my">
+            <img
+                    src="/img/icons/my.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>my</span>
+        </a>
+    </nav>
+</template>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/challenge-create.js" th:src="@{/js/challenge-create.js}"></script>
+</body>
+</html>

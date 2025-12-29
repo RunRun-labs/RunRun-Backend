@@ -146,6 +146,11 @@ public class Course extends BaseTimeEntity {
         this.address = req.getAddress();
     }
 
+    public void resolveUrl(String imageUrl, String thumbnailUrl) {
+        this.imageUrl = imageUrl;
+        this.thumbnailUrl = thumbnailUrl;
+    }
+
     public void block() {
         this.status = CourseStatus.BLOCKED;
     }

@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
@@ -22,7 +23,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,9 +44,9 @@ public class MatchSessionService {
   private final SessionUserRepository sessionUserRepository;
 
   @Transactional
-  public Long createOfflineSession(Long recruitId, UserDetails userDetails) {
+  public Long createOfflineSession(Long recruitId, CustomUser principal) {
 
-    User user = userRepository.findByLoginId(userDetails.getUsername())
+    User user = userRepository.findByLoginId(principal.getLoginId())
         .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
     Recruit recruit = recruitRepository.findById(recruitId)

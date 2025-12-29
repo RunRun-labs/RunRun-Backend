@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.user.entity;
 
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.domain.tts.entity.TtsVoicePack;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignUpDto;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -72,6 +73,10 @@ public class User extends BaseEntity {
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    @ManyToOne
+    @JoinColumn(name = "tts_voice_pack_id")
+    private TtsVoicePack ttsVoicePack;
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;

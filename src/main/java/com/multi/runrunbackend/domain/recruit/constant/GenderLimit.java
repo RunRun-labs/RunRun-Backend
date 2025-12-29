@@ -7,5 +7,5 @@ package com.multi.runrunbackend.domain.recruit.constant;
  * @since : 2025-12-17 수요일
  */
 public enum GenderLimit {
-    MALE, FEMALE, ANY
+  M, F, BOTH
 }

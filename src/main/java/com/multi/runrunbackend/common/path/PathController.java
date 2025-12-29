@@ -9,40 +9,40 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class PathController {
 
-    @GetMapping("/login")
-    public String loginView() {
-        return "auth/login";
-    }
+  @GetMapping("/login")
+  public String loginView() {
+    return "auth/login";
+  }
 
-    @GetMapping("/signup")
-    public String signupView() {
-        return "auth/signup";
-    }
+  @GetMapping("/signup")
+  public String signupView() {
+    return "auth/signup";
+  }
 
-    @GetMapping("/match/select")
-    public String matchSelectView() {
-        return "match/match-select";
-    }
+  @GetMapping("/match/select")
+  public String matchSelectView() {
+    return "match/match-select";
+  }
 
-    @GetMapping("/recruit")
-    public String recruitListView() {
-        return "recruit/recruit-list";
-    }
+  @GetMapping("/recruit")
+  public String recruitListView() {
+    return "recruit/recruit-list";
+  }
 
-    @GetMapping("/recruit/create")
-    public String recruitCreateView() {
-        return "recruit/recruit-create";
-    }
+  @GetMapping("/recruit/create")
+  public String recruitCreateView() {
+    return "recruit/recruit-create";
+  }
 
-    @GetMapping("/recruit/{id}")
-    public String recruitDetailView() {
-        return "recruit/recruit-detail";
-    }
+  @GetMapping("/recruit/{id}")
+  public String recruitDetailView() {
+    return "recruit/recruit-detail";
+  }
 
-    @GetMapping("/recruit/{id}/update")
-    public String recruitUpdateView() {
-        return "recruit/recruit-update";
-    }
+  @GetMapping("/recruit/{id}/update")
+  public String recruitUpdateView() {
+    return "recruit/recruit-update";
+  }
 
     @GetMapping("/crews")
     public String crewListPage() {
@@ -64,16 +64,27 @@ public class PathController {
         return "crew/updateCrew";
     }
 
-    @GetMapping("/chat")
-    public String chatList() {
-        return "chat/chat-list";
+    @GetMapping("/crews/{crewId}/join")
+    public String crewJoinPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
+        return "crew/crewJoin";
     }
 
-    @GetMapping("/chat/chat1")
-    public String chat1() {
-        return "chat/chat1";
+    @GetMapping("/crews/{crewId}/join-requests")
+    public String crewJoinRequestListPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
+        return "crew/crewJoinRequestList";
     }
 
+  @GetMapping("/chat")
+  public String chatList() {
+    return "chat/chat-list";
+  }
+
+  @GetMapping("/chat/chat1")
+  public String chat1() {
+    return "chat/chat1";
+  }
     @GetMapping("/myPage")
     public String myPageView() {
         return "mypage/mypage";
@@ -82,6 +93,33 @@ public class PathController {
     @GetMapping("/myPage/edit")
     public String myPageEdit() {
         return "mypage/mypage-edit";
+    }
+
+    @GetMapping("/challenge")
+    public String challengeView() {
+        return "challenge/challenge";
+    }
+
+    @GetMapping("/challenge/{id}")
+    public String challengeDetailView(@PathVariable Long id, Model model) {
+        model.addAttribute("challengeId", id);
+        return "challenge/challenge-detail";
+    }
+
+    @GetMapping("/challenge/create")
+    public String challengeCreateView() {
+        return "challenge/challenge-create";
+    }
+
+    @GetMapping("/challenge/{id}/edit")
+    public String challengeEditView(@PathVariable Long id, Model model) {
+        model.addAttribute("challengeId", id);
+        return "challenge/challenge-edit";
+    }
+
+    @GetMapping("/challenge/end")
+    public String challengeEndView() {
+        return "challenge/challenge-end";
     }
 
     @GetMapping("/course_auto")
@@ -106,8 +144,8 @@ public class PathController {
 
     @GetMapping("/courseDetail/{course_id}")
     public String courseDetailView(
-            @PathVariable(name = "course_id") Long courseId,
-            Model model
+        @PathVariable(name = "course_id") Long courseId,
+        Model model
     ) {
 
         model.addAttribute("courseId", courseId);
@@ -116,12 +154,22 @@ public class PathController {
 
     @GetMapping("/courseUpdate/{course_id}")
     public String courseUpdateView(
-            @PathVariable(name = "course_id") Long courseId,
-            Model model
+        @PathVariable(name = "course_id") Long courseId,
+        Model model
     ) {
 
         model.addAttribute("courseId", courseId);
         return "course/courseUpdate";
+    }
+
+  @GetMapping("/test/gps")
+  public String gpsTestView() {
+    return "test/gps-test";
+  }
+
+    @GetMapping("/tts-test")
+    public String ttsTestView() {
+        return "tts-test";
     }
 
     @GetMapping("/setting")

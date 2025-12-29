@@ -1,6 +1,6 @@
 package com.multi.runrunbackend.domain.user.service;
 
-import com.multi.runrunbackend.common.exception.custom.DuplicateUsernameException;
+import com.multi.runrunbackend.common.exception.custom.DuplicateException;
 import com.multi.runrunbackend.common.exception.custom.FileUploadException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
@@ -20,13 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  *
  * @author : kimyongwon
- * @description :
- * 사용자 도메인의 핵심 비즈니스 로직을 담당하는 서비스 클래스.
- * 컨트롤러로부터 전달받은 요청을 도메인 규칙에 맞게 수행한다.
- * 주요 책임:
- * - 로그인 사용자 조회
- * - 사용자 프로필/계정 정보 수정
- * - 사용자 존재 여부 검증 및 예외 처리
+ * @description : 사용자 도메인의 핵심 비즈니스 로직을 담당하는 서비스 클래스. 컨트롤러로부터 전달받은 요청을 도메인 규칙에 맞게 수행한다. 주요 책임: - 로그인
+ * 사용자 조회 - 사용자 프로필/계정 정보 수정 - 사용자 존재 여부 검증 및 예외 처리
  * @filename : UserService
  * @since : 25. 12. 18. 오후 4:23 목요일
  */
@@ -70,7 +65,7 @@ public class UserService {
         String loginId = principal.getLoginId();
 
         return userRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     }
 
 
@@ -104,7 +99,7 @@ public class UserService {
 
     private void validateDuplicateEmail(String email) {
         if (userRepository.existsByEmail(email)) {
-            throw new DuplicateUsernameException(ErrorCode.DUPLICATE_EMAIL);
+            throw new DuplicateException(ErrorCode.DUPLICATE_EMAIL);
         }
     }
 

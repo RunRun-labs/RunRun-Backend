@@ -12,6 +12,18 @@ let currentCrewData = null;
 let uploadedImageUrl = null;
 
 // ========================================
+// 글자 수 카운터 업데이트 함수
+// ========================================
+function updateCharCount(inputId, countId) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(countId);
+
+    if (input && counter) {
+        counter.textContent = input.value.length;
+    }
+}
+
+// ========================================
 // 초기화
 // ========================================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -530,13 +542,19 @@ function initLiveValidation() {
 
     const crewNameInput = document.getElementById('crewName');
     if (crewNameInput) {
-        crewNameInput.addEventListener('input', () => validateCrewName());
+        crewNameInput.addEventListener('input', () => {
+            validateCrewName();
+            updateCharCount('crewName', 'crewNameCount');
+        });
         crewNameInput.addEventListener('blur', () => validateCrewName());
     }
 
     const descriptionInput = document.getElementById('description');
     if (descriptionInput) {
-        descriptionInput.addEventListener('input', () => validateDescription());
+        descriptionInput.addEventListener('input', () => {
+            validateDescription();
+            updateCharCount('description', 'crewDescriptionCount');
+        });
         descriptionInput.addEventListener('blur', () => validateDescription());
         descriptionInput.addEventListener('focus', () => validatePreviousFields('description'));
     }
@@ -590,21 +608,30 @@ function initLiveValidation() {
 function validateCrewName() {
     const input = document.getElementById('crewName');
     const errorElement = document.getElementById('crewNameError');
+    const charCount = document.getElementById('crewNameCount');
     if (!input || !errorElement) return true; // 요소가 없으면 통과
 
-    const value = input.value.trim();
+    const value = input.value;
 
-    if (!value) {
+    if (!value.trim()) {
         showFieldError(input, errorElement, '크루명은 필수입니다.');
         return false;
     }
 
     if (value.length > 100) {
+        input.value = value.slice(0, 100);
         showFieldError(input, errorElement, '크루명은 100자 이내로 입력해주세요.');
+        if (charCount) {
+            charCount.parentElement.classList.add('over-limit');
+        }
+        showToast('크루명은 100자 이내로 입력해주세요.');
         return false;
     }
 
     clearFieldError(input, errorElement);
+    if (charCount) {
+        charCount.parentElement.classList.remove('over-limit');
+    }
     return true;
 }
 
@@ -650,16 +677,25 @@ function validateAllRequiredFieldsOnFocus() {
 function validateDescription() {
     const input = document.getElementById('description');
     const errorElement = document.getElementById('descriptionError');
+    const charCount = document.getElementById('crewDescriptionCount');
     if (!input || !errorElement) return true;
 
-    const value = input.value.trim();
+    const value = input.value;
 
     if (value.length > 500) {
+        input.value = value.slice(0, 500);
         showFieldError(input, errorElement, '크루 소개글은 500자 이내로 입력해주세요.');
+        if (charCount) {
+            charCount.parentElement.classList.add('over-limit');
+        }
+        showToast('크루 소개글은 500자 이내로 입력해주세요.');
         return false;
     }
 
     clearFieldError(input, errorElement);
+    if (charCount) {
+        charCount.parentElement.classList.remove('over-limit');
+    }
     return true;
 }
 
@@ -668,15 +704,17 @@ function validateActivityRegion() {
     const errorElement = document.getElementById('activityRegionError');
     if (!input || !errorElement) return true;
 
-    const value = input.value.trim();
+    const value = input.value;
 
-    if (!value) {
-        showFieldError(input, errorElement, '지역은 필수입니다.');
+    if (!value.trim()) {
+        showFieldError(input, errorElement, '활동 지역은 필수입니다.');
         return false;
     }
 
     if (value.length > 100) {
-        showFieldError(input, errorElement, '지역은 100자 이내로 입력해주세요.');
+        input.value = value.slice(0, 100);
+        showFieldError(input, errorElement, '활동 지역은 100자 이내로 입력해주세요.');
+        showToast('활동 지역은 100자 이내로 입력해주세요.');
         return false;
     }
 
@@ -689,15 +727,17 @@ function validateRegularMeetingTime() {
     const errorElement = document.getElementById('regularMeetingTimeError');
     if (!input || !errorElement) return true;
 
-    const value = input.value.trim();
+    const value = input.value;
 
-    if (!value) {
+    if (!value.trim()) {
         showFieldError(input, errorElement, '정기모임일시는 필수입니다.');
         return false;
     }
 
     if (value.length > 100) {
+        input.value = value.slice(0, 100);
         showFieldError(input, errorElement, '정기모임일시는 100자 이내로 입력해주세요.');
+        showToast('정기모임일시은 100자 이내로 입력해주세요.');
         return false;
     }
 
@@ -751,17 +791,51 @@ function validateImage() {
 function showFieldError(inputElement, errorElement, message) {
     if (inputElement) {
         inputElement.classList.add('error');
+        inputElement.style.borderColor = 'red';
     }
     if (errorElement) {
         errorElement.textContent = message;
+        errorElement.classList.add('visible');
     }
 }
 
 function clearFieldError(inputElement, errorElement) {
     if (inputElement) {
         inputElement.classList.remove('error');
+        inputElement.style.borderColor = '';
     }
     if (errorElement) {
         errorElement.textContent = '';
+        errorElement.classList.remove('visible');
     }
+}
+
+// ========================================
+// Toast 함수
+// ========================================
+function showToast(message, duration = 2000) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        `;
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    setTimeout(() => {
+        toast.style.opacity = '0';
+    }, duration);
 }
