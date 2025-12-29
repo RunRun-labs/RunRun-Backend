@@ -52,7 +52,7 @@ public class UserService {
     public void deleteUser(CustomUser principal) {
         User user = getUserByPrincipal(principal);
         if (user.isDeleted()) {
-            throw new DuplicateUsernameException(ErrorCode.USER_ALREADY_DELETED);
+            throw new DuplicateException(ErrorCode.USER_ALREADY_DELETED);
         }
         user.deleteAccount();
     }
@@ -65,7 +65,7 @@ public class UserService {
         String loginId = principal.getLoginId();
 
         return userRepository.findByLoginId(loginId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     }
 
 
