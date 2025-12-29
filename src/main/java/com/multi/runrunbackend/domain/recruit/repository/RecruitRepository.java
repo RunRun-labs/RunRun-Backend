@@ -37,14 +37,32 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
               :radius * 1000
           )
       )
+      AND (cast(:startOfDay as timestamp) IS NULL OR r.meeting_at BETWEEN :startOfDay AND :endOfDay)
+      AND (:region IS NULL OR r.meeting_place LIKE CONCAT('%', :region, '%'))
       """,
-      countQuery = "SELECT count(*) FROM recruit r WHERE r.status = 'RECRUITING' AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))",
+      countQuery = """
+              SELECT count(*) FROM recruit r 
+              WHERE r.status = 'RECRUITING' 
+              AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))
+              AND (:radius IS NULL OR 
+                  ST_DWithin(
+                      ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)::geography, 
+                      ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, 
+                      :radius * 1000
+                  )
+              )
+              AND (cast(:startOfDay as timestamp) IS NULL OR r.meeting_at BETWEEN :startOfDay AND :endOfDay)
+              AND (:region IS NULL OR r.meeting_place LIKE CONCAT('%', :region, '%'))
+          """,
       nativeQuery = true)
   Slice<Recruit> findRecruitsWithFilters(
       @Param("lat") Double myLat,
       @Param("lon") Double myLon,
       @Param("radius") Double radius,
       @Param("keyword") String keyword,
+      @Param("startOfDay") LocalDateTime startOfDay,
+      @Param("endOfDay") LocalDateTime endOfDay,
+      @Param("region") String region,
       Pageable pageable
   );
 

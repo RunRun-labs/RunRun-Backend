@@ -22,18 +22,26 @@
 <body>
 <main class="page">
   <header class="header">
-    <h1 class="header-title">모집글 조회 화면</h1>
+    <button type="button" id="backBtn" class="back-button" aria-label="뒤로가기">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <h1 class="header-title">모집글 목록</h1>
   </header>
 
   <section class="search-section">
-    <div class="search-bar">
+    <div class="search-container">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
       <input
           type="text"
           id="keywordInput"
           class="search-input"
           placeholder="검색어를 입력하세요"
       />
-      <button type="button" id="searchBtn" class="search-button">Search</button>
     </div>
   </section>
 
@@ -55,7 +63,6 @@
       <option value="latest">최신순</option>
       <option value="meetingSoon">모임 날짜 빠른 순</option>
     </select>
-    <button type="button" id="createBtn" class="create-button">생성하기</button>
   </section>
 
   <section class="recruit-list-section">
@@ -67,6 +74,13 @@
       <!-- 모집글 카드들이 동적으로 추가됩니다 -->
     </div>
   </section>
+
+  <!-- FAB (Floating Action Button) -->
+  <button type="button" id="createBtn" class="fab-button" aria-label="모집글 생성">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 </main>
 
 <div
