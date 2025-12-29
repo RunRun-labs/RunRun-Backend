@@ -231,7 +231,7 @@ function validateRegularMeetingTime() {
     if (value.length > 100) {
         input.value = value.slice(0, 100);
         showFieldError(input, errorElement, '정기 모임 일시는 100자 이내로 입력해주세요.');
-        showToast('정기 모임 일시은 100자 이내로 입력해주세요.');
+        showToast('정기 모임 일시는 100자 이내로 입력해주세요.');
         return false;
     }
 
