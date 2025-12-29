@@ -57,9 +57,9 @@ public class CrewJoinRequestResDto {
 
     /**
      * @param joinRequest 크루 가입 신청 엔티티
-     * @description : toDto : Entity → DTO 변환
+     * @description : fromEntity : Entity → DTO 변환
      */
-    public static CrewJoinRequestResDto toDto(CrewJoinRequest joinRequest) {
+    public static CrewJoinRequestResDto fromEntity(CrewJoinRequest joinRequest) {
         return CrewJoinRequestResDto.builder()
                 .joinRequestId(joinRequest.getId())  // 실무에선 둘 다 포함(안전한 식별)
                 .userId(joinRequest.getUser().getId())
