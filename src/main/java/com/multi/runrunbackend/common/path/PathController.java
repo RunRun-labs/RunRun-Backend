@@ -8,40 +8,40 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Controller
 public class PathController {
 
-  @GetMapping("/login")
-  public String loginView() {
-    return "auth/login";
-  }
+    @GetMapping("/login")
+    public String loginView() {
+        return "auth/login";
+    }
 
-  @GetMapping("/signup")
-  public String signupView() {
-    return "auth/signup";
-  }
+    @GetMapping("/signup")
+    public String signupView() {
+        return "auth/signup";
+    }
 
-  @GetMapping("/match/select")
-  public String matchSelectView() {
-    return "match/match-select";
-  }
+    @GetMapping("/match/select")
+    public String matchSelectView() {
+        return "match/match-select";
+    }
 
-  @GetMapping("/recruit")
-  public String recruitListView() {
-    return "recruit/recruit-list";
-  }
+    @GetMapping("/recruit")
+    public String recruitListView() {
+        return "recruit/recruit-list";
+    }
 
-  @GetMapping("/recruit/create")
-  public String recruitCreateView() {
-    return "recruit/recruit-create";
-  }
+    @GetMapping("/recruit/create")
+    public String recruitCreateView() {
+        return "recruit/recruit-create";
+    }
 
-  @GetMapping("/recruit/{id}")
-  public String recruitDetailView() {
-    return "recruit/recruit-detail";
-  }
+    @GetMapping("/recruit/{id}")
+    public String recruitDetailView() {
+        return "recruit/recruit-detail";
+    }
 
-  @GetMapping("/recruit/{id}/update")
-  public String recruitUpdateView() {
-    return "recruit/recruit-update";
-  }
+    @GetMapping("/recruit/{id}/update")
+    public String recruitUpdateView() {
+        return "recruit/recruit-update";
+    }
 
     @GetMapping("/crews")
     public String crewListPage() {
@@ -63,15 +63,16 @@ public class PathController {
         return "crew/updateCrew";
     }
 
-  @GetMapping("/chat")
-  public String chatList() {
-    return "chat/chat-list";
-  }
+    @GetMapping("/chat")
+    public String chatList() {
+        return "chat/chat-list";
+    }
 
-  @GetMapping("/chat/chat1")
-  public String chat1() {
-    return "chat/chat1";
-  }
+    @GetMapping("/chat/chat1")
+    public String chat1() {
+        return "chat/chat1";
+    }
+
     @GetMapping("/myPage")
     public String myPageView() {
         return "mypage/mypage";
@@ -120,6 +121,11 @@ public class PathController {
 
         model.addAttribute("courseId", courseId);
         return "course/courseUpdate";
+    }
+
+    @GetMapping("/tts-test")
+    public String ttsTestView() {
+        return "tts-test";
     }
 
 }

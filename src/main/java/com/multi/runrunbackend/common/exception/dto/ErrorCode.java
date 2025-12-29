@@ -28,13 +28,6 @@ public enum ErrorCode {
     /*==== 리프레시 토큰 ====*/
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH_101", "리프레시 토큰이 만료되었습니다. 다시 로그인하세요."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_102", "유효하지 않은 리프레시 토큰입니다."),
-    FILE_UPLOAD_FAILED(
-
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "F001",
-        "파일 업로드에 실패했습니다."
-    ),
-
     /* ===== 크루 관련 ===== */
     CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR001", "크루를 찾을 수 없습니다."),
     CREW_ALREADY_EXISTS(HttpStatus.CONFLICT, "CR002", "이미 존재하는 크루명입니다."),
@@ -51,6 +44,15 @@ public enum ErrorCode {
     ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR013", "이미 가입 신청한 크루입니다."),
     CANNOT_LEAVE_AS_LEADER(HttpStatus.BAD_REQUEST, "CR014",
         "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
+
+    /*==== 파일 ====*/
+    FILE_UPLOAD_FAILED(
+
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "F001",
+        "파일 업로드에 실패했습니다."
+    ),
+
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
         HttpStatus.BAD_REQUEST,
@@ -67,6 +69,7 @@ public enum ErrorCode {
         "F004",
         "파일 크기가 제한을 초과했습니다."
     ),
+    FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F005", "파일 삭제에 실패했습니다."),
 
     /*==== TMAP====*/
 
@@ -208,10 +211,16 @@ public enum ErrorCode {
         "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
     MAPBOX_OVERLAY_EMPTY(HttpStatus.BAD_REQUEST, "M_002",
         "썸네일 생성에 필요한 overlay 값이 비어있습니다."),
+    /*=====TTS=====*/
+    TTSVOICE_NOT_FOUND(HttpStatus.NOT_FOUND, "T_001", "해당 보이스 타입을 찾을 수 없습니다"),
+    TTS_CUE_CODE_INVALID(HttpStatus.BAD_REQUEST, "T_002", "큐 코드가 비어있거나 없습니다."),
+    TTS_VOICE_PACK_PREFIX_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "T_003",
+        "보이스팩 S3 prefix 설정이 올바르지 않습니다."),
     /*=====쿠폰=====*/
     COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_001", "쿠폰을 찾을 수 없습니다"),
     COUPON_CODE_DUPLICATE(HttpStatus.CONFLICT, "CPN_002", "쿠폰 코드가 중복입니다"),
     COUPON_NOT_DRAFT(HttpStatus.FORBIDDEN, "CPN_003", "DRAFT 상태만 변경할 수 있습니다");
+
 
     private final HttpStatus httpStatus;
     private final String code;
