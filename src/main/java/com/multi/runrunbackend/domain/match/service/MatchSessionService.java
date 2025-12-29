@@ -172,9 +172,9 @@ public class MatchSessionService {
 
   private double convertToMeter(DistanceType distance) {
     return switch (distance) {
-      case KM_3 -> 3000.0;
-      case KM_5 -> 5000.0;
-      case KM_10 -> 10000.0;
+      case KM_3 -> 3.0;
+      case KM_5 -> 5.0;
+      case KM_10 -> 10.0;
       default -> 0.0;
     };
   }
