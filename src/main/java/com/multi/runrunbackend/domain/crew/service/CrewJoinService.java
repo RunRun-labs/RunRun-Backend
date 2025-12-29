@@ -290,6 +290,58 @@ public class CrewJoinService {
     }
 
     /**
+     * @param crewId    크루 ID
+     * @param userId    권한을 변경할 사용자 ID
+     * @param newRole   변경할 역할
+     * @param principal 크루장
+     * @description : 크루장이 크루원의 권한을 변경
+     */
+    @Transactional
+    public void updateUserRole(Long crewId, Long userId, CrewRole newRole, CustomUser principal) {
+        // 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 사용자 조회(권한 변경을 직접 하는 사람 = 크루장)
+        User requester = getUserOrThrow(principal);
+
+        // 크루장 권한 검증 - 크루장만 가능
+        validateLeaderRole(crew, requester);
+
+        // 권한 변경할 대상 조회
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        // targetUser가 이 크루의 크루원인지 검증
+        CrewUser targetCrewUser = crewUserRepository
+                .findByCrewAndUserAndIsDeletedFalse(crew, targetUser)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_CREW_USER));
+
+        // 크루장으로 변경하는 경우 -> 기존 크루장을 일반 멤버로 강등
+        if (newRole == CrewRole.LEADER) {
+            // 일반 멤버는 크루장이 될 수 없음 (부크루장/운영진만 가능)
+            if (targetCrewUser.getRole() == CrewRole.MEMBER) {
+                throw new BusinessException(ErrorCode.CANNOT_ASSIGN_LEADER_TO_MEMBER);
+            }
+
+            // 기존 크루장 찾기
+            CrewUser currentLeader = crewUserRepository
+                    .findByCrewAndUserAndIsDeletedFalse(crew, requester)
+                    .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_CREW_USER));
+
+            // 기존 크루장을 일반 멤버로 변경
+            currentLeader.changeRole(CrewRole.MEMBER);
+
+            log.info("크루장 권한 위임 - 기존 크루장 userId: {} → 일반 멤버", requester.getId());
+        }
+
+        // 권한 변경
+        targetCrewUser.changeRole(newRole);
+
+        log.info("크루원 권한 변경 완료 - crewId: {}, userId: {}, newRole: {}",
+                crewId, userId, newRole);
+    }
+
+    /**
      * 공통 메서드
      */
 
@@ -323,6 +375,18 @@ public class CrewJoinService {
         if (!crewUser.getRole().equals(CrewRole.LEADER)
                 && !crewUser.getRole().equals(CrewRole.SUB_LEADER)) {
             throw new BusinessException(ErrorCode.NOT_CREW_LEADER_OR_SUB_LEADER);
+        }
+    }
+
+    /**
+     * 크루장 권한 검증 (크루장만 가능)
+     */
+    private void validateLeaderRole(Crew crew, User user) {
+        CrewUser crewUser = crewUserRepository.findByCrewAndUserAndIsDeletedFalse(crew, user)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+
+        if (!crewUser.getRole().equals(CrewRole.LEADER)) {
+            throw new BusinessException(ErrorCode.NOT_CREW_LEADER);
         }
     }
 
