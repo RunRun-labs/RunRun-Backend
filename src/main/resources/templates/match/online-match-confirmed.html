@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
   <meta charset="UTF-8"/>
   <meta
@@ -85,15 +85,13 @@
 <div class="container">
   <h1>배틀방입니다</h1>
   <div class="session-id" id="sessionIdDisplay">Session ID: -</div>
-  <p class="message">매칭이 성공적으로 완료되었습니다!</p>
-  <a href="/match/select" class="back-button">매칭 선택으로 돌아가기</a>
 </div>
 
 <script>
   // URL에서 sessionId 가져오기
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get('sessionId');
-  
+
   const sessionIdDisplay = document.getElementById('sessionIdDisplay');
   if (sessionId) {
     sessionIdDisplay.textContent = `Session ID: ${sessionId}`;

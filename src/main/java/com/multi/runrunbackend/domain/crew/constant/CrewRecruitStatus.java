@@ -1,4 +1,4 @@
-package com.multi.runrunbackend.domain.crew.entity;
+package com.multi.runrunbackend.domain.crew.constant;
 
 /**
  * @author : BoKyung

@@ -31,4 +31,28 @@ public interface CrewActivityRepository extends CrudRepository<CrewActivity, Lon
             @Param("crewId") Long crewId,
             Pageable pageable
     );
+
+    /**
+     * @param crewId 크루 ID
+     * @return 참여 횟수 합계
+     * @description :  특정 크루의 전체 참여 횟수 합계를 계산
+     */
+    @Query("SELECT COALESCE(SUM(ca.participationCnt), 0) " +
+            "FROM CrewActivity ca " +
+            "WHERE ca.crew.id = :crewId " +
+            "AND ca.isDeleted = false")
+    Long calculateTotalParticipation(
+            @Param("crewId") Long crewId
+    );
+
+    /**
+     * @param crewId 크루 ID
+     * @return 활동 수
+     * @description : 특정 크루의 총 활동 수 조회
+     */
+    @Query("SELECT COUNT(ca) " +
+            "FROM CrewActivity ca " +
+            "WHERE ca.crew.id = :crewId " +
+            "AND ca.isDeleted = false")
+    Long countByCrewId(@Param("crewId") Long crewId);
 }

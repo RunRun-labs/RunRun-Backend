@@ -32,16 +32,16 @@ public class CrewActivityUser extends BaseCreatedEntity {
     private User user;
 
     /**
-     * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
+     * @description : create - 엔티티 생성 정적 팩토리 메서드
      * @filename : CrewActivityMember
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static CrewActivityUser toEntity(CrewActivity crewActivity, User user) {
-        return CrewActivityUser.builder()
-                .crewActivity(crewActivity)
-                .user(user)
-                .build();
+    public static CrewActivityUser create(CrewActivity crewActivity, User user) {
+        CrewActivityUser activityUser = new CrewActivityUser();
+        activityUser.crewActivity = crewActivity;
+        activityUser.user = user;
+        return activityUser;
     }
 
 }
