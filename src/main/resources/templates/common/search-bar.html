@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+  <div class="search-bar-container" th:fragment="searchBar">
+    <div class="search-box">
+      <div class="search-icon">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9.5 9.5L12 12M10.5 5.5C10.5 8.26142 8.26142 10.5 5.5 10.5C2.73858 10.5 1 8.26142 1 5.5C1 2.73858 2.73858 1 5.5 1C8.26142 1 10.5 2.73858 10.5 5.5Z" stroke="#d2d2d2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Search here..." 
+        aria-label="검색"
+      />
+    </div>
+  </div>
+</body>
+</html>
+
