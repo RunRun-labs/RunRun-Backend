@@ -480,8 +480,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // 매칭 취소 API 호출
-      const response = await fetch("/api/match/online/cancel", {
-        method: "POST",
+      const response = await fetch("/api/match/online/join", {
+        method: "DELETE",
         headers: headers,
       });
 
