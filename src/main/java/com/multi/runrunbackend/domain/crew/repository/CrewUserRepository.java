@@ -67,20 +67,6 @@ public interface CrewUserRepository extends JpaRepository<CrewUser, Long> {
     Long countByCrewIdAndIsDeletedFalse(Long crewId);
 
     /**
-     * @param userId 사용자 ID
-     * @return 크루원 정보 (Optional)
-     * @method : findByUserIdAndIsDeletedFalse
-     * @description : 사용자가 속한 크루 조회 (1인 1크루)
-     */
-    @Query("SELECT cu FROM CrewUser cu " +
-            "JOIN FETCH cu.crew c " +
-            "WHERE cu.user.id = :userId " +
-            "AND cu.isDeleted = false " +
-            "AND c.isDeleted = false " +
-            "AND c.crewStatus = com.multi.runrunbackend.domain.crew.constant.CrewStatus.ACTIVE")
-    Optional<CrewUser> findByUserIdAndIsDeletedFalse(@Param("userId") Long userId);
-
-    /**
      * @param crewId 크루 ID
      * @description : 특정 크루의 모든 크루원을 soft delete 처리할 대상 조회 (크루 해체용)
      */
@@ -92,4 +78,13 @@ public interface CrewUserRepository extends JpaRepository<CrewUser, Long> {
      * @description : 사용자가 LEADER 역할로 있는지 확인 (1인 1크루 검증용)
      */
     boolean existsByUserIdAndRoleAndIsDeletedFalse(Long userId, CrewRole role);
+
+
+    /**
+     * 사용자가 다른 크루에 가입했는지 확인 (1인 1크루 검증용)
+     *
+     * @param userId 사용자 ID
+     */
+    boolean existsByUserIdAndIsDeletedFalse(Long userId);
+
 }
