@@ -47,12 +47,17 @@ public class MatchSessionController {
   }
 
   @PostMapping("/online/join")
-  public ResponseEntity<ApiResponse<Void>> joinOnlineMatch(
+  public ResponseEntity<ApiResponse<Long>> joinOnlineMatch(
       @AuthenticationPrincipal CustomUser principal,
       @RequestBody @Valid OnlineMatchJoinReqDto reqDto
   ) {
-    matchingQueueService.addQueue(principal, reqDto.getDistance(), reqDto.getParticipantCount());
-    return ResponseEntity.ok(ApiResponse.successNoData("온라인 매칭 대기열에 등록되었습니다."));
+    Long existingSessionId = matchingQueueService.addQueue(principal, reqDto.getDistance(),
+        reqDto.getParticipantCount());
+    if (existingSessionId != null) {
+      return ResponseEntity.ok(ApiResponse.success("이미 매칭된 세션이 있습니다.", existingSessionId));
+    }
+
+    return ResponseEntity.ok(ApiResponse.success("온라인 매칭 대기열에 등록되었습니다.", null));
   }
 
   @GetMapping("/online/status")
