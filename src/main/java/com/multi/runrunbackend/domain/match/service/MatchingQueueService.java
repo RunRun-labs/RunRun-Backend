@@ -91,6 +91,7 @@ public class MatchingQueueService {
     }
   }
 
+  @Transactional(readOnly = true)
   public OnlineMatchStatusResDto checkMatchStatus(CustomUser principal) {
 
     String loginId = principal.getLoginId();
