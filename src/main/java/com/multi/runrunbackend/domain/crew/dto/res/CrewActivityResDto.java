@@ -42,9 +42,9 @@ public class CrewActivityResDto {
 
     /**
      * @param crewActivity 크루 활동 엔티티
-     * @description : toDto : Entity → DTO 변환
+     * @description : fromEntity : Entity → DTO 변환
      */
-    public static CrewActivityResDto toDto(CrewActivity crewActivity) {
+    public static CrewActivityResDto fromEntity(CrewActivity crewActivity) {
         String activityName = crewActivity.getRegion() + " "
                 + crewActivity.getDistance() + "km 러닝";
 
