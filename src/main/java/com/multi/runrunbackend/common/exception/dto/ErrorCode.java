@@ -219,7 +219,9 @@ public enum ErrorCode {
     /*=====쿠폰=====*/
     COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_001", "쿠폰을 찾을 수 없습니다"),
     COUPON_CODE_DUPLICATE(HttpStatus.CONFLICT, "CPN_002", "쿠폰 코드가 중복입니다"),
-    COUPON_NOT_DRAFT(HttpStatus.FORBIDDEN, "CPN_003", "DRAFT 상태만 변경할 수 있습니다");
+    COUPON_NOT_DRAFT(HttpStatus.FORBIDDEN, "CPN_003", "DRAFT 상태만 변경할 수 있습니다"),
+    /*=====쿠폰 정책=====*/
+    COUPON_ROLE_DUPLICATE(HttpStatus.CONFLICT, "CPN_004", "쿠폰 정책이 중복입니다");
 
 
     private final HttpStatus httpStatus;
