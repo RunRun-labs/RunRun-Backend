@@ -8,6 +8,7 @@
 // ===========================
 const API_BASE_URL = '/api/crews';
 let currentCursor = null;
+const PAGE_SIZE = 5;
 let isLoading = false;
 let hasMore = true;
 
@@ -48,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasInitialData = crewListContainer.querySelectorAll('.crew-card').length > 0;
     console.log('초기 데이터 존재:', hasInitialData);
 
+    console.log('초기 크루 카드 개수:', crewListContainer.querySelectorAll('.crew-card').length);
+
     const hasActiveFilters = (currentFilters.search && currentFilters.search.trim()) ||
         (currentFilters.distance && currentFilters.distance.trim()) ||
         (currentFilters.pace && currentFilters.pace.trim()) ||
@@ -65,6 +68,15 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (!hasInitialData) {
         console.log('필터 없음 - 초기 데이터 로드');
         loadMoreCrews();
+    } else {
+        console.log('서버에서 렌더링된 초기 데이터 있음 - 무한 스크롤만 활성화');
+
+        const lastCard = crewListContainer.querySelector('.crew-card:last-child');
+        if (lastCard) {
+            const lastCrewId = lastCard.dataset.crewId;
+            console.log('마지막 크루 ID:', lastCrewId);
+            currentCursor = lastCrewId;
+        }
     }
 });
 
@@ -203,18 +215,38 @@ function resetAndReload() {
 // 무한 스크롤
 // ===========================
 function initInfiniteScroll() {
-    const observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && !isLoading && hasMore) {
-            console.log('스크롤 감지 - 추가 데이터 로딩');
-            loadMoreCrews();
-        }
-    }, {
-        rootMargin: '200px'
+    console.log('무한 스크롤 초기화 (scroll 방식)');
+
+    let scrollTimeout;
+
+    window.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+
+        scrollTimeout = setTimeout(() => {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = window.innerHeight;
+
+            const remaining = scrollHeight - (scrollTop + clientHeight);
+
+            console.log('스크롤 체크:', {
+                scrollTop: Math.round(scrollTop),
+                scrollHeight,
+                clientHeight,
+                remaining: Math.round(remaining),
+                isLoading,
+                hasMore
+            });
+
+            // 하단 300px 이내에 도달하면 로딩
+            if (remaining < 300 && !isLoading && hasMore) {
+                console.log('스크롤 감지 - 추가 데이터 로딩');
+                loadMoreCrews();
+            }
+        }, 100);
     });
 
-    if (loadingSpinner) {
-        observer.observe(loadingSpinner);
-    }
+    console.log('스크롤 이벤트 등록 완료');
 }
 
 // ===========================
@@ -305,23 +337,21 @@ async function loadMoreCrews() {
             console.log(`클라이언트 필터 적용 후 이번 페이지 결과 0개 (${page.crews.length}개 중 0개 매칭)`);
         }
 
-        if (page.pagination) {
-            updatePagination(page.pagination);
+        const pagination = {
+            hasNext: page.hasMore || false,
+            nextCursor: page.nextCursor || null
+        };
+
+        console.log('페이지네이션:', pagination);
+
+        if (pagination.nextCursor) {
+            updatePagination(pagination);
         } else {
 
             console.log('페이지네이션 정보 없음 - 마지막 페이지');
             hasMore = false;
+            showNoMoreData();
 
-            if (hasClientSideFilter && renderedCount === 0) {
-                const existingCards = crewListContainer.querySelectorAll('.crew-card');
-                if (existingCards.length === 0) {
-                    showEmptyMessage();
-                } else {
-                    showNoMoreData();
-                }
-            } else {
-                showNoMoreData();
-            }
         }
 
     } catch (error) {
@@ -347,17 +377,6 @@ function buildApiUrl() {
         params.append('keyword', currentFilters.search.trim());
     }
 
-    // if (currentFilters.distance && currentFilters.distance.trim()) {
-    //     const value = currentFilters.distance.trim();
-    //
-    //     if (!value.includes('미만') && !value.includes('이상')) {
-    //         const num = parseInt(value.replace(/[^0-9]/g, ''), 10);
-    //         if (!isNaN(num)) {
-    //             params.append('distance', `${num}km`);
-    //         }
-    //     }
-    // }
-
     if (currentFilters.recruitStatus === 'recruiting') {
 
         params.append('recruiting', 'true');
@@ -366,7 +385,7 @@ function buildApiUrl() {
         params.append('recruiting', 'false');
     }
 
-    params.append('size', '10');
+    params.append('size', PAGE_SIZE);
 
     const url = `${API_BASE_URL}?${params.toString()}`;
     console.log('생성된 API URL:', url);
@@ -515,7 +534,6 @@ function createCrewCard(crew) {
             <div class="crew-card__header">
                 <h2 class="crew-card__title">${escapeHtml(crew.crewName)}</h2>
                 ${badge}
-                <span class="crew-card__badge crew-card__badge--pending" data-pending-badge style="display:none;">🔵요청중</span>
             </div>
             <div class="crew-card__details">
                 <div class="crew-card__detail-item">
@@ -613,18 +631,43 @@ function escapeHtml(text) {
 }
 
 /**
- * 특정 크루 카드에 PENDING 배지를 표시/숨김
+ * 특정 크루 카드에 상태 배지 표시
  */
-function setPendingBadge(crewId, isPending) {
+function setStatusBadge(crewId, state) {
     const card = crewListContainer.querySelector(`.crew-card[data-crew-id="${crewId}"]`);
     if (!card) return;
-    const badge = card.querySelector('[data-pending-badge]');
-    if (!badge) return;
-    badge.style.display = isPending ? 'inline-flex' : 'none';
+
+    const header = card.querySelector('.crew-card__header');
+    if (!header) return;
+
+    // 기존 상태 배지 제거
+    const existingBadge = header.querySelector('[data-status-badge]');
+    if (existingBadge) {
+        existingBadge.remove();
+    }
+
+    // 상태에 따라 배지 생성
+    let badge = null;
+
+    if (state === 'APPROVED') {
+        badge = document.createElement('span');
+        badge.className = 'crew-card__badge crew-card__badge--approved';
+        badge.setAttribute('data-status-badge', 'approved');
+        badge.textContent = '🔴참여중';
+    } else if (state === 'PENDING') {
+        badge = document.createElement('span');
+        badge.className = 'crew-card__badge crew-card__badge--pending';
+        badge.setAttribute('data-status-badge', 'pending');
+        badge.textContent = '🔵요청중';
+    }
+
+    if (badge) {
+        header.appendChild(badge);
+    }
 }
 
 /**
- * 현재 사용자 기준 PENDING 상태인 크루에 배지 표시 - 응답의 crewJoinState가 PENDING이면 '요청중' 표시
+ * 현재 사용자 기준 상태에 따라 배지 표시
  */
 async function annotatePendingBadges(crewIds, token) {
     if (!crewIds || crewIds.length === 0) return;
@@ -637,10 +680,13 @@ async function annotatePendingBadges(crewIds, token) {
             const json = await res.json().catch(() => null);
             const data = json?.data || json;
             const state = data?.crewJoinState || data?.state || data?.joinStatus;
-            const isPending = state === 'PENDING';
-            setPendingBadge(id, isPending);
+
+            // APPROVED 우선, 그 다음 PENDING
+            if (state === 'APPROVED' || state === 'PENDING') {
+                setStatusBadge(id, state);
+            }
         } catch (e) {
-            console.warn('pending 배지 조회 실패', id, e);
+            console.warn('배지 조회 실패', id, e);
         }
     }));
 }
