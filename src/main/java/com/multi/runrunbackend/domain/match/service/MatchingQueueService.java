@@ -5,10 +5,13 @@ import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.dto.res.OnlineMatchStatusResDto;
+import com.multi.runrunbackend.domain.match.entity.SessionUser;
+import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
 import com.multi.runrunbackend.domain.rating.DistanceRating;
 import com.multi.runrunbackend.domain.rating.repository.DistanceRatingRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -30,18 +33,27 @@ public class MatchingQueueService {
   private final RedisTemplate<String, String> redisTemplate;
   private final DistanceRatingRepository distanceRatingRepository;
   private final UserRepository userRepository;
+  private final SessionUserRepository sessionUserRepository;
+
   private static final String QUEUE_KEY_PREFIX = "matching_queue:";
   private static final String USER_STATUS_KEY_PREFIX = "user_queue_status:";
   private static final String TICKET_KEY_PREFIX = "match_ticket:";
   private static final String WAIT_START_PREFIX = "user_wait_start:";
 
   @Transactional
-  public void addQueue(CustomUser principal, DistanceType distance, int targetCount) {
+  public Long addQueue(CustomUser principal, DistanceType distance, int targetCount) {
 
     String loginId = principal.getLoginId();
     User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
         ErrorCode.USER_NOT_FOUND));
     Long userId = user.getId();
+
+    Optional<SessionUser> activeSession = sessionUserRepository.findActiveOnlineSession(userId);
+    if (activeSession.isPresent()) {
+      Long existingSessionId = activeSession.get().getMatchSession().getId();
+      log.info("이미 매칭된 세션 존재 - User: {}, SessionID: {}", userId, existingSessionId);
+      return existingSessionId;
+    }
     removeQueue(principal);
 
     int rating = distanceRatingRepository.findByUserIdAndDistanceType(userId, distance)
@@ -58,6 +70,7 @@ public class MatchingQueueService {
     redisTemplate.opsForValue().set(USER_STATUS_KEY_PREFIX + userId, queueKey);
 
     log.info("매칭 대기열 등록 완료 - User: {}, Queue: {}, Rating: {}", userId, queueKey, rating);
+    return null;
   }
 
   public void removeQueue(CustomUser principal) {
