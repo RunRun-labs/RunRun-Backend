@@ -588,9 +588,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (isMatching) {
       const token = localStorage.getItem("accessToken");
-      navigator.sendBeacon("/api/match/online/cancel", JSON.stringify({
-        headers: {"Authorization": `Bearer ${token}`}
-      }));
+      fetch("/api/match/online/join", {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        keepalive: true
+      }).catch(() => {
+      });
     }
   });
 });

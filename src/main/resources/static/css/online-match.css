@@ -33,12 +33,10 @@ body {
   width: min(420px, 100vw);
   margin: 0 auto;
   height: 100vh;
-  padding: 0 20px calc(96px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-sizing: border-box;
-  background: #ffffff;
+  background: #fff;
 }
 
 .header {
@@ -77,13 +75,21 @@ body {
   text-align: center;
 }
 
-.match-settings {
+.match-content {
   flex: 1;
+  overflow-y: auto;
+  padding: 20px 35px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 100px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.match-settings {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  padding: 24px 0;
-  overflow-y: auto;
 }
 
 .setting-group {
@@ -176,54 +182,51 @@ body {
 }
 
 .start-button {
-  position: fixed;
-  bottom: calc(96px + env(safe-area-inset-bottom));
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(400px, calc(100vw - 40px));
-  max-width: 420px;
+  width: 100%;
+  max-width: 350px;
+  margin: 20px auto 0;
   padding: 18px 24px;
   background: var(--stroke);
-  border: none;
-  border-radius: 999px;
+  border: 1px solid var(--primary);
+  border-radius: 12px;
   font-size: 18px;
   font-weight: 600;
   color: var(--text-muted);
   cursor: not-allowed;
   transition: all 0.3s ease;
   font-family: "Inter", sans-serif;
-  z-index: 5;
-  margin-bottom: 8px;
+  box-shadow: 0px 2px 8px 0px rgba(186, 255, 41, 0.3);
 }
 
 .start-button:enabled {
   background: var(--primary);
-  color: var(--text-strong);
+  color: #000;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(186, 255, 41, 0.3);
+  box-shadow: 0px 2px 8px 0px rgba(186, 255, 41, 0.6);
 }
 
 .start-button:enabled:hover {
-  transform: translateX(-50%) scale(1.02);
-  box-shadow: 0 6px 16px rgba(186, 255, 41, 0.4);
+  background: #a8e01f;
+  box-shadow: 0px 4px 12px 0px rgba(186, 255, 41, 0.8);
 }
 
 .start-button:enabled:active {
-  transform: translateX(-50%) scale(0.98);
+  transform: scale(0.98);
 }
 
 /* 매칭 중 오버레이 */
 .matching-overlay {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(420px, 100vw);
+  height: calc(100vh - 76px - env(safe-area-inset-bottom));
   background: #0a0e1a;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 5;
   overflow: hidden;
 }
 
@@ -257,18 +260,23 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 32px;
-  padding: 40px 32px;
+  padding: 40px 32px 20px;
   text-align: center;
   z-index: 1;
   width: 100%;
   max-width: 600px;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 레이더 컨테이너 */
 .radar-container {
   position: relative;
-  width: 300px;
-  height: 300px;
+  width: min(300px, 80vw);
+  height: min(300px, 80vw);
+  min-width: 200px;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -318,8 +326,10 @@ body {
 
 .profile-image-wrapper {
   position: relative;
-  width: 75px;
-  height: 75px;
+  width: min(75px, 20vw);
+  height: min(75px, 20vw);
+  min-width: 50px;
+  min-height: 50px;
   margin: 0 auto;
 }
 
@@ -379,8 +389,10 @@ body {
 
 .opponent-profile {
   position: absolute;
-  width: 60px;
-  height: 60px;
+  width: min(60px, 15vw);
+  height: min(60px, 15vw);
+  min-width: 40px;
+  min-height: 40px;
   opacity: 0;
   transform-origin: center center;
   animation: fadeInOrbit 1s ease-out forwards;
@@ -613,7 +625,7 @@ body {
   align-items: center;
   padding: 8px 12px calc(6px + env(safe-area-inset-bottom));
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-  z-index: 10;
+  z-index: 100;
 }
 
 .nav-item {
@@ -633,13 +645,13 @@ body {
 }
 
 @media (max-width: 480px) {
-  .page {
-    padding: 0 16px calc(92px + env(safe-area-inset-bottom));
+  .match-content {
+    padding: 16px 20px 100px;
+    gap: 16px;
   }
 
   .match-settings {
     gap: 28px;
-    padding: 20px 0;
   }
 
   .setting-title {
@@ -666,30 +678,40 @@ body {
   }
 
   .start-button {
-    width: calc(100vw - 32px);
+    max-width: 100%;
     padding: 16px 20px;
     font-size: 17px;
-    bottom: calc(92px + env(safe-area-inset-bottom));
-    margin-bottom: 8px;
   }
 
-  .bottom-nav {
-    border-top: 1px solid var(--primary);
+  .matching-overlay {
+    width: min(420px, 100vw);
+    height: calc(100vh - 68px - env(safe-area-inset-bottom));
   }
 
   .matching-content {
-    padding: 24px;
+    padding: 24px 20px 16px;
     gap: 20px;
   }
 
   .radar-container {
-    width: 250px;
-    height: 250px;
+    width: min(250px, 70vw);
+    height: min(250px, 70vw);
+    min-width: 180px;
+    min-height: 180px;
   }
 
   .profile-image-wrapper {
-    width: 60px;
-    height: 60px;
+    width: min(60px, 18vw);
+    height: min(60px, 18vw);
+    min-width: 45px;
+    min-height: 45px;
+  }
+
+  .opponent-profile {
+    width: min(50px, 12vw);
+    height: min(50px, 12vw);
+    min-width: 35px;
+    min-height: 35px;
   }
 
   .status-title {
@@ -728,9 +750,13 @@ body {
     font-size: 18px;
   }
 
+  .match-content {
+    padding: 14px 16px 90px;
+    gap: 14px;
+  }
+
   .match-settings {
     gap: 24px;
-    padding: 16px 0;
   }
 
   .setting-title {
@@ -753,16 +779,20 @@ body {
   }
 
   .start-button {
-    bottom: calc(86px + env(safe-area-inset-bottom));
     padding: 14px 18px;
     font-size: 16px;
-    margin-bottom: 8px;
+  }
+
+  .matching-overlay {
+    width: min(420px, 100vw);
+    height: calc(100vh - 68px - env(safe-area-inset-bottom));
   }
 
   .bottom-nav {
     height: calc(68px + env(safe-area-inset-bottom));
     padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--primary);
+    z-index: 10;
   }
 
   .nav-item img {
@@ -781,6 +811,11 @@ body {
     width: 100%;
   }
 
+  .match-content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 48px 140px;
+  }
 
   .match-settings {
     max-width: 600px;
@@ -815,23 +850,42 @@ body {
     max-width: 600px;
     padding: 22px 32px;
     font-size: 20px;
-    bottom: calc(140px + env(safe-area-inset-bottom));
-    margin-bottom: 12px;
+  }
+
+  .matching-overlay {
+    max-width: 960px;
+    width: 100%;
+    height: calc(100vh - 82px - env(safe-area-inset-bottom));
   }
 
   .matching-content {
-    padding: 48px;
-    gap: 32px;
+    padding: 48px 40px 24px;
+    gap: 40px;
   }
 
   .radar-container {
-    width: 400px;
-    height: 400px;
+    width: min(400px, 60vw);
+    height: min(400px, 60vw);
+    min-width: 300px;
+    min-height: 300px;
   }
 
   .profile-image-wrapper {
-    width: 90px;
-    height: 90px;
+    width: min(90px, 12vw);
+    height: min(90px, 12vw);
+    min-width: 75px;
+    min-height: 75px;
+  }
+
+  .opponent-profile {
+    width: min(70px, 10vw);
+    height: min(70px, 10vw);
+    min-width: 60px;
+    min-height: 60px;
+  }
+
+  .bottom-nav {
+    z-index: 10;
   }
 
   .status-title {
