@@ -1,8 +1,12 @@
 package com.multi.runrunbackend.domain.membership.dto.res;
 
+import com.multi.runrunbackend.domain.membership.constant.MembershipGrade;
+import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.entity.Membership;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -13,15 +17,20 @@ import java.time.LocalDateTime;
  * @since : 25. 12. 30. 월요일
  */
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class MembershipMainResDto {
 
-    private String membershipGrade;      // 멤버십 등급
-    private String membershipStatus;     // 멤버십 상태 (사용중, 해지 신청됨, 만료됨)
+    private MembershipGrade membershipGrade;      // 멤버십 등급
+    private MembershipStatus membershipStatus;     // 멤버십 상태 (사용중, 해지 신청됨, 만료됨)
     private LocalDateTime startDate;     // 시작일
     private LocalDateTime endDate;       // 종료일
     private LocalDateTime nextBillingDate; // 다음 결제일
 
+    /**
+     * @description : Entity를 DTO로 변환
+     */
     public static MembershipMainResDto fromEntity(Membership membership) {
         return MembershipMainResDto.builder()
                 .membershipGrade(membership.getMembershipGrade())
