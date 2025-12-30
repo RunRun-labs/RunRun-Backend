@@ -18,6 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 /**
  * @author : BoKyung
  * @description : 멤버십 관리 서비스
@@ -82,6 +85,42 @@ public class MembershipService {
             membership.expire();
             log.info("멤버십 즉시 만료 처리 - 사용자 ID: {}", user.getId());
         }
+    }
+
+    /**
+     * @description : 멤버십 만료 처리 (스케줄러용)
+     */
+    @Transactional
+    public void processExpiredMemberships() {
+
+        // 현재 시간 (yyyy-mm-dd hh:mm:ss)
+        LocalDateTime now = LocalDateTime.now();
+
+        // 해지된 상태 + 종료일이 이미 지남(현재 시간보다 이전)인 멤버십 조회
+        List<Membership> expiredMemberships = membershipRepository
+                .findByMembershipStatusAndEndDateBefore(MembershipStatus.CANCELED, now);
+
+        if (expiredMemberships.isEmpty()) {
+            log.info("만료 처리할 멤버십 없음");
+            return;
+        }
+
+        // 조회된 멤버십 하나씩 꺼내서 처리
+        for (Membership membership : expiredMemberships) {
+            try {
+
+                // 만료 상태로 바꾸기
+                membership.expire();
+                log.info("멤버십 만료 처리 완료 - 사용자 ID: {}",
+                        membership.getUser().getId());
+            } catch (Exception e) {
+                log.error("멤버십 만료 처리 실패 - 사용자 ID: {}",
+                        membership.getUser().getId(), e);
+            }
+        }
+
+        // 몇 건 처리했는지 로그 처리
+        log.info("총 {}건의 멤버십 만료 처리 완료", expiredMemberships.size());
     }
 
     /**
