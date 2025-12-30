@@ -21,7 +21,6 @@ import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -365,9 +364,6 @@ public class CrewService {
                 .forEach(CrewJoinRequest::cancel);
     }
 
-    @Value("${file.max-size-bytes}")
-    private long maxFileSizeBytes;
-
     /**
      * @description : 이미지 파일 업로드
      */
@@ -376,23 +372,6 @@ public class CrewService {
         if (file == null || file.isEmpty()) {
             return "";
         }
-
-        // 파일 크기 검증 (10MB)
-        if (file.getSize() > maxFileSizeBytes) {
-            long maxSizeMB = maxFileSizeBytes / 1024 / 1024;
-            long currentSizeMB = file.getSize() / 1024 / 1024;
-            throw new IllegalArgumentException(
-                    String.format("이미지 크기는 %dMB 이하여야 합니다. (현재: %dMB)",
-                            maxSizeMB, currentSizeMB)
-            );
-        }
-
-        // 파일 타입 검증 (이미지만)
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
-        }
-
         // 파일이 있으면 업로드
         return s3FileStorage.upload(file, domainType, refId);
     }
