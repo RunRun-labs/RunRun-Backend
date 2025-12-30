@@ -417,15 +417,6 @@ function updateCrewUI(crew) {
         memberCount.textContent = crew.memberCount || 0;
     }
 
-    // 크루원 아이콘 클릭 이벤트 추가
-    const memberIcon = document.getElementById('memberIcon');
-    if (memberIcon) {
-        memberIcon.addEventListener('click', (e) => {
-            e.stopPropagation();
-            window.location.href = `/crews/${crewId}/users`;
-        });
-    }
-
     const crewDistance = document.getElementById('crewDistance');
     if (crewDistance) {
         crewDistance.textContent = crew.distance || '-';
