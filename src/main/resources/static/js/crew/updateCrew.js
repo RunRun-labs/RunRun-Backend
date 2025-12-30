@@ -120,12 +120,7 @@ async function loadCrewData() {
     try {
         showLoading(true);
 
-        let crewId = null;
-        const pathParts = window.location.pathname.split('/');
-        const crewIdIndex = pathParts.indexOf('crews');
-        if (crewIdIndex !== -1 && pathParts.length > crewIdIndex + 1) {
-            crewId = pathParts[crewIdIndex + 1];
-        }
+        const crewId = getCrewIdFromUrl();
 
         if (!crewId) {
             throw new Error('크루 ID를 찾을 수 없습니다.');
