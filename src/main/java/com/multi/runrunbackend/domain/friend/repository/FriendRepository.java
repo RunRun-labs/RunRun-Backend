@@ -3,6 +3,8 @@ package com.multi.runrunbackend.domain.friend.repository;
 import com.multi.runrunbackend.domain.friend.constant.FriendStatus;
 import com.multi.runrunbackend.domain.friend.entity.Friend;
 import com.multi.runrunbackend.domain.user.entity.User;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -23,9 +25,26 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     // 보낸 친구 요청 (REQUESTED)
     List<Friend> findByRequesterAndStatus(User requester, FriendStatus status);
 
-    // requester → receiver 단방향 조회
+
+    // 내가 requester인 친구 (ACCEPTED)
+    Slice<Friend> findByRequesterAndStatus(
+            User requester,
+            FriendStatus status,
+            Pageable pageable
+    );
+
+    // 내가 receiver인 친구 (ACCEPTED)
+    Slice<Friend> findByReceiverAndStatus(
+            User receiver,
+            FriendStatus status,
+            Pageable pageable
+    );
+
+    /*
+     * 단건 조회, 중복 체크
+     *  */
+
     Optional<Friend> findByRequesterAndReceiver(User requester, User receiver);
 
-    // requester → receiver 단방향 존재 여부
     boolean existsByRequesterAndReceiver(User requester, User receiver);
 }
