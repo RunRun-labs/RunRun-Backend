@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>RUNRUN | 이용약관</title>
+
+    <!-- 공통 CSS (기존 스타일 활용) -->
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" href="/css/common.css">
+
+    <!-- 폰트 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600&display=swap" rel="stylesheet"/>
+
+    <!-- 마크다운 파서 라이브러리 (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #baff29;
+            --text-strong: #000000;
+            --text-muted: #6c7278;
+            --stroke: #e1e4e8;
+            --bg: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-strong);
+            font-family: "Inter", "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .terms-page {
+            position: relative;
+            width: min(420px, 100vw);
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 0 20px 20px;
+        }
+
+        .terms-header-container {
+            position: relative;
+            padding: 18px 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-button {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 33px;
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-strong);
+        }
+
+        .back-button svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .terms-title-header {
+            margin: 0;
+            font-family: "Outfit", "Noto Sans KR", sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: #252525;
+            text-align: center;
+        }
+
+        .terms-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        .terms-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .terms-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .terms-meta {
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* 마크다운 변환 스타일 */
+        .markdown-body {
+            font-size: 15px;
+            color: #444;
+        }
+
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 700;
+            line-height: 1.25;
+            color: #000;
+        }
+
+        .markdown-body h1 {
+            font-size: 2em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+
+        .markdown-body h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+
+        .markdown-body h3 {
+            font-size: 1.25em;
+        }
+
+        .markdown-body p {
+            margin-bottom: 16px;
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            padding-left: 2em;
+            margin-bottom: 16px;
+        }
+
+        .markdown-body li {
+            margin-bottom: 4px;
+        }
+
+        .markdown-body strong {
+            color: #000;
+            font-weight: 700;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #ff4d4d;
+        }
+    </style>
+</head>
+<body>
+<div class="terms-page">
+    <header class="terms-header-container">
+        <button class="back-button" type="button" aria-label="뒤로가기">
+            <svg width="40" height="33" viewBox="0 0 40 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 8L8 16.5L15 25" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h1 class="terms-title-header" id="headerTitle">약관</h1>
+    </header>
+
+    <div class="terms-container">
+        <div class="terms-header">
+            <h1 class="terms-title" id="displayTitle">약관 불러오는 중...</h1>
+            <div class="terms-meta">
+                <span id="displayVersion"></span>
+                <span id="displayDate"></span>
+            </div>
+        </div>
+
+        <!-- 변환된 HTML이 들어갈 곳 -->
+        <div id="termsContent" class="markdown-body">
+            <div class="loading">내용을 불러오고 있습니다...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 약관 타입 파라미터 처리용 스크립트 -->
+<script>
+    // URL 파라미터에서 type 가져오기 (예: /terms/view?type=SERVICE)
+    // 혹은 PathVariable 사용 시 URL 파싱 로직 필요
+    // 여기서는 간단히 Query String 또는 PathVariable에 맞게 JS 변수로 주입한다고 가정하거나
+    // Thymeleaf 변수 사용: const TERMS_TYPE = [[${type}]];
+
+    // 테스트를 위해 URL 쿼리스트링에서 type을 읽도록 구현
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type') || 'SERVICE'; // 기본값 SERVICE
+</script>
+
+<script src="/js/terms-detail.js"></script>
+
+</body>
+</html>

@@ -55,8 +55,10 @@ public class JwtConfig {
                                 "/ws/**",
                                 "/myPage/**",
                                 "/friends/**",
+                                "/profile/**",
                                 "/course_auto/**",
                                 "/files/**",
+                                "/challenge/**",
                                 "/course",
                                 "/courseCreate",
                                 "/courseDetail/**",
@@ -66,6 +68,8 @@ public class JwtConfig {
                                 "/crews/**",
                                 "/match/**",
                                 "/recruit/**",
+                                "/setting/**",
+                                "/terms/**",
                                 "/tts-test"
                         ).permitAll()
                         .requestMatchers(

@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     attachProfileImageClickHandler();
     attachChallengeHandler();
     attachFriendHandler();
+    attachSettingsHandler();
     loadMyBodyInfo();
 });
 
@@ -96,6 +97,15 @@ function attachFriendHandler() {
 
     friendBtn.addEventListener("click", () => {
         window.location.href = "/friends/list";
+    });
+}
+
+function attachSettingsHandler() {
+    const settingsBtn = document.querySelector('[data-role="settings"]');
+    if (!settingsBtn) return;
+
+    settingsBtn.addEventListener("click", () => {
+        window.location.href = "/setting";
     });
 }
 
