@@ -19,6 +19,9 @@ import com.multi.runrunbackend.domain.friend.repository.FriendRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,18 +126,31 @@ public class FriendService {
      * ACCEPTED
      */
     @Transactional(readOnly = true)
-    public List<FriendResDto> getFriends(CustomUser principal) {
+    public Slice<FriendResDto> getFriends(
+            CustomUser principal,
+            Pageable pageable
+    ) {
         User me = getUserByPrincipal(principal);
 
-        List<Friend> asRequester =
-                friendRepository.findByRequesterAndStatus(me, FriendStatus.ACCEPTED);
+        Slice<Friend> asRequester =
+                friendRepository.findByRequesterAndStatus(
+                        me, FriendStatus.ACCEPTED, pageable);
 
-        List<Friend> asReceiver =
-                friendRepository.findByReceiverAndStatus(me, FriendStatus.ACCEPTED);
+        Slice<Friend> asReceiver =
+                friendRepository.findByReceiverAndStatus(
+                        me, FriendStatus.ACCEPTED, pageable);
 
-        return Stream.concat(asRequester.stream(), asReceiver.stream())
-                .map(friend -> FriendResDto.from(friend, me))
-                .toList();
+        List<FriendResDto> content =
+                Stream.concat(
+                                asRequester.getContent().stream(),
+                                asReceiver.getContent().stream()
+                        )
+                        .map(friend -> FriendResDto.from(friend, me))
+                        .toList();
+
+        boolean hasNext = asRequester.hasNext() || asReceiver.hasNext();
+
+        return new SliceImpl<>(content, pageable, hasNext);
     }
 
     /**
