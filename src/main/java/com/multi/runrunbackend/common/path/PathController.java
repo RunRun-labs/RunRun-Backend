@@ -81,6 +81,11 @@ public class PathController {
         return "crew/crewUser";
     }
 
+    @GetMapping("/crews/main")
+    public String crewMain() {
+        return "crew/crewMain";
+    }
+
     @GetMapping("/chat")
     public String chatList() {
         return "chat/chat-list";
