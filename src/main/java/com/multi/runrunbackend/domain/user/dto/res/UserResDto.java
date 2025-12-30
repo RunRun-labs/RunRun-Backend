@@ -36,17 +36,19 @@ public class UserResDto {
     private LocalDateTime lastLoginAt;
 
     public static UserResDto from(User user) {
+
+        boolean isDeleted = user.isDeleted();
         return UserResDto.builder()
                 .id(user.getId())
                 .loginId(user.getLoginId())
-                .email(user.getEmail())
-                .name(user.getName())
+                .email(isDeleted ? null : user.getEmail())
+                .name(isDeleted ? "탈퇴한 회원입니다" : user.getName())
                 .role(user.getRole())
-                .profileImageUrl(user.getProfileImageUrl())
-                .gender(user.getGender())
-                .birthDate(user.getBirthDate())
-                .heightCm(user.getHeightCm())
-                .weightKg(user.getWeightKg())
+                .profileImageUrl(isDeleted ? null : user.getProfileImageUrl())
+                .gender(isDeleted ? null : user.getGender())
+                .birthDate(isDeleted ? null : user.getBirthDate())
+                .heightCm(isDeleted ? null : user.getHeightCm())
+                .weightKg(isDeleted ? null : user.getWeightKg())
                 .lastLoginAt(user.getLastLoginAt())
                 .build();
     }

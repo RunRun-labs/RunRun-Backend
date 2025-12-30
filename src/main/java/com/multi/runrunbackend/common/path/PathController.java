@@ -88,10 +88,10 @@ public class PathController {
     return "crew/crewJoinRequestList";
   }
 
-  @GetMapping("/chat")
-  public String chatList() {
-    return "chat/chat-list";
-  }
+    @GetMapping("/chat")
+    public String chatList() {
+        return "chat/chat-list";
+    }
 
   @GetMapping("/chat/chat1")
   public String chat1() {
@@ -175,14 +175,35 @@ public class PathController {
     return "course/courseUpdate";
   }
 
-  @GetMapping("/test/gps")
-  public String gpsTestView() {
-    return "test/gps-test";
-  }
+    @GetMapping("/test/gps")
+    public String gpsTestView() {
+        return "test/gps-test";
+    }
 
   @GetMapping("/tts-test")
   public String ttsTestView() {
     return "tts-test";
   }
+
+    @GetMapping("/setting")
+    public String settingView() {
+        return "setting/setting";
+    }
+
+    @GetMapping("/setting/blocked-users")
+    public String blockedUsersView() {
+        return "setting/blocked-users";
+    }
+
+    @GetMapping("/terms/view")
+    public String termsView() {
+        return "terms/terms-detail";
+    }
+
+    @GetMapping("/profile/{userId}")
+    public String userProfileView(@PathVariable Long userId, Model model) {
+        model.addAttribute("userId", userId);
+        return "user/user-profile";
+    }
 
 }
