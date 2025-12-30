@@ -1,6 +1,9 @@
 package com.multi.runrunbackend.domain.user.service;
 
-import com.multi.runrunbackend.common.exception.custom.*;
+import com.multi.runrunbackend.common.exception.custom.DuplicateException;
+import com.multi.runrunbackend.common.exception.custom.FileUploadException;
+import com.multi.runrunbackend.common.exception.custom.NotFoundException;
+import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
@@ -9,7 +12,6 @@ import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserProfileResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
 import com.multi.runrunbackend.domain.user.entity.User;
-import com.multi.runrunbackend.domain.user.repository.UserBlockRepository;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final UserBlockRepository userBlockRepository;
+    private final UserBlockService userBlockService;
     private final FileStorage fileStorage;
     private static final long MAX_PROFILE_IMAGE_SIZE = 1L * 1024 * 1024;
 
@@ -45,15 +47,11 @@ public class UserService {
             Long targetUserId,
             CustomUser principal
     ) {
-        User viewer = getUserByPrincipal(principal);
+
+        userBlockService.validateUserBlockStatus(targetUserId, principal);
 
         User target = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-
-
-        if (userBlockRepository.existsByBlockerAndBlockedUser(viewer, target)) {
-            throw new ForbiddenException(ErrorCode.USER_BLOCKED);
-        }
 
         return UserProfileResDto.from(target);
     }
