@@ -11,6 +11,30 @@ body {
     color: #212529;
 }
 
+/* ========================= CSS 변수 정의 ========================= */
+:root {
+    /* 높이 관련 */
+    --header-height: 60px;
+    --nav-height: 50px;
+
+    /* 간격 관련 */
+    --spacing-xl: 32px;
+    --spacing-lg: 24px;
+    --spacing-sm: 12px;
+
+    /* 색상 관련 */
+    --primary-color: #BAFF29;
+    --primary-dark: #a3e024;
+    --bg-color: #1a1a1a;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+}
+
+/* ========================= 권한 없음 상태 화면 ========================= */
+.empty-state-container {
+    min-height: calc(100vh - var(--header-height) - var(--nav-height));
+}
+
 /* 메인 컨테이너 */
 .crew-member-list {
     min-height: 100vh;
@@ -185,27 +209,6 @@ body {
 .activity-time {
     color: #868e96;
     margin-right: 4px;
-}
-
-.member-stats {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-    font-size: 12px;
-    color: #868e96;
-    margin-bottom: 4px;
-}
-
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-}
-
-.stat-icon {
-    font-size: 14px;
 }
 
 .member-stats {
