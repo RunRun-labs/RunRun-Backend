@@ -23,16 +23,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     if (!crewId) {
-        showError('크루 ID를 찾을 수 없습니다..');
+        showError('크루 ID가 없습니다.');
         return;
-    }
-
-    // 권한 확인 및 멤버 로드 추가
-    const hasPermission = await checkCrewMemberPermission();
-
-    if (hasPermission) {
-        // 크루원이면 목록 로드
-        await fetchMembers();
     }
 
     // 로컬스토리지에서 현재 사용자 ID 가져오기
@@ -43,6 +35,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     } catch (error) {
         console.warn('사용자 ID를 가져오는데 실패했습니다:', error);
+    }
+
+    // 권한 확인
+    const hasPermission = await checkCrewMemberPermission();
+
+    if (hasPermission) {
+        // 크루원이면 목록 로드
+        await fetchMembers();
     }
 
     // 드롭다운 닫기 이벤트
@@ -134,7 +134,7 @@ function createLeaderCard(member) {
         actionSection = `
             <div class="member-right">
                 ${stats}
-                <button class="leave-button" onclick="handleLeave(${member.userId})">탈퇴</button>
+                <button class="leave-button" onclick="handleLeaderLeave()">탈퇴</button>
             </div>
         `;
     } else {
@@ -180,7 +180,8 @@ function createMemberCard(member) {
         // 본인이면 탈퇴 버튼만
         actionSection = `
             <div class="member-right">
-                <button class="leave-button" onclick="handleLeave(${member.userId})">탈퇴</button>
+                ${stats}
+                <button class="leave-button" onclick="handleLeave()">탈퇴</button>
             </div>
         `;
     } else if (isLeader && !isMyself) {
@@ -259,7 +260,7 @@ function createDropdownOptions(member) {
     const options = [];
 
     if (member.role === 'MEMBER') {
-        // 일반 멤버 → 부크루장/운영진만 임명 가능 (크루장 위임 불가)
+        // 일반 멤버 → 부크루장/운영진만 임명 가능
         options.push(`
             <div class="dropdown-item" onclick="changeRole(${member.userId}, 'SUB_LEADER', event)">
                 <span class="role-icon">🛡️</span>
@@ -434,7 +435,6 @@ async function checkCrewMemberPermission() {
             return false;
         }
 
-        // 크루원이면 목록 표시
         return true;
 
     } catch (error) {
@@ -448,13 +448,11 @@ async function checkCrewMemberPermission() {
 // 권한 없음 화면 표시
 // ========================================
 function showNoPermissionState() {
-    // 크루원 목록 숨김
-    const memberList = document.getElementById('memberList');
-    if (memberList) {
-        memberList.style.display = 'none';
+    const mainContainer = document.getElementById('main-container');
+    if (mainContainer) {
+        mainContainer.style.display = 'none';
     }
 
-    // 권한 없음 화면 표시
     const noPermissionState = document.getElementById('noPermissionState');
     if (noPermissionState) {
         noPermissionState.style.display = 'flex';
@@ -501,7 +499,6 @@ async function changeRole(userId, newRole, event) {
             throw new Error('로그인이 필요합니다.');
         }
 
-        // 권한 변경 API 호출
         const response = await fetch(`/api/crews/${crewId}/users/${userId}/role?role=${newRole}`, {
             method: 'PATCH',
             headers: {
@@ -527,9 +524,9 @@ async function changeRole(userId, newRole, event) {
 }
 
 // ============================
-// 탈퇴 처리
+// 탈퇴 처리 (일반 크루원)
 // ============================
-async function handleLeave(userId) {
+async function handleLeave() {
     if (!confirm('정말 크루에서 탈퇴하시겠습니까?')) {
         return;
     }
@@ -555,9 +552,7 @@ async function handleLeave(userId) {
         }
 
         alert('크루에서 탈퇴되었습니다.');
-
-        // 크루 목록 페이지로 이동
-        window.location.href = '/feed';
+        window.location.href = '/crews/main';
 
     } catch (error) {
         console.error('탈퇴 실패:', error);
@@ -566,23 +561,54 @@ async function handleLeave(userId) {
 }
 
 // ============================
+// 크루장 탈퇴 처리 (위임 필수)
+// ============================
+async function handleLeaderLeave() {
+    alert('크루장은 크루장 권한을 부크루장 또는 운영진에게 위임한 후 탈퇴할 수 있습니다.');
+}
+
+// ============================
 // UI 상태 관리
 // ============================
 function showLoading() {
-    document.getElementById('loading').style.display = 'flex';
-    document.getElementById('error').style.display = 'none';
-    document.getElementById('main-container').style.display = 'none';
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.style.display = 'flex';
+    }
+    const error = document.getElementById('error');
+    if (error) {
+        error.style.display = 'none';
+    }
+    const mainContainer = document.getElementById('main-container');
+    if (mainContainer) {
+        mainContainer.style.display = 'none';
+    }
 }
 
 function hideLoading() {
-    document.getElementById('loading').style.display = 'none';
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.style.display = 'none';
+    }
 }
 
 function showError(message) {
-    document.getElementById('error-message').textContent = message;
-    document.getElementById('error').style.display = 'flex';
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('main-container').style.display = 'none';
+    const errorMessage = document.getElementById('error-message');
+    if (errorMessage) {
+        errorMessage.textContent = message;
+    }
+    const error = document.getElementById('error');
+    if (error) {
+        error.style.display = 'flex';
+    }
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.style.display = 'none';
+    }
+    const mainContainer = document.getElementById('main-container');
+    if (mainContainer) {
+        mainContainer.style.display = 'none';
+    }
 }
 
 function goBack() {

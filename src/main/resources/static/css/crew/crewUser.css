@@ -62,11 +62,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-primary);
+    color: #212529;
     transition: opacity 0.2s;
 }
 
-.back-button:hover {
+.btn-back:hover {
     opacity: 0.7;
 }
 
@@ -74,6 +74,8 @@ body {
     font-size: 18px;
     font-weight: 600;
     margin: 0;
+    flex: 1;
+    text-align: center;
 }
 
 /* 섹션 */
