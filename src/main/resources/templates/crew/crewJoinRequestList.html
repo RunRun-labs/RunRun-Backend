@@ -41,16 +41,6 @@
                     <p class="join-request-card__date" th:text="${#temporals.format(request.createdAt, 'yyyy.MM.dd')}">
                         2025.10.19</p>
                 </div>
-                <!--                <div class="running-info">-->
-                <!--                    <span class="distance">거리: {{ distance }}</span>-->
-                <!--                    <span class="pace">페이스: {{ pace }}</span>-->
-                <!--                </div>-->
-
-                <!--                <div class="introduction">{{ introduction }}</div>-->
-                <!--                <div class="actions">-->
-                <!--                    <button onclick="approve()">승인</button>-->
-                <!--                    <button onclick="reject()">거절</button>-->
-                <!--                </div>-->
                 <div class="join-request-card__message">
                     <p th:text="${request.introduction ?: '자기소개가 없습니다.'}">안녕하세요! 러닝 초보입니다. 함께 달리고 싶어요~!</p>
                 </div>
