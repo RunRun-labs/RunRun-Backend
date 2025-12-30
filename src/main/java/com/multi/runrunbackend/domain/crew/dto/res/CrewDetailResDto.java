@@ -72,7 +72,8 @@ public class CrewDetailResDto {
     public static CrewDetailResDto fromEntity(
             Crew crew,
             Long memberCount,
-            List<CrewActivityResDto> recentActivities
+            List<CrewActivityResDto> recentActivities,
+            String httpsImageUrl
     ) {
         return CrewDetailResDto.builder()
                 .crewId(crew.getId())
@@ -84,7 +85,7 @@ public class CrewDetailResDto {
                 .regularMeetingTime(crew.getActivityTime())
                 .crewRecruitStatus(crew.getCrewRecruitStatus())
                 .crewStatus(crew.getCrewStatus())
-                .crewImageUrl(crew.getCrewImageUrl())
+                .crewImageUrl(httpsImageUrl)
                 .distance(crew.getDistance())
                 .averagePace(crew.getAveragePace())
                 .recentActivities(recentActivities)
