@@ -1,0 +1,292 @@
+/* 전체 초기화 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background-color: #f5f5f5;
+    padding-bottom: 80px;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background-color: #f5f5f5;
+    padding-bottom: 80px;
+    min-height: 100vh;
+}
+
+/* 메인 컨텐츠 - 스크롤 가능하게 */
+.container {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 70px 20px 20px;
+    overflow-y: auto;
+    height: auto;
+}
+
+/* 헤더 */
+.header {
+    background-color: white;
+    border-bottom: 1px solid #e0e0e0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+.nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px 0;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav-link.active {
+    color: #c4e538;
+    font-weight: 700;
+}
+
+/* 메인 컨텐츠 */
+.container {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 70px 20px 20px;
+}
+
+/* 멤버십 카드 래퍼 */
+.membership-card-wrapper {
+    margin-bottom: 30px;
+}
+
+/* 멤버십 카드 공통 스타일 */
+.membership-card {
+    background: linear-gradient(135deg, #d4f563 0%, #c4e538 100%);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    min-height: 200px;
+}
+
+/* 무료 회원 카드 */
+.membership-card.free {
+    background: linear-gradient(135deg, #d4f563 0%, #c4e538 100%);
+}
+
+/* 프리미엄 회원 카드 */
+.membership-card.premium {
+    background: linear-gradient(135deg, #d4f563 0%, #c4e538 100%);
+}
+
+/* 현재 이용중 배지 */
+.status-badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+/* 멤버십 타이틀 */
+.membership-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.membership-icon {
+    font-size: 30px;
+}
+
+.membership-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* 기간 표시 (프리미엄만) */
+.membership-period {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* 설명 텍스트 */
+.membership-description {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* 버튼 그룹 */
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #333;
+    background-color: white;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    background-color: #333;
+    color: white;
+}
+
+.btn-cancel {
+    background-color: transparent;
+}
+
+.btn-detail {
+    background-color: transparent;
+}
+
+/* NEW 배지 */
+.new-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #ff4444;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* 혜택 섹션 */
+.benefits-section {
+    background-color: white;
+    border-radius: 15px;
+    padding: 25px;
+}
+
+.benefits-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 25px;
+}
+
+/* 혜택 아이템 */
+.benefit-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    transition: all 0.3s;
+}
+
+.benefit-item:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-2px);
+}
+
+.benefit-icon {
+    font-size: 32px;
+    min-width: 40px;
+}
+
+.benefit-content {
+    flex: 1;
+}
+
+.benefit-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.benefit-description {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+}
+
+/* 하단 네비게이션 */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 100;
+}
+
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #666;
+    font-size: 12px;
+}
+
+.bottom-nav-icon {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.bottom-nav-text {
+    font-size: 10px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 480px) {
+    .container {
+        padding: 70px 15px 20px;
+    }
+
+    .membership-card {
+        padding: 25px 20px;
+    }
+
+    .membership-title {
+        font-size: 28px;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
