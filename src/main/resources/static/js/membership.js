@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // ========================================
 async function fetchMembershipInfo(token) {
     try {
-        const response = await fetch(`${API_BASE_URL}/memberships/my`, {
+        const response = await fetch(`${API_BASE_URL}/memberships`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
