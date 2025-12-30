@@ -211,6 +211,7 @@ body {
     line-height: 1.4;
     margin-bottom: var(--spacing-xs);
     min-width: 0;
+    padding-right: 80px;
 }
 
 .crew-info__leader {
