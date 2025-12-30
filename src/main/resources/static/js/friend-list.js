@@ -1,9 +1,15 @@
+// 전역 변수: 무한 스크롤 관리
+let currentPage = 0;
+let hasNext = true;
+let isLoading = false;
+
 document.addEventListener("DOMContentLoaded", () => {
     console.log("friend-list.js loaded");
     
     attachBackButtonHandler();
     loadFriendRequests();
-    loadFriends();
+    initInfiniteScroll();
+    loadFriends(0, true); // 초기 로드 (첫 페이지, 초기화)
 });
 
 // 기본 프로필 이미지 SVG
@@ -54,15 +60,28 @@ async function loadFriendRequests() {
     }
 }
 
-async function loadFriends() {
+/**
+ * 친구 목록 로드 (Slice 기반 페이지네이션)
+ * @param {number} page - 페이지 번호 (0부터 시작)
+ * @param {boolean} reset - true면 목록 초기화, false면 기존 목록에 추가
+ */
+async function loadFriends(page = 0, reset = false) {
+    // 이미 로딩 중이거나 더 이상 불러올 데이터가 없으면 리턴
+    if (isLoading || (!hasNext && !reset)) {
+        return;
+    }
+
     try {
+        isLoading = true;
         const token = localStorage.getItem("accessToken");
         if (!token) {
             console.error("No access token found");
             return;
         }
 
-        const res = await fetch("/friends", {
+        // 페이지 파라미터 추가
+        const url = `/friends?page=${page}&size=20`;
+        const res = await fetch(url, {
             headers: {"Authorization": `Bearer ${token}`}
         });
 
@@ -71,20 +90,25 @@ async function loadFriends() {
         }
 
         const payload = await res.json();
-        const friends = payload?.data ?? [];
+        const sliceData = payload?.data ?? {};
+        const friends = sliceData?.content ?? [];
+        hasNext = sliceData?.hasNext ?? false;
+        currentPage = page;
 
-        renderFriends(friends);
+        if (reset) {
+            // 초기 로드: 기존 목록 초기화
+            renderFriends(friends, true);
+        } else {
+            // 무한 스크롤: 기존 목록에 추가
+            renderFriends(friends, false);
+        }
         
-        // 친구 요청 개수도 함께 확인
-        const requestRes = await fetch("/friends/requests/received", {
-            headers: {"Authorization": `Bearer ${token}`}
-        });
-        const requestPayload = requestRes.ok ? await requestRes.json() : {data: []};
-        const requestCount = requestPayload?.data?.length ?? 0;
-        
-        updateEmptyState(requestCount, friends.length);
+        // 초기 로드 시 empty state 업데이트는 renderFriends에서 처리
+        // (친구 요청 개수는 이미 loadFriendRequests에서 확인됨)
     } catch (e) {
         console.error("Error loading friends:", e);
+    } finally {
+        isLoading = false;
     }
 }
 
@@ -124,13 +148,31 @@ function renderFriendRequests(requests) {
     });
 }
 
-function renderFriends(friends) {
+/**
+ * 친구 목록 렌더링
+ * @param {Array} friends - 친구 목록 배열
+ * @param {boolean} reset - true면 기존 목록 초기화, false면 기존 목록에 추가
+ */
+function renderFriends(friends, reset = true) {
     const container = document.getElementById("friendsList");
     if (!container) return;
 
-    container.innerHTML = "";
+    if (reset) {
+        container.innerHTML = "";
+    }
 
     if (friends.length === 0) {
+        // 초기 로드이고 친구가 없을 때만 empty state 업데이트
+        if (reset) {
+            const requestNotification = document.getElementById("friendRequestNotification");
+            const hasRequests = requestNotification && !requestNotification.hasAttribute("hidden");
+            const requestCount = hasRequests 
+                ? parseInt(document.getElementById("requestCount")?.textContent || "0", 10) 
+                : 0;
+            updateEmptyState(requestCount, 0);
+        }
+        // 센티넬 업데이트 (더 이상 불러올 데이터 없음)
+        updateScrollSentinel();
         return;
     }
 
@@ -138,6 +180,9 @@ function renderFriends(friends) {
         const item = createFriendItem(friend);
         container.appendChild(item);
     });
+
+    // 무한 스크롤 센티넬 업데이트
+    updateScrollSentinel();
 }
 
 function createFriendRequestItem(request) {
@@ -287,7 +332,10 @@ async function acceptFriendRequest(requestId) {
         alert("친구 요청을 수락했습니다.");
         // 목록 새로고침
         loadFriendRequests();
-        loadFriends();
+        // 친구 목록 초기화 후 첫 페이지 로드
+        currentPage = 0;
+        hasNext = true;
+        loadFriends(0, true);
     } catch (e) {
         console.error("Error accepting friend request:", e);
         alert(e.message || "친구 요청 수락에 실패했습니다.");
@@ -348,8 +396,10 @@ async function deleteFriend(friendUserId) {
         }
 
         alert("친구가 삭제되었습니다.");
-        // 목록 새로고침
-        loadFriends();
+        // 목록 새로고침: 초기화 후 첫 페이지 로드
+        currentPage = 0;
+        hasNext = true;
+        loadFriends(0, true);
     } catch (e) {
         console.error("Error deleting friend:", e);
         alert(e.message || "친구 삭제에 실패했습니다.");
@@ -364,6 +414,60 @@ function updateEmptyState(requestCount, friendCount) {
         emptyState.removeAttribute("hidden");
     } else {
         emptyState.setAttribute("hidden", "hidden");
+    }
+}
+
+// 무한 스크롤 Observer
+let scrollObserver = null;
+
+/**
+ * 무한 스크롤 초기화
+ */
+function initInfiniteScroll() {
+    // Intersection Observer를 사용한 무한 스크롤
+    const observerOptions = {
+        root: null, // viewport를 root로 사용
+        rootMargin: "200px", // 뷰포트 하단 200px 전에 미리 로드
+        threshold: 0.1
+    };
+
+    scrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && hasNext && !isLoading) {
+                // 다음 페이지 로드
+                loadFriends(currentPage + 1, false);
+            }
+        });
+    }, observerOptions);
+}
+
+/**
+ * 무한 스크롤 센티넬 요소 관리
+ */
+function updateScrollSentinel() {
+    const container = document.getElementById("friendsList");
+    if (!container) return;
+
+    // 기존 센티넬 제거
+    const oldSentinel = document.getElementById("scrollSentinel");
+    if (oldSentinel) {
+        if (scrollObserver) {
+            scrollObserver.unobserve(oldSentinel);
+        }
+        oldSentinel.remove();
+    }
+
+    // 더 불러올 데이터가 있을 때만 센티넬 추가
+    if (hasNext) {
+        const sentinel = document.createElement("div");
+        sentinel.id = "scrollSentinel";
+        sentinel.style.height = "1px";
+        sentinel.style.width = "100%";
+        container.appendChild(sentinel);
+        
+        if (scrollObserver) {
+            scrollObserver.observe(sentinel);
+        }
     }
 }
 
