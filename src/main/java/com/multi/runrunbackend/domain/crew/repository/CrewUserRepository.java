@@ -76,13 +76,11 @@ public interface CrewUserRepository extends JpaRepository<CrewUser, Long> {
      */
     @Query("SELECT cu, COUNT(cau.id), MAX(ca.createdAt) " +
             "FROM CrewUser cu " +
-            "LEFT JOIN CrewActivityUser cau " +
-            "  ON cau.user.id = cu.user.id " +
-            "LEFT JOIN cau.crewActivity ca " +
-            "  ON ca.crew.id = :crewId " +
-            "  AND ca.isDeleted = false " +
+            "LEFT JOIN CrewActivityUser cau ON cau.user.id = cu.user.id " +
+            "LEFT JOIN cau.crewActivity ca ON ca.id = cau.crewActivity.id " +
             "WHERE cu.crew.id = :crewId " +
             "AND cu.isDeleted = false " +
+            "AND (ca.id IS NULL OR (ca.crew.id = :crewId AND ca.isDeleted = false)) " +
             "GROUP BY cu.id, cu.user.id, cu.user.name, cu.user.profileImageUrl, cu.role, cu.createdAt " +
             "ORDER BY " +
             "  CASE cu.role " +
