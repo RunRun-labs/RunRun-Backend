@@ -11,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public class MatchConfirmResDto {
+public class OfflineMatchConfirmResDto {
 
   private Long sessionId;
 }
