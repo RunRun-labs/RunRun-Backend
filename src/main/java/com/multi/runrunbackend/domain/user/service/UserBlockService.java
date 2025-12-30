@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.user.service;
 
 import com.multi.runrunbackend.common.exception.custom.BadRequestException;
+import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
  *
  * @author : kimyongwon
  * @description : 차단, 차단 해제, 목록 조회 비즈니스 로직.
- * @filename : UserBlcokService
+ * @filename : UserBlockService
  * @since : 25. 12. 29. 오전 12:12 월요일
  */
 @Service
@@ -43,7 +44,7 @@ public class UserBlockService {
         }
 
         if (userBlockRepository.existsByBlockerAndBlockedUser(blocker, targetUser)) {
-            return;
+            throw new ForbiddenException(ErrorCode.ALREADY_BLOCKED);
         }
 
         UserBlock userBlock = UserBlock.block(blocker, targetUser);
@@ -71,6 +72,26 @@ public class UserBlockService {
         return userBlockRepository.findAllByBlockerId(blocker.getId()).stream()
                 .map(UserBlockResDto::from)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public void validateUserBlockStatus(Long targetUserId, CustomUser principal) {
+
+        User currentUser = userRepository.findByLoginId(principal.getLoginId())
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        // 1. 내가 상대를 차단한 경우
+        if (userBlockRepository.existsByBlockerAndBlockedUser(currentUser, targetUser)) {
+            throw new ForbiddenException(ErrorCode.USER_BLOCKED);
+        }
+
+        // 2. 상대가 나를 차단한 경우 (추가된 요구사항)
+        if (userBlockRepository.existsByBlockerAndBlockedUser(targetUser, currentUser)) {
+            throw new ForbiddenException(ErrorCode.BLOCKED_BY_USER);
+        }
     }
 
     private User getUserByPrincipal(CustomUser principal) {
