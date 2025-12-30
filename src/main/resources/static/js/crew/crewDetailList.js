@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    currentUserId = parseInt(localStorage.getItem('userId'));
+    let currentUserId = parseInt(localStorage.getItem('userId'));
 
     await loadCrewData();
 
