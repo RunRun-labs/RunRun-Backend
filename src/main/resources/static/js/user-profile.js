@@ -1,22 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
     console.log("user-profile.js loaded");
-    
+
     // Thymeleaf에서 전달된 userId 우선 사용, 없으면 URL에서 추출
     // URL 형식: /profile/{userId}
     let userId = window.userProfileUserId;
-    
+
     if (!userId) {
         const urlParams = new URLSearchParams(window.location.search);
         // /profile/{userId} 경로에서 userId 추출
         const userIdFromPath = window.location.pathname.split('/').pop();
         userId = userIdFromPath || urlParams.get('userId');
     }
-    
+
     if (!userId) {
         console.error("User ID not found");
         return;
     }
-    
+
     attachBackButtonHandler();
     attachFriendButtonHandler(userId);
     attachBlockButtonHandler(userId);
@@ -47,7 +47,7 @@ async function loadUserProfile(userId) {
 
         const payload = await res.json();
         const user = payload?.data ?? null;
-        
+
         if (!user) {
             console.error("User data not found");
             return;
@@ -65,17 +65,18 @@ async function loadUserProfile(userId) {
 function renderProfile(user) {
     // 프로필 제목 설정
     const titleEl = document.getElementById("profileTitle");
-    if (titleEl && user.name) {
-        titleEl.textContent = `${user.name} 님의 프로필`;
+    if (titleEl) {
+        const loginId = user?.loginId; // 백엔드 응답 필드명이 다르면 여기만 맞추면 됨
+        titleEl.textContent = `${loginId ? loginId : "사용자"} 님의 프로필`;
     }
 
     // 프로필 이미지 렌더링
     renderProfileImage(user);
-    
+
     // 누적/랭킹 정보 (나중에 연동 예정)
     const totalDistanceEl = document.getElementById("totalDistance");
     const rankEl = document.getElementById("rank");
-    
+
     if (totalDistanceEl) {
         totalDistanceEl.textContent = "-"; // TODO: API 연동 후 실제 데이터 표시
     }
@@ -142,7 +143,7 @@ function attachFriendButtonHandler(userId) {
 
     friendBtn.addEventListener("click", async () => {
         const isFriend = friendBtn.classList.contains("is-friend");
-        
+
         if (isFriend) {
             // 친구 삭제
             if (confirm("친구를 삭제하시겠습니까?")) {
