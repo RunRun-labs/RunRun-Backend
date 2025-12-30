@@ -7,10 +7,7 @@ import com.multi.runrunbackend.domain.membership.service.MembershipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author : BoKyung
@@ -50,6 +47,20 @@ public class MembershipController {
 
         return ResponseEntity.ok(
                 ApiResponse.successNoData("멤버십 해지 신청 완료")
+        );
+    }
+
+    /**
+     * 멤버십 구독 (POST /api/memberships)
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse> subscribeMembership(
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        membershipService.subscribeMembership(principal);
+
+        return ResponseEntity.ok(
+                ApiResponse.successNoData("프리미엄 멤버십 구독 완료")
         );
     }
 }
