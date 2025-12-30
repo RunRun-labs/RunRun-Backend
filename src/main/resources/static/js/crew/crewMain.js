@@ -113,7 +113,7 @@ function setupEventListeners() {
     const createBtn = document.querySelector('[data-action="create"]');
     if (createBtn) {
         createBtn.onclick = () => {
-            if (!validateLogin()) return;
+            if (!validateCanCreateCrew()) return;
             location.href = '/crews/new';
         };
     }
@@ -183,6 +183,21 @@ function validateCrewLeader() {
 
     if (!crewData.isLeader) {
         alert('크루장만 접근 가능합니다.');
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * 크루 생성 가능 여부 검증 (1인 1크루 제한)
+ */
+function validateCanCreateCrew() {
+    if (!validateLogin()) return false;
+
+    // crewData가 있고 크루에 가입되어 있으면 생성 불가
+    if (crewData && crewData.hasJoinedCrew) {
+        alert('이미 크루에 가입되어 있습니다.\n1인 1크루만 가입 가능합니다.');
         return false;
     }
 
