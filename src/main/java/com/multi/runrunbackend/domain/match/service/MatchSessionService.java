@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.match.service;
 
+import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
@@ -20,9 +21,12 @@ import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @filename : MatchService
  * @since : 2025-12-21 일요일
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -131,6 +136,56 @@ public class MatchSessionService {
     recruit.updateStatus(RecruitStatus.MATCHED);
 
     return matchSession.getId();
+  }
+
+  @Transactional
+  public Long createOnlineSession(Set<String> userIds, DistanceType distance, int avgDuration) {
+
+    if (userIds == null || userIds.isEmpty()) {
+      throw new ValidationException(ErrorCode.NOT_ENOUGH_PARTICIPANTS);
+    }
+
+    double targetDistanceValue = convertToKiloMeter(distance);
+
+    MatchSession session = MatchSession.builder()
+        .type(SessionType.ONLINE)
+        .targetDistance(targetDistanceValue)
+        .duration(avgDuration)
+        .status(SessionStatus.STANDBY)
+        .build();
+
+    matchSessionRepository.save(session);
+
+    List<SessionUser> sessionUsers = new ArrayList<>();
+
+    for (String userIdStr : userIds) {
+      Long userId = Long.parseLong(userIdStr);
+      User user = userRepository.findById(userId)
+          .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+      SessionUser sessionUser = SessionUser.builder()
+          .matchSession(session)
+          .user(user)
+          .isReady(false)
+          .build();
+
+      sessionUsers.add(sessionUser);
+    }
+
+    sessionUserRepository.saveAll(sessionUsers);
+
+    log.info("온라인 매칭 DB 저장 완료 - SessionID: {}, 거리: {}km", session.getId(), targetDistanceValue);
+
+    return session.getId();
+  }
+
+  private double convertToKiloMeter(DistanceType distance) {
+    return switch (distance) {
+      case KM_3 -> 3.0;
+      case KM_5 -> 5.0;
+      case KM_10 -> 10.0;
+      default -> 0.0;
+    };
   }
 
 }

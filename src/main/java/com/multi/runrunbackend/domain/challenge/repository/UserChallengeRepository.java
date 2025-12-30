@@ -23,7 +23,10 @@ public interface UserChallengeRepository extends JpaRepository<UserChallenge, Lo
     List<UserChallenge> findByUserId(Long userId);
 
     // 특정 챌린지의 참여자 수 카운트
-    long countByChallengeId(Long challengeId);
+    // UserChallenge와 User를 조인하여, User의 isDeleted가 false인 경우만 카운트합니다.
+    @Query("SELECT COUNT(uc) FROM UserChallenge uc JOIN uc.user u " +
+            "WHERE uc.challenge.id = :challengeId AND u.isDeleted = false")
+    long countByChallengeId(@Param("challengeId") Long challengeId);
 
     // 종료일이 지났는데 아직 상태가 (JOINED, IN_PROGRESS)인 것들 조회 -> 실패 처리
     @Query("SELECT uc FROM UserChallenge uc JOIN uc.challenge c " +

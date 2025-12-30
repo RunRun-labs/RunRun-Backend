@@ -23,25 +23,38 @@ public class PathController {
         return "match/match-select";
     }
 
-    @GetMapping("/recruit")
-    public String recruitListView() {
-        return "recruit/recruit-list";
-    }
+  @GetMapping("/match/online")
+  public String onlineMatchView() {
+    return "match/online-match";
+  }
+
+  //테스트용
+  @GetMapping("/match/online/confirmed")
+  public String onlineMatchConfirmedView() {
+    return "match/online-match-confirmed";
+  }
+
+  @GetMapping("/recruit")
+  public String recruitListView() {
+    return "recruit/recruit-list";
+  }
 
     @GetMapping("/recruit/create")
     public String recruitCreateView() {
         return "recruit/recruit-create";
     }
 
-    @GetMapping("/recruit/{id}")
-    public String recruitDetailView() {
-        return "recruit/recruit-detail";
-    }
+  @GetMapping("/recruit/{id}")
+  public String recruitDetailView(@PathVariable Long id, Model model) {
+    model.addAttribute("recruitId", id);
+    return "recruit/recruit-detail";
+  }
 
-    @GetMapping("/recruit/{id}/update")
-    public String recruitUpdateView() {
-        return "recruit/recruit-update";
-    }
+  @GetMapping("/recruit/{id}/update")
+  public String recruitUpdateView(@PathVariable Long id, Model model) {
+    model.addAttribute("recruitId", id);
+    return "recruit/recruit-update";
+  }
 
     @GetMapping("/crews")
     public String crewListPage() {
@@ -173,14 +186,35 @@ public class PathController {
         return "course/courseUpdate";
     }
 
-    @GetMapping("/test/gps")
-    public String gpsTestView() {
-        return "test/gps-test";
-    }
+  @GetMapping("/test/gps")
+  public String gpsTestView() {
+    return "test/gps-test";
+  }
 
     @GetMapping("/tts-test")
     public String ttsTestView() {
         return "tts-test";
+    }
+
+    @GetMapping("/setting")
+    public String settingView() {
+        return "setting/setting";
+    }
+
+    @GetMapping("/setting/blocked-users")
+    public String blockedUsersView() {
+        return "setting/blocked-users";
+    }
+
+    @GetMapping("/terms/view")
+    public String termsView() {
+        return "terms/terms-detail";
+    }
+
+    @GetMapping("/profile/{userId}")
+    public String userProfileView(@PathVariable Long userId, Model model) {
+        model.addAttribute("userId", userId);
+        return "user/user-profile";
     }
 
 }
