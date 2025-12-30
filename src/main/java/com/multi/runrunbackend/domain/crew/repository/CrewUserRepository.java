@@ -92,4 +92,10 @@ public interface CrewUserRepository extends JpaRepository<CrewUser, Long> {
             "    ELSE 3 " +
             "  END, cu.createdAt ASC")
     List<Object[]> findAllWithParticipationCountAndLastActivity(@Param("crewId") Long crewId);
+
+    /**
+     * @param userId 사용자 ID
+     * @description : 사용자가 가입한 크루 정보 조회
+     */
+    Optional<CrewUser> findByUserIdAndIsDeletedFalse(Long userId);
 }
