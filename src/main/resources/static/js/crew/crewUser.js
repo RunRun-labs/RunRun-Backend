@@ -23,8 +23,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     if (!crewId) {
-        showError('크루 ID가 없습니다.');
+        showError('크루 ID를 찾을 수 없습니다..');
         return;
+    }
+
+    // 권한 확인 및 멤버 로드 추가
+    const hasPermission = await checkCrewMemberPermission();
+
+    if (hasPermission) {
+        // 크루원이면 목록 로드
+        await fetchMembers();
     }
 
     // 로컬스토리지에서 현재 사용자 ID 가져오기
@@ -35,14 +43,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     } catch (error) {
         console.warn('사용자 ID를 가져오는데 실패했습니다:', error);
-    }
-
-    // 권한 확인
-    const hasPermission = await checkCrewMemberPermission();
-
-    if (hasPermission) {
-        // 크루원이면 목록 로드
-        await fetchMembers();
     }
 
     // 드롭다운 닫기 이벤트
@@ -467,26 +467,6 @@ function showNoPermissionState() {
 function goToCrewDetail() {
     window.location.href = `/crews/${crewId}`;
 }
-
-// ========================================
-// 페이지 초기화
-// ========================================
-document.addEventListener('DOMContentLoaded', async () => {
-
-    if (!crewId) {
-        alert('크루 ID를 찾을 수 없습니다.');
-        history.back();
-        return;
-    }
-
-    // 권한 확인
-    const hasPermission = await checkCrewMemberPermission();
-
-    if (hasPermission) {
-        // 크루원이면 목록 로드
-        await loadCrewMembers();
-    }
-});
 
 // ============================
 // 권한 변경 처리
