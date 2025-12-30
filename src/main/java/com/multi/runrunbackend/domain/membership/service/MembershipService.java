@@ -88,6 +88,31 @@ public class MembershipService {
     }
 
     /**
+     * @description : 멤버십 구독 (프리미엄 업그레이드)
+     * @author : BoKyung
+     * @since : 25. 12. 30. 월요일
+     */
+    @Transactional
+    public void subscribeMembership(CustomUser principal) {
+
+        User user = getUserOrThrow(principal);
+
+        Membership membership = membershipRepository.findByUser(user)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+
+        // 이미 프리미엄이면 에러
+        if (membership.getMembershipGrade() == MembershipGrade.PREMIUM
+                && membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.MEMBERSHIP_ALREADY_PREMIUM);
+        }
+
+        // 프리미엄 업그레이드
+        membership.upgradeToPremium();
+
+        log.info("프리미엄 멤버십 구독 완료 - 사용자 ID: {}", user.getId());
+    }
+
+    /**
      * @description : 멤버십 만료 처리 (스케줄러용)
      */
     @Transactional
