@@ -172,4 +172,9 @@ public class PathController {
         return "tts-test";
     }
 
+    @GetMapping("/friends/list")
+    public String friendListView() {
+        return "friend/friend-list";
+    }
+
 }
