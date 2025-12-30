@@ -1,10 +1,13 @@
 package com.multi.runrunbackend.domain.membership.repository;
 
+import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.entity.Membership;
 import com.multi.runrunbackend.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -18,5 +21,11 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
 
     // 멤버십 찾기
     Optional<Membership> findByUser(User user);
+
+    // 해지 신청 상태 + 만료일이 지난 멤버십 찾기 (자동 처리용)
+    List<Membership> findByMembershipStatusAndEndDateBefore(
+            MembershipStatus status,
+            LocalDateTime dateTime
+    );
 
 }
