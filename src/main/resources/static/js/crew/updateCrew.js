@@ -10,6 +10,7 @@
 // ========================================
 let currentCrewData = null;
 let selectedImageFile = null;
+let uploadedImageUrl = null;
 
 // ========================================
 // URL에서 크루 ID 추출
