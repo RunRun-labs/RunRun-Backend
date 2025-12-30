@@ -9,6 +9,6 @@ package com.multi.runrunbackend.domain.membership.constant;
 public enum MembershipStatus {
 
     ACTIVE,      // 활성화 (사용 중)
-    CANCELED,    // 해지 신청됨
+    CANCELED,    // 해지 신청됨 (만료대기)
     EXPIRED      // 만료됨
 }
