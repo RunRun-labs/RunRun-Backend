@@ -40,6 +40,17 @@ public enum ErrorCode {
             "BLOCK_002",
             "차단한 사용자 입니다."
     ),
+    BLOCKED_BY_USER(
+            HttpStatus.FORBIDDEN,
+            "BLOCK_003",
+            "차단당한 사용자 입니다."
+    ),
+    ALREADY_BLOCKED(
+            HttpStatus.CONFLICT,
+            "BLOCK_004",
+            "이미 차단한 사용자 입니다."
+    ),
+
 
     /* ===== 크루 관련 ===== */
     CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR001", "크루를 찾을 수 없습니다."),
