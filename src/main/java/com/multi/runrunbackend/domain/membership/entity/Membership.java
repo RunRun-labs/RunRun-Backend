@@ -115,7 +115,17 @@ public class Membership extends BaseEntity {
      * @since : 25. 12. 30. 월요일
      */
     public void renew() {
-        this.nextBillingDate = this.nextBillingDate.plusMonths(1);
+        // null이면 (FREE 회원이 PREMIUM 구독 시작)
+        if (this.nextBillingDate == null) {
+            this.nextBillingDate = LocalDateTime.now().plusMonths(1);
+            this.membershipGrade = MembershipGrade.PREMIUM;
+        }
+        // 이미 있으면 (기존 PREMIUM 회원 갱신)
+        else {
+            this.nextBillingDate = this.nextBillingDate.plusMonths(1);
+        }
+
+        // 상태는 무조건 ACTIVE
         this.membershipStatus = MembershipStatus.ACTIVE;
     }
 
