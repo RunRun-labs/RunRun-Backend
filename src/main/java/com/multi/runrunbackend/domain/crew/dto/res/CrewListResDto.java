@@ -54,11 +54,11 @@ public class CrewListResDto {
      * @param memberCount 크루원 수
      * @description : fromEntity : Entity → DTO 변환
      */
-    public static CrewListResDto fromEntity(Crew crew, Long memberCount) {
+    public static CrewListResDto fromEntity(Crew crew, Long memberCount, String httpsImageUrl) {
         return CrewListResDto.builder()
                 .crewId(crew.getId())
                 .crewName(crew.getCrewName())
-                .crewImageUrl(crew.getCrewImageUrl())
+                .crewImageUrl(httpsImageUrl)
                 .region(crew.getRegion())
                 .memberCount(memberCount)
                 .crewRecruitStatus(crew.getCrewRecruitStatus())
