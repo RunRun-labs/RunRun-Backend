@@ -1,21 +1,15 @@
 package com.multi.runrunbackend.domain.running.battle.controller;
 
 import com.multi.runrunbackend.common.exception.custom.CustomException;
-import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto;
 import com.multi.runrunbackend.domain.running.battle.dto.req.BattleReadyReqDto;
 import com.multi.runrunbackend.domain.running.battle.dto.res.BattleRankingResDto;
-import com.multi.runrunbackend.domain.running.battle.dto.res.BattleUpdateRespDto;
 import com.multi.runrunbackend.domain.running.battle.service.BattleService;
-import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 /**
@@ -30,7 +24,7 @@ import org.springframework.stereotype.Controller;
 public class BattleWebSocketController {
 
   private final BattleService battleService;
-  private final SimpMessagingTemplate messagingTemplate;
+  // SimpMessagingTemplate 제거 - Redis Pub/Sub 사용
 
   @MessageMapping("/battle/ready")
   public void handleReady(BattleReadyReqDto request) {
@@ -44,16 +38,12 @@ public class BattleWebSocketController {
       boolean allReady = battleService.toggleReady(request.getSessionId(), userId,
           request.getIsReady());
 
-      Map<String, Object> response = new HashMap<>();
-      response.put("type", "BATTLE_READY");
-      response.put("userId", userId);
-      response.put("isReady", request.getIsReady());
-      response.put("allReady", allReady);  // allReady 추가
-      response.put("timestamp", LocalDateTime.now());
-
-      messagingTemplate.convertAndSend(
-          "/sub/battle/" + request.getSessionId() + "/ready",
-          (Object) response
+      // Redis Pub/Sub으로 Ready 메시지 전송
+      battleService.sendReadyMessage(
+          request.getSessionId(),
+          userId,
+          request.getIsReady(),
+          allReady
       );
 
       log.info("✅ Ready 상태 브로드캐스트: sessionId={}, userId={}, isReady={}, allReady={}",
@@ -66,36 +56,16 @@ public class BattleWebSocketController {
         // 1초 대기 (UI 업데이트 시간)
         Thread.sleep(1000);
 
-        // 배틀 시작
+        // 배틀 시작 (Service에서 Redis Pub/Sub 메시지 전송)
         battleService.startBattle(request.getSessionId());
-
-        // 배틀 시작 알림
-        Map<String, Object> startResponse = new HashMap<>();
-        startResponse.put("type", "BATTLE_START");
-        startResponse.put("sessionId", request.getSessionId());
-        startResponse.put("timestamp", LocalDateTime.now());
-
-        messagingTemplate.convertAndSend(
-            "/sub/battle/" + request.getSessionId() + "/start",
-            (Object) startResponse
-        );
 
         log.info("🚩 배틀 시작 브로드캐스트: sessionId={}", request.getSessionId());
 
         // 초기 순위 전송 (0m로 초기화된 상태)
         List<BattleRankingResDto> initialRankings = battleService.getRankings(
             request.getSessionId());
-        BattleUpdateRespDto initialUpdate = BattleUpdateRespDto.builder()
-            .type("BATTLE_UPDATE")
-            .sessionId(request.getSessionId())
-            .rankings(initialRankings)
-            .timestamp(LocalDateTime.now())
-            .build();
-
-        messagingTemplate.convertAndSend(
-            "/sub/battle/" + request.getSessionId() + "/ranking",
-            (Object) initialUpdate
-        );
+        
+        battleService.sendRankingMessage(request.getSessionId(), initialRankings);
 
         log.info("📊 초기 순위 전송: sessionId={}, 참가자={}명",
             request.getSessionId(), initialRankings.size());
@@ -109,11 +79,11 @@ public class BattleWebSocketController {
       // ValidationException, NotFoundException 등 모든 커스텀 Exception 처리
       log.error("❌ Ready 처리 실패 - {}: sessionId={}", 
           e.getErrorCode().getMessage(), request.getSessionId());
-      sendErrorMessage(request.getSessionId(), e.getErrorCode());
+      battleService.sendErrorMessage(request.getSessionId(), e.getErrorCode());
 
     } catch (Exception e) {
       log.error("❌ Ready 처리 실패: sessionId={}", request.getSessionId(), e);
-      sendErrorMessage(request.getSessionId(), ErrorCode.INTERNAL_SERVER_ERROR);
+      battleService.sendErrorMessage(request.getSessionId(), ErrorCode.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -136,17 +106,8 @@ public class BattleWebSocketController {
 
       List<BattleRankingResDto> rankings = battleService.getRankings(request.getSessionId());
 
-      BattleUpdateRespDto response = BattleUpdateRespDto.builder()
-          .type("BATTLE_UPDATE")
-          .sessionId(request.getSessionId())
-          .rankings(rankings)
-          .timestamp(LocalDateTime.now())
-          .build();
-
-      messagingTemplate.convertAndSend(
-          "/sub/battle/" + request.getSessionId() + "/ranking",
-          (Object) response
-      );
+      // Redis Pub/Sub으로 순위 메시지 전송
+      battleService.sendRankingMessage(request.getSessionId(), rankings);
 
       log.info("📡 순위 브로드캐스트: sessionId={}, 참가자={}명",
           request.getSessionId(), rankings.size());
@@ -155,27 +116,11 @@ public class BattleWebSocketController {
       // NotFoundException, ValidationException 등 모든 커스텀 Exception 처리
       log.error("❌ GPS 처리 실패 - {}: sessionId={}", 
           e.getErrorCode().getMessage(), request.getSessionId());
-      sendErrorMessage(request.getSessionId(), e.getErrorCode());
+      battleService.sendErrorMessage(request.getSessionId(), e.getErrorCode());
 
     } catch (Exception e) {
       log.error("❌ GPS 처리 실패: sessionId={}", request.getSessionId(), e);
-      sendErrorMessage(request.getSessionId(), ErrorCode.INTERNAL_SERVER_ERROR);
+      battleService.sendErrorMessage(request.getSessionId(), ErrorCode.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  private void sendErrorMessage(Long sessionId, ErrorCode errorCode) {
-    Map<String, Object> errorResponse = new HashMap<>();
-    errorResponse.put("type", "ERROR");
-    errorResponse.put("errorCode", errorCode.name());
-    errorResponse.put("message", errorCode.getMessage());
-    errorResponse.put("httpStatus", errorCode.getHttpStatus().value());
-    errorResponse.put("timestamp", LocalDateTime.now());
-
-    messagingTemplate.convertAndSend(
-        "/sub/battle/" + sessionId + "/errors",
-        (Object) errorResponse
-    );
-
-    log.info("📤 에러 메시지 전송: sessionId={}, errorCode={}", sessionId, errorCode.name());
   }
 }

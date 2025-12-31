@@ -149,6 +149,13 @@ function onConnected(frame) {
     }, 2000);
   });
   
+  // 포기 메시지 구독 (새로 추가)
+  stompClient.subscribe('/sub/battle/' + SESSION_ID + '/quit', function(message) {
+    const data = JSON.parse(message.body);
+    console.log('🚪 포기 알림 수신:', data);
+    handleUserQuit(data);
+  });
+  
   console.log('✅ 채널 구독 완료');
   
   // 초기 순위 로드 (REST API)
@@ -750,6 +757,78 @@ function showFinishMessage() {
     setTimeout(() => {
       document.body.removeChild(messageDiv);
     }, 500);
+  }, 3000);
+}
+
+/**
+ * 포기 메시지 처리
+ */
+function handleUserQuit(data) {
+  console.log('🚨 포기 처리:', data);
+  
+  // 토스트 메시지 표시
+  showToast(data.message || data.quitUserName + '님이 포기하셨습니다.');
+  
+  // 순위 자동 갱신 (포기한 사람 제거됨)
+  loadInitialRankings();
+}
+
+/**
+ * 토스트 메시지 표시
+ */
+function showToast(message) {
+  // 기존 토스트 제거
+  const existingToast = document.getElementById('toast-message');
+  if (existingToast) {
+    document.body.removeChild(existingToast);
+  }
+  
+  const toast = document.createElement('div');
+  toast.id = 'toast-message';
+  toast.style.cssText = `
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 107, 107, 0.95);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.3s ease-out;
+  `;
+  toast.textContent = message;
+  
+  // 애니메이션 정의
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideDown {
+      from {
+        transform: translateX(-50%) translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  document.body.appendChild(toast);
+  
+  // 3초 후 제거
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
   }, 3000);
 }
 

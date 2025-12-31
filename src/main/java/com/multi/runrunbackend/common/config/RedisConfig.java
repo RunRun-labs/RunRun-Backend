@@ -3,6 +3,7 @@ package com.multi.runrunbackend.common.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.multi.runrunbackend.domain.chat.service.RedisSubscriber;
+import com.multi.runrunbackend.domain.running.battle.service.BattleRedisSubscriber;
 import com.multi.runrunbackend.domain.running.service.RunningStatsSubscriber;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -90,6 +91,14 @@ public class RedisConfig {
   }
 
   /**
+   * 배틀 WebSocket 토픽 - battle:* 패턴
+   */
+  @Bean
+  public PatternTopic battleTopic() {
+    return new PatternTopic("battle:*");
+  }
+
+  /**
    * Redis Pub/Sub 메시지 리스너 컨테이너 - Redis메시지를 수신하는 컨테이너
    */
   @Bean
@@ -97,8 +106,10 @@ public class RedisConfig {
       RedisConnectionFactory connectionFactory,
       MessageListenerAdapter chatListenerAdapter,
       MessageListenerAdapter runningListenerAdapter,
+      MessageListenerAdapter battleListenerAdapter,
       PatternTopic chatTopic,
-      PatternTopic runningTopic
+      PatternTopic runningTopic,
+      PatternTopic battleTopic
   ) {
     RedisMessageListenerContainer container = new RedisMessageListenerContainer();
     container.setConnectionFactory(connectionFactory);
@@ -108,6 +119,9 @@ public class RedisConfig {
 
     // GPS 통계 리스너
     container.addMessageListener(runningListenerAdapter, runningTopic);
+
+    // 배틀 WebSocket 리스너
+    container.addMessageListener(battleListenerAdapter, battleTopic);
 
     return container;
   }
@@ -126,6 +140,14 @@ public class RedisConfig {
   @Bean
   public MessageListenerAdapter runningListenerAdapter(RunningStatsSubscriber subscriber) {
     return new MessageListenerAdapter(subscriber, "handleMessage");
+  }
+
+  /**
+   * 배틀 WebSocket 리스너 어댑터
+   */
+  @Bean
+  public MessageListenerAdapter battleListenerAdapter(BattleRedisSubscriber subscriber) {
+    return new MessageListenerAdapter(subscriber, "onMessage");
   }
 
   @Bean
