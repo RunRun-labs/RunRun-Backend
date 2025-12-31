@@ -5,12 +5,15 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.dto.req.OfflineMatchConfirmReqDto;
 import com.multi.runrunbackend.domain.match.dto.req.OnlineMatchJoinReqDto;
+import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.OfflineMatchConfirmResDto;
 import com.multi.runrunbackend.domain.match.dto.res.OnlineMatchStatusResDto;
 import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
 import com.multi.runrunbackend.domain.match.service.MatchingQueueService;
+import com.multi.runrunbackend.domain.running.battle.service.BattleService;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -40,6 +43,7 @@ public class MatchSessionController {
 
   private final MatchSessionService matchSessionService;
   private final MatchingQueueService matchingQueueService;
+  private final BattleService battleService;
 
   @PostMapping("/offline/confirm")
   public ResponseEntity<ApiResponse<OfflineMatchConfirmResDto>> confirmMatch(
@@ -81,6 +85,32 @@ public class MatchSessionController {
   ) {
     matchingQueueService.removeQueue(principal);
     return ResponseEntity.ok(ApiResponse.successNoData("매칭 대기가 취소되었습니다."));
+  }
+
+  /**
+   * 대기방 정보 조회
+   */
+  @GetMapping("/session/{sessionId}")
+  public ResponseEntity<ApiResponse<MatchWaitingInfoDto>> getWaitingInfo(
+      @PathVariable Long sessionId,
+      @AuthenticationPrincipal CustomUser principal
+  ) {
+    MatchWaitingInfoDto info = matchSessionService.getWaitingInfo(sessionId, principal.getUserId());
+    return ResponseEntity.ok(ApiResponse.success(info));
+  }
+
+  /**
+   * 타임아웃 처리 (5분 경과)
+   */
+  @PostMapping("/session/{sessionId}/timeout")
+  public ResponseEntity<ApiResponse<Map<String, Object>>> handleTimeout(
+      @PathVariable Long sessionId,
+      @AuthenticationPrincipal CustomUser principal
+  ) {
+    // Service에서 모든 비즈니스 로직 및 WebSocket 메시지 전송 처리
+    Map<String, Object> result = battleService.handleTimeout(sessionId);
+
+    return ResponseEntity.ok(ApiResponse.success(result));
   }
 
 

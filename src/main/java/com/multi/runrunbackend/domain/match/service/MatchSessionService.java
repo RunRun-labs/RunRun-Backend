@@ -10,6 +10,8 @@ import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
+import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
+import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingParticipantDto;
 import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
@@ -24,6 +26,7 @@ import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.time.Duration;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -153,7 +156,7 @@ public class MatchSessionService {
       throw new ValidationException(ErrorCode.NOT_ENOUGH_PARTICIPANTS);
     }
 
-    double targetDistanceValue = convertToKiloMeter(distance);
+    double targetDistanceValue = convertToKilometer(distance);
 
     MatchSession session = MatchSession.builder()
         .type(SessionType.ONLINE)
@@ -187,13 +190,88 @@ public class MatchSessionService {
     return session.getId();
   }
 
-  private double convertToKiloMeter(DistanceType distance) {
+  private double convertToKilometer(DistanceType distance) {
     return switch (distance) {
       case KM_3 -> 3.0;
       case KM_5 -> 5.0;
       case KM_10 -> 10.0;
       default -> 0.0;
     };
+  }
+
+  /**
+   * 대기방 정보 조회
+   */
+  public MatchWaitingInfoDto getWaitingInfo(Long sessionId, Long currentUserId) {
+    log.info("🔍 세션 정보 조회 시작: sessionId={}, currentUserId={}", sessionId, currentUserId);
+
+    // 세션 조회
+    MatchSession session = matchSessionRepository.findById(sessionId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+
+    log.info("✅ 세션 찾음: id={}, status={}, targetDistance={}",
+        session.getId(), session.getStatus(), session.getTargetDistance());
+
+    // 참가자 목록 조회
+    List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
+
+    log.info("👥 참가자 수: {}", sessionUsers.size());
+
+    if (sessionUsers.isEmpty()) {
+      log.error("❌ 참가자가 없음! sessionId={}", sessionId);
+      throw new NotFoundException(ErrorCode.SESSION_NOT_FOUND);
+    }
+
+    // 방장 찾기 (첫 번째 참가자 또는 Recruit의 host)
+    Long hostUserId = session.getRecruit() != null
+        ? session.getRecruit().getUser().getId()
+        : sessionUsers.get(0).getUser().getId();
+
+    log.info("👑 방장 userId: {}", hostUserId);
+
+    // 참가자 DTO 변환
+    List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
+        .map(su -> {
+          User user = su.getUser();
+          return MatchWaitingParticipantDto.builder()
+              .userId(user.getId())
+              .name(user.getName())
+              .profileImage(user.getProfileImageUrl())
+              .isReady(su.isReady())
+              .isHost(user.getId().equals(hostUserId))
+              .avgPace("5:" + (30 + (int)(Math.random() * 30)))  // 임시 하드코딩: 5:30 ~ 5:59
+              .build();
+        })
+        .collect(Collectors.toList());
+
+    // Ready 카운트
+    long readyCount = sessionUsers.stream().filter(SessionUser::isReady).count();
+
+    // 남은 시간 계산 (세션 생성 시각 + 5분 - 현재 시각)
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime createdAt = session.getCreatedAt();
+    LocalDateTime timeLimit = createdAt.plusMinutes(5);  // 5분 제한
+
+    long remainingSeconds = Duration.between(now, timeLimit).getSeconds();
+    if (remainingSeconds < 0) {
+      remainingSeconds = 0;  // 음수면 0으로
+    }
+
+    MatchWaitingInfoDto result = MatchWaitingInfoDto.builder()
+        .sessionId(session.getId())
+        .targetDistance(session.getTargetDistance())
+        .status(session.getStatus())
+        .createdAt(session.getCreatedAt())
+        .remainingSeconds(remainingSeconds)
+        .participants(participants)
+        .readyCount((int) readyCount)
+        .totalCount(sessionUsers.size())
+        .build();
+
+    log.info("✅ 세션 정보 반환: participants={}, readyCount={}",
+        result.getTotalCount(), result.getReadyCount());
+
+    return result;
   }
 
 

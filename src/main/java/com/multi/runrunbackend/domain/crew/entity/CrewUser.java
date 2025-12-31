@@ -65,4 +65,11 @@ public class CrewUser extends BaseEntity {
         }
     }
 
+    /**
+     * 권한 변경
+     */
+    public void changeRole(CrewRole newRole) {
+        this.role = newRole;
+    }
+
 }

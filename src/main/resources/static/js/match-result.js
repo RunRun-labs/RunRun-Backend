@@ -1,0 +1,385 @@
+/**
+ * Match Result - 배틀 결과 페이지
+ */
+
+// 전역 변수
+let SESSION_ID = null;
+let myUserId = null;
+let resultData = null;
+
+// localStorage에서 userId 가져오기
+const storedUserId = localStorage.getItem('userId');
+if (storedUserId) {
+  myUserId = parseInt(storedUserId);
+  console.log('👤 현재 사용자 ID:', myUserId);
+}
+
+// 페이지 로드 시 초기화
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("🎯 결과 페이지 초기화");
+  
+  // URL에서 sessionId 가져오기
+  const urlParams = new URLSearchParams(window.location.search);
+  SESSION_ID = parseInt(urlParams.get('sessionId'));
+  
+  if (!SESSION_ID) {
+    console.error('❌ SESSION_ID가 없습니다!');
+    alert('잘못된 접근입니다.');
+    window.location.href = '/match/select';
+    return;
+  }
+  
+  console.log('📍 Session ID:', SESSION_ID);
+  
+  // 결과 데이터 로드
+  loadResultData();
+  
+  // 이벤트 리스너 설정
+  setupEventListeners();
+});
+
+/**
+ * 결과 데이터 로드
+ */
+function loadResultData() {
+  const token = localStorage.getItem('accessToken');
+  
+  console.log('📡 API 호출 시작: /api/battle/' + SESSION_ID + '/result');
+  
+  fetch('/api/battle/' + SESSION_ID + '/result', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token ? 'Bearer ' + token : ''
+    }
+  })
+  .then(response => {
+    console.log('📡 API 응답 상태:', response.status, response.statusText);
+    if (!response.ok) {
+      return response.text().then(text => {
+        console.error('❌ API 오류 응답:', text);
+        throw new Error('API 호출 실패: ' + response.status + ' - ' + text);
+      });
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('✅ API 응답 데이터:', JSON.stringify(data, null, 2));
+    
+    if (!data || !data.data) {
+      throw new Error('데이터 형식 오류: data.data가 없음');
+    }
+    
+    resultData = data.data;
+    console.log('📋 결과 데이터 파싱 완료:', resultData);
+    
+    renderResult(resultData);
+  })
+  .catch(error => {
+    console.error('❌ 결과 데이터 로드 실패:', error);
+    console.error('❌ 에러 상세:', error.message);
+    console.error('❌ 에러 스택:', error.stack);
+    
+    // ✅ 페이지를 이동시키지 않고 에러 메시지 표시
+    showErrorMessage(error.message);
+  });
+}
+
+/**
+ * 에러 메시지 표시
+ */
+function showErrorMessage(errorMsg) {
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 68, 68, 0.95);
+    color: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    z-index: 9999;
+    max-width: 80%;
+  `;
+  
+  errorDiv.innerHTML = `
+    <div style="font-size: 24px; font-weight: 700; margin-bottom: 15px;">❌ 결과 로드 실패</div>
+    <div style="font-size: 14px; margin-bottom: 20px;">${errorMsg}</div>
+    <button onclick="location.reload()" style="
+      background: white;
+      color: #ff4444;
+      border: none;
+      padding: 10px 30px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 10px;
+    ">재시도</button>
+    <button onclick="window.location.href='/match/select'" style="
+      background: rgba(255,255,255,0.3);
+      color: white;
+      border: none;
+      padding: 10px 30px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    ">돌아가기</button>
+  `;
+  
+  document.body.appendChild(errorDiv);
+}
+
+/**
+ * 결과 렌더링
+ */
+function renderResult(data) {
+  // 배너 섹션
+  renderBanner(data);
+  
+  // 나의 기록
+  renderMyRecord(data);
+  
+  // 최종 순위
+  renderRankings(data.rankings);
+  
+  // 1위와 비교 (내가 1위가 아닐 때만)
+  if (data.myRank > 1) {
+    renderComparison(data);
+  } else {
+    document.querySelector('.comparison-section').style.display = 'none';
+  }
+}
+
+/**
+ * 배너 렌더링
+ */
+function renderBanner(data) {
+  const targetKm = (data.targetDistance / 1000).toFixed(1);
+  
+  // 완료 배지
+  document.querySelector('.completion-badge span').textContent = 
+    `🏁 ${targetKm}km 스피드 배틀 완료`;
+  
+  // 순위 표시
+  document.querySelector('.rank-number').textContent = data.myRank;
+  
+  // 결과 메시지
+  const messageText = document.querySelector('.message-text');
+  if (data.myRank === 1) {
+    messageText.innerHTML = '<span class="message-muted">축하합니다! </span>1등<span class="message-muted">으로 완주했어요 </span>🏆';
+  } else {
+    const firstPlace = data.rankings.find(r => r.rank === 1);
+    const timeDiff = data.finishTime - firstPlace.finishTime;  // 밀리초
+    const diffSeconds = Math.floor(timeDiff / 1000);  // 초
+    
+    // 분과 초로 변환
+    if (diffSeconds >= 60) {
+      const minutes = Math.floor(diffSeconds / 60);
+      const seconds = diffSeconds % 60;
+      messageText.innerHTML = 
+        `${firstPlace.username}<span class="message-muted">님보다 </span>${minutes}분 ${seconds}초<span class="message-muted"> 늦게 도착했어요</span>`;
+    } else {
+      messageText.innerHTML = 
+        `${firstPlace.username}<span class="message-muted">님보다 </span>${diffSeconds}초<span class="message-muted"> 늦게 도착했어요</span>`;
+    }
+  }
+}
+
+/**
+ * 나의 기록 렌더링
+ */
+function renderMyRecord(data) {
+  // 완주 시간
+  const finishTimeStr = formatTime(data.finishTime);
+  document.querySelector('.stat-box:nth-child(1) .stat-value').textContent = finishTimeStr;
+  
+  // 평균 페이스
+  document.querySelector('.stat-box:nth-child(2) .stat-value').textContent = data.avgPace;
+  
+  // 총 거리
+  const totalKm = (data.totalDistance / 1000).toFixed(2);
+  document.querySelector('.stat-box:nth-child(3) .stat-value').textContent = totalKm;
+  
+  // 완주 날짜
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} (${getDayOfWeek(now)}) ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 완주`;
+  document.querySelector('.record-date').textContent = dateStr;
+}
+
+/**
+ * 순위 리스트 렌더링
+ */
+function renderRankings(rankings) {
+  const rankingList = document.querySelector('.ranking-list');
+  rankingList.innerHTML = '';
+  
+  rankings.forEach(participant => {
+    const isMe = participant.userId === myUserId;
+    const rankingItem = createRankingItem(participant, isMe);
+    rankingList.appendChild(rankingItem);
+  });
+}
+
+/**
+ * 순위 아이템 생성
+ */
+function createRankingItem(participant, isMe) {
+  const item = document.createElement('div');
+  item.className = `ranking-item rank-${participant.rank}`;
+  
+  // 순위 배지
+  const badge = document.createElement('div');
+  badge.className = `rank-badge rank-${participant.rank}-badge`;
+  badge.textContent = participant.rank;
+  
+  // 아바타
+  const avatar = document.createElement('div');
+  avatar.className = 'participant-avatar';
+  avatar.innerHTML = `
+    <svg width="20" height="24" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 0L10 24M0 12L20 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  `;
+  
+  // 참가자 정보
+  const info = document.createElement('div');
+  info.className = 'participant-info';
+  
+  const name = document.createElement('div');
+  name.className = 'participant-name';
+  name.textContent = isMe ? '나' : participant.username;
+  
+  const status = document.createElement('div');
+  status.className = 'participant-status';
+  const finishTimeStr = formatTime(participant.finishTime);
+  status.textContent = `${finishTimeStr} 완주${participant.rank === 1 ? ' 🏆' : ''}`;
+  
+  info.appendChild(name);
+  info.appendChild(status);
+  
+  // 통계
+  const stats = document.createElement('div');
+  stats.className = 'participant-stats';
+  
+  const pace = document.createElement('div');
+  pace.className = 'participant-pace';
+  pace.textContent = `${participant.currentPace} /km`;
+  
+  const distance = document.createElement('div');
+  distance.className = 'participant-distance';
+  distance.textContent = `${(participant.totalDistance / 1000).toFixed(2)}km`;
+  
+  stats.appendChild(pace);
+  stats.appendChild(distance);
+  
+  // 조립
+  item.appendChild(badge);
+  item.appendChild(avatar);
+  item.appendChild(info);
+  item.appendChild(stats);
+  
+  return item;
+}
+
+/**
+ * 1위와 비교 렌더링
+ */
+function renderComparison(data) {
+  const firstPlace = data.rankings.find(r => r.rank === 1);
+  const myData = data.rankings.find(r => r.userId === myUserId);
+  
+  if (!firstPlace || !myData) {
+    document.querySelector('.comparison-section').style.display = 'none';
+    return;
+  }
+  
+  // 헤더 - 이름
+  document.querySelector('.user-me + .user-name').textContent = '나';
+  document.querySelector('.user-winner + .user-name').textContent = firstPlace.username;
+  
+  // 완주 시간
+  const finishRows = document.querySelectorAll('.comparison-row');
+  const myFinishTime = formatTime(myData.finishTime);
+  const firstFinishTime = formatTime(firstPlace.finishTime);
+  
+  finishRows[0].querySelectorAll('.comparison-value')[0].textContent = myFinishTime;
+  finishRows[0].querySelectorAll('.comparison-value')[1].textContent = firstFinishTime + ' ✓';
+  
+  // 평균 페이스
+  finishRows[1].querySelectorAll('.comparison-value')[0].textContent = myData.currentPace + ' /km';
+  finishRows[1].querySelectorAll('.comparison-value')[1].textContent = firstPlace.currentPace + ' /km ✓';
+  
+  // 구간 페이스 (서버에서 데이터 없으면 숨기기)
+  if (!data.segmentPaces) {
+    for (let i = 2; i < finishRows.length; i++) {
+      finishRows[i].style.display = 'none';
+    }
+  }
+}
+
+/**
+ * 시간 포맷 (밀리초 → MM:SS)
+ */
+function formatTime(milliseconds) {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+/**
+ * 요일 반환
+ */
+function getDayOfWeek(date) {
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  return days[date.getDay()];
+}
+
+/**
+ * 이벤트 리스너 설정
+ */
+function setupEventListeners() {
+  // 뒤로가기
+  const backButton = document.getElementById('back-button');
+  if (backButton) {
+    backButton.addEventListener('click', () => {
+      window.location.href = '/match/select';
+    });
+  }
+  
+  // 공유하기
+  const shareButton = document.getElementById('share-button');
+  if (shareButton) {
+    shareButton.addEventListener('click', () => {
+      if (navigator.share) {
+        navigator.share({
+          title: 'RUNRUN 대결 결과',
+          text: `${resultData.myRank}등으로 완주했어요!`,
+          url: window.location.href
+        }).catch(err => console.log('공유 실패', err));
+      } else {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          alert('링크가 클립보드에 복사되었습니다.');
+        });
+      }
+    });
+  }
+  
+  // 홈으로
+  const homeButton = document.getElementById('home-button');
+  if (homeButton) {
+    homeButton.addEventListener('click', () => {
+      window.location.href = '/';
+    });
+  }
+  
+  // 재대결
+  const rematchButton = document.getElementById('rematch-button');
+  if (rematchButton) {
+    rematchButton.addEventListener('click', () => {
+      window.location.href = '/match/select';
+    });
+  }
+}

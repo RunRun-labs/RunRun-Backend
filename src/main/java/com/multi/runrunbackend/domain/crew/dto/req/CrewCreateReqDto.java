@@ -3,10 +3,8 @@ package com.multi.runrunbackend.domain.crew.dto.req;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 
 /**
  * @author : BoKyung
@@ -14,6 +12,7 @@ import lombok.NoArgsConstructor;
  * @filename : CrewCreateReqDto
  * @since : 25. 12. 18. 목요일
  */
+@Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

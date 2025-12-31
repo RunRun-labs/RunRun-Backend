@@ -13,9 +13,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author : BoKyung
@@ -35,12 +37,13 @@ public class CrewController {
      * @param reqDto 크루 생성 요청 DTO
      * @description : 크루 생성
      */
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createCrew(
             @AuthenticationPrincipal CustomUser principal,
-            @Valid @RequestBody CrewCreateReqDto reqDto
+            @Valid @RequestPart("crew") CrewCreateReqDto reqDto,
+            @RequestPart(value = "crewImageFile", required = false) MultipartFile crewImageFile
     ) {
-        Long crewId = crewService.createCrew(principal, reqDto);
+        Long crewId = crewService.createCrew(principal, reqDto, crewImageFile);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success("크루 생성 성공", crewId));
@@ -52,13 +55,14 @@ public class CrewController {
      * @param reqDto    크루 수정 요청 DTO
      * @description : 크루 수정
      */
-    @PutMapping("/{crewId}")
+    @PutMapping(value = "/{crewId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> updateCrew(
             @AuthenticationPrincipal CustomUser principal,
             @PathVariable Long crewId,
-            @Valid @RequestBody CrewUpdateReqDto reqDto
+            @Valid @RequestPart("crew") CrewUpdateReqDto reqDto,
+            @RequestPart(value = "crewImageFile", required = false) MultipartFile crewImageFile
     ) {
-        crewService.updateCrew(crewId, principal, reqDto);
+        crewService.updateCrew(crewId, principal, reqDto, crewImageFile);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("크루 정보 수정 성공", null));
