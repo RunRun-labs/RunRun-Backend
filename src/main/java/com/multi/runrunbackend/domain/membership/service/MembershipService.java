@@ -102,14 +102,22 @@ public class MembershipService {
             Membership membership = membershipRepository.findByUser(user)
                     .orElseThrow(() -> new NotFoundException(ErrorCode.MEMBERSHIP_NOT_FOUND));
 
-            // 이미 활성 상태의 프리미엄 멤버십이면 에러
-            if (membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
-                throw new BusinessException(ErrorCode.MEMBERSHIP_ALREADY_PREMIUM);
-            }
+            MembershipStatus status = membership.getMembershipStatus();
 
-            // 만료된 멤버십이면 재활성화 (선택사항)
-            membership.reactivate();  // 재구독 로직
-            log.info("프리미엄 멤버십 재활성화 - 사용자 ID: {}", user.getId());
+            if (status == MembershipStatus.ACTIVE) {
+                // 이미 활성 상태 → 에러
+                throw new BusinessException(ErrorCode.MEMBERSHIP_ALREADY_PREMIUM);
+
+            } else if (status == MembershipStatus.CANCELED) {
+                // 해지 신청 상태 → 해지 취소
+                membership.cancelCancellation();
+                log.info("멤버십 해지 취소 - 사용자 ID: {}", user.getId());
+
+            } else if (status == MembershipStatus.EXPIRED) {
+                // 만료 상태 → 재활성화
+                membership.reactivate();
+                log.info("프리미엄 멤버십 재활성화 - 사용자 ID: {}", user.getId());
+            }
         }
     }
 
