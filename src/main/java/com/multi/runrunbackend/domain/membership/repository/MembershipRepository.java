@@ -22,6 +22,9 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     // 멤버십 찾기
     Optional<Membership> findByUser(User user);
 
+    // 멤버십 존재 여부 확인
+    boolean existsByUser_Id(Long userId);
+
     // 해지 신청 상태 + 만료일이 지난 멤버십 찾기 (자동 처리용)
     List<Membership> findByMembershipStatusAndEndDateBefore(
             MembershipStatus status,
