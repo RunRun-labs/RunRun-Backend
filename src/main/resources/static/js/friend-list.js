@@ -2,13 +2,20 @@
 let currentPage = 0;
 let hasNext = true;
 let isLoading = false;
+let userHasInteracted = false; // 사용자가 실제로 스크롤을 했는지
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("friend-list.js loaded");
-    
+
     attachBackButtonHandler();
     loadFriendRequests();
+
+    // 실제 스크롤이 발생하는 컨테이너를 기준으로 무한 스크롤 동작
     initInfiniteScroll();
+
+    // '스크롤(또는 휠/터치) 입력' 이후에만 다음 페이지 로드
+    attachUserScrollGate();
+
     loadFriends(0, true); // 초기 로드 (첫 페이지, 초기화)
 });
 
@@ -66,8 +73,8 @@ async function loadFriendRequests() {
  * @param {boolean} reset - true면 목록 초기화, false면 기존 목록에 추가
  */
 async function loadFriends(page = 0, reset = false) {
-    // 이미 로딩 중이거나 더 이상 불러올 데이터가 없으면 리턴
     if (isLoading || (!hasNext && !reset)) {
+        console.log("Skipping load:", {isLoading, hasNext, reset, page});
         return;
     }
 
@@ -79,8 +86,8 @@ async function loadFriends(page = 0, reset = false) {
             return;
         }
 
-        // 페이지 파라미터 추가
-        const url = `/friends?page=${page}&size=20`;
+        const url = `/friends?page=${page}&size=2`;
+        console.log("Loading friends:", url);
         const res = await fetch(url, {
             headers: {"Authorization": `Bearer ${token}`}
         });
@@ -90,21 +97,23 @@ async function loadFriends(page = 0, reset = false) {
         }
 
         const payload = await res.json();
-        const sliceData = payload?.data ?? {};
-        const friends = sliceData?.content ?? [];
-        hasNext = sliceData?.hasNext ?? false;
+        const pageData = payload?.data ?? {};
+        const friends = pageData?.content ?? [];
+
+        hasNext = !(pageData?.last ?? true);
         currentPage = page;
 
-        if (reset) {
-            // 초기 로드: 기존 목록 초기화
-            renderFriends(friends, true);
-        } else {
-            // 무한 스크롤: 기존 목록에 추가
-            renderFriends(friends, false);
-        }
-        
-        // 초기 로드 시 empty state 업데이트는 renderFriends에서 처리
-        // (친구 요청 개수는 이미 loadFriendRequests에서 확인됨)
+        console.log("Loaded friends:", {
+            page,
+            friendsCount: friends.length,
+            hasNext,
+            last: pageData?.last,
+            totalElements: pageData?.totalElements,
+            totalPages: pageData?.totalPages,
+            currentPage
+        });
+
+        renderFriends(friends, reset);
     } catch (e) {
         console.error("Error loading friends:", e);
     } finally {
@@ -115,7 +124,7 @@ async function loadFriends(page = 0, reset = false) {
 function renderFriendRequestNotification(count) {
     const notificationEl = document.getElementById("friendRequestNotification");
     const countEl = document.getElementById("requestCount");
-    
+
     if (!notificationEl || !countEl) return;
 
     if (count === 0) {
@@ -166,8 +175,8 @@ function renderFriends(friends, reset = true) {
         if (reset) {
             const requestNotification = document.getElementById("friendRequestNotification");
             const hasRequests = requestNotification && !requestNotification.hasAttribute("hidden");
-            const requestCount = hasRequests 
-                ? parseInt(document.getElementById("requestCount")?.textContent || "0", 10) 
+            const requestCount = hasRequests
+                ? parseInt(document.getElementById("requestCount")?.textContent || "0", 10)
                 : 0;
             updateEmptyState(requestCount, 0);
         }
@@ -456,20 +465,28 @@ let scrollObserver = null;
  * 무한 스크롤 초기화
  */
 function initInfiniteScroll() {
-    // Intersection Observer를 사용한 무한 스크롤
+    // CSS 구조상 .friend-list-page에 height 제한이 없어 body 스크롤이 발생할 가능성이 높음
+    // 따라서 root를 null(viewport)로 설정하여 어디서 스크롤하든 감지되도록 함
     const observerOptions = {
-        root: null, // viewport를 root로 사용
-        rootMargin: "200px", // 뷰포트 하단 200px 전에 미리 로드
-        threshold: 0.1
+        root: null,
+        rootMargin: "200px", // 하단 여유
+        threshold: 0
     };
 
     scrollObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting && hasNext && !isLoading) {
-                // 다음 페이지 로드
-                loadFriends(currentPage + 1, false);
+        for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+
+            if (!userHasInteracted) {
+                console.log('Sentinel intersecting but waiting for user scroll interaction');
+                continue;
             }
-        });
+
+            if (!hasNext || isLoading) continue;
+
+            console.log("Sentinel intersecting, loading next page:", currentPage + 1);
+            loadFriends(currentPage + 1, false);
+        }
     }, observerOptions);
 }
 
@@ -477,29 +494,80 @@ function initInfiniteScroll() {
  * 무한 스크롤 센티넬 요소 관리
  */
 function updateScrollSentinel() {
-    const container = document.getElementById("friendsList");
-    if (!container) return;
+    const listContainer = document.getElementById("friendsList");
+    if (!listContainer) return;
 
     // 기존 센티넬 제거
     const oldSentinel = document.getElementById("scrollSentinel");
     if (oldSentinel) {
-        if (scrollObserver) {
-            scrollObserver.unobserve(oldSentinel);
-        }
+        if (scrollObserver) scrollObserver.unobserve(oldSentinel);
         oldSentinel.remove();
     }
 
-    // 더 불러올 데이터가 있을 때만 센티넬 추가
-    if (hasNext) {
-        const sentinel = document.createElement("div");
-        sentinel.id = "scrollSentinel";
-        sentinel.style.height = "1px";
-        sentinel.style.width = "100%";
-        container.appendChild(sentinel);
-        
-        if (scrollObserver) {
-            scrollObserver.observe(sentinel);
+    if (!hasNext || !scrollObserver) {
+        console.log("No more data to load, hasNext:", hasNext, "observer:", !!scrollObserver);
+        return;
+    }
+
+    const sentinel = document.createElement("div");
+    sentinel.id = "scrollSentinel";
+    sentinel.style.height = "1px";
+    sentinel.style.width = "100%";
+    sentinel.style.visibility = "hidden";
+
+    // 리스트 끝에 센티넬 추가
+    listContainer.appendChild(sentinel);
+
+    requestAnimationFrame(() => {
+        const sentinelEl = document.getElementById("scrollSentinel");
+        if (!sentinelEl || !scrollObserver) return;
+        scrollObserver.observe(sentinelEl);
+        console.log("Sentinel observed (root: viewport) hasNext:", hasNext);
+    });
+}
+
+function attachUserScrollGate() {
+    const markInteracted = () => {
+        if (userHasInteracted) return;
+        userHasInteracted = true;
+        console.log('User interaction detected: infinite scroll enabled');
+
+        // 이벤트 리스너 정리
+        window.removeEventListener('scroll', markInteracted);
+        window.removeEventListener('wheel', markInteracted);
+        window.removeEventListener('touchmove', markInteracted);
+
+        const page = document.querySelector('.friend-list-page');
+        if (page) {
+            page.removeEventListener('scroll', markInteracted);
+            page.removeEventListener('wheel', markInteracted);
+            page.removeEventListener('touchmove', markInteracted);
         }
+
+        // [추가] 인터랙션 감지 시점에 센티넬이 이미 화면 안에 있다면 즉시 로드
+        // (Observer는 이미 교차 중인 상태에서는 콜백을 다시 호출하지 않기 때문)
+        const sentinel = document.getElementById("scrollSentinel");
+        if (sentinel && hasNext && !isLoading) {
+            const rect = sentinel.getBoundingClientRect();
+            // rootMargin(200px)과 동일하게 여유를 둠
+            if (rect.top <= window.innerHeight + 200) {
+                console.log("Sentinel already visible upon interaction, loading next page:", currentPage + 1);
+                loadFriends(currentPage + 1, false);
+            }
+        }
+    };
+
+    // window와 .friend-list-page 모두에 이벤트 등록 (어디서 스크롤이 발생하든 감지)
+    // scroll 뿐만 아니라 wheel, touchmove도 감지하여 사용자 의도를 파악
+    window.addEventListener('scroll', markInteracted, {passive: true});
+    window.addEventListener('wheel', markInteracted, {passive: true});
+    window.addEventListener('touchmove', markInteracted, {passive: true});
+
+    const page = document.querySelector('.friend-list-page');
+    if (page) {
+        page.addEventListener('scroll', markInteracted, {passive: true});
+        page.addEventListener('wheel', markInteracted, {passive: true});
+        page.addEventListener('touchmove', markInteracted, {passive: true});
     }
 }
 
@@ -508,4 +576,3 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
