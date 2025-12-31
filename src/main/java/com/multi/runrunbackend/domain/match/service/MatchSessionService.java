@@ -10,7 +10,7 @@ import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
-import com.multi.runrunbackend.domain.match.dto.req.RunningRecordResDto;
+import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
@@ -205,6 +205,10 @@ public class MatchSessionService {
     RunningResult ghostResult = runningResultRepository.findById(runningResultId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND));
 
+    if (!ghostResult.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException(ErrorCode.UNAUTHORIZED);
+    }
+
     MatchSession session = MatchSession.builder()
         .course(ghostResult.getCourse())
         .type(SessionType.GHOST)
@@ -219,7 +223,7 @@ public class MatchSessionService {
     SessionUser sessionUser = SessionUser.builder()
         .matchSession(session)
         .user(user)
-        .isReady(true)
+        .isReady(false)
         .build();
 
     sessionUserRepository.save(sessionUser);
