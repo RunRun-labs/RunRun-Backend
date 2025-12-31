@@ -5,11 +5,16 @@ import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.match.constant.RunStatus;
+import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
+import com.multi.runrunbackend.domain.match.dto.req.RunningRecordResDto;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
+import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
+import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
 import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
@@ -18,11 +23,15 @@ import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @filename : MatchService
  * @since : 2025-12-21 일요일
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -42,13 +52,13 @@ public class MatchSessionService {
   private final MatchSessionRepository matchSessionRepository;
   private final RecruitUserRepository recruitUserRepository;
   private final SessionUserRepository sessionUserRepository;
+  private final RunningResultRepository runningResultRepository;
+
 
   @Transactional
   public Long createOfflineSession(Long recruitId, CustomUser principal) {
 
-    User user = userRepository.findByLoginId(principal.getLoginId())
-        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-
+    User user = getUser(principal);
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
@@ -133,5 +143,82 @@ public class MatchSessionService {
     return matchSession.getId();
   }
 
+
+  @Transactional
+  public Long createGhostSession(Long runningResultId, CustomUser principal) {
+
+    User user = getUser(principal);
+
+    RunningResult ghostResult = runningResultRepository.findById(runningResultId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND));
+
+    MatchSession session = MatchSession.builder()
+        .course(ghostResult.getCourse())
+        .type(SessionType.GHOST)
+        .runningResult(ghostResult)
+        .targetDistance(ghostResult.getTotalDistance().doubleValue())
+        .status(SessionStatus.STANDBY)
+        .duration(0)
+        .build();
+
+    matchSessionRepository.save(session);
+
+    SessionUser sessionUser = SessionUser.builder()
+        .matchSession(session)
+        .user(user)
+        .isReady(true)
+        .build();
+
+    sessionUserRepository.save(sessionUser);
+
+    log.info("고스트 세션 생성 - SessionID: {}, GhostResultID: {}", session.getId(), runningResultId);
+
+    return session.getId();
+  }
+
+  public Slice<RunningRecordResDto> getMyRunningRecords(CustomUser principal,
+      RunningResultFilterType filterType, Pageable pageable) {
+    User user = getUser(principal);
+
+    BigDecimal min = null;
+    BigDecimal max = null;
+
+    if (filterType != null) {
+      switch (filterType) {
+        case UNDER_3 -> {
+          max = BigDecimal.valueOf(3.0);
+        }
+        case BETWEEN_3_5 -> {
+          min = BigDecimal.valueOf(3.0);
+          max = BigDecimal.valueOf(5.0);
+        }
+        case BETWEEN_5_10 -> {
+          min = BigDecimal.valueOf(5.0);
+          max = BigDecimal.valueOf(10.0);
+        }
+        case OVER_10 -> {
+          min = BigDecimal.valueOf(10.0);
+        }
+        case ALL -> {
+        }
+      }
+    }
+
+    Slice<RunningResult> resultSlice = runningResultRepository.findMySoloRecordsByDistance(
+        user.getId(),
+        RunStatus.COMPLETED,
+        min,
+        max,
+        pageable
+    );
+
+    return resultSlice.map(RunningRecordResDto::from);
+  }
+
+
+  private User getUser(CustomUser principal) {
+    return userRepository.findByLoginId(principal.getLoginId())
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+  }
 }
 
