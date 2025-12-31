@@ -21,13 +21,11 @@ import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -132,25 +130,9 @@ public class FriendService {
     ) {
         User me = getUserByPrincipal(principal);
 
-        Slice<Friend> asRequester =
-                friendRepository.findByRequesterAndStatus(
-                        me, FriendStatus.ACCEPTED, pageable);
-
-        Slice<Friend> asReceiver =
-                friendRepository.findByReceiverAndStatus(
-                        me, FriendStatus.ACCEPTED, pageable);
-
-        List<FriendResDto> content =
-                Stream.concat(
-                                asRequester.getContent().stream(),
-                                asReceiver.getContent().stream()
-                        )
-                        .map(friend -> FriendResDto.from(friend, me))
-                        .toList();
-
-        boolean hasNext = asRequester.hasNext() || asReceiver.hasNext();
-
-        return new SliceImpl<>(content, pageable, hasNext);
+        return friendRepository
+                .findFriends(me, FriendStatus.ACCEPTED, pageable)
+                .map(friend -> FriendResDto.from(friend, me));
     }
 
     /**
