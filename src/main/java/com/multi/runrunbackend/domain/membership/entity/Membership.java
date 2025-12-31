@@ -1,7 +1,6 @@
 package com.multi.runrunbackend.domain.membership.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
-import com.multi.runrunbackend.domain.membership.constant.MembershipGrade;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -31,10 +30,6 @@ public class Membership extends BaseEntity {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "membership_grade", nullable = false, length = 20)
-    private MembershipGrade membershipGrade; // FREE, PREMIUM
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "membership_status", nullable = false, length = 20)
     private MembershipStatus membershipStatus; // ACTIVE, CANCELED, EXPIRED
 
@@ -48,50 +43,45 @@ public class Membership extends BaseEntity {
     private LocalDateTime nextBillingDate;
 
     /**
-     * @description : 엔티티 생성 전 기본값 설정
-     * @author : BoKyung
-     * @since : 25. 12. 30. 월요일
-     */
-    @PrePersist
-    public void prePersist() {
-        if (this.membershipGrade == null) {
-            this.membershipGrade = MembershipGrade.FREE;
-        }
-        if (this.membershipStatus == null) {
-            this.membershipStatus = MembershipStatus.ACTIVE;
-        }
-    }
-
-    /**
      * @description : 무료 멤버십 생성 정적 팩토리 메서드
-     * @author : BoKyung
-     * @since : 25. 12. 30. 월요일
      */
     public static Membership create(User user) {
         Membership membership = new Membership();
         membership.user = user;
-        membership.membershipGrade = MembershipGrade.FREE;
         membership.membershipStatus = MembershipStatus.ACTIVE;
         membership.startDate = LocalDateTime.now();
+        membership.nextBillingDate = LocalDateTime.now().plusMonths(1);
         return membership;
     }
 
     /**
-     * @description : 프리미엄 멤버십 업그레이드
-     * @author : BoKyung
-     * @since : 25. 12. 30. 월요일
+     * @description : 멤버십 재활성화
      */
-    public void upgradeToPremium() {
-        LocalDateTime now = LocalDateTime.now();
-        this.membershipGrade = MembershipGrade.PREMIUM;
+    public void reactivate() {
         this.membershipStatus = MembershipStatus.ACTIVE;
-        this.nextBillingDate = now.plusMonths(1);
+        this.startDate = LocalDateTime.now();
+        this.nextBillingDate = LocalDateTime.now().plusMonths(1);
+        this.endDate = null;
+    }
+
+    /**
+     * @description : 멤버십 갱신 (자동 결제 성공 시)
+     */
+    public void renew() {
+        // 다음 결제일 연장
+        if (this.nextBillingDate == null) {
+            this.nextBillingDate = LocalDateTime.now().plusMonths(1);
+        } else {
+            this.nextBillingDate = this.nextBillingDate.plusMonths(1);
+        }
+
+        // 상태 활성화
+        this.membershipStatus = MembershipStatus.ACTIVE;
+        this.endDate = null;
     }
 
     /**
      * @description : 멤버십 해지 신청
-     * @author : BoKyung
-     * @since : 25. 12. 30. 월요일
      */
     public void cancel() {
         this.membershipStatus = MembershipStatus.CANCELED;
@@ -103,30 +93,9 @@ public class Membership extends BaseEntity {
      * @since : 25. 12. 30. 월요일
      */
     public void expire() {
-        this.membershipGrade = MembershipGrade.FREE;
         this.membershipStatus = MembershipStatus.EXPIRED;
         this.endDate = LocalDateTime.now();
         this.nextBillingDate = null;
-    }
-
-    /**
-     * @description : 멤버십 갱신
-     * @author : BoKyung
-     * @since : 25. 12. 30. 월요일
-     */
-    public void renew() {
-        // null이면 (FREE 회원이 PREMIUM 구독 시작)
-        if (this.nextBillingDate == null) {
-            this.nextBillingDate = LocalDateTime.now().plusMonths(1);
-            this.membershipGrade = MembershipGrade.PREMIUM;
-        }
-        // 이미 있으면 (기존 PREMIUM 회원 갱신)
-        else {
-            this.nextBillingDate = this.nextBillingDate.plusMonths(1);
-        }
-
-        // 상태는 무조건 ACTIVE
-        this.membershipStatus = MembershipStatus.ACTIVE;
     }
 
     /**
