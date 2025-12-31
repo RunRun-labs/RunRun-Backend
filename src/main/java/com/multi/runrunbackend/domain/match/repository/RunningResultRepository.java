@@ -36,7 +36,6 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
 
   @Query("SELECT r FROM RunningResult r " +
       "WHERE r.user.id = :userId " +
-      "AND r.course IS NULL " +
       "AND r.runStatus = :runStatus " +
       "AND r.isDeleted = false " +
       "AND (:minDistance IS NULL OR r.totalDistance > :minDistance) " +
