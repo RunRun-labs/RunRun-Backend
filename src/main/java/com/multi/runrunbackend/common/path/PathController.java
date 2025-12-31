@@ -23,15 +23,26 @@ public class PathController {
         return "match/match-select";
     }
 
-    @GetMapping("/match/ghost")
-    public String ghostView() {
-        return "match/ghost";
-    }
+  @GetMapping("/match/online")
+  public String onlineMatchView() {
+    return "match/online-match";
+  }
 
-    @GetMapping("/recruit")
-    public String recruitListView() {
-        return "recruit/recruit-list";
-    }
+  //테스트용
+  @GetMapping("/match/online/confirmed")
+  public String onlineMatchConfirmedView() {
+    return "match/online-match-confirmed";
+  }
+
+  @GetMapping("/match/ghost")
+  public String ghostView() {
+    return "match/ghost";
+  }
+
+  @GetMapping("/recruit")
+  public String recruitListView() {
+    return "recruit/recruit-list";
+  }
 
     @GetMapping("/recruit/create")
     public String recruitCreateView() {
@@ -175,6 +186,27 @@ public class PathController {
     @GetMapping("/tts-test")
     public String ttsTestView() {
         return "tts-test";
+    }
+
+    @GetMapping("/setting")
+    public String settingView() {
+        return "setting/setting";
+    }
+
+    @GetMapping("/setting/blocked-users")
+    public String blockedUsersView() {
+        return "setting/blocked-users";
+    }
+
+    @GetMapping("/terms/view")
+    public String termsView() {
+        return "terms/terms-detail";
+    }
+
+    @GetMapping("/profile/{userId}")
+    public String userProfileView(@PathVariable Long userId, Model model) {
+        model.addAttribute("userId", userId);
+        return "user/user-profile";
     }
 
 }
