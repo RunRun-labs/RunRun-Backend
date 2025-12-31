@@ -17,6 +17,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    // userId를 Number로 변환 (타입 불일치 해결)
+    userId = Number(userId);
+    if (isNaN(userId)) {
+        console.error("Invalid User ID");
+        return;
+    }
+
     attachBackButtonHandler();
     attachFriendButtonHandler(userId);
     attachBlockButtonHandler(userId);
@@ -54,8 +61,8 @@ async function loadUserProfile(userId) {
         }
 
         renderProfile(user);
-        // TODO: 친구 관계 확인 API 연동
-        // checkFriendStatus(userId);
+        // 친구 관계 확인
+        await checkFriendStatus(userId);
     } catch (e) {
         console.error("Error loading user profile:", e);
         alert("프로필을 불러오는데 실패했습니다.");
@@ -143,17 +150,47 @@ function attachFriendButtonHandler(userId) {
 
     friendBtn.addEventListener("click", async () => {
         const isFriend = friendBtn.classList.contains("is-friend");
+        const isReceived = friendBtn.classList.contains("is-received");
+        const isSent = friendBtn.classList.contains("is-sent");
 
         if (isFriend) {
             // 친구 삭제
             if (confirm("친구를 삭제하시겠습니까?")) {
                 await deleteFriend(userId);
             }
+        } else if (isReceived) {
+            // 받은 친구 요청 수락
+            await acceptReceivedFriendRequest(userId);
+        } else if (isSent) {
+            // 이미 친구 요청을 보낸 상태
+            alert("이미 친구 요청을 보냈습니다.");
         } else {
             // 친구 신청
             await requestFriend(userId);
         }
     });
+}
+
+/**
+ * FriendResDto에서 상대방 사용자 정보를 안전하게 가져오는 헬퍼 함수
+ * 필드명이 user 또는 counterpart로 변경되어도 대응 가능
+ */
+function getCounterpart(friendDto) {
+    // user 필드 우선 확인, 없으면 counterpart 필드 확인
+    return friendDto?.user || friendDto?.counterpart || null;
+}
+
+/**
+ * 상대방 userId를 안전하게 가져오는 헬퍼 함수
+ * 타입 변환도 함께 처리
+ */
+function getCounterpartUserId(friendDto) {
+    const counterpart = getCounterpart(friendDto);
+    if (!counterpart) return null;
+    
+    // userId 필드 확인 (타입 변환)
+    const userId = counterpart.userId || counterpart.id || null;
+    return userId != null ? Number(userId) : null;
 }
 
 async function requestFriend(userId) {
@@ -164,25 +201,40 @@ async function requestFriend(userId) {
             return;
         }
 
-        // TODO: 친구 신청 API 연동
-        // const res = await fetch(`/friends/request`, {
-        //     method: "POST",
-        //     headers: {
-        //         "Authorization": `Bearer ${token}`,
-        //         "Content-Type": "application/json"
-        //     },
-        //     body: JSON.stringify({ userId })
-        // });
+        // userId가 Number인지 확인
+        const targetUserId = Number(userId);
+        if (isNaN(targetUserId)) {
+            throw new Error("잘못된 사용자 ID입니다.");
+        }
 
-        // if (!res.ok) throw new Error("친구 신청 실패");
+        const res = await fetch(`/friends/${targetUserId}/requests`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
 
-        // 임시: 성공 메시지 표시
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            const errorMessage = errorData.message || "친구 신청 실패";
+            
+            // 이미 친구 요청이 존재하는 경우
+            if (res.status === 409 || errorMessage.includes("이미")) {
+                alert("이미 친구 요청이 존재합니다.");
+                // 상태 다시 확인
+                await checkFriendStatus(targetUserId);
+                return;
+            }
+            
+            throw new Error(errorMessage);
+        }
+
         alert("친구 신청이 완료되었습니다.");
-        // TODO: 친구 상태 업데이트
-        // updateFriendButton(true);
+        // 친구 상태 업데이트 (요청 보냄 상태)
+        await checkFriendStatus(targetUserId);
     } catch (e) {
         console.error("Error requesting friend:", e);
-        alert("친구 신청에 실패했습니다.");
+        alert(e.message || "친구 신청에 실패했습니다.");
     }
 }
 
@@ -194,36 +246,237 @@ async function deleteFriend(userId) {
             return;
         }
 
-        // TODO: 친구 삭제 API 연동
-        // const res = await fetch(`/friends/${userId}`, {
-        //     method: "DELETE",
-        //     headers: {
-        //         "Authorization": `Bearer ${token}`
-        //     }
-        // });
+        // userId가 Number인지 확인
+        const targetUserId = Number(userId);
+        if (isNaN(targetUserId)) {
+            throw new Error("잘못된 사용자 ID입니다.");
+        }
 
-        // if (!res.ok) throw new Error("친구 삭제 실패");
+        // 친구 삭제 API 호출
+        const res = await fetch(`/friends/${targetUserId}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
 
-        // 임시: 성공 메시지 표시
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || "친구 삭제 실패");
+        }
+
         alert("친구가 삭제되었습니다.");
-        // TODO: 친구 상태 업데이트
-        // updateFriendButton(false);
+        // 친구 상태 업데이트 (친구 아님)
+        await checkFriendStatus(targetUserId);
     } catch (e) {
         console.error("Error deleting friend:", e);
-        alert("친구 삭제에 실패했습니다.");
+        alert(e.message || "친구 삭제에 실패했습니다.");
     }
 }
 
-function updateFriendButton(isFriend) {
+/**
+ * 받은 친구 요청 수락
+ */
+async function acceptReceivedFriendRequest(targetUserId) {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
+        const targetId = Number(targetUserId);
+        if (isNaN(targetId)) {
+            throw new Error("잘못된 사용자 ID입니다.");
+        }
+
+        // 받은 친구 요청 목록에서 friendId 찾기
+        const receivedRes = await fetch("/friends/requests/received", {
+            headers: {"Authorization": `Bearer ${token}`}
+        });
+
+        if (!receivedRes.ok) {
+            throw new Error("친구 요청 목록 조회 실패");
+        }
+
+        const receivedData = await receivedRes.json();
+        const receivedRequests = receivedData?.data ?? [];
+        
+        // 헬퍼 함수를 사용하여 안전하게 찾기
+        const receivedRequest = receivedRequests.find(req => {
+            const counterpartUserId = getCounterpartUserId(req);
+            return counterpartUserId !== null && counterpartUserId === targetId;
+        });
+
+        if (!receivedRequest || !receivedRequest.friendId) {
+            alert("친구 요청을 찾을 수 없습니다.");
+            return;
+        }
+
+        // 친구 요청 수락
+        const acceptRes = await fetch(`/friends/requests/${receivedRequest.friendId}/accept`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!acceptRes.ok) {
+            const errorData = await acceptRes.json().catch(() => ({}));
+            throw new Error(errorData.message || "친구 요청 수락 실패");
+        }
+
+        alert("친구 요청을 수락했습니다.");
+        // 친구 상태 업데이트 (친구됨)
+        await checkFriendStatus(targetId);
+    } catch (e) {
+        console.error("Error accepting friend request:", e);
+        alert(e.message || "친구 요청 수락에 실패했습니다.");
+    }
+}
+
+/**
+ * 친구 상태 확인
+ * 상태: "none" | "sent" | "received" | "accepted"
+ */
+async function checkFriendStatus(targetUserId) {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            return;
+        }
+
+        // targetUserId를 Number로 변환
+        const targetId = Number(targetUserId);
+        if (isNaN(targetId)) {
+            console.error("Invalid target user ID:", targetUserId);
+            updateFriendButtonStatus("none");
+            return;
+        }
+
+        // 1. 받은 친구 요청 목록 확인
+        const receivedRes = await fetch("/friends/requests/received", {
+            headers: {"Authorization": `Bearer ${token}`}
+        });
+        
+        if (receivedRes.ok) {
+            const receivedData = await receivedRes.json();
+            const receivedRequests = receivedData?.data ?? [];
+            
+            // 헬퍼 함수를 사용하여 안전하게 찾기
+            const receivedRequest = receivedRequests.find(req => {
+                const counterpartUserId = getCounterpartUserId(req);
+                return counterpartUserId !== null && counterpartUserId === targetId;
+            });
+            
+            if (receivedRequest) {
+                updateFriendButtonStatus("received", receivedRequest.friendId);
+                return;
+            }
+        }
+
+        // 2. 보낸 친구 요청 목록 확인
+        const sentRes = await fetch("/friends/requests/sent", {
+            headers: {"Authorization": `Bearer ${token}`}
+        });
+        
+        if (sentRes.ok) {
+            const sentData = await sentRes.json();
+            const sentRequests = sentData?.data ?? [];
+            
+            // 헬퍼 함수를 사용하여 안전하게 찾기
+            const sentRequest = sentRequests.find(req => {
+                const counterpartUserId = getCounterpartUserId(req);
+                return counterpartUserId !== null && counterpartUserId === targetId;
+            });
+            
+            if (sentRequest) {
+                updateFriendButtonStatus("sent", sentRequest.friendId);
+                return;
+            }
+        }
+
+        // 3. 친구 목록 확인 (여러 페이지 확인)
+        let page = 0;
+        let hasNext = true;
+        
+        while (hasNext) {
+            const friendsRes = await fetch(`/friends?page=${page}&size=20`, {
+                headers: {"Authorization": `Bearer ${token}`}
+            });
+            
+            if (!friendsRes.ok) {
+                break;
+            }
+            
+            const friendsData = await friendsRes.json();
+            const sliceData = friendsData?.data ?? {};
+            const friends = sliceData?.content ?? [];
+            
+            // 헬퍼 함수를 사용하여 안전하게 찾기
+            const friend = friends.find(f => {
+                const counterpartUserId = getCounterpartUserId(f);
+                return counterpartUserId !== null && 
+                       counterpartUserId === targetId && 
+                       f.status === "ACCEPTED";
+            });
+            
+            if (friend) {
+                updateFriendButtonStatus("accepted", friend.friendId);
+                return;
+            }
+            
+            hasNext = sliceData?.hasNext ?? false;
+            page++;
+            
+            // 최대 3페이지까지만 확인 (60명까지)
+            if (page >= 3) {
+                break;
+            }
+        }
+
+        // 친구 관계 없음
+        updateFriendButtonStatus("none");
+    } catch (e) {
+        console.error("Error checking friend status:", e);
+        // 에러 시 기본값으로 설정
+        updateFriendButtonStatus("none");
+    }
+}
+
+/**
+ * 친구 버튼 상태 업데이트
+ * @param {string} status - "none" | "sent" | "received" | "accepted"
+ * @param {number} friendId - 친구 관계 ID (optional)
+ */
+function updateFriendButtonStatus(status, friendId = null) {
     const friendBtn = document.getElementById("friendButton");
     if (!friendBtn) return;
 
-    if (isFriend) {
-        friendBtn.classList.add("is-friend");
-        friendBtn.textContent = "친구삭제";
-    } else {
-        friendBtn.classList.remove("is-friend");
-        friendBtn.textContent = "친구신청";
+    // 기존 클래스 제거
+    friendBtn.classList.remove("is-friend", "is-sent", "is-received");
+
+    switch (status) {
+        case "accepted":
+            friendBtn.classList.add("is-friend");
+            friendBtn.textContent = "친구삭제";
+            friendBtn.dataset.friendId = friendId || "";
+            break;
+        case "sent":
+            friendBtn.classList.add("is-sent");
+            friendBtn.textContent = "요청 보냄";
+            friendBtn.dataset.friendId = friendId || "";
+            break;
+        case "received":
+            friendBtn.classList.add("is-received");
+            friendBtn.textContent = "요청 수락";
+            friendBtn.dataset.friendId = friendId || "";
+            break;
+        case "none":
+        default:
+            friendBtn.textContent = "친구신청";
+            friendBtn.dataset.friendId = "";
+            break;
     }
 }
 
@@ -302,7 +555,13 @@ async function blockUser(userId, shouldReport) {
             return;
         }
 
-        const res = await fetch(`/users/blocks/${userId}`, {
+        // userId가 Number인지 확인
+        const targetUserId = Number(userId);
+        if (isNaN(targetUserId)) {
+            throw new Error("잘못된 사용자 ID입니다.");
+        }
+
+        const res = await fetch(`/users/blocks/${targetUserId}`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`
