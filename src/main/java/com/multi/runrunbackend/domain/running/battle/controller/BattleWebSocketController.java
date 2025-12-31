@@ -1,11 +1,12 @@
 package com.multi.runrunbackend.domain.running.battle.controller;
 
+import com.multi.runrunbackend.common.exception.custom.CustomException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
-import com.multi.runrunbackend.domain.running.battle.dto.request.BattleGpsRequest;
-import com.multi.runrunbackend.domain.running.battle.dto.request.BattleReadyRequest;
-import com.multi.runrunbackend.domain.running.battle.dto.response.BattleRankingDto;
-import com.multi.runrunbackend.domain.running.battle.dto.response.BattleUpdateResponse;
+import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto;
+import com.multi.runrunbackend.domain.running.battle.dto.req.BattleReadyReqDto;
+import com.multi.runrunbackend.domain.running.battle.dto.res.BattleRankingResDto;
+import com.multi.runrunbackend.domain.running.battle.dto.res.BattleUpdateRespDto;
 import com.multi.runrunbackend.domain.running.battle.service.BattleService;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ public class BattleWebSocketController {
   private final SimpMessagingTemplate messagingTemplate;
 
   @MessageMapping("/battle/ready")
-  public void handleReady(BattleReadyRequest request) {
+  public void handleReady(BattleReadyReqDto request) {
     log.info("🎯 Ready 상태 변경 요청: sessionId={}, userId={}, isReady={}",
         request.getSessionId(), request.getUserId(), request.getIsReady());
 
@@ -82,8 +83,9 @@ public class BattleWebSocketController {
         log.info("🚩 배틀 시작 브로드캐스트: sessionId={}", request.getSessionId());
 
         // 초기 순위 전송 (0m로 초기화된 상태)
-        List<BattleRankingDto> initialRankings = battleService.getRankings(request.getSessionId());
-        BattleUpdateResponse initialUpdate = BattleUpdateResponse.builder()
+        List<BattleRankingResDto> initialRankings = battleService.getRankings(
+            request.getSessionId());
+        BattleUpdateRespDto initialUpdate = BattleUpdateRespDto.builder()
             .type("BATTLE_UPDATE")
             .sessionId(request.getSessionId())
             .rankings(initialRankings)
@@ -103,6 +105,12 @@ public class BattleWebSocketController {
       log.error("❌ Thread sleep 실패: sessionId={}", request.getSessionId(), e);
       Thread.currentThread().interrupt();
 
+    } catch (CustomException e) {
+      // ValidationException, NotFoundException 등 모든 커스텀 Exception 처리
+      log.error("❌ Ready 처리 실패 - {}: sessionId={}", 
+          e.getErrorCode().getMessage(), request.getSessionId());
+      sendErrorMessage(request.getSessionId(), e.getErrorCode());
+
     } catch (Exception e) {
       log.error("❌ Ready 처리 실패: sessionId={}", request.getSessionId(), e);
       sendErrorMessage(request.getSessionId(), ErrorCode.INTERNAL_SERVER_ERROR);
@@ -111,7 +119,7 @@ public class BattleWebSocketController {
 
 
   @MessageMapping("/battle/gps")
-  public void handleGps(BattleGpsRequest request) {
+  public void handleGps(BattleGpsReqDto request) {
     try {
       Long userId = request.getUserId();
       Double totalDistance = request.getTotalDistance();
@@ -126,9 +134,9 @@ public class BattleWebSocketController {
           totalDistance
       );
 
-      List<BattleRankingDto> rankings = battleService.getRankings(request.getSessionId());
+      List<BattleRankingResDto> rankings = battleService.getRankings(request.getSessionId());
 
-      BattleUpdateResponse response = BattleUpdateResponse.builder()
+      BattleUpdateRespDto response = BattleUpdateRespDto.builder()
           .type("BATTLE_UPDATE")
           .sessionId(request.getSessionId())
           .rankings(rankings)
@@ -143,8 +151,10 @@ public class BattleWebSocketController {
       log.info("📡 순위 브로드캐스트: sessionId={}, 참가자={}명",
           request.getSessionId(), rankings.size());
 
-    } catch (NotFoundException e) {
-      log.error("❌ GPS 처리 실패 - 세션 없음: sessionId={}", request.getSessionId());
+    } catch (CustomException e) {
+      // NotFoundException, ValidationException 등 모든 커스텀 Exception 처리
+      log.error("❌ GPS 처리 실패 - {}: sessionId={}", 
+          e.getErrorCode().getMessage(), request.getSessionId());
       sendErrorMessage(request.getSessionId(), e.getErrorCode());
 
     } catch (Exception e) {

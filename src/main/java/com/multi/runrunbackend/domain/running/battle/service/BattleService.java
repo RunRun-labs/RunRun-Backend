@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.running.battle.service;
 
 import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
+import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.constant.RunningType;
@@ -14,8 +15,8 @@ import com.multi.runrunbackend.domain.match.repository.BattleResultRepository;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
-import com.multi.runrunbackend.domain.running.battle.dto.request.BattleGpsRequest.GpsData;
-import com.multi.runrunbackend.domain.running.battle.dto.response.BattleRankingDto;
+import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto.GpsData;
+import com.multi.runrunbackend.domain.running.battle.dto.res.BattleRankingResDto;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
@@ -54,11 +55,16 @@ public class BattleService {
    */
   @Transactional
   public boolean toggleReady(Long sessionId, Long userId, Boolean isReady) {
+    // null 체크 - 커스텀 Exception 사용
+    if (isReady == null) {
+      throw new ValidationException(ErrorCode.INVALID_READY_STATUS);
+    }
+    
     SessionUser sessionUser = sessionUserRepository
         .findBySessionIdAndUserId(sessionId, userId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
-    sessionUser.updateReady(isReady);
+    sessionUser.updateReady(isReady);  // primitive boolean으로 자동 언박싱
     sessionUserRepository.save(sessionUser);
 
     log.info("✅ Ready 상태 변경: sessionId={}, userId={}, isReady={}",
@@ -99,7 +105,7 @@ public class BattleService {
     boolean allReady = participants.stream().allMatch(SessionUser::isReady);
 
     if (!allReady) {
-      throw new IllegalStateException("모든 참가자가 Ready 상태가 아닙니다.");
+      throw new ValidationException(ErrorCode.ALL_USERS_NOT_READY);
     }
 
     session.updateStatus(SessionStatus.IN_PROGRESS);
@@ -117,9 +123,10 @@ public class BattleService {
 
   /**
    * 타임아웃 처리
+   * @return Map<String, Object> - sessionId, started, alreadyStarted 포함
    */
   @Transactional
-  public boolean handleTimeout(Long sessionId) {
+  public Map<String, Object> handleTimeout(Long sessionId) {
     log.info("⏰ 타임아웃 처리 시작: sessionId={}", sessionId);
 
     MatchSession session = matchSessionRepository.findById(sessionId)
@@ -128,14 +135,22 @@ public class BattleService {
     // 이미 시작된 경우 - 자동 시작으로 처리됨
     if (session.getStatus() == SessionStatus.IN_PROGRESS) {
       log.info("✅ 이미 배틀 시작됨 (자동 시작): sessionId={}", sessionId);
-      return true;  // 시작됨으로 반환
+      Map<String, Object> result = new HashMap<>();
+      result.put("sessionId", sessionId);
+      result.put("started", true);
+      result.put("alreadyStarted", true);
+      return result;
     }
 
     // 이미 종료되거나 취소된 경우
     if (session.getStatus() != SessionStatus.STANDBY) {
       log.warn("⚠️ 세션 상태가 STANDBY가 아님: sessionId={}, status={}",
           sessionId, session.getStatus());
-      return false;
+      Map<String, Object> result = new HashMap<>();
+      result.put("sessionId", sessionId);
+      result.put("started", false);
+      result.put("alreadyStarted", false);
+      return result;
     }
 
     // STANDBY 상태 - 타임아웃 처리 필요
@@ -146,15 +161,74 @@ public class BattleService {
 
     log.info("📊 타임아웃 결과: 강퇴={}명, 남은 인원={}명", kickedCount, remainingCount);
 
+    Map<String, Object> result = new HashMap<>();
+    result.put("sessionId", sessionId);
+    result.put("alreadyStarted", false);
+
     if (remainingCount >= 2) {
       log.info("🏁 남은 참가자끼리 배틀 시작: sessionId={}", sessionId);
       startBattle(sessionId);
-      return true;
+      result.put("started", true);
+      
+      // WebSocket 메시지 전송
+      sendTimeoutStartMessage(sessionId);
+      sendBattleStartMessage(sessionId);
+      
+    } else {
+      log.info("❌ 참가자 부족으로 매치 취소: sessionId={}", sessionId);
+      cancelMatch(sessionId);
+      result.put("started", false);
+      
+      // WebSocket 메시지 전송
+      sendTimeoutCancelMessage(sessionId);
     }
 
-    log.info("❌ 참가자 부족으로 매치 취소: sessionId={}", sessionId);
-    cancelMatch(sessionId);
-    return false;
+    return result;
+  }
+
+  /**
+   * 타임아웃 시작 메시지 전송
+   */
+  private void sendTimeoutStartMessage(Long sessionId) {
+    Map<String, Object> message = new HashMap<>();
+    message.put("type", "TIMEOUT_START");
+    message.put("message", "일부 참가자가 강퇴되었습니다. 배틀을 시작합니다.");
+    message.put("timestamp", LocalDateTime.now());
+
+    messagingTemplate.convertAndSend(
+        "/sub/battle/" + sessionId + "/timeout",
+        (Object) message
+    );
+  }
+
+  /**
+   * 배틀 시작 메시지 전송
+   */
+  private void sendBattleStartMessage(Long sessionId) {
+    Map<String, Object> message = new HashMap<>();
+    message.put("type", "BATTLE_START");
+    message.put("sessionId", sessionId);
+    message.put("timestamp", LocalDateTime.now());
+
+    messagingTemplate.convertAndSend(
+        "/sub/battle/" + sessionId + "/start",
+        (Object) message
+    );
+  }
+
+  /**
+   * 타임아웃 취소 메시지 전송
+   */
+  private void sendTimeoutCancelMessage(Long sessionId) {
+    Map<String, Object> message = new HashMap<>();
+    message.put("type", "TIMEOUT_CANCEL");
+    message.put("message", "참가자가 부족하여 매치가 취소되었습니다.");
+    message.put("timestamp", LocalDateTime.now());
+
+    messagingTemplate.convertAndSend(
+        "/sub/battle/" + sessionId + "/timeout",
+        (Object) message
+    );
   }
 
   /**
@@ -222,7 +296,7 @@ public class BattleService {
   /**
    * 전체 순위 조회
    */
-  public List<BattleRankingDto> getRankings(Long sessionId) {
+  public List<BattleRankingResDto> getRankings(Long sessionId) {
     MatchSession session = matchSessionRepository.findById(sessionId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
@@ -257,7 +331,7 @@ public class BattleService {
    */
   private void saveBattleResults(Long sessionId, LocalDateTime startedAt) {
     // 1. Redis에서 순위 조회
-    List<BattleRankingDto> rankings = getRankings(sessionId);
+    List<BattleRankingResDto> rankings = getRankings(sessionId);
 
     if (rankings.isEmpty()) {
       log.warn("⚠️ 순위 데이터 없음: sessionId={}", sessionId);
@@ -268,7 +342,7 @@ public class BattleService {
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
     // 2. 각 참가자의 결과 저장
-    for (BattleRankingDto ranking : rankings) {
+    for (BattleRankingResDto ranking : rankings) {
       User user = userRepository.findById(ranking.getUserId())
           .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
@@ -308,7 +382,7 @@ public class BattleService {
   /**
    * 총 시간 계산 (초)
    */
-  private Integer calculateTotalTime(BattleRankingDto ranking) {
+  private Integer calculateTotalTime(BattleRankingResDto ranking) {
     double distanceKm = ranking.getTotalDistance() / 1000.0;
     String[] paceParts = ranking.getCurrentPace().split(":");
     int paceMinutes = Integer.parseInt(paceParts[0]);
@@ -369,10 +443,10 @@ public class BattleService {
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
     // 순위 조회
-    List<BattleRankingDto> rankings = getRankings(sessionId);
+    List<BattleRankingResDto> rankings = getRankings(sessionId);
 
     // 내 데이터 찾기
-    BattleRankingDto myData = rankings.stream()
+    BattleRankingResDto myData = rankings.stream()
         .filter(r -> r.getUserId().equals(userId))
         .findFirst()
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
@@ -396,7 +470,7 @@ public class BattleService {
   /**
    * 완주 시간 계산
    */
-  private Long calculateFinishTime(BattleRankingDto ranking) {
+  private Long calculateFinishTime(BattleRankingResDto ranking) {
     double distanceKm = ranking.getTotalDistance() / 1000.0;
     String[] paceParts = ranking.getCurrentPace().split(":");
     int paceMinutes = Integer.parseInt(paceParts[0]);
@@ -415,8 +489,8 @@ public class BattleService {
     battleRedisService.finishUser(sessionId, userId);
     log.info("🏆 참가자 완주 처리: sessionId={}, userId={}", sessionId, userId);
 
-    List<BattleRankingDto> rankings = getRankings(sessionId);
-    boolean allFinished = rankings.stream().allMatch(BattleRankingDto::getIsFinished);
+    List<BattleRankingResDto> rankings = getRankings(sessionId);
+    boolean allFinished = rankings.stream().allMatch(BattleRankingResDto::getIsFinished);
 
     if (allFinished) {
       log.info("✅ 모든 참가자 완주 - 배틀 종료: sessionId={}", sessionId);

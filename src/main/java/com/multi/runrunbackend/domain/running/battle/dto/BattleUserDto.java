@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BattleUserData implements Serializable {
+public class BattleUserDto implements Serializable {
 
   // private static final long serialVersionUID = 1L;
   //Java 직렬화

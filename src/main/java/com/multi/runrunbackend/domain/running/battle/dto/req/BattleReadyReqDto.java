@@ -1,4 +1,4 @@
-package com.multi.runrunbackend.domain.running.battle.dto.request;
+package com.multi.runrunbackend.domain.running.battle.dto.req;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,9 +15,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BattleReadyRequest {
-    
-    private Long sessionId;
-    private Long userId;  // 추가
-    private Boolean isReady;
+public class BattleReadyReqDto {
+
+  private Long sessionId;
+  private Long userId;  // 추가
+  private Boolean isReady;
 }

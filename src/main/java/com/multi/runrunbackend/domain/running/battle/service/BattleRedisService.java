@@ -2,9 +2,9 @@ package com.multi.runrunbackend.domain.running.battle.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.multi.runrunbackend.domain.running.battle.dto.BattleUserData;
-import com.multi.runrunbackend.domain.running.battle.dto.request.BattleGpsRequest.GpsData;
-import com.multi.runrunbackend.domain.running.battle.dto.response.BattleRankingDto;
+import com.multi.runrunbackend.domain.running.battle.dto.BattleUserDto;
+import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto.GpsData;
+import com.multi.runrunbackend.domain.running.battle.dto.res.BattleRankingResDto;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class BattleRedisService {
 
     LocalDateTime now = LocalDateTime.now();
 
-    BattleUserData userData = BattleUserData.builder()
+    BattleUserDto userData = BattleUserDto.builder()
         .userId(userId)
         .username(username)
         .totalDistance(0.0)
@@ -85,7 +85,7 @@ public class BattleRedisService {
     }
 
     try {
-      BattleUserData userData = objectMapper.readValue(json, BattleUserData.class);
+      BattleUserDto userData = objectMapper.readValue(json, BattleUserDto.class);
 
       userData.setTotalDistance(totalDistance);
       userData.setCurrentSpeed(gps.getSpeed() != null ? gps.getSpeed() : 0.0);
@@ -137,7 +137,7 @@ public class BattleRedisService {
   /**
    * 전체 순위 조회
    */
-  public List<BattleRankingDto> getRankings(Long sessionId, Double targetDistance) {
+  public List<BattleRankingResDto> getRankings(Long sessionId, Double targetDistance) {
     String rankingKey = String.format(BATTLE_RANKING_KEY, sessionId);
 
     Set<ZSetOperations.TypedTuple<Object>> rankingSet =
@@ -148,7 +148,7 @@ public class BattleRedisService {
       return new ArrayList<>();
     }
 
-    List<BattleRankingDto> rankings = new ArrayList<>();
+    List<BattleRankingResDto> rankings = new ArrayList<>();
 
     // ✅ 1단계: 모든 참가자 데이터 수집
     for (ZSetOperations.TypedTuple<Object> tuple : rankingSet) {
@@ -160,7 +160,7 @@ public class BattleRedisService {
 
       if (json != null) {
         try {
-          BattleUserData userData = objectMapper.readValue(json, BattleUserData.class);
+          BattleUserDto userData = objectMapper.readValue(json, BattleUserDto.class);
 
           // ✅ finishTime 계산
           Long finishTimeMillis = null;
@@ -178,7 +178,7 @@ public class BattleRedisService {
             finishTimeMillis = 0L;
           }
 
-          rankings.add(BattleRankingDto.builder()
+          rankings.add(BattleRankingResDto.builder()
               .rank(0)  // 임시 순위 (정렬 후 부여)
               .userId(userId)
               .username(userData.getUsername())
@@ -237,7 +237,7 @@ public class BattleRedisService {
     }
 
     try {
-      BattleUserData userData = objectMapper.readValue(json, BattleUserData.class);
+      BattleUserDto userData = objectMapper.readValue(json, BattleUserDto.class);
       userData.setIsFinished(true);
       userData.setFinishTime(LocalDateTime.now());
 

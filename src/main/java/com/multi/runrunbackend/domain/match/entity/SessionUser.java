@@ -54,7 +54,7 @@ public class SessionUser extends BaseSoftDeleteEntity {
     /**
      * Ready 상태 업데이트
      */
-    public void updateReady(Boolean isReady) {
+    public void updateReady(boolean isReady) {
         this.isReady = isReady;
     }
 }
