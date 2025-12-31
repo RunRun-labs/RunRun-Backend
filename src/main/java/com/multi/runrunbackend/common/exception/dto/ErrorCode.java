@@ -7,9 +7,9 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode {
 
-    /* ===== 공통 ===== */
-    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "C001", "잘못된 요청입니다."),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "서버 오류가 발생했습니다."),
+  /* ===== 공통 ===== */
+  INVALID_REQUEST(HttpStatus.BAD_REQUEST, "C001", "잘못된 요청입니다."),
+  INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "서버 오류가 발생했습니다."),
 
     /* ===== 인증 / 회원 ===== */
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
@@ -79,6 +79,8 @@ public enum ErrorCode {
     ALREADY_JOINED_CREW(HttpStatus.CONFLICT, "CR014", "이미 가입한 크루가 있습니다."),
     CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR015", "크루원을 찾을 수 없습니다."),
     CREW_RECRUITMENT_CLOSED(HttpStatus.CONFLICT, "CR016", "모집이 마감된 크루입니다."),
+    NOT_CREW_USER(HttpStatus.FORBIDDEN, "CR017", "크루원이 아닙니다."),
+    CANNOT_ASSIGN_LEADER_TO_MEMBER(HttpStatus.FORBIDDEN, "CR018", "일반 멤버는 크루장이 될 수 없습니다. 부크루장 또는 운영진에게만 위임 가능합니다."),
     /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
 
