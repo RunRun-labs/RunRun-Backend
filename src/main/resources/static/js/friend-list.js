@@ -86,7 +86,7 @@ async function loadFriends(page = 0, reset = false) {
             return;
         }
 
-        const url = `/friends?page=${page}&size=2`;
+        const url = `/friends?page=${page}&size=5`;
         console.log("Loading friends:", url);
         const res = await fetch(url, {
             headers: {"Authorization": `Bearer ${token}`}

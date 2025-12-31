@@ -105,7 +105,7 @@ public class FriendController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<FriendResDto>>> getFriends(
             @AuthenticationPrincipal CustomUser customUser,
-            @PageableDefault(size = 2) Pageable pageable
+            @PageableDefault(size = 5) Pageable pageable
     ) {
         Page<FriendResDto> friends =
                 friendService.getFriends(customUser, pageable);
