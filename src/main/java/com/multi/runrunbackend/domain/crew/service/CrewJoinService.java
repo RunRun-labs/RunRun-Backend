@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.crew.service;
 
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
@@ -9,6 +10,7 @@ import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.crew.constant.JoinStatus;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewJoinReqDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewJoinRequestResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewUserResDto;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
 import com.multi.runrunbackend.domain.crew.entity.CrewJoinRequest;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
@@ -22,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -255,6 +258,90 @@ public class CrewJoinService {
     }
 
     /**
+     * @param crewId    크루 ID
+     * @param principal 조회하는 사용자
+     * @description : 크루원 목록 조회 (역할 순서로 정렬: LEADER -> SUB_LEADER -> STAFF -> MEMBER)
+     */
+    public List<CrewUserResDto> getCrewUserList(Long crewId, CustomUser principal) {
+        // 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 사용자 조회
+        User user = getUserOrThrow(principal);
+
+        // 해당 크루의 크루원인지 확인
+        validateCrewUser(crew, user);
+
+        // 크루원 목록 + 참여 횟수를 한 번에 조회
+        List<Object[]> results = crewUserRepository
+                .findAllWithParticipationCountAndLastActivity(crewId);
+
+        // DTO 변환
+        return results.stream()
+                .map(result -> {
+                    CrewUser crewUser = (CrewUser) result[0];
+                    Long participationCount = (Long) result[1];
+                    LocalDateTime lastActivityDate = (LocalDateTime) result[2];
+
+                    return CrewUserResDto.fromEntity(crewUser, participationCount.intValue(), lastActivityDate);
+                })
+                .toList();
+
+    }
+
+    /**
+     * @param crewId    크루 ID
+     * @param userId    권한을 변경할 사용자 ID
+     * @param newRole   변경할 역할
+     * @param principal 크루장
+     * @description : 크루장이 크루원의 권한을 변경
+     */
+    @Transactional
+    public void updateUserRole(Long crewId, Long userId, CrewRole newRole, CustomUser principal) {
+        // 크루 조회
+        Crew crew = findCrewById(crewId);
+
+        // 사용자 조회(권한 변경을 직접 하는 사람 = 크루장)
+        User requester = getUserOrThrow(principal);
+
+        // 크루장 권한 검증 - 크루장만 가능
+        validateLeaderRole(crew, requester);
+
+        // 권한 변경할 대상 조회
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        // targetUser가 이 크루의 크루원인지 검증
+        CrewUser targetCrewUser = crewUserRepository
+                .findByCrewAndUserAndIsDeletedFalse(crew, targetUser)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_CREW_USER));
+
+        // 크루장으로 변경하는 경우 -> 기존 크루장을 일반 멤버로 강등
+        if (newRole == CrewRole.LEADER) {
+            // 일반 멤버는 크루장이 될 수 없음 (부크루장/운영진만 가능)
+            if (targetCrewUser.getRole() == CrewRole.MEMBER) {
+                throw new BusinessException(ErrorCode.CANNOT_ASSIGN_LEADER_TO_MEMBER);
+            }
+
+            // 기존 크루장 찾기
+            CrewUser currentLeader = crewUserRepository
+                    .findByCrewAndUserAndIsDeletedFalse(crew, requester)
+                    .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_CREW_USER));
+
+            // 기존 크루장을 일반 멤버로 변경
+            currentLeader.changeRole(CrewRole.MEMBER);
+
+            log.info("크루장 권한 위임 - 기존 크루장 userId: {} → 일반 멤버", requester.getId());
+        }
+
+        // 권한 변경
+        targetCrewUser.changeRole(newRole);
+
+        log.info("크루원 권한 변경 완료 - crewId: {}, userId: {}, newRole: {}",
+                crewId, userId, newRole);
+    }
+
+    /**
      * 공통 메서드
      */
 
@@ -292,6 +379,18 @@ public class CrewJoinService {
     }
 
     /**
+     * 크루장 권한 검증 (크루장만 가능)
+     */
+    private void validateLeaderRole(Crew crew, User user) {
+        CrewUser crewUser = crewUserRepository.findByCrewAndUserAndIsDeletedFalse(crew, user)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+
+        if (!crewUser.getRole().equals(CrewRole.LEADER)) {
+            throw new BusinessException(ErrorCode.NOT_CREW_LEADER);
+        }
+    }
+
+    /**
      * 1인 1크루 검증 - 다른 크루에 이미 가입했는지 확인
      */
     private void validateNotInAnotherCrew(Long userId) {
@@ -322,6 +421,18 @@ public class CrewJoinService {
         if (!requestsToCancel.isEmpty()) {
             log.info("다른 크루 대기 신청 자동 취소 완료 - userId: {}, 취소된 신청 수: {}",
                     userId, requestsToCancel.size());
+        }
+    }
+
+    /**
+     * @description : 크루원 권한 검증 (해당 크루의 크루원인지 확인)
+     */
+    private void validateCrewUser(Crew crew, User user) {
+        boolean isCrewUser = crewUserRepository
+                .existsByCrewIdAndUserIdAndIsDeletedFalse(crew.getId(), user.getId());
+
+        if (!isCrewUser) {
+            throw new ForbiddenException(ErrorCode.NOT_CREW_USER);
         }
     }
 }
