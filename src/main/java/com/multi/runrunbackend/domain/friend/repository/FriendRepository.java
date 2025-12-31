@@ -6,6 +6,8 @@ import com.multi.runrunbackend.domain.user.entity.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +41,14 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
             FriendStatus status,
             Pageable pageable
     );
+
+    // 양방향 친구 관계 조회 ( 차단시 친구관계 삭제 등을 위해 )
+    @Query("""
+                select f from Friend f
+                where (f.requester = :u1 and f.receiver = :u2)
+                   or (f.requester = :u2 and f.receiver = :u1)
+            """)
+    Optional<Friend> findBetweenUsers(@Param("u1") User u1, @Param("u2") User u2);
 
     /*
      * 단건 조회, 중복 체크
