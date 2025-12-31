@@ -42,7 +42,7 @@ async function fetchMembershipInfo(token) {
             currentMembership = result.data;
             renderMembershipCard(result.data);
         } else {
-            // 멤버십 정보가 없는 경우 (무료 회원)
+            // 멤버십 정보가 없는 경우 (일반 회원)
             renderFreeMembershipCard();
         }
     } catch (error) {
@@ -66,8 +66,8 @@ function renderFreeMembershipCard() {
     cardElement.innerHTML = `
         <div class="status-badge">현재 이용중</div>
         <div class="membership-title-wrapper">
-            <span class="membership-icon">⭐</span>
-            <h1 class="membership-title">무료 회원</h1>
+            <span class="membership-icon">🏃‍♂️</span>
+            <h1 class="membership-title">일반 회원</h1>
         </div>
         <p class="membership-description">멤버십을 구독하세요</p>
         <div class="button-group">
@@ -104,7 +104,7 @@ function renderMembershipCard(membership) {
 // 활성 멤버십 카드 렌더링
 // ========================================
 function renderActiveMembershipCard(cardElement, membership) {
-    const endDate = formatDate(membership.endDate);
+    const nextBillingDate = formatDate(membership.nextBillingDate);
 
     cardElement.className = 'membership-card premium';
     cardElement.innerHTML = `
@@ -114,9 +114,9 @@ function renderActiveMembershipCard(cardElement, membership) {
             <span class="membership-icon">⭐</span>
             <h1 class="membership-title">프리미엄</h1>
         </div>
-        <p class="membership-period">${endDate}까지</p>
+        <p class="membership-period">${nextBillingDate}까지</p>
         <div class="button-group">
-            <button class="btn btn-cancel" onclick="cancelMembership()">멤버십 결제</button>
+            <button class="btn btn-cancel" onclick="cancelMembership()">멤버십 해지</button>
             <button class="btn btn-detail" onclick="showMembershipDetail()">멤버십 내역</button>
         </div>
     `;
@@ -138,9 +138,44 @@ function renderCanceledMembershipCard(cardElement, membership) {
         </div>
         <p class="membership-period">${endDate}까지 사용 가능</p>
         <div class="button-group">
+        <button class="btn btn-resubscribe" onclick="reactivateMembership()">해지 취소</button>
             <button class="btn btn-detail" onclick="showMembershipDetail()">멤버십 내역</button>
         </div>
     `;
+}
+
+// ========================================
+// 멤버십 해지 취소 (재구독)
+// ========================================
+async function reactivateMembership() {
+    const token = localStorage.getItem('accessToken');
+
+    if (!confirm('멤버십 해지를 취소하시겠습니까?\n다시 정상적으로 자동 결제됩니다.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/memberships`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert(result.message || '멤버십 해지가 취소되었습니다!');
+            // 페이지 새로고침
+            location.reload();
+        } else {
+            alert(result.message || '해지 취소에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('멤버십 해지 취소 실패:', error);
+        alert('해지 취소 중 오류가 발생했습니다.');
+    }
 }
 
 // ========================================
