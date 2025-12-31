@@ -251,5 +251,18 @@ public class BattleRedisService {
     }
   }
 
+  /**
+   * 참가자 제거 (포기 시 사용)
+   */
+  public void removeUser(Long sessionId, Long userId) {
+    // 1. 사용자 데이터 삭제
+    String userKey = String.format(BATTLE_USER_KEY, sessionId, userId);
+    redisTemplate.delete(userKey);
 
+    // 2. 랭킹에서 제거
+    String rankingKey = String.format(BATTLE_RANKING_KEY, sessionId);
+    redisTemplate.opsForZSet().remove(rankingKey, userId.toString());
+
+    log.info("🗑️ Redis 제거 완료: sessionId={}, userId={}", sessionId, userId);
+  }
 }
