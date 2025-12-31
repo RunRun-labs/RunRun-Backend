@@ -20,7 +20,9 @@ import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -129,6 +131,11 @@ public class FriendService {
             Pageable pageable
     ) {
         User me = getUserByPrincipal(principal);
+
+        // JPQL 정렬 제거에 따른 기본 정렬(최신순) 적용
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
 
         return friendRepository
                 .findFriends(me, FriendStatus.ACCEPTED, pageable)

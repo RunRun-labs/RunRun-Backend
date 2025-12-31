@@ -33,7 +33,6 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
                 select f from Friend f
                 where f.status = :status
                   and (f.requester = :me or f.receiver = :me)
-                order by f.createdAt desc
             """)
     Page<Friend> findFriends(
             @Param("me") User me,
@@ -53,7 +52,7 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
      * 단건 조회, 중복 체크
      *  */
 
-    Optional<Friend> findByRequesterAndReceiver(User requester, User receiver);
+    Optional<Friend> findByRequesterAndReceiver(User requesterId, User receiverId);
 
-    boolean existsByRequesterAndReceiver(User requester, User receiver);
+    boolean existsByRequesterAndReceiver(User requesterId, User receiverId);
 }
