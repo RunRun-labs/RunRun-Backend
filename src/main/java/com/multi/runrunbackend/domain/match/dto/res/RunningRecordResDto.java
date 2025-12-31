@@ -1,4 +1,4 @@
-package com.multi.runrunbackend.domain.match.dto.req;
+package com.multi.runrunbackend.domain.match.dto.res;
 
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import java.time.LocalDateTime;
