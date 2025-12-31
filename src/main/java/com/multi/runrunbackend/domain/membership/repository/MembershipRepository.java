@@ -25,6 +25,9 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     // 멤버십 존재 여부 확인
     boolean existsByUser_Id(Long userId);
 
+    // ACTIVE 또는 CANCELED 확인
+    boolean existsByUser_IdAndMembershipStatusIn(Long userId, List<MembershipStatus> statuses);
+
     // 해지 신청 상태 + 만료일이 지난 멤버십 찾기 (자동 처리용)
     List<Membership> findByMembershipStatusAndEndDateBefore(
             MembershipStatus status,
