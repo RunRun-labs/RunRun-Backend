@@ -5,8 +5,8 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.friend.dto.res.FriendResDto;
 import com.multi.runrunbackend.domain.friend.service.FriendService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -103,11 +103,11 @@ public class FriendController {
      * GET /friends
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<Slice<FriendResDto>>> getFriends(
+    public ResponseEntity<ApiResponse<Page<FriendResDto>>> getFriends(
             @AuthenticationPrincipal CustomUser customUser,
-            @PageableDefault(size = 5) Pageable pageable
+            @PageableDefault(size = 2) Pageable pageable
     ) {
-        Slice<FriendResDto> friends =
+        Page<FriendResDto> friends =
                 friendService.getFriends(customUser, pageable);
 
         return ResponseEntity.ok(
