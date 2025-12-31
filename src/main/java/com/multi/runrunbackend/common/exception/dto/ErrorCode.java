@@ -260,7 +260,9 @@ public enum ErrorCode {
     AGE_RESTRICTION(HttpStatus.BAD_REQUEST, "R015", "참여 가능 나이가 아닙니다."),
     GENDER_RESTRICTION(HttpStatus.BAD_REQUEST, "R016", "참여 가능 성별이 아닙니다."),
     BIRTHDATE_REQUIRED(HttpStatus.BAD_REQUEST, "R017", "권한이 없는 나이대 입니다."),
-    /*===== 세션/채팅 =====*/
+  /*=====매칭=====*/
+  RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "러닝 결과를 찾을 수 없습니다."),
+  /*===== 세션/채팅 =====*/
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
     SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
     NOT_SESSION_HOST(HttpStatus.FORBIDDEN, "SES_003", "방장만 실행할 수 있습니다."),
