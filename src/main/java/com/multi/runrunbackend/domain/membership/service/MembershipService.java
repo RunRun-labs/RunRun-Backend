@@ -1,12 +1,10 @@
 package com.multi.runrunbackend.domain.membership.service;
 
 
-import com.multi.runrunbackend.common.exception.custom.BadRequestException;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
-import com.multi.runrunbackend.domain.membership.constant.MembershipGrade;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.dto.res.MembershipMainResDto;
 import com.multi.runrunbackend.domain.membership.entity.Membership;
@@ -63,11 +61,6 @@ public class MembershipService {
         Membership membership = membershipRepository.findByUser(user)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.MEMBERSHIP_NOT_FOUND));
 
-        // 프리미엄 멤버십이 아니면 해지 불가
-        if (membership.getMembershipGrade() != MembershipGrade.PREMIUM) {
-            throw new BadRequestException(ErrorCode.MEMBERSHIP_NOT_PREMIUM);
-        }
-
         // 이미 해지 신청된 상태면 에러
         if (membership.getMembershipStatus() == MembershipStatus.CANCELED) {
             throw new BusinessException(ErrorCode.MEMBERSHIP_ALREADY_CANCELED);
@@ -97,23 +90,31 @@ public class MembershipService {
 
         User user = getUserOrThrow(principal);
 
-        Membership membership = membershipRepository.findByUser(user)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+        // 멤버십 존재 여부 확인
+        if (!membershipRepository.existsByUser_Id(user.getId())) {
+            // 멤버십 없으면 → 프리미엄 멤버십 생성
+            Membership membership = Membership.create(user);
+            membershipRepository.save(membership);
+            log.info("프리미엄 멤버십 생성 완료 - 사용자 ID: {}", user.getId());
 
-        // 이미 프리미엄이면 에러
-        if (membership.getMembershipGrade() == MembershipGrade.PREMIUM
-                && membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
-            throw new BusinessException(ErrorCode.MEMBERSHIP_ALREADY_PREMIUM);
+        } else {
+            // 멤버십 있으면 → 이미 구독 중인지 확인
+            Membership membership = membershipRepository.findByUser(user)
+                    .orElseThrow(() -> new NotFoundException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+
+            // 이미 활성 상태의 프리미엄 멤버십이면 에러
+            if (membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
+                throw new BusinessException(ErrorCode.MEMBERSHIP_ALREADY_PREMIUM);
+            }
+
+            // 만료된 멤버십이면 재활성화 (선택사항)
+            membership.reactivate();  // 재구독 로직
+            log.info("프리미엄 멤버십 재활성화 - 사용자 ID: {}", user.getId());
         }
-
-        // 프리미엄 업그레이드
-        membership.upgradeToPremium();
-
-        log.info("프리미엄 멤버십 구독 완료 - 사용자 ID: {}", user.getId());
     }
 
     /**
-     * @description : 멤버십 만료 처리 (스케줄러용)
+     * @description : 멤버십 만료 처리 (스케줄러-> 매일 자정)
      */
     @Transactional
     public void processExpiredMemberships() {
