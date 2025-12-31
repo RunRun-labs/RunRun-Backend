@@ -237,29 +237,21 @@ public class MatchSessionService {
       RunningResultFilterType filterType, Pageable pageable) {
     User user = getUser(principal);
 
-    BigDecimal min = null;
-    BigDecimal max = null;
+    BigDecimal min = filterType != null ? switch (filterType) {
+      case UNDER_3 -> BigDecimal.ZERO;
+      case BETWEEN_3_5 -> BigDecimal.valueOf(3.0);
+      case BETWEEN_5_10 -> BigDecimal.valueOf(5.0);
+      case OVER_10 -> BigDecimal.valueOf(10.0);
+      case ALL -> null;
+    } : null;
 
-    if (filterType != null) {
-      switch (filterType) {
-        case UNDER_3 -> {
-          max = BigDecimal.valueOf(3.0);
-        }
-        case BETWEEN_3_5 -> {
-          min = BigDecimal.valueOf(3.0);
-          max = BigDecimal.valueOf(5.0);
-        }
-        case BETWEEN_5_10 -> {
-          min = BigDecimal.valueOf(5.0);
-          max = BigDecimal.valueOf(10.0);
-        }
-        case OVER_10 -> {
-          min = BigDecimal.valueOf(10.0);
-        }
-        case ALL -> {
-        }
-      }
-    }
+    BigDecimal max = filterType != null ? switch (filterType) {
+      case UNDER_3 -> BigDecimal.valueOf(3.0);
+      case BETWEEN_3_5 -> BigDecimal.valueOf(5.0);
+      case BETWEEN_5_10 -> BigDecimal.valueOf(10.0);
+      case OVER_10 -> null;
+      case ALL -> null;
+    } : null;
 
     Slice<RunningResult> resultSlice = runningResultRepository.findMySoloRecordsByDistance(
         user.getId(),
