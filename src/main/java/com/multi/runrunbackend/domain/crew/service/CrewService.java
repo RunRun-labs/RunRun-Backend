@@ -16,6 +16,7 @@ import com.multi.runrunbackend.domain.crew.repository.CrewActivityRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewJoinRequestRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
+import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
@@ -347,10 +348,14 @@ public class CrewService {
      * @description : 멤버십 여부
      */
     private void validatePremiumMembership(User user) {
-        // 멤버십이 있는지만 확인!
-        boolean hasMembership = membershipRepository.existsByUser_Id(user.getId());
+        // ACTIVE 또는 CANCELED 상태의 멤버십만 확인
+        boolean hasValidMembership = membershipRepository
+                .existsByUser_IdAndMembershipStatusIn(
+                        user.getId(),
+                        List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
+                );
 
-        if (!hasMembership) {
+        if (!hasValidMembership) {
             throw new BusinessException(ErrorCode.MEMBERSHIP_REQUIRED);
         }
     }
