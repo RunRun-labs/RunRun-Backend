@@ -39,4 +39,29 @@ public class MatchSessionController {
     );
     return ResponseEntity.ok(ApiResponse.success(new MatchConfirmResDto(sessionId)));
   }
+
+
+  @PostMapping("/ghost/{runningResultId}/start")
+  public ResponseEntity<ApiResponse<Long>> startGhostMatch(
+      @AuthenticationPrincipal CustomUser principal,
+      @PathVariable Long runningResultId
+  ) {
+
+    Long sessionId = matchSessionService.createGhostSession(runningResultId, principal);
+
+    return ResponseEntity.ok(ApiResponse.success("고스트런 세션이 생성되었습니다.", sessionId));
+
+  }
+
+  @GetMapping("/ghost")
+  public ResponseEntity<ApiResponse<Slice<RunningRecordResDto>>> getMyRunningRecords(
+      @AuthenticationPrincipal CustomUser principal,
+      @RequestParam(required = false, defaultValue = "ALL") RunningResultFilterType filter,
+      @PageableDefault(size = 10, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    Slice<RunningRecordResDto> records = matchSessionService.getMyRunningRecords(principal, filter,
+        pageable);
+    return ResponseEntity.ok(ApiResponse.success("내 러닝 결과 조회 성공", records));
+  }
+
 }
