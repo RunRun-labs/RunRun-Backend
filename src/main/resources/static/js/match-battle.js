@@ -91,8 +91,8 @@ function loadSessionData() {
       return;
     }
     
-    // 목표 거리 표시
-    const targetKm = (sessionData.targetDistance / 1000).toFixed(1);
+    // 목표 거리 표시 (이미 km 단위)
+    const targetKm = sessionData.targetDistance.toFixed(1);
     document.getElementById('goal-distance').textContent = targetKm;
     document.querySelector('.battle-title').textContent = targetKm + 'km 스피드 배틀';
     
@@ -408,7 +408,9 @@ function sendGpsData(lat, lng, speed) {
   console.log('📤 GPS 데이터 전송:', totalDistance.toFixed(2) + 'm');
   
   // 목표 거리 도달 체크 (아직 완주 안 했을 때만)
-  if (!isFinished && totalDistance >= sessionData.targetDistance) {
+  // targetDistance는 km, totalDistance는 m이므로 변환 필요
+  const targetDistanceInMeters = sessionData.targetDistance * 1000;
+  if (!isFinished && totalDistance >= targetDistanceInMeters) {
     handleFinish();
   }
 }
@@ -418,7 +420,7 @@ function sendGpsData(lat, lng, speed) {
  */
 function updateMyProgress() {
   const distanceKm = totalDistance / 1000;
-  const targetKm = sessionData.targetDistance / 1000;
+  const targetKm = sessionData.targetDistance; // 이미 km 단위
   const progressPercent = (distanceKm / targetKm) * 100;
   
   document.getElementById('my-distance').textContent = distanceKm.toFixed(2);

@@ -148,7 +148,7 @@ public class MatchSessionService {
       throw new ValidationException(ErrorCode.NOT_ENOUGH_PARTICIPANTS);
     }
 
-    double targetDistanceValue = convertToKiloMeter(distance);
+    double targetDistanceValue = convertToKilometer(distance);
 
     MatchSession session = MatchSession.builder()
         .type(SessionType.ONLINE)
@@ -182,7 +182,7 @@ public class MatchSessionService {
     return session.getId();
   }
 
-  private double convertToKiloMeter(DistanceType distance) {
+  private double convertToKilometer(DistanceType distance) {
     return switch (distance) {
       case KM_3 -> 3.0;
       case KM_5 -> 5.0;

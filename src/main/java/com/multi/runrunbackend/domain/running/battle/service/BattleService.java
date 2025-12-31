@@ -209,9 +209,10 @@ public class BattleService {
     MatchSession session = matchSessionRepository.findById(sessionId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
-    Double targetDistance = session.getTargetDistance();
+    // targetDistance는 km 단위이므로 미터로 변환
+    Double targetDistanceInMeters = session.getTargetDistance() * 1000;
 
-    if (totalDistance >= targetDistance) {
+    if (totalDistance >= targetDistanceInMeters) {
       battleRedisService.finishUser(sessionId, userId);
       log.info("🏆 참가자 완주: sessionId={}, userId={}, distance={}m",
           sessionId, userId, totalDistance);
@@ -225,9 +226,10 @@ public class BattleService {
     MatchSession session = matchSessionRepository.findById(sessionId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
-    Double targetDistance = session.getTargetDistance();
+    // targetDistance는 km 단위이므로 미터로 변환하여 전달
+    Double targetDistanceInMeters = session.getTargetDistance() * 1000;
 
-    return battleRedisService.getRankings(sessionId, targetDistance);
+    return battleRedisService.getRankings(sessionId, targetDistanceInMeters);
   }
 
   /**
@@ -330,7 +332,8 @@ public class BattleService {
    * 거리 타입 결정
    */
   private DistanceType determineDistanceType(Double targetDistance) {
-    int km = (int) (targetDistance / 1000.0);
+    // targetDistance는 이미 km 단위
+    int km = targetDistance.intValue();
     return switch (km) {
       case 3 -> DistanceType.KM_3;
       case 5 -> DistanceType.KM_5;

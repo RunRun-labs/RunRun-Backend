@@ -477,8 +477,8 @@ function loadSessionData() {
  * 세션 정보 UI 업데이트
  */
 function updateSessionInfo() {
-  // 목표 거리 (m -> km)
-  const targetKm = (sessionData.targetDistance / 1000).toFixed(1);
+  // 목표 거리 (이미 km 단위)
+  const targetKm = sessionData.targetDistance.toFixed(1);
   document.getElementById('target-distance-km').textContent = targetKm;
   
   // 참가자 수
