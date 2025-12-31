@@ -16,6 +16,7 @@ import com.multi.runrunbackend.domain.crew.repository.CrewActivityRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewJoinRequestRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
+import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class CrewService {
     private final CrewActivityRepository crewActivityRepository;
     private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
+    private final MembershipRepository membershipRepository;
 
     /**
      * @param reqDto 크루 생성 요청 DTO
@@ -56,7 +58,7 @@ public class CrewService {
         User user = getUserOrThrow(principal);
 
         // 프리미엄 멤버십인지 검증
-//       validatePremiumMembership(user.get);
+        validatePremiumMembership(user);
 
         // 1인 1크루 생성 제한 검증
         validateNotAlreadyLeader(user.getId());
@@ -339,5 +341,17 @@ public class CrewService {
         otherPendingRequests.stream()
                 .filter(request -> !request.getCrew().getId().equals(currentCrewId))
                 .forEach(CrewJoinRequest::cancel);
+    }
+
+    /**
+     * @description : 멤버십 여부
+     */
+    private void validatePremiumMembership(User user) {
+        // 멤버십이 있는지만 확인!
+        boolean hasMembership = membershipRepository.existsByUser_Id(user.getId());
+
+        if (!hasMembership) {
+            throw new BusinessException(ErrorCode.MEMBERSHIP_REQUIRED);
+        }
     }
 }
