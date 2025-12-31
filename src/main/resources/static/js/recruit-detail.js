@@ -44,7 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getAgeRangeText(ageMin, ageMax) {
-    if (ageMin === null || ageMin === undefined || ageMax === null || ageMax === undefined) {
+    if (ageMin === null || ageMin === undefined || ageMax === null || ageMax
+        === undefined) {
       return "";
     }
     // ageMin과 ageMax를 직접 사용하여 "0세~100세" 형식으로 표시
@@ -52,13 +53,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function formatPace(pace) {
-    if (!pace) return "-";
+    if (!pace) {
+      return "-";
+    }
     // 2:00/km 이하 또는 9:00/km 이상일 때 "이하", "이상" 붙이기
     const paceMatch = pace.match(/^(\d{1,2}):(\d{2})$/);
     if (paceMatch) {
       const minutes = parseInt(paceMatch[1], 10);
       const seconds = parseInt(paceMatch[2], 10);
-      
+
       if (minutes === 2 && seconds === 0) {
         return `${pace}/km 이하`;
       } else if (minutes === 9 && seconds === 0) {
@@ -167,14 +170,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 작성자
     if (recruitData.authorLoginId) {
-      document.getElementById("authorLoginId").textContent = recruitData.authorLoginId;
+      document.getElementById(
+          "authorLoginId").textContent = recruitData.authorLoginId;
     } else {
       document.getElementById("authorLoginId").textContent = "-";
     }
 
     // 작성일자
     if (recruitData.createdAt) {
-      document.getElementById("createdAt").textContent = formatDate(recruitData.createdAt);
+      document.getElementById("createdAt").textContent = formatDate(
+          recruitData.createdAt);
     } else {
       document.getElementById("createdAt").textContent = "-";
     }
@@ -209,14 +214,14 @@ document.addEventListener("DOMContentLoaded", () => {
       // 수정하기와 삭제하기 버튼 표시
       const editDeleteButtons = document.getElementById("editDeleteButtons");
       editDeleteButtons.style.display = "flex";
-      
+
       const editButton = document.getElementById("editButton");
       const deleteButton = document.getElementById("deleteButton");
-      
+
       editButton.onclick = () => {
         window.location.href = `/recruit/${recruitId}/update`;
       };
-      
+
       deleteButton.onclick = () => {
         if (confirm("정말로 이 모집글을 삭제하시겠습니까?")) {
           deleteRecruit();
@@ -232,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // 매칭 확정 또는 완료된 경우 버튼 표시하지 않음
         return;
       }
-      
+
       actionButton.textContent = "참가 취소";
       actionButton.style.display = "block";
       actionButton.onclick = () => {
@@ -248,7 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
       actionButton.disabled = false;
       actionButton.style.opacity = "1";
       actionButton.style.cursor = "pointer";
-      
+
       // data- 속성으로 조건 정보 저장
       if (recruitData.ageMin !== null && recruitData.ageMin !== undefined) {
         actionButton.setAttribute("data-age-min", recruitData.ageMin);
@@ -259,14 +264,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (recruitData.genderLimit) {
         actionButton.setAttribute("data-gender-limit", recruitData.genderLimit);
       }
-      
+
       // 클릭 이벤트 - 조건 검사 후 토스트 표시
       actionButton.onclick = async () => {
         // Step 1: 프론트엔드 유효성 검사
         const ageMin = actionButton.getAttribute("data-age-min");
         const ageMax = actionButton.getAttribute("data-age-max");
         const genderLimit = actionButton.getAttribute("data-gender-limit");
-        
+
         // 로그인 체크
         const token = localStorage.getItem("accessToken");
         if (!token) {
@@ -276,7 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }, 1500);
           return;
         }
-        
+
         // 성별 조건 체크
         if (genderLimit && genderLimit !== "BOTH" && currentUserGender) {
           if (genderLimit === "M" && currentUserGender !== "M") {
@@ -288,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
         }
-        
+
         // 나이 조건 체크
         if (ageMin && ageMax && currentUserAge !== null) {
           const ageMinNum = parseInt(ageMin, 10);
@@ -298,7 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
         }
-        
+
         // Step 2: API 호출
         try {
           const headers = {
@@ -374,7 +379,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // 모집글 삭제
   async function deleteRecruit() {
     try {
-      const token = localStorage.getItem("accessToken") || getCookie("accessToken");
+      const token = localStorage.getItem("accessToken") || getCookie(
+          "accessToken");
       if (!token) {
         showToast("로그인이 필요합니다.", "error");
         setTimeout(() => {
@@ -412,7 +418,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // 매칭 확정 (러닝 시작하기)
   async function confirmMatch() {
     try {
-      const token = localStorage.getItem("accessToken") || getCookie("accessToken");
+      const token = localStorage.getItem("accessToken") || getCookie(
+          "accessToken");
       if (!token) {
         showToast("로그인이 필요합니다.", "error");
         setTimeout(() => {
@@ -430,7 +437,7 @@ document.addEventListener("DOMContentLoaded", () => {
         recruitId: parseInt(recruitId, 10),
       };
 
-      const response = await fetch("/api/match/confirm", {
+      const response = await fetch("/api/match/offline/confirm", {
         method: "POST",
         headers: headers,
         body: JSON.stringify(requestBody),
@@ -500,12 +507,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 생년월일로 나이 계산
   function calculateAge(birthDate) {
-    if (!birthDate) return null;
+    if (!birthDate) {
+      return null;
+    }
     const birth = new Date(birthDate);
     const today = new Date();
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate()
+        < birth.getDate())) {
       age--;
     }
     return age;
@@ -548,7 +558,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       // 먼저 사용자 정보 로드
       await loadCurrentUser();
-      
+
       const token = localStorage.getItem("accessToken");
       const headers = {
         "Content-Type": "application/json",

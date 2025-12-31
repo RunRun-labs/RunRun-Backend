@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 온라인 대결</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/match-battle.css" th:href="@{/css/match-battle.css}">
+</head>
+<body>
+<main class="page">
+  <div class="battle-room">
+    <!-- Header Section -->
+    <header class="header-section">
+      <button class="header-button" type="button" aria-label="뒤로가기" id="back-button">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.25 13.5L6.75 9L11.25 4.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <div class="header-content">
+        <div class="live-badge">
+          <span class="badge-dot"></span>
+          <span class="badge-text">LIVE</span>
+        </div>
+        <h1 class="battle-title">배틀 진행중...</h1>
+      </div>
+      
+      <button class="header-button" type="button" aria-label="메뉴" id="menu-button">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 4.5C9.41421 4.5 9.75 4.16421 9.75 3.75C9.75 3.33579 9.41421 3 9 3C8.58579 3 8.25 3.33579 8.25 3.75C8.25 4.16421 8.58579 4.5 9 4.5Z" fill="white"/>
+          <path d="M9 10.5C9.41421 10.5 9.75 10.1642 9.75 9.75C9.75 9.33579 9.41421 9 9 9C8.58579 9 8.25 9.33579 8.25 9.75C8.25 10.1642 8.58579 10.5 9 10.5Z" fill="white"/>
+          <path d="M9 16.5C9.41421 16.5 9.75 16.1642 9.75 15.75C9.75 15.3358 9.41421 15 9 15C8.58579 15 8.25 15.3358 8.25 15.75C8.25 16.1642 8.58579 16.5 9 16.5Z" fill="white"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Progress Time Section -->
+    <section class="progress-time-section">
+      <div class="time-label">진행 시간</div>
+      <div class="time-display">
+        <span class="time-value" id="elapsed-minutes">00</span>
+        <span class="time-separator">:</span>
+        <span class="time-value" id="elapsed-seconds">00</span>
+      </div>
+      <div class="distance-stats">
+        <div class="stat-item">
+          <div class="stat-value-wrapper">
+            <span class="stat-number" id="my-distance">0.00</span>
+            <span class="stat-unit">km</span>
+          </div>
+          <div class="stat-label">내 거리</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value-wrapper">
+            <span class="stat-number" id="goal-distance">5</span>
+            <span class="stat-unit">km</span>
+          </div>
+          <div class="stat-label">목표</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value-wrapper">
+            <span class="stat-number" id="progress-percent">0.0</span>
+            <span class="stat-unit">%</span>
+          </div>
+          <div class="stat-label">진행률</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real-time Ranking Section -->
+    <section class="ranking-section">
+      <div class="ranking-header">
+        <div class="ranking-title-wrapper">
+          <div class="ranking-icon">
+            <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 2L9.5 9.5L17 2" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 9.5L9.5 17L17 9.5" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2 class="ranking-title">실시간 순위</h2>
+        </div>
+        <div class="participants-count">
+          <span id="participants-count">0</span>명 참가중
+        </div>
+      </div>
+      
+      <div class="ranking-list" id="ranking-list">
+        <!-- Ranking items will be dynamically generated -->
+      </div>
+    </section>
+
+    <!-- Pace Comparison Section -->
+    <section class="pace-comparison-section">
+      <div class="comparison-header">
+        <span class="comparison-icon">⚡</span>
+        <h3 class="comparison-title">페이스 비교</h3>
+      </div>
+      <div class="pace-grid" id="pace-grid">
+        <!-- Pace comparison items will be dynamically generated -->
+      </div>
+    </section>
+
+    <!-- Action Buttons Section -->
+    <section class="action-section">
+      <button class="chat-button" type="button" id="chat-button">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 1.5C4.85786 1.5 1.5 4.35786 1.5 8.5C1.5 10.5 2.25 12.3214 3.375 13.7143L1.5 16.5L4.28571 14.625C5.67857 15.75 7.5 16.5 9.5 16.5C13.6421 16.5 16.5 13.6421 16.5 9.5C16.5 5.35786 13.6421 2.5 9 2.5V1.5Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>채팅</span>
+      </button>
+      <button class="giveup-button" type="button" id="giveup-button">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.5 4.5L4.5 13.5M4.5 4.5L13.5 13.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>포기하기</span>
+      </button>
+    </section>
+  </div>
+</main>
+
+<!-- WebSocket 라이브러리 -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<script src="/js/match-battle.js" th:src="@{/js/match-battle.js}"></script>
+</body>
+</html>
+
