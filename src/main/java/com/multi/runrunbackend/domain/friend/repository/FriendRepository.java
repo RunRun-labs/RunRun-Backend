@@ -28,17 +28,16 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     List<Friend> findByRequesterAndStatus(User requester, FriendStatus status);
 
 
-    // 내가 requester인 친구 (ACCEPTED)
-    Slice<Friend> findByRequesterAndStatus(
-            User requester,
-            FriendStatus status,
-            Pageable pageable
-    );
-
-    // 내가 receiver인 친구 (ACCEPTED)
-    Slice<Friend> findByReceiverAndStatus(
-            User receiver,
-            FriendStatus status,
+    // 친구 조회 (받은 친구, 보낸 친구 모두)
+    @Query("""
+                select f from Friend f
+                where f.status = :status
+                  and (f.requester = :me or f.receiver = :me)
+                order by f.createdAt desc
+            """)
+    Slice<Friend> findFriends(
+            @Param("me") User me,
+            @Param("status") FriendStatus status,
             Pageable pageable
     );
 
