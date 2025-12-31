@@ -206,4 +206,9 @@ public class PathController {
         return "user/user-profile";
     }
 
+    @GetMapping("/friends/list")
+    public String friendListView() {
+        return "friend/friend-list";
+    }
+
 }

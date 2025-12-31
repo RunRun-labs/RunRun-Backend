@@ -6,6 +6,7 @@ import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.friend.repository.FriendRepository;
 import com.multi.runrunbackend.domain.user.dto.res.UserBlockResDto;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.entity.UserBlock;
@@ -31,6 +32,7 @@ public class UserBlockService {
 
     private final UserBlockRepository userBlockRepository;
     private final UserRepository userRepository;
+    private final FriendRepository friendRepository;
 
 
     @Transactional
@@ -46,6 +48,10 @@ public class UserBlockService {
         if (userBlockRepository.existsByBlockerAndBlockedUser(blocker, targetUser)) {
             throw new ForbiddenException(ErrorCode.ALREADY_BLOCKED);
         }
+
+        // 차단 시 기존 친구 관계 삭제 추가
+        friendRepository.findBetweenUsers(blocker, targetUser)
+                .ifPresent(friendRepository::delete);
 
         UserBlock userBlock = UserBlock.block(blocker, targetUser);
         userBlockRepository.save(userBlock);
