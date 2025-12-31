@@ -77,6 +77,7 @@ public enum ErrorCode {
     MEMBERSHIP_ALREADY_CANCELED(HttpStatus.CONFLICT, "M003", "이미 해지 신청된 멤버십입니다."),
     MEMBERSHIP_REQUIRED(HttpStatus.FORBIDDEN, "M004", "프리미엄 멤버십이 필요합니다."),
     MEMBERSHIP_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "M005", "활성화된 멤버십이 아닙니다."),
+    MEMBERSHIP_NOT_CANCELED(HttpStatus.BAD_REQUEST, "M006", "해지 신청 상태가 아닙니다."),
 
     /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
