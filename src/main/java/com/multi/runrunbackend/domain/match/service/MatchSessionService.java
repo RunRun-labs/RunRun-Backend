@@ -26,8 +26,8 @@ import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
-import java.time.Duration;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -239,7 +239,7 @@ public class MatchSessionService {
               .profileImage(user.getProfileImageUrl())
               .isReady(su.isReady())
               .isHost(user.getId().equals(hostUserId))
-              .avgPace("5:" + (30 + (int)(Math.random() * 30)))  // 임시 하드코딩: 5:30 ~ 5:59
+              .avgPace("5:" + (30 + (int) (Math.random() * 30)))  // 임시 하드코딩: 5:30 ~ 5:59
               .build();
         })
         .collect(Collectors.toList());
@@ -288,7 +288,6 @@ public class MatchSessionService {
     }
 
     MatchSession session = MatchSession.builder()
-        .course(ghostResult.getCourse())
         .type(SessionType.GHOST)
         .runningResult(ghostResult)
         .targetDistance(ghostResult.getTotalDistance().doubleValue())
