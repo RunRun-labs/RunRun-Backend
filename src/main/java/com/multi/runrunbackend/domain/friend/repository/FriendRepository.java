@@ -3,8 +3,8 @@ package com.multi.runrunbackend.domain.friend.repository;
 import com.multi.runrunbackend.domain.friend.constant.FriendStatus;
 import com.multi.runrunbackend.domain.friend.entity.Friend;
 import com.multi.runrunbackend.domain.user.entity.User;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,7 +35,7 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
                   and (f.requester = :me or f.receiver = :me)
                 order by f.createdAt desc
             """)
-    Slice<Friend> findFriends(
+    Page<Friend> findFriends(
             @Param("me") User me,
             @Param("status") FriendStatus status,
             Pageable pageable
