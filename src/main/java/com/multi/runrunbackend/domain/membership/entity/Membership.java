@@ -1,6 +1,8 @@
 package com.multi.runrunbackend.domain.membership.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -85,6 +87,18 @@ public class Membership extends BaseEntity {
      */
     public void cancel() {
         this.membershipStatus = MembershipStatus.CANCELED;
+    }
+
+    /**
+     * @description : 해지 취소 (다시 구독)
+     */
+    public void cancelCancellation() {
+        if (this.membershipStatus != MembershipStatus.CANCELED) {
+            throw new BusinessException(ErrorCode.MEMBERSHIP_NOT_CANCELED);
+        }
+
+        this.membershipStatus = MembershipStatus.ACTIVE;
+        this.endDate = null;  // nextBillingDate는 유지 (기존 결제일 그대로)
     }
 
     /**
