@@ -1,19 +1,8 @@
 package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 /**
  * @author : BoKyung
@@ -47,29 +36,19 @@ public class CrewActivity extends BaseEntity {
 
 
     /**
-     * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
+     * @description : create - 엔티티 생성 정적 팩토리 메서드
      * @filename : CrewActivity
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static CrewActivity toEntity(Crew crew, String region, Integer distance,
-                                        Integer participationCnt) {
-        return CrewActivity.builder()
-                .crew(crew)
-                .region(region)
-                .distance(distance)
-                .participationCnt(participationCnt)
-                .build();
+    public static CrewActivity create(Crew crew, String region, Integer distance,
+                                      Integer participationCnt) {
+        CrewActivity activity = new CrewActivity();
+        activity.crew = crew;
+        activity.region = region;
+        activity.distance = distance;
+        activity.participationCnt = participationCnt;
+        return activity;
     }
 
-    /**
-     * @description : updateParticipationCnt - 참여 인원 업데이트
-     * @filename : CrewActivity
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
-     */
-    public void updateParticipationCnt(Integer participationCnt) {
-        this.participationCnt = participationCnt;
-
-    }
 }

@@ -3,23 +3,14 @@ package com.multi.runrunbackend.domain.crew.entity;
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.crew.constant.CrewDistanceType;
+import com.multi.runrunbackend.domain.crew.constant.CrewPaceType;
+import com.multi.runrunbackend.domain.crew.constant.JoinStatus;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+
 /**
  * @author : BoKyung
  * @description : 크루 가입 신청 엔티티
@@ -46,14 +37,16 @@ public class CrewJoinRequest extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "introduction", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "introduction", columnDefinition = "TEXT")
     private String introduction;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "distance", nullable = false)
-    private Integer distance;
+    private CrewDistanceType distance;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "pace", nullable = false)
-    private Integer pace;
+    private CrewPaceType pace;
 
     @Column(name = "region", nullable = false, length = 100)
     private String region;
@@ -62,23 +55,17 @@ public class CrewJoinRequest extends BaseEntity {
     @Column(name = "join_status", nullable = false, length = 20)
     private JoinStatus joinStatus;  // PENDING, APPROVED, REJECTED, CANCELED
 
-    /**
-     * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
-     * @filename : CrewJoinRequest
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
-     */
-    public static CrewJoinRequest toEntity(Crew crew, User user, String introduction,
-                                           Integer distance, Integer pace, String region) {
-        return CrewJoinRequest.builder()
-                .crew(crew)
-                .user(user)
-                .introduction(introduction)
-                .distance(distance)
-                .pace(pace)
-                .region(region)
-                .joinStatus(JoinStatus.PENDING)
-                .build();
+    public static CrewJoinRequest create(Crew crew, User user, String introduction,
+                                         CrewDistanceType distance, CrewPaceType pace, String region) {
+        CrewJoinRequest request = new CrewJoinRequest();
+        request.crew = crew;
+        request.user = user;
+        request.introduction = introduction;
+        request.distance = distance;
+        request.pace = pace;
+        request.region = region;
+        request.joinStatus = JoinStatus.PENDING;
+        return request;
     }
 
     /**
@@ -93,7 +80,7 @@ public class CrewJoinRequest extends BaseEntity {
     }
 
     /**
-     * @description : reject - 가입 신청 거절
+     * @description : reject - 가입 신청 거절 (거절 후 재신청 가능하도록 soft delete 처리)
      * @filename : CrewJoinRequest
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
@@ -101,6 +88,7 @@ public class CrewJoinRequest extends BaseEntity {
     public void reject() {
         validatePending();
         this.joinStatus = JoinStatus.REJECTED;
+        this.delete(); // 거절 후 재신청 가능하도록 soft delete 처리
     }
 
     /**

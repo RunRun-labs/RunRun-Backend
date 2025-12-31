@@ -1,9 +1,11 @@
 package com.multi.runrunbackend.domain.match.service;
 
+import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
@@ -22,11 +24,12 @@ import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,9 +52,9 @@ public class MatchSessionService {
   private final SessionUserRepository sessionUserRepository;
 
   @Transactional
-  public Long createOfflineSession(Long recruitId, UserDetails userDetails) {
+  public Long createOfflineSession(Long recruitId, CustomUser principal) {
 
-    User user = userRepository.findByLoginId(userDetails.getUsername())
+    User user = userRepository.findByLoginId(principal.getLoginId())
         .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
     Recruit recruit = recruitRepository.findById(recruitId)
@@ -138,36 +141,86 @@ public class MatchSessionService {
     return matchSession.getId();
   }
 
+  @Transactional
+  public Long createOnlineSession(Set<String> userIds, DistanceType distance, int avgDuration) {
+
+    if (userIds == null || userIds.isEmpty()) {
+      throw new ValidationException(ErrorCode.NOT_ENOUGH_PARTICIPANTS);
+    }
+
+    double targetDistanceValue = convertToKiloMeter(distance);
+
+    MatchSession session = MatchSession.builder()
+        .type(SessionType.ONLINE)
+        .targetDistance(targetDistanceValue)
+        .duration(avgDuration)
+        .status(SessionStatus.STANDBY)
+        .build();
+
+    matchSessionRepository.save(session);
+
+    List<SessionUser> sessionUsers = new ArrayList<>();
+
+    for (String userIdStr : userIds) {
+      Long userId = Long.parseLong(userIdStr);
+      User user = userRepository.findById(userId)
+          .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+      SessionUser sessionUser = SessionUser.builder()
+          .matchSession(session)
+          .user(user)
+          .isReady(false)
+          .build();
+
+      sessionUsers.add(sessionUser);
+    }
+
+    sessionUserRepository.saveAll(sessionUsers);
+
+    log.info("온라인 매칭 DB 저장 완료 - SessionID: {}, 거리: {}km", session.getId(), targetDistanceValue);
+
+    return session.getId();
+  }
+
+  private double convertToKiloMeter(DistanceType distance) {
+    return switch (distance) {
+      case KM_3 -> 3.0;
+      case KM_5 -> 5.0;
+      case KM_10 -> 10.0;
+      default -> 0.0;
+    };
+  }
+
   /**
    * 대기방 정보 조회
    */
   public MatchWaitingInfoDto getWaitingInfo(Long sessionId, Long currentUserId) {
     log.info("🔍 세션 정보 조회 시작: sessionId={}, currentUserId={}", sessionId, currentUserId);
-    
+
     // 세션 조회
     MatchSession session = matchSessionRepository.findById(sessionId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
-    
-    log.info("✅ 세션 찾음: id={}, status={}, targetDistance={}", 
+
+    log.info("✅ 세션 찾음: id={}, status={}, targetDistance={}",
         session.getId(), session.getStatus(), session.getTargetDistance());
-    
+
     // 참가자 목록 조회
     List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
-    
+
     log.info("👥 참가자 수: {}", sessionUsers.size());
-    
+
     if (sessionUsers.isEmpty()) {
       log.error("❌ 참가자가 없음! sessionId={}", sessionId);
       throw new NotFoundException(ErrorCode.SESSION_NOT_FOUND);
     }
-    
+
     // 방장 찾기 (첫 번째 참가자 또는 Recruit의 host)
-    Long hostUserId = session.getRecruit() != null 
+    Long hostUserId = session.getRecruit() != null
         ? session.getRecruit().getUser().getId()
         : sessionUsers.get(0).getUser().getId();
-    
+
     log.info("👑 방장 userId: {}", hostUserId);
-    
+
     // 참가자 DTO 변환
     List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
         .map(su -> {
@@ -182,20 +235,20 @@ public class MatchSessionService {
               .build();
         })
         .collect(Collectors.toList());
-    
+
     // Ready 카운트
     long readyCount = sessionUsers.stream().filter(SessionUser::isReady).count();
-    
+
     // 남은 시간 계산 (세션 생성 시각 + 5분 - 현재 시각)
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime createdAt = session.getCreatedAt();
     LocalDateTime timeLimit = createdAt.plusMinutes(5);  // 5분 제한
-    
+
     long remainingSeconds = Duration.between(now, timeLimit).getSeconds();
     if (remainingSeconds < 0) {
       remainingSeconds = 0;  // 음수면 0으로
     }
-    
+
     MatchWaitingInfoDto result = MatchWaitingInfoDto.builder()
         .sessionId(session.getId())
         .targetDistance(session.getTargetDistance())
@@ -206,10 +259,10 @@ public class MatchSessionService {
         .readyCount((int) readyCount)
         .totalCount(sessionUsers.size())
         .build();
-    
-    log.info("✅ 세션 정보 반환: participants={}, readyCount={}", 
+
+    log.info("✅ 세션 정보 반환: participants={}, readyCount={}",
         result.getTotalCount(), result.getReadyCount());
-    
+
     return result;
   }
 

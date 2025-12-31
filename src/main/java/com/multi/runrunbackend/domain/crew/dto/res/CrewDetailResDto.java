@@ -1,8 +1,8 @@
 package com.multi.runrunbackend.domain.crew.dto.res;
 
+import com.multi.runrunbackend.domain.crew.constant.CrewRecruitStatus;
+import com.multi.runrunbackend.domain.crew.constant.CrewStatus;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
-import com.multi.runrunbackend.domain.crew.entity.CrewRecruitStatus;
-import com.multi.runrunbackend.domain.crew.entity.CrewStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -67,9 +67,9 @@ public class CrewDetailResDto {
      * @param crew             크루 엔티티
      * @param memberCount      크루원 수
      * @param recentActivities 최근 활동 내역
-     * @description : toEntity : Entity → DTO 변환
+     * @description : formEntity : Entity → DTO 변환
      */
-    public static CrewDetailResDto toEntity(
+    public static CrewDetailResDto fromEntity(
             Crew crew,
             Long memberCount,
             List<CrewActivityResDto> recentActivities

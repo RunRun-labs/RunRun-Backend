@@ -1,0 +1,243 @@
+:root {
+    --primary: #baff29;
+    --text-strong: #000000;
+    --text-muted: #6c7278;
+    --stroke: #e1e4e8;
+    --bg: #ffffff;
+    --error: #ff4444;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+}
+
+.blocked-users-body {
+    font-family: "Inter", "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text-strong);
+}
+
+.page {
+    position: relative;
+    width: min(420px, 100vw);
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 0 20px 110px;
+    display: flex;
+    flex-direction: column;
+}
+
+.blocked-users-page {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 130px;
+}
+
+.blocked-users-header {
+    position: relative;
+    padding: 18px 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.back-button {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 33px;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-strong);
+}
+
+.back-button svg {
+    width: 100%;
+    height: 100%;
+}
+
+.blocked-users-title {
+    margin: 0;
+    font-family: "Outfit", "Noto Sans KR", sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #252525;
+    text-align: center;
+}
+
+.blocked-users-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.blocked-user-item {
+    width: 100%;
+    height: 104px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 24px;
+    border-top: 1px solid var(--primary);
+    background: var(--bg);
+    transition: background-color 0.15s ease;
+}
+
+.blocked-user-item:first-child {
+    border-top: none;
+}
+
+.blocked-user-item:hover {
+    background: #fafafa;
+}
+
+.blocked-user-item:active {
+    background: #f5f5f5;
+}
+
+.user-profile-image {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--stroke);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-profile-image img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-profile-image svg {
+    width: 100%;
+    height: 100%;
+    color: var(--text-muted);
+}
+
+.user-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.user-login-id {
+    font-family: "Fugaz One", "Noto Sans KR", sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-strong);
+}
+
+.unblock-button {
+    padding: 8px 16px;
+    border: none;
+    background: var(--primary);
+    color: var(--text-strong);
+    font-family: "Fugaz One", "Noto Sans KR", sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.unblock-button:hover {
+    background: #a8e020;
+}
+
+.unblock-button:active {
+    transform: scale(0.98);
+}
+
+.unblock-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.empty-state[hidden] {
+    display: none;
+}
+
+/* 하단 네비게이션 */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(420px, 100vw);
+    height: 80px;
+    background: var(--bg);
+    border-top: 1px solid var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 16px 0;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    color: var(--text-strong);
+    transition: opacity 0.15s ease;
+}
+
+.nav-item:hover {
+    opacity: 0.7;
+}
+
+.nav-item img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.nav-item span {
+    font-family: "Fugaz One", sans-serif;
+    font-size: 10px;
+    text-transform: lowercase;
+}
+
+@media (max-width: 480px) {
+    .page {
+        padding: 0 16px 110px;
+    }
+
+    .blocked-user-item {
+        padding: 0 16px;
+    }
+}
+

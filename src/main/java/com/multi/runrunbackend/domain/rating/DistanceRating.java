@@ -38,30 +38,30 @@ import org.hibernate.annotations.SQLRestriction;
     @UniqueConstraint(columnNames = {"user_id", "distance_type"})
 })
 @SQLRestriction("is_deleted = false")
-public class Rating extends BaseEntity {
+public class DistanceRating extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "distance_type", length = 10, nullable = false)
-    private DistanceType distanceType;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "distance_type", length = 10, nullable = false)
+  private DistanceType distanceType;
 
-    @Column(name = "current_rating", nullable = false)
-    @Builder.Default
-    private Integer currentRating = 1000;
+  @Column(name = "current_rating", nullable = false)
+  @Builder.Default
+  private Integer currentRating = 1000;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "current_tier", length = 20, nullable = false)
-    private Tier currentTier;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "current_tier", length = 20, nullable = false)
+  private Tier currentTier;
 
-    @Column(name = "win_count", nullable = false)
-    @Builder.Default
-    private Integer winCount = 0;
+  @Column(name = "win_count", nullable = false)
+  @Builder.Default
+  private Integer winCount = 0;
 
 }

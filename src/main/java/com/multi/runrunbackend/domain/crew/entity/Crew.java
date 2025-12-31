@@ -1,9 +1,12 @@
 package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
-import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.crew.constant.CrewRecruitStatus;
+import com.multi.runrunbackend.domain.crew.constant.CrewStatus;
+import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
+import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
@@ -60,25 +63,26 @@ public class Crew extends BaseEntity {
     private CrewRecruitStatus crewRecruitStatus;  // RECRUITING, CLOSED
 
     /**
-     * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
+     * @param user   크루장 (User 엔티티)
+     * @param reqDto 크루 생성 요청 DTO
+     * @description : create - 크루 엔티티 생성 정적 팩토리 메서드
      * @filename : Crew
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static Crew create(String crewName, String crewDescription, String crewImageUrl,
-                              String region, String distance, String averagePace, String activityTime, User user) {
-        return Crew.builder()
-                .crewName(crewName)
-                .crewDescription(crewDescription)
-                .crewImageUrl(crewImageUrl)
-                .region(region)
-                .distance(distance)
-                .averagePace(averagePace)
-                .activityTime(activityTime)
-                .user(user)
-                .crewStatus(CrewStatus.ACTIVE)
-                .crewRecruitStatus(CrewRecruitStatus.RECRUITING)
-                .build();
+    public static Crew create(User user, CrewCreateReqDto reqDto) {
+        Crew crew = new Crew();
+        crew.user = user;
+        crew.crewName = reqDto.getCrewName();
+        crew.crewDescription = reqDto.getCrewDescription();
+        crew.crewImageUrl = reqDto.getCrewImageUrl();
+        crew.region = reqDto.getRegion();
+        crew.distance = reqDto.getDistance();
+        crew.averagePace = reqDto.getAveragePace();
+        crew.activityTime = reqDto.getActivityTime();
+        crew.crewStatus = CrewStatus.ACTIVE;
+        crew.crewRecruitStatus = CrewRecruitStatus.RECRUITING;
+        return crew;
     }
 
     /**

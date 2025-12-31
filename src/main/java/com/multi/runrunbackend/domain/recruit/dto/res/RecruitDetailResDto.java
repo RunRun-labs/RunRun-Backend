@@ -29,6 +29,7 @@ public class RecruitDetailResDto {
   private Integer currentParticipants;
 
   private String authorName;
+  private String authorLoginId;
   private Long authorId;
 
   private String genderLimit;
@@ -60,6 +61,7 @@ public class RecruitDetailResDto {
         .maxParticipants(recruit.getMaxParticipants())
         .currentParticipants(recruit.getCurrentParticipants())
         .authorName(recruit.getUser().getName())
+        .authorLoginId(recruit.getUser().getLoginId())
         .authorId(recruit.getUser().getId())
         .genderLimit(recruit.getGenderLimit().name())
         .createdAt(recruit.getCreatedAt())
