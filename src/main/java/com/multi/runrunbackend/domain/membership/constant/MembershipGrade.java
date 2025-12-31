@@ -8,6 +8,5 @@ package com.multi.runrunbackend.domain.membership.constant;
  */
 public enum MembershipGrade {
 
-    FREE,      // 무료 회원
     PREMIUM    // 프리미엄 회원
 }
