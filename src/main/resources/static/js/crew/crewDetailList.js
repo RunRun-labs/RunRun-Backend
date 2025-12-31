@@ -7,6 +7,7 @@
 // 전역 변수
 // ===========================
 let crewId = null;
+let currentUserRole = null;
 let isApplied = false; // 신청 여부
 let joinStatus = null; // 가입 신청 상태 (PENDING, APPROVED, REJECTED, CANCELED)
 let isFavorite = false;
@@ -41,7 +42,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    let currentUserId = parseInt(localStorage.getItem('userId'));
+
     await loadCrewData();
+
+    if (currentUserId) {
+        await checkMyRole();
+        showActionButtons();  // 역할별 버튼 표시
+    }
 
     initEventListeners();
 
@@ -209,15 +217,167 @@ async function loadCrewData() {
     }
 }
 
+// ========================================
+// 내 역할 확인
+// ========================================
+async function checkMyRole() {
+    try {
+        const token = localStorage.getItem('accessToken');
+
+        if (!token || !currentUserId) {
+            return;
+        }
+
+        const response = await fetch(`/api/crews/${crewId}/users`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            return;
+        }
+
+        const result = await response.json();
+        const members = result.data || result;
+
+        // 내 정보 찾기
+        const myInfo = members.find(member => member.userId === currentUserId);
+
+        if (myInfo) {
+            currentUserRole = myInfo.role;
+            console.log('내 역할:', currentUserRole);
+        }
+
+    } catch (error) {
+        console.error('역할 확인 실패:', error);
+    }
+}
+
+// ========================================
+// 역할별 버튼 표시
+// ========================================
+function showActionButtons() {
+    // 크루원이 아니면 버튼 표시 안 함
+    if (!currentUserRole) {
+        console.log('크루원이 아니므로 버튼 표시 안 함');
+        return;
+    }
+
+    console.log('역할별 버튼 표시 - 역할:', currentUserRole);
+
+    // 크루장만 수정 버튼 표시
+    if (currentUserRole === 'LEADER') {
+        showEditButton();
+        console.log('크루장 - 수정 버튼 표시');
+    }
+
+    // 모든 크루원에게 사람 아이콘 클릭 가능하게 만들기
+    makeMemberIconClickable();
+}
+
+// ========================================
+// 크루 수정 버튼 (오른쪽 하단)
+// ========================================
+function showEditButton() {
+    const header = document.querySelector('.crew-info__header');
+
+    if (!header) {
+        console.warn('헤더를 찾을 수 없습니다.');
+        return;
+    }
+
+    // 이미 버튼이 있으면 종료
+    if (document.getElementById('btnEditCrew')) {
+        return;
+    }
+
+    // 연필 버튼 생성
+    const editButton = document.createElement('button');
+    editButton.id = 'btnEditCrew';
+    editButton.className = 'btn-edit-circle';
+    editButton.setAttribute('aria-label', '크루 수정');
+    editButton.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+    editButton.onclick = () => {
+        window.location.href = `/crews/${crewId}/edit`;
+    };
+
+    // 헤더에 추가
+    header.appendChild(editButton);
+}
+
+// ========================================
+// 사람 아이콘 클릭 가능하게 (크루원 목록으로 이동)
+// ========================================
+function makeMemberIconClickable() {
+    // "5명 참여중" 앞의 사람 아이콘 찾기
+    const locationDiv = document.querySelector('.crew-info__location');
+
+    if (!locationDiv) {
+        console.warn('위치 정보를 찾을 수 없습니다.');
+        return;
+    }
+
+    // 두 번째 SVG (사람 아이콘) 찾기
+    const icons = locationDiv.querySelectorAll('svg.icon');
+    if (icons.length < 2) {
+        console.warn('사람 아이콘을 찾을 수 없습니다.');
+        return;
+    }
+
+    const memberIcon = icons[1]; // 두 번째 아이콘 (사람)
+
+    // 클릭 가능한 스타일 추가
+    memberIcon.classList.add('icon-clickable');
+    memberIcon.style.cursor = 'pointer';
+
+    // 클릭 이벤트 추가
+    memberIcon.addEventListener('click', () => {
+        console.log('크루원 목록으로 이동:', `/crews/${crewId}/users`);
+        window.location.href = `/crews/${crewId}/users`;
+    });
+
+    // 접근성을 위한 키보드 이벤트
+    memberIcon.setAttribute('tabindex', '0');
+    memberIcon.setAttribute('role', 'button');
+    memberIcon.setAttribute('aria-label', '크루원 목록 보기');
+
+    memberIcon.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            window.location.href = `/crews/${crewId}/users`;
+        }
+    });
+}
+
 // ===========================
 // 크루 UI 업데이트
 // ===========================
 function updateCrewUI(crew) {
+    console.log('🔍 updateCrewUI 호출됨');
+    console.log('  crew 전체 데이터:', crew);
+    console.log('  crewImageUrl:', crew.crewImageUrl);
     const crewImage = document.getElementById('crewImage');
     if (crewImage) {
         const defaultImageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI0Y1RjVGNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+6rCA7J2AIOyVlOydgCDsiqTsmYg8L3RleHQ+PC9zdmc+';
-        crewImage.src = crew.crewImageUrl && crew.crewImageUrl.trim() ? crew.crewImageUrl : defaultImageUrl;
+
+        const finalUrl = crew.crewImageUrl && crew.crewImageUrl.trim() ? crew.crewImageUrl : defaultImageUrl;
+        console.log('  최종 이미지 URL:', finalUrl);
+        console.log('  URL 타입:', finalUrl.startsWith('http') ? 'HTTPS URL' : finalUrl.startsWith('data:') ? '기본 SVG' : '상대 경로');
+
+        crewImage.src = finalUrl;
         crewImage.alt = crew.crewName || '크루 이미지';
+
+        console.log('  img 태그에 설정 완료');
+    } else {
+        console.warn('❌ crewImage 엘리먼트를 찾을 수 없음!');
     }
 
     const recruitingBadge = document.getElementById('recruitmentBadge');
@@ -255,6 +415,15 @@ function updateCrewUI(crew) {
     const memberCount = document.getElementById('memberCount');
     if (memberCount) {
         memberCount.textContent = crew.memberCount || 0;
+    }
+
+    // 크루원 아이콘 클릭 이벤트 추가
+    const memberIcon = document.getElementById('memberIcon');
+    if (memberIcon) {
+        memberIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.location.href = `/crews/${crewId}/users`;
+        });
     }
 
     const crewDistance = document.getElementById('crewDistance');

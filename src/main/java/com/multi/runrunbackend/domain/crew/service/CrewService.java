@@ -2,6 +2,8 @@ package com.multi.runrunbackend.domain.crew.service;
 
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.file.FileDomainType;
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.crew.constant.*;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
@@ -25,6 +27,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +49,7 @@ public class CrewService {
     private final CrewActivityRepository crewActivityRepository;
     private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
+    private final FileStorage s3FileStorage;
     private final MembershipRepository membershipRepository;
 
     /**
@@ -53,7 +57,7 @@ public class CrewService {
      * @description : 크루 생성
      */
     @Transactional
-    public Long createCrew(CustomUser principal, CrewCreateReqDto reqDto) {
+    public Long createCrew(CustomUser principal, CrewCreateReqDto reqDto, MultipartFile crewImageFile) {
 
         // 사용자 조회
         User user = getUserOrThrow(principal);
@@ -67,7 +71,13 @@ public class CrewService {
         // 크루명 중복 확인
         validateCrewNameNotDuplicate(reqDto.getCrewName());
 
-        // 크루 생성
+        // 크루 이미지 업로드
+        String imageUrl = resolveImageUrl(crewImageFile, FileDomainType.CREW_IMAGE, user.getId());
+
+        // DTO에 이미지 URL 설정
+        reqDto.setCrewImageUrl(imageUrl);
+
+        // Course처럼 create() 사용!
         Crew crew = Crew.create(user, reqDto);
         crewRepository.save(crew);
 
@@ -87,7 +97,7 @@ public class CrewService {
      * @description : 크루 수정
      */
     @Transactional
-    public void updateCrew(Long crewId, CustomUser principal, CrewUpdateReqDto reqDto) {
+    public void updateCrew(Long crewId, CustomUser principal, CrewUpdateReqDto reqDto, MultipartFile crewImageFile) {
         // 사용자 조회
         User user = getUserOrThrow(principal);
 
@@ -100,10 +110,14 @@ public class CrewService {
         // 해체되지 않은 크루인지 검증
         crew.validateNotDisbanded();
 
+        // 변경된 이미지가 있으면 업로드
+        String imageUrl = resolveChangedImageUrl(crewImageFile, FileDomainType.CREW_IMAGE,
+                user.getId(), crew);
+
         // 크루 정보 수정
         crew.updateCrew(
                 reqDto.getCrewDescription(),
-                reqDto.getCrewImageUrl(),
+                imageUrl,
                 reqDto.getRegion(),
                 reqDto.getDistance(),
                 reqDto.getAveragePace(),
@@ -168,7 +182,11 @@ public class CrewService {
         List<CrewListResDto> crewListResDtos = crews.stream()
                 .map(crew -> {
                     Long memberCount = crewUserRepository.countByCrewIdAndIsDeletedFalse(crew.getId());
-                    return CrewListResDto.fromEntity(crew, memberCount);
+                    // 이미지 url이 있을 때만 S3 key를 HTTPS로 변환
+                    String httpsImageUrl = (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
+                            ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
+                            : "";
+                    return CrewListResDto.fromEntity(crew, memberCount, httpsImageUrl);
                 })
                 .collect(Collectors.toList());
 
@@ -195,7 +213,12 @@ public class CrewService {
                 .map(CrewActivityResDto::fromEntity)
                 .collect(Collectors.toList());
 
-        return CrewDetailResDto.fromEntity(crew, memberCount, activityResDtos);
+        // 이미지 url을 HTTPS로 변환
+        String httpsImageUrl = (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
+                ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
+                : "";
+
+        return CrewDetailResDto.fromEntity(crew, memberCount, activityResDtos, httpsImageUrl);
     }
 
     /**
@@ -342,6 +365,40 @@ public class CrewService {
         otherPendingRequests.stream()
                 .filter(request -> !request.getCrew().getId().equals(currentCrewId))
                 .forEach(CrewJoinRequest::cancel);
+    }
+
+    /**
+     * @description : 이미지 파일 업로드
+     */
+    private String resolveImageUrl(MultipartFile file, FileDomainType domainType, Long refId) {
+        // 파일이 없으면 빈 문자열 반
+        if (file == null || file.isEmpty()) {
+            return "";
+        }
+        // 파일이 있으면 업로드
+        return s3FileStorage.upload(file, domainType, refId);
+    }
+
+    /**
+     * @description : 변경된 이미지 파일 업로드
+     */
+    private String resolveChangedImageUrl(MultipartFile file, FileDomainType domainType,
+                                          Long refId, Crew crew) {
+
+        try {
+            // 파일이 없으면 기존 URL 유지
+            if (file == null || file.isEmpty()) {
+                return crew.getCrewImageUrl();
+            }
+            // 파일이 있으면 변경된 파일만 업로드
+
+            return s3FileStorage.uploadIfChanged(file, domainType, refId, crew.getCrewImageUrl());
+        } catch (Exception e) {
+
+            // 업로드 실패 시 기존 URL 유지
+            return crew.getCrewImageUrl();
+        }
+
     }
 
     /**

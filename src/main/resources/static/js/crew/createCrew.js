@@ -8,7 +8,7 @@
 // ========================================
 // 전역 변수
 // ========================================
-let uploadedImageUrl = null;
+let selectedImageFile = null;
 let toastTimer = null;
 let isSubmitting = false;
 // ========================================
@@ -423,14 +423,14 @@ function initializeImageUpload() {
             return;
         }
 
-        if (file.size > 5 * 1024 * 1024) {
-            showError('이미지 크기는 5MB 이하여야 합니다.');
+        if (file.size > 10 * 1024 * 1024) {
+            showError('이미지 크기는 10MB 이하여야 합니다.');
             return;
         }
 
+        selectedImageFile = file;
         showImagePreview(file);
 
-        await uploadImageToServer(file);
     });
 }
 
@@ -464,50 +464,9 @@ function removeImage() {
     imageInput.value = '';
     imagePreview.style.display = 'none';
     uploadBtn.style.display = 'flex';
-    uploadedImageUrl = null;
+    selectedImageFile = null;
 
     validateImage();
-}
-
-// ========================================
-// 서버에 이미지 업로드
-// ========================================
-async function uploadImageToServer(file) {
-    try {
-        showLoading(true);
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('domain', 'CREW_IMAGE'); // FileDomainType
-
-        const response = await fetch('/api/files/upload', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getAccessToken()}`
-            },
-            body: formData
-        });
-
-        if (!response.ok) {
-            throw new Error('이미지 업로드 실패');
-        }
-
-        const result = await response.json();
-
-        if (result.data && result.data.url) {
-            uploadedImageUrl = result.data.url;
-            console.log('이미지 업로드 성공:', uploadedImageUrl);
-        } else {
-            throw new Error('이미지 URL을 받지 못했습니다.');
-        }
-
-    } catch (error) {
-        console.error('이미지 업로드 에러:', error);
-        showError('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
-        removeImage();
-    } finally {
-        showLoading(false);
-    }
 }
 
 // ========================================
@@ -517,28 +476,37 @@ async function createCrew() {
     try {
         showLoading(true);
 
-        const defaultImageUrl = '';
-        const imageUrl = uploadedImageUrl || defaultImageUrl;
+        // FormData 생성!
+        const formData = new FormData();
 
-        const requestData = {
+        const crewData = {
             crewName: document.getElementById('crewName').value.trim(),
             crewDescription: document.getElementById('description').value.trim(),
-            crewImageUrl: imageUrl,
             region: document.getElementById('activityRegion').value.trim(),
             distance: document.getElementById('runningDistance').value.trim(),
             averagePace: document.getElementById('averagePace').value,
             activityTime: document.getElementById('regularMeetingTime').value.trim()
         };
 
-        console.log('크루 생성 요청 데이터:', requestData);
+        formData.append('crew', new Blob([JSON.stringify(crewData)], {
+            type: 'application/json'
+        }));
+
+        if (selectedImageFile) {
+            formData.append('crewImageFile', selectedImageFile);
+            console.log('이미지 파일:', selectedImageFile.name);
+        } else {
+            console.log('이미지 없이 크루 생성');
+        }
+
+        console.log('크루 생성 요청 데이터:', crewData);
 
         const response = await fetch('/api/crews', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${getAccessToken()}`
             },
-            body: JSON.stringify(requestData)
+            body: formData
         });
 
         const result = await response.json();

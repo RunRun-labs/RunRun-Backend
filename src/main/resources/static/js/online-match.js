@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 7. 약 2초(setTimeout) 뒤에 리다이렉트한다
         setTimeout(() => {
-          window.location.href = `/match/online/confirmed?sessionId=${sessionId}`;
+          window.location.href = `/match/waiting?sessionId=${sessionId}`;
         }, 2000);
 
         return;
@@ -483,7 +483,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 페이지 이동
         if (sessionId) {
-          window.location.href = `/match/online/confirmed?sessionId=${sessionId}`;
+          window.location.href = `/match/waiting?sessionId=${sessionId}`;
         } else {
           console.error("세션 ID를 받지 못했습니다.");
           hideMatchingOverlay();

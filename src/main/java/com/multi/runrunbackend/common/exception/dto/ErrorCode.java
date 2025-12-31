@@ -19,6 +19,14 @@ public enum ErrorCode {
     DUPLICATE_USER(HttpStatus.CONFLICT, "U005", "이미 사용 중인 아이디 입니다"),
     /*  ===== 사용자 탈퇴 ===== */
     USER_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "U006", "이미 탈퇴한 사용자입니다."),
+    /* ===== 친구 ===== */
+    FRIEND_REQUEST_SELF(HttpStatus.BAD_REQUEST, "FR001", "자기 자신에게는 친구 요청을 보낼 수 없습니다."),
+    ALREADY_FRIEND_REQUEST(HttpStatus.CONFLICT, "FR002", "이미 친구 요청을 보냈거나 친구 관계입니다."),
+    FRIEND_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "FR003", "존재하지 않는 친구 요청입니다."),
+    FRIEND_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "FR004", "해당 친구 요청에 대한 권한이 없습니다."),
+    NOT_PENDING_FRIEND_REQUEST(HttpStatus.BAD_REQUEST, "FR005", "대기 중인 친구 요청이 아닙니다."),
+    FRIEND_NOT_FOUND(HttpStatus.NOT_FOUND, "FR006", "친구 관계를 찾을 수 없습니다."),
+
     /* ==== 토큰 ====*/
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A001", "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "만료된 토큰입니다."),
@@ -71,6 +79,8 @@ public enum ErrorCode {
     ALREADY_JOINED_CREW(HttpStatus.CONFLICT, "CR014", "이미 가입한 크루가 있습니다."),
     CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR015", "크루원을 찾을 수 없습니다."),
     CREW_RECRUITMENT_CLOSED(HttpStatus.CONFLICT, "CR016", "모집이 마감된 크루입니다."),
+    NOT_CREW_USER(HttpStatus.FORBIDDEN, "CR017", "크루원이 아닙니다."),
+    CANNOT_ASSIGN_LEADER_TO_MEMBER(HttpStatus.FORBIDDEN, "CR018", "일반 멤버는 크루장이 될 수 없습니다. 부크루장 또는 운영진에게만 위임 가능합니다."),
     /* ===== 멤버십 ===== */
     MEMBERSHIP_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "멤버십 정보를 찾을 수 없습니다."),
     MEMBERSHIP_ALREADY_PREMIUM(HttpStatus.CONFLICT, "M002", "이미 프리미엄 멤버십입니다."),
@@ -265,6 +275,7 @@ public enum ErrorCode {
     USER_ALREADY_LEFT(HttpStatus.BAD_REQUEST, "SES_005", "이미 퇴장한 사용자입니다."),
     ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
     HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다."),
+    INVALID_READY_STATUS(HttpStatus.BAD_REQUEST, "SES_008", "Ready 상태 값이 올바르지 않습니다."),
     /*=====MAPBOX =====*/
     MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
             "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
