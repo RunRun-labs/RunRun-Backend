@@ -1,6 +1,5 @@
 package com.multi.runrunbackend.domain.membership.dto.res;
 
-import com.multi.runrunbackend.domain.membership.constant.MembershipGrade;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.entity.Membership;
 import lombok.AllArgsConstructor;
@@ -22,10 +21,9 @@ import java.time.LocalDateTime;
 @Builder
 public class MembershipMainResDto {
 
-    private MembershipGrade membershipGrade;      // 멤버십 등급
     private MembershipStatus membershipStatus;     // 멤버십 상태 (사용중, 해지 신청됨, 만료됨)
     private LocalDateTime startDate;     // 시작일
-    private LocalDateTime endDate;       // 종료일
+    private LocalDateTime endDate;       // 종료일 (해지 신청할때 사용할 예정)
     private LocalDateTime nextBillingDate; // 다음 결제일
 
     /**
@@ -33,7 +31,6 @@ public class MembershipMainResDto {
      */
     public static MembershipMainResDto fromEntity(Membership membership) {
         return MembershipMainResDto.builder()
-                .membershipGrade(membership.getMembershipGrade())
                 .membershipStatus(membership.getMembershipStatus())
                 .startDate(membership.getStartDate())
                 .endDate(membership.getEndDate())
