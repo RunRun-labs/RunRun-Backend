@@ -31,7 +31,8 @@ body {
     sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
-  overflow-x: hidden;
+  overflow: hidden;
+  height: 100vh;
 }
 
 /* 전체 컨테이너 - 중앙 정렬 */
@@ -43,16 +44,29 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100vh;
 }
 
 .page {
   position: relative;
   width: 100%;
   min-height: calc(100vh - 180px);
-  padding-bottom: 96px;
+  padding-bottom: 20px; /* records-list의 padding-bottom으로 대체 */
   display: flex;
   flex-direction: column;
   flex: 1;
+  overflow-x: hidden;
+}
+
+/* 상단 고정 영역 래퍼 (헤더 + 필터) */
+.sticky-header-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-primary);
+  width: 100%;
 }
 
 /* 헤더 - 중앙 정렬 */
@@ -64,10 +78,9 @@ body {
   justify-content: center;
   gap: 12px;
   background: var(--bg-primary);
-  position: relative;
-  top: 0;
-  z-index: 100;
-  margin-bottom: 20px;
+  margin: 0;
+  box-sizing: border-box;
+  height: 88px; /* 명확한 높이 정의 */
 }
 
 .back-button {
@@ -181,7 +194,12 @@ body {
 /* 필터 칩 섹션 - 가로 스크롤 */
 .filter-section {
   width: 100%;
-  margin-bottom: 24px;
+  margin: 0 0 24px 0; /* 하단만 여백 유지 (info-box와의 간격) */
+  padding: 12px 0;
+  background: var(--bg-primary);
+  border-bottom: 1px solid rgba(42, 42, 58, 0.5); /* 리스트와 경계 구분을 위한 옅은 보더 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 약한 그림자 추가 */
+  box-sizing: border-box;
 }
 
 .filter-chips {
@@ -265,6 +283,7 @@ body {
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  padding-bottom: 140px; /* 하단 버튼과 겹치지 않도록 여백 추가 */
 }
 
 .empty-state {
@@ -633,11 +652,16 @@ body {
   }
 
   .page {
-    padding-bottom: 92px;
+    padding-bottom: 20px;
+  }
+
+  .records-list {
+    padding-bottom: 140px; /* 하단 버튼과 겹치지 않도록 여백 추가 */
   }
 
   .header {
     padding: 16px 0 18px;
+    height: 84px; /* 모바일 헤더 높이 명확히 정의 */
   }
 
   .header-title {
@@ -674,11 +698,16 @@ body {
 
 @media (max-width: 920px) and (max-height: 520px) {
   .page {
-    padding-bottom: 86px;
+    padding-bottom: 20px;
+  }
+
+  .records-list {
+    padding-bottom: 130px; /* 하단 버튼과 겹치지 않도록 여백 추가 */
   }
 
   .header {
     padding: 14px 0 16px;
+    height: 75px; /* 작은 화면 헤더 높이 명확히 정의 */
   }
 
   .header-title {

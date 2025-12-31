@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadingSpinner = document.getElementById("loadingSpinner");
   const emptyState = document.getElementById("emptyState");
   const startButton = document.getElementById("startButton");
+  const sentinel = document.getElementById("sentinel");
+  const container = document.querySelector(".container");
 
   let currentFilter = "ALL";
   let currentPage = 0;
@@ -47,6 +49,10 @@ document.addEventListener("DOMContentLoaded", () => {
         allRecords = [];
         renderFilterChips();
         updateStartButton();
+        // 필터 변경 시 스크롤 위치를 최상단으로 초기화
+        if (container) {
+          container.scrollTop = 0;
+        }
         loadRecords(true);
       });
       filterChips.appendChild(chip);
@@ -468,7 +474,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 기록 목록 로드
   async function loadRecords(reset = false) {
-    if (isLoading || (!hasNext && !reset)) return;
+    // 중복 호출 방지 및 데이터 체크
+    if (isLoading) {
+      return;
+    }
+    if (!hasNext && !reset) {
+      return;
+    }
 
     isLoading = true;
 
@@ -508,26 +520,48 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       loadingSpinner.style.display = "none";
       isLoading = false;
+      // 데이터 로드 후 Intersection Observer 재설정
+      setupInfiniteScroll();
     }
   }
 
-  // 무한 스크롤
-  let scrollTimeout;
-  window.addEventListener("scroll", () => {
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      const scrollHeight = document.documentElement.scrollHeight;
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const clientHeight = window.innerHeight;
+  // Intersection Observer를 사용한 무한 스크롤
+  let observer = null;
+  
+  function setupInfiniteScroll() {
+    // 기존 observer가 있으면 해제
+    if (observer) {
+      observer.disconnect();
+    }
 
-      if (scrollTop + clientHeight >= scrollHeight - 100) {
-        loadRecords(false);
+    // sentinel이 없거나 hasNext가 false면 observer 생성하지 않음
+    if (!sentinel || !hasNext) {
+      return;
+    }
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !isLoading && hasNext) {
+            loadRecords(false);
+          }
+        });
+      },
+      {
+        root: container, // 스크롤 컨테이너
+        rootMargin: "100px", // 100px 전에 미리 로드
+        threshold: 0.1
       }
-    }, 100);
-  });
+    );
+
+    observer.observe(sentinel);
+  }
 
   // 초기화
   renderFilterChips();
   loadRecords(true);
+  
+  // 초기 Intersection Observer 설정
+  setupInfiniteScroll();
 });
 
