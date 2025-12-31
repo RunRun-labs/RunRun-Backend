@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.running.battle.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +51,8 @@ public class BattleService {
   private final RunningResultRepository runningResultRepository;
   private final BattleResultRepository battleResultRepository;
   private final SimpMessagingTemplate messagingTemplate;
+  private final RedisTemplate<String, Object> redisPubSubTemplate;
+  private final ObjectMapper objectMapper;
 
   /**
    * Ready 상태 토글
@@ -119,6 +123,9 @@ public class BattleService {
     }
 
     log.info("🏁 배틀 시작: sessionId={}, 참가자={}명", sessionId, participants.size());
+
+    // ✅ 배틀 시작 메시지 전송
+    sendBattleStartMessage(sessionId);
   }
 
   /**
@@ -187,6 +194,56 @@ public class BattleService {
   }
 
   /**
+   * Ready 상태 메시지 전송 (Redis Pub/Sub)
+   */
+  public void sendReadyMessage(Long sessionId, Long userId, Boolean isReady, boolean allReady) {
+    Map<String, Object> message = new HashMap<>();
+    message.put("type", "BATTLE_READY");
+    message.put("userId", userId);
+    message.put("isReady", isReady);
+    message.put("allReady", allReady);
+    message.put("timestamp", LocalDateTime.now());
+
+    publishToRedis("/sub/battle/" + sessionId + "/ready", message);
+
+    log.info("✅ Ready 메시지 발행: sessionId={}, userId={}, isReady={}, allReady={}",
+        sessionId, userId, isReady, allReady);
+  }
+
+  /**
+   * 순위 업데이트 메시지 전송 (Redis Pub/Sub)
+   */
+  public void sendRankingMessage(Long sessionId, List<BattleRankingResDto> rankings) {
+    Map<String, Object> message = new HashMap<>();
+    message.put("type", "BATTLE_UPDATE");
+    message.put("sessionId", sessionId);
+    message.put("rankings", rankings);
+    message.put("timestamp", LocalDateTime.now());
+
+    publishToRedis("/sub/battle/" + sessionId + "/ranking", message);
+
+    log.info("📊 순위 메시지 발행: sessionId={}, 참가자={}명",
+        sessionId, rankings.size());
+  }
+
+  /**
+   * 에러 메시지 전송 (Redis Pub/Sub)
+   */
+  public void sendErrorMessage(Long sessionId, ErrorCode errorCode) {
+    Map<String, Object> message = new HashMap<>();
+    message.put("type", "ERROR");
+    message.put("errorCode", errorCode.name());
+    message.put("message", errorCode.getMessage());
+    message.put("httpStatus", errorCode.getHttpStatus().value());
+    message.put("timestamp", LocalDateTime.now());
+
+    publishToRedis("/sub/battle/" + sessionId + "/errors", message);
+
+    log.info("📤 에러 메시지 발행: sessionId={}, errorCode={}",
+        sessionId, errorCode.name());
+  }
+
+  /**
    * 타임아웃 시작 메시지 전송
    */
   private void sendTimeoutStartMessage(Long sessionId) {
@@ -195,10 +252,7 @@ public class BattleService {
     message.put("message", "일부 참가자가 강퇴되었습니다. 배틀을 시작합니다.");
     message.put("timestamp", LocalDateTime.now());
 
-    messagingTemplate.convertAndSend(
-        "/sub/battle/" + sessionId + "/timeout",
-        (Object) message
-    );
+    publishToRedis("/sub/battle/" + sessionId + "/timeout", message);
   }
 
   /**
@@ -210,10 +264,7 @@ public class BattleService {
     message.put("sessionId", sessionId);
     message.put("timestamp", LocalDateTime.now());
 
-    messagingTemplate.convertAndSend(
-        "/sub/battle/" + sessionId + "/start",
-        (Object) message
-    );
+    publishToRedis("/sub/battle/" + sessionId + "/start", message);
   }
 
   /**
@@ -225,10 +276,28 @@ public class BattleService {
     message.put("message", "참가자가 부족하여 매치가 취소되었습니다.");
     message.put("timestamp", LocalDateTime.now());
 
-    messagingTemplate.convertAndSend(
-        "/sub/battle/" + sessionId + "/timeout",
-        (Object) message
-    );
+    publishToRedis("/sub/battle/" + sessionId + "/timeout", message);
+  }
+
+  /**
+   * Redis Pub/Sub을 통한 메시지 발행 (다중 서버 환경 지원)
+   */
+  private void publishToRedis(String destination, Object message) {
+    try {
+      Map<String, Object> redisMessage = new HashMap<>();
+      redisMessage.put("destination", destination);
+      redisMessage.put("message", message);
+
+      String channel = "battle:" + destination.hashCode();
+      String payload = objectMapper.writeValueAsString(redisMessage);
+
+      redisPubSubTemplate.convertAndSend(channel, payload);
+
+      log.info("📤 [Redis Pub] 메시지 발행 - destination: {}, channel: {}", destination, channel);
+
+    } catch (Exception e) {
+      log.error("❌ Redis Pub 실패: destination={}", destination, e);
+    }
   }
 
   /**
@@ -425,10 +494,7 @@ public class BattleService {
     message.put("sessionId", sessionId);
     message.put("timestamp", LocalDateTime.now());
 
-    messagingTemplate.convertAndSend(
-        "/sub/battle/" + sessionId + "/complete",
-        (Object) message  // ✅ 명시적 캐스팅
-    );
+    publishToRedis("/sub/battle/" + sessionId + "/complete", message);
 
     log.info("🏁 배틀 종료 메시지 전송: sessionId={}", sessionId);
   }
@@ -503,18 +569,98 @@ public class BattleService {
    */
   @Transactional
   public void quitBattle(Long sessionId, Long userId) {
-    SessionUser sessionUser = sessionUserRepository
-        .findBySessionIdAndUserId(sessionId, userId)
+    MatchSession session = matchSessionRepository.findById(sessionId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
+    SessionUser sessionUser = sessionUserRepository
+        .findBySessionIdAndUserId(sessionId, userId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_USER_NOT_FOUND));
+
+    User user = sessionUser.getUser();
+
+    // 1. Redis에서 현재 데이터 조회
+    List<BattleRankingResDto> rankings = getRankings(sessionId);
+    BattleRankingResDto quitUserData = rankings.stream()
+        .filter(r -> r.getUserId().equals(userId))
+        .findFirst()
+        .orElse(null);
+
+    // 2. 포기한 사람의 런닝 결과 저장 (GIVE_UP)
+    if (quitUserData != null) {
+      RunningResult runningResult = RunningResult.builder()
+          .user(user)
+          .course(null)
+          .totalDistance(BigDecimal.valueOf(quitUserData.getTotalDistance() / 1000.0))  // km
+          .totalTime(calculateTotalTime(quitUserData))
+          .avgPace(parsePaceToBigDecimal(quitUserData.getCurrentPace()))
+          .startedAt(session.getCreatedAt())
+          .runStatus(RunStatus.GIVE_UP)  // ✅ 포기 상태
+          .splitPace(new ArrayList<>())
+          .runningType(RunningType.ONLINEBATTLE)
+          .build();
+
+      runningResultRepository.save(runningResult);
+
+      // BattleResult 저장
+      BattleResult battleResult = BattleResult.builder()
+          .session(session)
+          .user(user)
+          .ranking(quitUserData.getRank())
+          .distanceType(determineDistanceType(session.getTargetDistance()))
+          .previousRating(1500)
+          .currentRating(1500)
+          .runningResult(runningResult)
+          .build();
+
+      battleResultRepository.save(battleResult);
+
+      log.info("✅ 포기자 결과 저장: sessionId={}, userId={}, distance={}km",
+          sessionId, userId, runningResult.getTotalDistance());
+    }
+
+    // 3. SessionUser soft delete
     sessionUser.delete();
     sessionUserRepository.save(sessionUser);
+
+    // 4. Redis에서 제거
+    battleRedisService.removeUser(sessionId, userId);
+
     log.info("🚪 참가자 포기: sessionId={}, userId={}", sessionId, userId);
 
+    // 5. 남은 참가자 확인
     List<SessionUser> remainingUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
-    if (remainingUsers.size() < 2) {
-      log.info("⚠️ 참가자 부족으로 배틀 종료: sessionId={}", sessionId);
-      finishBattle(sessionId);
+
+    if (remainingUsers.isEmpty()) {
+      // 모두 포기 - 배틀 종료
+      log.info("⚠️ 모든 참가자 포기 - 배틀 종료: sessionId={}", sessionId);
+      session.updateStatus(SessionStatus.COMPLETED);
+      matchSessionRepository.save(session);
+      sendBattleCompleteMessage(sessionId);
+
+    } else {
+      // 1명 이상 남음 - 계속 진행 (완주할 때까지)
+      log.info("✅ 남은 참가자 {}명 - 계속 진행: sessionId={}",
+          remainingUsers.size(), sessionId);
+
+      // 포기 알림 메시지 전송
+      sendQuitMessage(sessionId, user.getName(), remainingUsers.size());
     }
+  }
+
+  /**
+   * 포기 알림 메시지 전송
+   */
+  private void sendQuitMessage(Long sessionId, String quitUserName, int remainingCount) {
+    Map<String, Object> message = new HashMap<>();
+    message.put("type", "USER_QUIT");
+    message.put("message", quitUserName + "님이 포기하셨습니다. (남은 인원: " + remainingCount + "명)");
+    message.put("quitUserName", quitUserName);
+    message.put("remainingCount", remainingCount);
+    message.put("timestamp", LocalDateTime.now());
+
+    publishToRedis("/sub/battle/" + sessionId + "/quit", message);
+
+    log.info("📤 포기 메시지 발행: sessionId={}, 남은 인원={}명",
+        sessionId, remainingCount);
   }
 }
