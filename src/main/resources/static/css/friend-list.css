@@ -127,6 +127,24 @@ body {
     border-bottom: none;
 }
 
+/* 프로필 링크 (클릭 가능한 영역) */
+.friend-profile-link {
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.friend-profile-link:hover {
+    opacity: 0.8;
+}
+
+.friend-info-link {
+    cursor: pointer;
+}
+
+.friend-info-link:hover {
+    opacity: 0.8;
+}
+
 /* 프로필 이미지 */
 .friend-profile-wrapper {
     position: relative;
