@@ -72,7 +72,8 @@ public class PathController {
     }
 
     @GetMapping("/crews/{crewId}/edit")
-    public String crewEditPage() {
+    public String crewEditPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
         return "crew/updateCrew";
     }
 
