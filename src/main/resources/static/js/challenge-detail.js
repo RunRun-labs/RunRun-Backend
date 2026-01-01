@@ -24,13 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // 3) 일반적인 뒤로가기가 가능한 경우 history 사용
-            if (window.history.length > 1 && isSameOriginReferrer()) {
-                window.history.back();
-                return;
-            }
-
-            // 4) 폴백
+            // 3) 그 외의 모든 경우는 기본 목록으로 이동 (history.back 제거)
             window.location.href = "/challenge";
         });
     }

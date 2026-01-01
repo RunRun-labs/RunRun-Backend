@@ -90,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (backBtn) {
         backBtn.addEventListener("click", () => {
+            // 수정 화면의 상위는 상세 화면
             window.location.href = `/challenge/${challengeId}`;
         });
     }
