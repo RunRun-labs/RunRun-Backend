@@ -373,10 +373,6 @@ function showProgressArea(challenge) {
     let targetValue = challenge.targetValue || 0;
     const progressValue = challenge.progressValue || 0;
 
-    // TIME 타입인 경우 목표값을 '시간' 단위로 간주하여 '분'으로 변환
-    if (challenge.challengeType === 'TIME') {
-        targetValue = targetValue * 60;
-    }
 
     // 0으로 나누기 방지
     let progressPercent = 0;
