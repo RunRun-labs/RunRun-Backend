@@ -3,10 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const bottomNavMount = document.getElementById("bottomNavMount");
     const bottomNavTemplate = document.getElementById("bottomNavTemplate");
     const joinButton = document.querySelector('[data-role="join-button"]');
-    const cancelButton = document.querySelector('[data-role="cancel-button"]');
     const editButton = document.querySelector('[data-role="edit-button"]');
     const deleteButton = document.querySelector('[data-role="delete-button"]');
-    const progressArea = document.querySelector('[data-role="progress-area"]');
 
     // 뒤로가기 버튼 클릭 이벤트
     if (backButton) {
@@ -309,14 +307,17 @@ function renderChallengeDetail(challenge) {
         deleteBtn.hidden = true;
         deleteBtn.style.display = "none";
     }
+
+    // [수정] 목표값 노출을 위해 progressArea와 progressBarContainer는 항상 표시
     if (progressArea) {
-        progressArea.hidden = true;
-        progressArea.style.display = "none";
+        progressArea.hidden = false;
+        progressArea.style.display = "flex";
     }
     if (progressBarContainer) {
-        progressBarContainer.hidden = true;
-        progressBarContainer.style.display = "none";
+        progressBarContainer.hidden = false;
+        progressBarContainer.style.display = "block";
     }
+    showProgressArea(challenge);
 
     // 관리자인 경우: 수정하기/삭제하기 버튼 표시
     if (isAdmin()) {
@@ -329,22 +330,12 @@ function renderChallengeDetail(challenge) {
             deleteBtn.hidden = false;
             deleteBtn.style.display = "block";
         }
-        // 관리자여도 챌린지 상세 내용은 봐야 하므로 progress는 숨기고, 참여 버튼도 숨김
     } else {
         // 일반 사용자인 경우: 기존 로직 유지
         console.log("[DEBUG] Normal user detected.");
 
-        // [수정] 참여 기록이 있는 모든 상태(JOINED, IN_PROGRESS, COMPLETED, FAILED)에서 진행도 표시
+        // 참여 중인 경우 (포기 버튼 처리)
         if (status === "JOINED" || status === "IN_PROGRESS" || status === "COMPLETED" || status === "FAILED") {
-            if (progressArea) {
-                progressArea.hidden = false;
-                progressArea.style.display = "flex";
-            }
-            if (progressBarContainer) {
-                progressBarContainer.hidden = false;
-                progressBarContainer.style.display = "block";
-            }
-            showProgressArea(challenge);
 
             // 단, 포기 버튼은 '진행 중'일 때만 표시 (완료/실패 시에는 포기 불가)
             if (status === "JOINED" || status === "IN_PROGRESS") {
@@ -484,9 +475,7 @@ function calculateDaysRemaining(endDateString) {
 
     // 차이가 0이면 오늘 -> 0 반환
     // 차이가 양수면 남은 일수 -> 올림 처리 필요 없음 (시간이 00:00이므로 정확히 나누어 떨어짐)
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays;
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
 }
 
 /**
