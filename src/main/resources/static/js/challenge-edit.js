@@ -381,7 +381,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: formData,
             });
 
-            if (!response.ok) throw new Error("수정 실패");
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "수정 실패");
+            }
 
             setMessage("챌린지가 수정되었습니다!", "success");
             setTimeout(() => {
