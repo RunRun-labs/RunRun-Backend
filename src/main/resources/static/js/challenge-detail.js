@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const bottomNavMount = document.getElementById("bottomNavMount");
     const bottomNavTemplate = document.getElementById("bottomNavTemplate");
     const joinButton = document.querySelector('[data-role="join-button"]');
+    const cancelButton = document.querySelector('[data-role="cancel-button"]');
     const editButton = document.querySelector('[data-role="edit-button"]');
     const deleteButton = document.querySelector('[data-role="delete-button"]');
 
