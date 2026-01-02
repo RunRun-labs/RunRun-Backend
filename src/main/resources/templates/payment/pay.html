@@ -1,0 +1,389 @@
+<!-- 위치: src/main/resources/templates/payment/pay.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>멤버십 결제</title>
+    <!-- 토스페이먼츠 SDK -->
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f5f5;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background-color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .back-btn {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .plan-card {
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .plan-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .plan-price {
+            font-size: 28px;
+            font-weight: bold;
+            float: right;
+            margin-top: -32px;
+        }
+
+        .plan-period {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .payment-method-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 24px;
+        }
+
+        .agreements {
+            margin-bottom: 24px;
+        }
+
+        .agreement-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .agreement-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+        }
+
+        .coupon-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .coupon-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .coupon-input-wrapper {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .coupon-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .apply-coupon-btn {
+            padding: 12px 20px;
+            background: #96e6a1;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .price-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .price-row.total {
+            border-top: 1px solid #e0e0e0;
+            margin-top: 12px;
+            padding-top: 16px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .discount {
+            color: #ff4444;
+        }
+
+        .payment-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .payment-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<div class="header">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <div class="header-title">멤버십 결제</div>
+    <div style="width: 24px;"></div>
+</div>
+
+<!-- 메인 컨텐츠 -->
+<div class="container">
+    <!-- 플랜 정보 -->
+    <div class="plan-card">
+        <div class="plan-title">프리미엄 플랜</div>
+        <div class="plan-price">9,900원</div>
+        <div class="plan-period">1개월 구독</div>
+    </div>
+
+    <!-- 결제 수단 -->
+    <div class="section-title">결제 수단</div>
+    <button class="payment-method-btn">토스페이</button>
+
+    <!-- 약관 동의 -->
+    <div class="agreements">
+        <label class="agreement-item">
+            <input type="checkbox" id="agree-terms">
+            <span>이용약관 동의 (필수)</span>
+        </label>
+        <label class="agreement-item">
+            <input type="checkbox" id="agree-privacy">
+            <span>개인정보 처리방침 동의 (필수)</span>
+        </label>
+        <label class="agreement-item">
+            <input type="checkbox" id="agree-auto">
+            <span>자동결제 동의 (필수)</span>
+        </label>
+    </div>
+
+    <!-- 쿠폰 섹션 -->
+    <div class="coupon-section">
+        <div class="coupon-title">쿠폰</div>
+        <div class="coupon-input-wrapper">
+            <input type="text" id="coupon-code" class="coupon-input" placeholder="사용 가능 쿠폰 1장">
+            <button class="apply-coupon-btn" onclick="applyCoupon()">쿠폰 사용하기 ›</button>
+        </div>
+    </div>
+
+    <!-- 가격 요약 -->
+    <div class="price-summary">
+        <div class="price-row">
+            <span>상품 금액</span>
+            <span id="original-price">9,900원</span>
+        </div>
+        <div class="price-row">
+            <span>쿠폰 할인</span>
+            <span id="coupon-discount" class="discount">-0원</span>
+        </div>
+        <div class="price-row total">
+            <span>최종 결제 금액</span>
+            <span id="final-price">9,900원</span>
+        </div>
+    </div>
+
+    <!-- 결제하기 버튼 -->
+    <button class="payment-btn" id="payment-btn">멤버십 결제하기</button>
+</div>
+
+<!-- 하단 네비게이션 -->
+<div class="bottom-nav">
+    <a href="/chat" class="nav-item">
+        <div class="nav-icon">💬</div>
+        <div>chat</div>
+    </a>
+    <a href="/crews" class="nav-item">
+        <div class="nav-icon">👥</div>
+        <div>crew</div>
+    </a>
+    <a href="/" class="nav-item">
+        <div class="nav-icon">🏠</div>
+        <div>home</div>
+    </a>
+    <a href="/match/select" class="nav-item">
+        <div class="nav-icon">⚡</div>
+        <div>match</div>
+    </a>
+    <a href="/myPage" class="nav-item">
+        <div class="nav-icon">👤</div>
+        <div>my</div>
+    </a>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const accessToken = localStorage.getItem('accessToken');
+
+    let finalAmount = 9900;
+    let couponCode = null;
+
+    // 쿠폰 적용
+    function applyCoupon() {
+        couponCode = document.getElementById('coupon-code').value;
+        if (!couponCode || couponCode.trim() === '') {
+            alert('쿠폰 코드를 입력해주세요');
+            return;
+        }
+
+        const discountAmount = 9900;
+        finalAmount = 0;
+
+        document.getElementById('coupon-discount').textContent = '-' + discountAmount.toLocaleString() + '원';
+        document.getElementById('final-price').textContent = finalAmount.toLocaleString() + '원';
+
+        alert('쿠폰 적용 완료!');
+    }
+
+    // 토스페이먼츠 v2 SDK 초기화
+    const clientKey = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
+    const tossPayments = TossPayments(clientKey);
+    let payment = null;
+
+
+    // 멤버십 결제하기 버튼
+    document.getElementById('payment-btn').addEventListener('click', async () => {
+        // 약관 체크
+        if (!document.getElementById('agree-terms').checked ||
+            !document.getElementById('agree-privacy').checked ||
+            !document.getElementById('agree-auto').checked) {
+            alert('모든 약관에 동의해주세요');
+            return;
+        }
+
+        try {
+            console.log('결제 요청 시작...');
+
+            // 1. orderId 생성
+            const response = await fetch('http://localhost:8080/api/payments/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                    amount: finalAmount,
+                    couponCode: couponCode
+                })
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                alert('결제 요청 실패: ' + result.message);
+                return;
+            }
+
+            const orderId = result.data.orderId;
+            const amount = result.data.amount;
+
+            const customerKeyFromServer = result.data.customerKey;
+            payment = tossPayments.payment({customerKey: customerKeyFromServer});
+
+            console.log('orderId:', orderId);
+
+            // 2. 자동결제용 카드 등록 (빌링키 발급)
+            await payment.requestBillingAuth({
+                method: 'CARD',
+                successUrl: window.location.origin + '/payment/success?orderId=' + orderId + '&amount=' + amount,
+                failUrl: window.location.origin + '/payment/fail',
+                customerEmail: result.data.customerEmail || 'test@runrun.com',
+                customerName: result.data.customerName || '런런회원'
+            });
+
+        } catch (error) {
+            console.error('에러:', error);
+            alert('결제 실패: ' + error.message);
+        }
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

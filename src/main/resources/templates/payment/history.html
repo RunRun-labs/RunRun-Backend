@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 내역</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f5f5;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background-color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .container {
+            padding: 76px 20px 20px;
+        }
+
+        .payment-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .payment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .payment-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .payment-amount {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .payment-date {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .payment-method {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-done {
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            color: #000;
+        }
+
+        .status-pending {
+            background: #ffeb3b;
+            color: #000;
+        }
+
+        .status-failed {
+            background: #ff4444;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 60px;
+            margin-bottom: 16px;
+        }
+
+        .empty-text {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .purchase-btn {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<div class="header">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <div class="header-title">결제 내역</div>
+    <div style="width: 24px;"></div>
+</div>
+
+<!-- 메인 컨텐츠 -->
+<div class="container" id="payment-list">
+    <!-- 로딩 중 -->
+    <div class="empty-state" id="loading">
+        <div class="empty-icon">⏳</div>
+        <div class="empty-text">불러오는 중...</div>
+    </div>
+</div>
+
+<!-- 하단 네비게이션 -->
+<div class="bottom-nav">
+    <a href="/chat" class="nav-item">
+        <div class="nav-icon">💬</div>
+        <div>chat</div>
+    </a>
+    <a href="/crews" class="nav-item">
+        <div class="nav-icon">👥</div>
+        <div>crew</div>
+    </a>
+    <a href="/" class="nav-item">
+        <div class="nav-icon">🏠</div>
+        <div>home</div>
+    </a>
+    <a href="/match/select" class="nav-item">
+        <div class="nav-icon">⚡</div>
+        <div>match</div>
+    </a>
+    <a href="/myPage" class="nav-item">
+        <div class="nav-icon">👤</div>
+        <div>my</div>
+    </a>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const accessToken = localStorage.getItem('accessToken');
+
+    // 결제 내역 불러오기
+    async function loadPaymentHistory() {
+        try {
+            const response = await fetch('/api/payments/history', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                showEmpty('결제 내역을 불러올 수 없습니다');
+                return;
+            }
+
+            const payments = result.data.content;
+
+            if (payments.length === 0) {
+                showEmpty('아직 결제한 내역이 없습니다');
+                return;
+            }
+
+            displayPayments(payments);
+
+        } catch (error) {
+            console.error('결제 내역 조회 실패:', error);
+            showEmpty('오류가 발생했습니다');
+        }
+    }
+
+    // 결제 내역 표시
+    function displayPayments(payments) {
+        const container = document.getElementById('payment-list');
+        container.innerHTML = '';
+
+        payments.forEach(payment => {
+            const card = createPaymentCard(payment);
+            container.appendChild(card);
+        });
+    }
+
+    // 결제 카드 생성
+    function createPaymentCard(payment) {
+        const card = document.createElement('div');
+        card.className = 'payment-card';
+
+        const statusClass = {
+            'DONE': 'status-done',
+            'PENDING': 'status-pending',
+            'FAILED': 'status-failed',
+            'CANCELLED': 'status-failed'
+        }[payment.paymentStatus] || 'status-pending';
+
+        const statusText = {
+            'DONE': '결제완료',
+            'PENDING': '대기중',
+            'FAILED': '실패',
+            'CANCELLED': '취소'
+        }[payment.paymentStatus] || payment.paymentStatus;
+
+        const methodText = payment.paymentMethod || '토스페이';
+
+        card.innerHTML = `
+            <div class="payment-header">
+                <div class="payment-name">프리미엄 플랜</div>
+                <span class="status-badge ${statusClass}">${statusText}</span>
+            </div>
+            <div class="payment-amount">${payment.finalAmount.toLocaleString()}원</div>
+            <div class="payment-date">${formatDate(payment.approvedAt || payment.createdAt)}</div>
+            <div class="payment-method">결제수단: ${methodText}</div>
+        `;
+
+        return card;
+    }
+
+    // 날짜 포맷
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}.${month}.${day}`;
+    }
+
+    // 빈 화면 표시
+    function showEmpty(message) {
+        const container = document.getElementById('payment-list');
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📄</div>
+                <div class="empty-text">${message}</div>
+                <button class="purchase-btn" onclick="location.href='/payment/pay'">멤버십 구매하기</button>
+            </div>
+        `;
+    }
+
+    // 페이지 로드 시 실행
+    loadPaymentHistory();
+    /*]]>*/
+</script>
+</body>
+</html>
