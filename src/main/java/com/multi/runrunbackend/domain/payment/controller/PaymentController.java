@@ -5,17 +5,19 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.payment.dto.req.PaymentApproveReqDto;
 import com.multi.runrunbackend.domain.payment.dto.req.PaymentRequestReqDto;
 import com.multi.runrunbackend.domain.payment.dto.res.PaymentApproveResDto;
+import com.multi.runrunbackend.domain.payment.dto.res.PaymentHistoryResDto;
 import com.multi.runrunbackend.domain.payment.dto.res.PaymentRequestResDto;
 import com.multi.runrunbackend.domain.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -83,4 +85,18 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success("빌링키 발급 및 첫 결제 완료", res));
     }
 
+    /**
+     * 결제 내역 조회 (GET /api/payments/history)
+     */
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<Page<PaymentHistoryResDto>>> getPaymentHistory(
+            @AuthenticationPrincipal CustomUser principal,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        Page<PaymentHistoryResDto> res = paymentService.getPaymentHistory(principal, pageable);
+        return ResponseEntity.ok(
+                ApiResponse.success("결제 내역 조회 성공", res)
+        );
+    }
 }
