@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 /**
  * @author : BoKyung
  * @description : 결제 레포지토리
@@ -21,5 +23,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      */
     Page<Payment> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
 
+    /**
+     * @description : orderId로 결제 내역 찾기
+     */
+    Optional<Payment> findByOrderId(String orderId);
 
 }
