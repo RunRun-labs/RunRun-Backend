@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,7 +32,6 @@ public class PaymentScheduler {
      * @since : 2026. 1. 1.
      */
     @Scheduled(cron = "0 0 0 * * *")
-    @Transactional
     public void processAutoPayments() {
         log.info("=== 자동결제 스케줄러 시작 ===");
 
