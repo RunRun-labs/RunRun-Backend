@@ -2,7 +2,9 @@ package com.multi.runrunbackend.domain.payment.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.payment.dto.req.PaymentApproveReqDto;
 import com.multi.runrunbackend.domain.payment.dto.req.PaymentRequestReqDto;
+import com.multi.runrunbackend.domain.payment.dto.res.PaymentApproveResDto;
 import com.multi.runrunbackend.domain.payment.dto.res.PaymentRequestResDto;
 import com.multi.runrunbackend.domain.payment.service.PaymentService;
 import jakarta.validation.Valid;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 /**
  * @author : BoKyung
@@ -41,6 +45,42 @@ public class PaymentController {
         return ResponseEntity.ok(
                 ApiResponse.success("결제 요청 생성 완료", res)
         );
+    }
+
+    /**
+     * 결제 승인 (POST /api/payments/confirm)
+     */
+    @PostMapping("/confirm")
+    public ResponseEntity<ApiResponse<PaymentApproveResDto>> confirmPayment(
+            @AuthenticationPrincipal CustomUser principal,
+            @Valid @RequestBody PaymentApproveReqDto req
+    ) {
+        PaymentApproveResDto result = paymentService.confirmPayment(principal, req);
+        return ResponseEntity.ok(ApiResponse.success("결제 승인 완료", result));
+    }
+
+    /**
+     * 무료 결제 승인 (0원 결제)
+     */
+    @PostMapping("/confirm-free")
+    public ResponseEntity<ApiResponse<PaymentApproveResDto>> confirmFreePayment(
+            @AuthenticationPrincipal CustomUser principal,
+            @Valid @RequestBody Map<String, String> request
+    ) {
+        String orderId = request.get("orderId");
+        PaymentApproveResDto res = paymentService.confirmFreePayment(principal, orderId);
+        return ResponseEntity.ok(
+                ApiResponse.success("무료 결제 처리 완료", res)
+        );
+    }
+
+    @PostMapping("/billing/confirm")
+    public ResponseEntity<ApiResponse<PaymentApproveResDto>> confirmBilling(
+            @AuthenticationPrincipal CustomUser principal,
+            @RequestBody Map<String, Object> request
+    ) {
+        PaymentApproveResDto res = paymentService.confirmBillingFirstPayment(principal, request);
+        return ResponseEntity.ok(ApiResponse.success("빌링키 발급 및 첫 결제 완료", res));
     }
 
 }
