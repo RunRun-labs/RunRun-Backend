@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | User Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/user-profile.css"
+            th:href="@{/css/user-profile.css}"
+    />
+</head>
+<body class="mypage-body">
+<main class="page mypage-page">
+    <header class="mypage-header">
+        <button class="back-button" type="button" aria-label="뒤로가기" data-role="back">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M23.3333 13.3333L16.6667 20L23.3333 26.6667" stroke="#1E1E1E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h1 class="user-profile-title" id="profileTitle">사용자 프로필</h1>
+    </header>
+
+    <section class="profile-summary">
+        <div class="profile-row">
+            <!-- 좌측: 프로필 이미지 -->
+            <div class="profile-avatar">
+                <img
+                        class="avatar-img"
+                        data-role="profile-preview"
+                        alt="프로필 이미지"
+                        hidden
+                />
+                <span
+                        class="avatar-initial"
+                        data-role="profile-initial"
+                ></span>
+            </div>
+
+            <!-- 중앙: 누적/랭킹 정보 -->
+            <div class="profile-text profile-center">
+                <p class="profile-meta">
+                    누적:
+                    <span id="totalDistance">-</span><br/>
+                    랭킹:
+                    <span id="rank">-</span>
+                </p>
+            </div>
+
+            <!-- 우측: 친구신청/차단 버튼 -->
+            <div class="profile-actions-right">
+                <button class="action-button friend-button" type="button" id="friendButton" data-role="friend">
+                    친구신청
+                </button>
+                <button class="action-button block-button" type="button" id="blockButton" data-role="block">
+                    사용자 차단
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section class="weekly-section">
+        <div class="weekly-chips">
+            <button class="chip chip-filled" type="button">
+                <span class="chip-icon">🏃‍♂️</span>
+                <span id="weekDistance">0km</span>
+            </button>
+            <button class="chip chip-outline" type="button">
+                <span id="weekLabel">이번 주</span>
+            </button>
+            <button class="chip chip-filled" type="button">
+                <span class="chip-icon">⏱</span>
+                <span id="weekTime">0h 0m</span>
+            </button>
+        </div>
+
+        <div class="weekly-chart">
+            <div class="chart-bars" id="chartBars">
+                <div class="bar" style="--h: 0"></div>
+                <div class="bar" style="--h: 0"></div>
+                <div class="bar" style="--h: 0"></div>
+                <div class="bar" style="--h: 0"></div>
+                <div class="bar" style="--h: 0"></div>
+                <div class="bar" style="--h: 0"></div>
+                <div class="bar" style="--h: 0"></div>
+            </div>
+            <div class="chart-days">
+                <span>Mo</span>
+                <span>Tu</span>
+                <span>We</span>
+                <span>Th</span>
+                <span>Fr</span>
+                <span>Sa</span>
+                <span>Su</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="run-list" id="runList">
+        <!-- 러닝 기록이 동적으로 로드됩니다 -->
+    </section>
+</main>
+
+<!-- 차단 모달 -->
+<div class="modal-overlay" id="blockModal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">사용자 차단</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-block-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="#1E1E1E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-text">이 사용자를 차단하시겠습니까?</p>
+            <div class="block-options">
+                <button class="block-option-button" type="button" data-role="block-only">
+                    차단
+                </button>
+                <button class="block-option-button" type="button" data-role="block-and-report">
+                    차단 및 신고
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="bottomNavTemplate">
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+            <img
+                    src="http://localhost:3845/assets/3ca81eaa50aaf4304e5454034789cf398897e16f.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+            <img
+                    src="http://localhost:3845/assets/a25ca98a797a195cf0014d33755d97160983a834.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>feed</span>
+        </a>
+        <a class="nav-item" th:href="@{/}" href="/">
+            <img
+                    src="http://localhost:3845/assets/6d060744ca344e07264a3340d1ce76267f035268.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+            <img
+                    src="http://localhost:3845/assets/a1c3341d0388b5ec41a25350c4e525c869160bdd.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>match</span>
+        </a>
+        <a class="nav-item" th:href="@{/my}" href="/my">
+            <img
+                    src="http://localhost:3845/assets/1894082a888c5c07d733295ec6a54ed9b0711586.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>my</span>
+        </a>
+    </nav>
+</template>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script>
+    // Thymeleaf에서 전달된 userId를 전역 변수로 설정
+    window.userProfileUserId = /*[[${userId}]]*/ null;
+</script>
+<script src="/js/user-profile.js" th:src="@{/js/user-profile.js}"></script>
+</body>
+</html>
+

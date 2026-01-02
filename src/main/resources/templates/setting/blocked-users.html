@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | 차단한 사용자 관리</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Outfit:wght@600&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/blocked-users.css"
+            th:href="@{/css/blocked-users.css}"
+    />
+</head>
+<body class="blocked-users-body">
+<main class="page blocked-users-page">
+    <header class="blocked-users-header">
+        <button class="back-button" type="button" aria-label="뒤로가기">
+            <svg width="40" height="33" viewBox="0 0 40 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 8L8 16.5L15 25" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h1 class="blocked-users-title">차단한 사용자 관리</h1>
+    </header>
+
+    <section class="blocked-users-list" data-role="blocked-users-list">
+        <!-- 차단한 사용자 목록이 여기에 동적으로 추가됩니다 -->
+        <div class="empty-state" data-role="empty-state" hidden>
+            <p>차단한 사용자가 없습니다.</p>
+        </div>
+    </section>
+</main>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/blocked-users.js" th:src="@{/js/blocked-users.js}"></script>
+</body>
+</html>
+

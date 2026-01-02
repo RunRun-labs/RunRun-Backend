@@ -29,9 +29,11 @@
                         name="crewName"
                         class="form-input"
                         placeholder="크루 이름을 입력하세요."
-                        maxlength="100"
                         required
                 >
+                <div class="char-count">
+                    <span id="crewNameCount">0</span>/100
+                </div>
                 <p class="error-text" id="crewNameError"></p>
             </div>
 
@@ -43,8 +45,10 @@
                         class="form-textarea"
                         placeholder="크루 소개글을 작성해주세요."
                         rows="4"
-                        maxlength="500"
                 ></textarea>
+                <div class="char-count">
+                    <span id="crewDescriptionCount">0</span>/500
+                </div>
                 <p class="error-text" id="descriptionError"></p>
             </div>
 
@@ -92,7 +96,6 @@
                         name="activityRegion"
                         class="form-input"
                         placeholder="러닝 활동 장소를 입력해주세요. 예: 서울 송파구"
-                        maxlength="100"
                         required
                 >
                 <p class="error-text" id="activityRegionError"></p>
@@ -106,7 +109,6 @@
                         name="regularMeetingTime"
                         class="form-input"
                         placeholder="정기 모임 시간을 입력해주세요. (요일, 시간 필수) 예: 매주 월,수,금 오후 7시"
-                        maxlength="100"
                         required
                 >
                 <p class="error-text" id="regularMeetingTimeError"></p>

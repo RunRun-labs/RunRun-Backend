@@ -1,6 +1,6 @@
 package com.multi.runrunbackend.domain.crew.dto.res;
 
-import com.multi.runrunbackend.domain.crew.entity.CrewRole;
+import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -38,21 +38,27 @@ public class CrewUserResDto {
     @Schema(description = "가입일")
     private LocalDateTime createdAt;
 
-    @Schema(description = "참여 횟수")
+    @Schema(description = "참여 횟수")  // dto에 놓고 service에서 계산 예정
     private Integer participationCount;
 
+    @Schema(description = "마지막 활동일")  // ex. 크루원 목록에서 마지막 활동 표시용
+    private LocalDateTime lastActivityDate;
+
     /**
-     * @param crewUser 크루원 엔티티
-     * @description : toDto : Entity → DTO 변환
+     * @param crewUser           크루원 엔티티
+     * @param participationCount 참여 횟수
+     * @param lastActivityDate   마지막 활동일
+     * @description : fromEntity : Entity → DTO 변환
      */
-    public static CrewUserResDto toDto(CrewUser crewUser) {
+    public static CrewUserResDto fromEntity(CrewUser crewUser, Integer participationCount, LocalDateTime lastActivityDate) {
         return CrewUserResDto.builder()
                 .userId(crewUser.getUser().getId())
                 .userName(crewUser.getUser().getName())
                 .profileImageUrl(crewUser.getUser().getProfileImageUrl())
                 .role(crewUser.getRole())
                 .createdAt(crewUser.getCreatedAt())
-                .participationCount(crewUser.getParticipationCount())
+                .participationCount(participationCount)
+                .lastActivityDate(lastActivityDate)
                 .build();
     }
 }

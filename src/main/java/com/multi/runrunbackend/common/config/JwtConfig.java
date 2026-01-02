@@ -9,6 +9,7 @@ import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @RequiredArgsConstructor
+@EnableMethodSecurity(prePostEnabled = true)
 public class JwtConfig {
 
     private final TokenProvider tokenProvider;
@@ -53,8 +55,11 @@ public class JwtConfig {
                                 "/chat/**",
                                 "/ws/**",
                                 "/myPage/**",
+                                "/friends/**",
+                                "/profile/**",
                                 "/course_auto/**",
                                 "/files/**",
+                                "/challenge/**",
                                 "/course",
                                 "/courseCreate",
                                 "/courseDetail/**",
@@ -63,7 +68,11 @@ public class JwtConfig {
                                 "/crews/new",
                                 "/crews/**",
                                 "/match/**",
-                                "/recruit/**"
+                                "/recruit/**",
+                                "/setting/**",
+                                "/terms/**",
+                                "/tts-test",
+                                "/membership/**"
                         ).permitAll()
                         .requestMatchers(
                                 PathRequest.toStaticResources().atCommonLocations()

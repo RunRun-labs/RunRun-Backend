@@ -1,0 +1,603 @@
+:root {
+  --bg-gradient-start: #0f172a;
+  --bg-gradient-end: #1e293b;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-orange: #f59e0b;
+  --accent-orange-light: #fbbf24;
+  --accent-green: #10b981;
+  --accent-purple: #a78bfa;
+  --border-white-10: rgba(255, 255, 255, 0.1);
+  --border-white-30: rgba(255, 255, 255, 0.3);
+  --overlay-dark: rgba(0, 0, 0, 0.3);
+  --overlay-white-5: rgba(255, 255, 255, 0.05);
+  --overlay-white-10: rgba(255, 255, 255, 0.1);
+  --overlay-white-20: rgba(255, 255, 255, 0.2);
+  --overlay-green-20: rgba(16, 185, 129, 0.2);
+  --overlay-orange-10: rgba(251, 191, 36, 0.1);
+  --overlay-orange-20: rgba(251, 191, 36, 0.2);
+  --overlay-purple-20: rgba(139, 92, 246, 0.2);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  margin: 0;
+  height: auto;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+body {
+  font-family: "Inter", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg-gradient-start);
+  color: var(--text-primary);
+  display: flex;
+  justify-content: center;
+}
+
+.page {
+  position: relative;
+  width: min(420px, 100vw);
+  margin: 0 auto;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.waiting-room {
+  background: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  border-radius: 20px;
+  box-shadow: 0px 25px 50px 0px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header Section */
+.header-section {
+  position: relative;
+  width: 100%;
+  padding: 8px 16px 20px;
+  min-height: 108px;
+}
+
+.back-button {
+  position: absolute;
+  left: 16px;
+  top: 56px;
+  width: 40px;
+  height: 40px;
+  background: var(--overlay-white-10);
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s ease;
+}
+
+.back-button:hover {
+  background: var(--overlay-white-20);
+}
+
+.back-button:active {
+  transform: scale(0.95);
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+  gap: 8px;
+}
+
+.match-badge {
+  background: linear-gradient(137.09deg, var(--accent-orange) 0%, var(--accent-orange-light) 100%);
+  border-radius: 20px;
+  padding: 6px 14px;
+  margin-top: 8px;
+}
+
+.badge-text {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 700;
+  font-size: 10.3px;
+  color: #78350f;
+  white-space: nowrap;
+}
+
+.challenge-title {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 700;
+  font-size: 20.8px;
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.challenge-subtitle {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 400;
+  font-size: 13.1px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* Challenge Info Section */
+.challenge-info-section {
+  padding: 0 16px 20px;
+}
+
+.challenge-info-card {
+  background: var(--overlay-white-5);
+  border: 1px solid var(--border-white-10);
+  border-radius: 16px;
+  padding: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+}
+
+.info-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.info-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  height: 34px;
+  position: relative;
+}
+
+.value-number {
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.value-unit {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 400;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.info-label {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 400;
+  font-size: 11.1px;
+  color: var(--text-muted);
+  text-align: center;
+  width: 100%;
+}
+
+.info-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  transform: scaleY(-1);
+}
+
+.info-icon svg {
+  width: 28px;
+  height: 34px;
+}
+
+.info-divider {
+  width: 1px;
+  height: 50px;
+  background: var(--border-white-10);
+  flex-shrink: 0;
+}
+
+/* Countdown Section */
+.countdown-section {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.countdown-label {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 400;
+  font-size: 13.1px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0;
+}
+
+.countdown-timer {
+  font-family: "Inter", sans-serif;
+  font-weight: 800;
+  font-size: 55.3px;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1;
+}
+
+.timer-separator {
+  color: var(--accent-orange);
+}
+
+.countdown-note {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 400;
+  font-size: 12.1px;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+}
+
+/* Participants Section */
+.participants-section {
+  padding: 0 16px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.participants-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+}
+
+.participants-title {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 600;
+  font-size: 15.3px;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.ready-status {
+  background: var(--overlay-green-20);
+  border-radius: 12px;
+  padding: 4px 10px;
+}
+
+.ready-text {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 600;
+  font-size: 12.3px;
+  color: var(--accent-green);
+  white-space: nowrap;
+}
+
+.participants-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.participant-card {
+  position: relative;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 182px;
+}
+
+.me-card {
+  background: var(--overlay-orange-10);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.host-card,
+.ready-card {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.waiting-card {
+  background: var(--overlay-white-5);
+  border: 1px solid var(--border-white-10);
+  opacity: 0.6;
+}
+
+.card-status-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ready-icon {
+  background: var(--accent-green);
+}
+
+.waiting-icon {
+  background: var(--overlay-white-10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waiting-icon::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--text-muted);
+  border-radius: 4px;
+}
+
+.card-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.speed-icon {
+  background: var(--overlay-orange-20);
+  transform: scaleY(-1);
+}
+
+.host-card .speed-icon,
+.ready-card .speed-icon {
+  background: var(--overlay-green-20);
+}
+
+.waiting-card .card-avatar {
+  background: var(--overlay-white-10);
+}
+
+.emoji-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.card-name {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 600;
+  font-size: 13.2px;
+  color: var(--text-primary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.card-badge {
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-family: "Inter", sans-serif;
+  font-weight: 400;
+  font-size: 9.5px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.me-badge {
+  background: var(--overlay-orange-20);
+  color: var(--accent-orange-light);
+}
+
+.host-badge {
+  background: var(--overlay-purple-20);
+  color: var(--accent-purple);
+}
+
+.card-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.stat-value {
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  font-size: 12.6px;
+  color: var(--text-primary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stat-label {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 400;
+  font-size: 9.4px;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.card-ready-badge {
+  background: var(--overlay-green-20);
+  border-radius: 10px;
+  padding: 4px 10px;
+  margin-top: auto;
+}
+
+.card-ready-badge span {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 400;
+  font-size: 10.3px;
+  color: var(--accent-green);
+  white-space: nowrap;
+}
+
+.card-waiting-badge {
+  background: var(--overlay-white-10);
+  border-radius: 10px;
+  padding: 4px 10px;
+  margin-top: auto;
+}
+
+.card-waiting-badge span {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-weight: 400;
+  font-size: 10.3px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Action Section */
+.action-section {
+  background: var(--overlay-dark);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.ready-button {
+  background: var(--overlay-green-20);
+  border: none;
+  border-radius: 16px;
+  padding: 19.5px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.ready-button:hover {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.ready-button:active {
+  transform: scale(0.98);
+}
+
+.ready-button svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.ready-button span {
+  font-family: "Arial", sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--accent-green);
+  white-space: nowrap;
+}
+
+.cancel-button {
+  background: none;
+  border: none;
+  padding: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.cancel-button:hover {
+  opacity: 0.8;
+}
+
+.cancel-button:active {
+  transform: scale(0.98);
+}
+
+.cancel-button {
+  font-family: "Arial", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: #ef4444;
+  text-align: center;
+  width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .challenge-title {
+    font-size: 18px;
+  }
+
+  .challenge-subtitle {
+    font-size: 12px;
+  }
+
+  .countdown-timer {
+    font-size: 48px;
+  }
+
+  .participants-grid {
+    gap: 6px;
+  }
+
+  .participant-card {
+    min-height: 160px;
+    padding: 12px;
+  }
+}
+
+@media (min-width: 900px) {
+  .page {
+    max-width: 600px;
+    width: 100%;
+  }
+
+  .waiting-room {
+    border-radius: 24px;
+    margin: 20px 0;
+    min-height: calc(100vh - 40px);
+  }
+
+  .challenge-info-card {
+    padding: 24px;
+  }
+
+  .participants-grid {
+    gap: 12px;
+  }
+
+  .participant-card {
+    min-height: 200px;
+    padding: 20px;
+  }
+}
+
+/* Scrollbar Styling - Removed as using page scroll now */
+

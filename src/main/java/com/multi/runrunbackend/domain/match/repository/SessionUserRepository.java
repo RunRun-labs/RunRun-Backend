@@ -72,4 +72,12 @@ public interface SessionUserRepository extends JpaRepository<SessionUser, Long> 
       "AND ms.type = 'OFFLINE' " +
       "ORDER BY COALESCE(r.meetingAt, ms.createdAt) ASC")
   List<SessionUser> findMyOfflineSessions(@Param("userId") Long userId);
+
+  @Query("SELECT su FROM SessionUser su " +
+      "JOIN FETCH su.matchSession ms " +
+      "WHERE su.user.id = :userId " +
+      "AND su.isDeleted = false " +
+      "AND ms.type = 'ONLINE' " +
+      "AND ms.status = 'STANDBY'")
+  Optional<SessionUser> findActiveOnlineSession(@Param("userId") Long userId);
 }

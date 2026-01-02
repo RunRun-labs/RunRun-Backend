@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS 실시간 테스트</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        h1 { font-size: 24px; font-weight: 700; color: #1F2937; margin-bottom: 8px; }
+        .subtitle { font-size: 14px; color: #6B7280; margin-bottom: 20px; }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .status.waiting { background: #FEF3C7; color: #92400E; }
+        .status.active { background: #D1FAE5; color: #065F46; animation: pulse 2s infinite; }
+        .status.error { background: #FEE2E2; color: #991B1B; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-start { background: linear-gradient(90deg, #10B981 0%, #059669 100%); color: white; }
+        .btn-stop { background: linear-gradient(90deg, #EF4444 0%, #DC2626 100%); color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { font-size: 14px; color: #6B7280; }
+        .data-value { font-size: 16px; font-weight: 600; color: #1F2937; }
+        .data-value.good { color: #10B981; }
+        .data-value.warning { color: #F59E0B; }
+        .data-value.error { color: #EF4444; }
+        .big-stat { text-align: center; margin: 20px 0; }
+        .big-stat-label { font-size: 12px; color: #6B7280; margin-bottom: 8px; }
+        .big-stat-value { font-size: 48px; font-weight: 700; color: #10B981; }
+        .big-stat-unit { font-size: 16px; color: #9CA3AF; margin-left: 4px; }
+        .log-container {
+            background: #F9FAFB;
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry { padding: 4px 0; color: #4B5563; }
+        .log-entry.success { color: #10B981; }
+        .log-entry.error { color: #EF4444; }
+        .log-entry.warning { color: #F59E0B; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>📍 GPS 실시간 테스트</h1>
+            <p class="subtitle">1초마다 강제로 GPS 새로 요청 (getCurrentPosition)</p>
+            <div id="status" class="status waiting">⏸️ 대기 중</div>
+            <button id="startBtn" class="btn btn-start">GPS 추적 시작</button>
+            <button id="stopBtn" class="btn btn-stop" style="display: none;">GPS 추적 중지</button>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">📍 현재 위치 (실시간)</h2>
+            <div class="data-row">
+                <span class="data-label">위도 (Latitude)</span>
+                <span class="data-value" id="latitude">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">경도 (Longitude)</span>
+                <span class="data-value" id="longitude">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">정확도 (Accuracy)</span>
+                <span class="data-value" id="accuracy">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">속도 (Speed)</span>
+                <span class="data-value" id="speed">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">업데이트 횟수</span>
+                <span class="data-value" id="updateCount">0</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">마지막 업데이트</span>
+                <span class="data-value" id="lastUpdate">--</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="big-stat">
+                <div class="big-stat-label">총 이동 거리</div>
+                <div>
+                    <span class="big-stat-value" id="totalDistance">0.000</span>
+                    <span class="big-stat-unit">km</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">📋 로그</h2>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry">로그가 여기에 표시됩니다...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⭐ 하이브리드 방식: watchPosition + 1초 폴링
+        let watchId = null;        // watchPosition ID
+        let pollTimer = null;      // 1초 폴링 타이머
+        let isTracking = false;
+        let lastPosition = null;
+        let currentPosition = null; // 최신 GPS 위치 저장
+        let totalDistance = 0;
+        let updateCount = 0;
+        let lastUpdateTime = 0;
+
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusEl = document.getElementById('status');
+        const latitudeEl = document.getElementById('latitude');
+        const longitudeEl = document.getElementById('longitude');
+        const accuracyEl = document.getElementById('accuracy');
+        const speedEl = document.getElementById('speed');
+        const totalDistanceEl = document.getElementById('totalDistance');
+        const updateCountEl = document.getElementById('updateCount');
+        const lastUpdateEl = document.getElementById('lastUpdate');
+        const logContainer = document.getElementById('logContainer');
+
+        // GPS 추적 시작
+        startBtn.addEventListener('click', function() {
+            if (!navigator.geolocation) {
+                addLog('❌ 이 브라우저는 GPS를 지원하지 않습니다.', 'error');
+                alert('이 브라우저는 GPS를 지원하지 않습니다.');
+                return;
+            }
+
+            addLog('🚀 GPS 추적 시작... (1초마다 강제 요청)', 'success');
+            
+            // ⭐ 1초마다 getCurrentPosition으로 강제 요청!
+            pollTimer = setInterval(() => {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        currentPosition = position;
+                        lastUpdateTime = Date.now();
+                        
+                        // 화면 갱신
+                        const now = new Date();
+                        lastUpdateEl.textContent = now.toLocaleTimeString('ko-KR');
+                        
+                        console.log('📡 GPS 수신:', position.coords.accuracy.toFixed(1) + 'm');
+                        
+                        // 바로 처리
+                        processGPS(position);
+                    },
+                    onGPSError,
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0  // ⭐ 캐시 절대 사용 안 함!
+                    }
+                );
+            }, 1000);  // ⭐ 1초마다!
+
+            isTracking = true;
+            updateCount = 0;
+            totalDistance = 0;
+            lastPosition = null;
+            currentPosition = null;
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'block';
+            statusEl.textContent = '✅ GPS 추적 중';
+            statusEl.className = 'status active';
+        });
+
+        // GPS 추적 중지
+        stopBtn.addEventListener('click', function() {
+            stopTracking();
+            addLog('🛑 GPS 추적 중지됨', 'warning');
+        });
+
+        // ⭐ GPS 수신 (저장만, 처리는 1초마다)
+        function onGPSReceive(position) {
+            if (!isTracking) return;
+            
+            // 최신 GPS 위치 저장
+            currentPosition = position;
+            lastUpdateTime = Date.now();
+            
+            // 화면 갱신 (업데이트 시간)
+            const now = new Date();
+            lastUpdateEl.textContent = now.toLocaleTimeString('ko-KR');
+            
+            console.log('📡 GPS 수신:', position.coords.accuracy.toFixed(1) + 'm');
+        }
+
+        // ⭐ GPS 처리 (1초마다 실행)
+        function processGPS(position) {
+            if (!isTracking) return;
+            
+            updateCount++;
+            updateCountEl.textContent = updateCount;
+            
+            const coords = position.coords;
+            
+            // ⭐ 로그: 위경도 + 정확도
+            console.log(`🔄 GPS 처리 #${updateCount}`,
+                        `위도: ${coords.latitude.toFixed(6)},`,
+                        `경도: ${coords.longitude.toFixed(6)},`,
+                        `정확도: ${coords.accuracy.toFixed(1)}m`);
+            
+            // 위치 정보 업데이트
+            latitudeEl.textContent = coords.latitude.toFixed(6);
+            longitudeEl.textContent = coords.longitude.toFixed(6);
+            
+            // 정확도 표시
+            accuracyEl.textContent = coords.accuracy.toFixed(1) + 'm';
+            if (coords.accuracy < 10) {
+                accuracyEl.className = 'data-value good';
+            } else if (coords.accuracy < 100) {  // ⭐ 50m → 100m로 완화
+                accuracyEl.className = 'data-value warning';
+            } else {
+                accuracyEl.className = 'data-value error';
+            }
+            
+            // 속도 표시
+            if (coords.speed !== null && coords.speed !== undefined && coords.speed > 0) {
+                const speedKmh = (coords.speed * 3.6).toFixed(1);
+                speedEl.textContent = speedKmh + ' km/h';
+            } else {
+                speedEl.textContent = '0 km/h';
+            }
+
+            // 거리 계산
+            if (lastPosition) {
+                const distance = calculateDistance(
+                    lastPosition.coords.latitude,
+                    lastPosition.coords.longitude,
+                    coords.latitude,
+                    coords.longitude
+                );
+
+                // ⭐ 로그: 거리 변화량 항상 표시
+                console.log(`📏 거리 변화: ${(distance * 1000).toFixed(2)}m`);
+
+                if (distance < 1.0) {  
+                    totalDistance += distance;
+                    totalDistanceEl.textContent = totalDistance.toFixed(3);
+                    
+                    // ⭐ 모든 이동 로그 (조건 제거)
+                    addLog(`✅ #${updateCount} 위도:${coords.latitude.toFixed(6)} 경도:${coords.longitude.toFixed(6)} +${(distance * 1000).toFixed(2)}m (총:${totalDistance.toFixed(3)}km)`, 'success');
+                } else {
+                    addLog(`⚠️ #${updateCount} GPS 점프: ${(distance * 1000).toFixed(1)}m - 무시`, 'warning');
+                }
+            } else {
+                addLog(`📍 첫 GPS: 위도:${coords.latitude.toFixed(6)}, 경도:${coords.longitude.toFixed(6)} (정확도:${coords.accuracy.toFixed(1)}m)`, 'success');
+            }
+
+            lastPosition = position;
+        }
+
+        // GPS 에러 콜백
+        function onGPSError(error) {
+            let errorMsg = '';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMsg = '❌ GPS 권한 거부됨';
+                    alert('GPS 권한을 허용해주세요!');
+                    stopTracking();
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMsg = '⚠️ GPS 위치 사용 불가';
+                    break;
+                case error.TIMEOUT:
+                    errorMsg = '⚠️ GPS 타임아웃';
+                    break;
+                default:
+                    errorMsg = '❌ 알 수 없는 GPS 오류';
+            }
+
+            addLog(errorMsg, 'error');
+            console.error('GPS 에러:', error);
+        }
+
+        // 거리 계산 (Haversine)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function toRad(degrees) {
+            return degrees * (Math.PI / 180);
+        }
+
+        // 로그 추가
+        function addLog(message, type = '') {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry ' + type;
+            const timestamp = new Date().toLocaleTimeString('ko-KR');
+            logEntry.textContent = '[' + timestamp + '] ' + message;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // 추적 중지
+        function stopTracking() {
+            if (pollTimer !== null) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+            
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            
+            isTracking = false;
+            currentPosition = null;
+            startBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+            statusEl.textContent = '⏸️ 대기 중';
+            statusEl.className = 'status waiting';
+        }
+    </script>
+</body>
+</html>

@@ -34,10 +34,14 @@ public class CourseListResDto {
     private CourseRegisterType registerType;
 
     private OffsetDateTime createdAt;
-    // DISTANCE 정렬/내 주변에서만 의미 있음
+
     private Double distM;
 
     private Boolean isLiked;
     private Boolean isFavorited;
+
+    public void resolveThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
 
 }

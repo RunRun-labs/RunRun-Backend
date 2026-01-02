@@ -58,7 +58,7 @@ public class CourseService {
     private final WebClient tmapWebClient;
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
-    private final FileStorage fileStorage;
+    private final FileStorage s3FileStorage;
     private final CourseRepositoryCustom courseRepositoryCustom;
     private final GeometryParser geometryParser;
     private final CoursePathProcessor pathProcessor;
@@ -179,6 +179,8 @@ public class CourseService {
 
         boolean isFavorited = courseFavoriteRepository.existsByCourse_IdAndUser_Id(courseId,
             user.getId());
+        course.resolveUrl(s3FileStorage.toHttpsUrl(course.getImageUrl()),
+            s3FileStorage.toHttpsUrl(course.getThumbnailUrl()));
 
         return CourseDetailResDto.fromEntity(course, user, isLiked, isFavorited);
     }
@@ -187,7 +189,19 @@ public class CourseService {
     public CursorPage<CourseListResDto> getCourseList(CustomUser principal, CourseListReqDto req) {
         User user = getUserOrThrow(principal);
 
-        return courseRepositoryCustom.searchCourses(req, user.getId());
+        CursorPage<CourseListResDto> page = courseRepositoryCustom.searchCourses(req, user.getId());
+
+        page.setItems(
+            page.getItems().stream()
+                .map(dto -> {
+                    dto.resolveThumbnailUrl(
+                        s3FileStorage.toHttpsUrl(dto.getThumbnailUrl()));
+                    return dto;
+                })
+                .toList()
+        );
+        return page;
+
     }
 
     @Transactional
@@ -331,7 +345,7 @@ public class CourseService {
         if (file.isEmpty()) {
             throw new FileUploadException(ErrorCode.FILE_EMPTY);
         }
-        return fileStorage.upload(file, domainType, refId);
+        return s3FileStorage.upload(file, domainType, refId);
     }
 
     private String resolveChangedImageUrl(MultipartFile file, FileDomainType domainType,
@@ -342,6 +356,6 @@ public class CourseService {
         if (file.isEmpty()) {
             throw new FileUploadException(ErrorCode.FILE_EMPTY);
         }
-        return fileStorage.uploadIfChanged(file, domainType, refId, course.getImageUrl());
+        return s3FileStorage.uploadIfChanged(file, domainType, refId, course.getImageUrl());
     }
 }

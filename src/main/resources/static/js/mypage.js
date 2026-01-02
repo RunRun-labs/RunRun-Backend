@@ -2,6 +2,9 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("mypage.js loaded");
     attachProfileEditHandler();
     attachProfileImageClickHandler();
+    attachChallengeHandler();
+    attachFriendHandler();
+    attachSettingsHandler();
     loadMyBodyInfo();
 });
 
@@ -76,6 +79,33 @@ function attachProfileEditHandler() {
 
     profileSettingsBtn.addEventListener("click", () => {
         window.location.href = "/myPage/edit";
+    });
+}
+
+function attachChallengeHandler() {
+    const challengeBtn = document.querySelector('.profile-actions .action-pill:first-child');
+    if (!challengeBtn) return;
+
+    challengeBtn.addEventListener("click", () => {
+        window.location.href = "/challenge";
+    });
+}
+
+function attachFriendHandler() {
+    const friendBtn = document.querySelector('.profile-actions .action-pill:nth-child(2)');
+    if (!friendBtn) return;
+
+    friendBtn.addEventListener("click", () => {
+        window.location.href = "/friends/list";
+    });
+}
+
+function attachSettingsHandler() {
+    const settingsBtn = document.querySelector('[data-role="settings"]');
+    if (!settingsBtn) return;
+
+    settingsBtn.addEventListener("click", () => {
+        window.location.href = "/setting";
     });
 }
 

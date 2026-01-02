@@ -980,3 +980,301 @@ body {
   }
 }
 
+/* ============================================ */
+/* 런닝 결과 모달 - 모바일 최적화 */
+/* ============================================ */
+
+.running-result-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  max-width: 400px;
+  max-height: 85vh;
+  background: var(--bg-white);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* 헤더 */
+.result-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--stroke);
+  flex-shrink: 0;
+}
+
+.result-modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.result-modal-close {
+  width: 32px;
+  height: 32px;
+  background: var(--bg);
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.result-modal-close:hover {
+  background: var(--stroke);
+}
+
+/* 스크롤 가능한 컨텐츠 영역 */
+.result-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 축하 메시지 */
+.result-celebration {
+  text-align: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.celebration-emoji {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.celebration-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0 0 4px 0;
+}
+
+.celebration-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* 주요 통계 */
+.result-main-stats {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.stat-value.stat-distance {
+  color: #10B981;
+}
+
+.stat-value.stat-time {
+  color: #3B82F6;
+}
+
+.stat-value.stat-pace {
+  color: #EF4444;
+  font-size: 28px;
+}
+
+.stat-unit {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.stat-pace-box {
+  text-align: center;
+  padding: 12px;
+  background: #F3F4F6;
+  border-radius: 8px;
+}
+
+/* 구간별 페이스 */
+.result-segments-section {
+  padding: 16px 20px;
+}
+
+.segments-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin: 0 0 12px 0;
+}
+
+.segments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* 전체 모달 스크롤 사용 - 내부 스크롤 제거 */
+}
+
+/* 구간별 페이스 아이템 */
+.segment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #F9FAFB;
+  border-radius: 8px;
+}
+
+.segment-km {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.segment-pace {
+  font-size: 13px;
+  font-weight: 600;
+  color: #10B981;
+}
+
+/* 하단 고정 버튼 */
+.result-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--stroke);
+  flex-shrink: 0;
+}
+
+.result-close-button {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(90deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.result-close-button:hover {
+  opacity: 0.9;
+}
+
+/* 모바일 세로 */
+@media (max-width: 480px) {
+  .running-result-modal {
+    width: 92vw;
+    max-height: 90vh;
+  }
+
+  .celebration-emoji {
+    font-size: 36px;
+  }
+
+  .celebration-title {
+    font-size: 17px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-value.stat-pace {
+    font-size: 26px;
+  }
+  
+  /* 구간별 페이스 모바일 최적화 */
+  .result-segments-section {
+    padding: 12px 20px;
+  }
+  
+  .segment-item {
+    padding: 8px 10px;
+  }
+  
+  .segment-km {
+    font-size: 12px;
+  }
+  
+  .segment-pace {
+    font-size: 12px;
+  }
+}
+
+/* 모바일 가로 */
+@media (max-width: 920px) and (max-height: 520px) {
+  .running-result-modal {
+    width: 80vw;
+    max-width: 500px;
+    max-height: 92vh;
+  }
+
+  .result-celebration {
+    padding: 12px 20px;
+  }
+
+  .celebration-emoji {
+    font-size: 32px;
+    margin-bottom: 4px;
+  }
+
+  .celebration-title {
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+
+  .result-main-stats {
+    padding: 12px 20px;
+  }
+
+  .stat-grid {
+    margin-bottom: 10px;
+  }
+}
+
+/* 데스크톱 */
+@media (min-width: 900px) {
+  .running-result-modal {
+    max-width: 420px;
+  }
+}

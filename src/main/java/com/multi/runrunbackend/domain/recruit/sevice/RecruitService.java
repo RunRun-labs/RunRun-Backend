@@ -4,7 +4,9 @@ import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
+import com.multi.runrunbackend.domain.recruit.constant.GenderLimit;
 import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitCreateReqDto;
 import com.multi.runrunbackend.domain.recruit.dto.req.RecruitListReqDto;
@@ -48,8 +50,22 @@ public class RecruitService {
 
 
   @Transactional
-  public RecruitCreateResDto createRecruit(User user, RecruitCreateReqDto request) {
+  public RecruitCreateResDto createRecruit(CustomUser principal, RecruitCreateReqDto request) {
+
+    User user = getUser(principal);
+
     request.validate();
+
+    if (request.getGenderLimit() != GenderLimit.BOTH) {
+      if (!request.getGenderLimit().name().equals(user.getGender())) {
+        throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
+      }
+    }
+
+    int hostAge = calculateAge(user.getBirthDate());
+    if (hostAge < request.getAgeMin() || hostAge > request.getAgeMax()) {
+      throw new ValidationException(ErrorCode.AGE_RESTRICTION);
+    }
 
 //    Course course = null;
 //    if (request.getCourseId() != null) {
@@ -78,11 +94,28 @@ public class RecruitService {
     Pageable dynamicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
         sort);
 
+    LocalDateTime startOfDay = null;
+    LocalDateTime endOfDay = null;
+
+    if (req.getDate() != null) {
+      startOfDay = req.getDate().atStartOfDay();
+      endOfDay = req.getDate().atTime(23, 59, 59);
+    }
+
+    Double searchRadius = req.getRadiusKm();
+
+    if (req.getRegion() != null && !req.getRegion().isEmpty()) {
+      searchRadius = null;
+    }
+
     Slice<Recruit> recruits = recruitRepository.findRecruitsWithFilters(
         req.getLatitude(),
         req.getLongitude(),
-        req.getRadiusKm(),
+        searchRadius,
         req.getKeyword(),
+        startOfDay,
+        endOfDay,
+        req.getRegion(),
         dynamicPageable
     );
 
@@ -107,21 +140,20 @@ public class RecruitService {
   }
 
 
-  public RecruitDetailResDto getRecruitDetail(Long recruitId, User user) {
+  public RecruitDetailResDto getRecruitDetail(Long recruitId, CustomUser principal) {
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
-
+    User user = getUser(principal);
     Long userId = user.getId();
 
     boolean isParticipant = false;
-    if (user != null) {
-      isParticipant = recruitUserRepository.existsByRecruitAndUser(recruit, user);
-    }
+    isParticipant = recruitUserRepository.existsByRecruitAndUser(recruit, user);
 
     return RecruitDetailResDto.from(recruit, userId, isParticipant);
   }
 
   @Transactional
-  public void updateRecruit(Long recruitId, User user, RecruitUpdateReqDto req) {
+  public void updateRecruit(Long recruitId, CustomUser principal, RecruitUpdateReqDto req) {
+    User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     if (!recruit.getUser().getId().equals(user.getId())) {
@@ -132,22 +164,41 @@ public class RecruitService {
       throw new ForbiddenException(ErrorCode.RECRUIT_HAS_PARTICIPANTS);
     }
 
+    req.validate();
+
+    if (req.getGenderLimit() != null && req.getGenderLimit() != GenderLimit.BOTH) {
+      if (!req.getGenderLimit().name().equals(user.getGender())) {
+        throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
+      }
+    }
+
+    int hostAge = calculateAge(user.getBirthDate());
+    if (hostAge < req.getAgeMin() || hostAge > req.getAgeMax()) {
+      throw new ValidationException(ErrorCode.AGE_RESTRICTION);
+    }
+
     recruit.update(req);
   }
 
   @Transactional
-  public void deleteRecruit(Long recruitId, User user) {
+  public void deleteRecruit(Long recruitId, CustomUser principal) {
+    User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     if (!recruit.getUser().getId().equals(user.getId())) {
       throw new ForbiddenException(ErrorCode.RECRUIT_DELETE_DENIED);
     }
 
+    if (recruit.getCurrentParticipants() > 1) {
+      throw new ForbiddenException(ErrorCode.RECRUIT_HAS_PARTICIPANTS);
+    }
+
     recruitRepository.delete(recruit);
   }
 
   @Transactional
-  public void joinRecruit(Long recruitId, User user) {
+  public void joinRecruit(Long recruitId, CustomUser principal) {
+    User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     if (recruitUserRepository.existsByRecruitAndUser(recruit, user)) {
@@ -160,6 +211,18 @@ public class RecruitService {
 
     if (LocalDateTime.now().plusHours(1).isAfter(recruit.getMeetingAt())) {
       throw new ValidationException(ErrorCode.RECRUIT_TIME_OVER);
+    }
+
+    if (recruit.getGenderLimit() != GenderLimit.BOTH) {
+      if (!recruit.getGenderLimit().name().equals(user.getGender())) {
+        throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
+      }
+    }
+
+    int userAge = calculateAge(user.getBirthDate());
+
+    if (userAge < recruit.getAgeMin() || userAge > recruit.getAgeMax()) {
+      throw new ValidationException(ErrorCode.AGE_RESTRICTION);
     }
 
     RecruitUser recruitUser = RecruitUser.builder()
@@ -176,7 +239,8 @@ public class RecruitService {
   }
 
   @Transactional
-  public void leaveRecruit(Long recruitId, User user) {
+  public void leaveRecruit(Long recruitId, CustomUser principal) {
+    User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
     RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
@@ -206,6 +270,18 @@ public class RecruitService {
       throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
     }
     return recruit;
+  }
+
+  private int calculateAge(java.time.LocalDate birthDate) {
+    if (birthDate == null) {
+      throw new ValidationException(ErrorCode.BIRTHDATE_REQUIRED);
+    }
+    return java.time.Period.between(birthDate, java.time.LocalDate.now()).getYears();
+  }
+
+  private User getUser(CustomUser principal) {
+    return userRepository.findByLoginId(principal.getLoginId())
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
   }
 
 }
