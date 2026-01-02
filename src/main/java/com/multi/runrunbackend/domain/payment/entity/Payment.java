@@ -1,21 +1,16 @@
 package com.multi.runrunbackend.domain.payment.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseCreatedEntity;
+import com.multi.runrunbackend.domain.payment.constant.MembershipGrade;
+import com.multi.runrunbackend.domain.payment.constant.PaymentMethod;
+import com.multi.runrunbackend.domain.payment.constant.PaymentStatus;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import java.time.LocalDateTime;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 /**
  * @author : BoKyung
@@ -26,8 +21,6 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class Payment extends BaseCreatedEntity {
 
     @Id
@@ -38,8 +31,9 @@ public class Payment extends BaseCreatedEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "membership_grade", nullable = false, length = 20)
-    private String membershipGrade;
+    private MembershipGrade membershipGrade;
 
     @Column(name = "original_amount", nullable = false)
     private Integer originalAmount;
@@ -50,11 +44,16 @@ public class Payment extends BaseCreatedEntity {
     @Column(name = "final_amount")
     private Integer finalAmount;
 
-    @Column(name = "payment_method", length = 20)
-    private String paymentMethod; // TOSS_PAY
+    @Column(name = "coupon_code", length = 50)
+    private String couponCode;
 
-    @Column(name = "payment_status", length = 20)
-    private String paymentStatus; // PENDING, COMPLETED, FAILED, CANCELED
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", length = 50)
+    private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 50)
+    private PaymentStatus paymentStatus;
 
     @Column(name = "payment_key", length = 100)
     private String paymentKey;
@@ -62,63 +61,109 @@ public class Payment extends BaseCreatedEntity {
     @Column(name = "order_id", length = 100)
     private String orderId;
 
-    @Column(name = "approved_at")
+    @Column(name = "billing_key", length = 200)
+    private String billingKey;
+
+    private Boolean isAutoPayment = false;
+
     private LocalDateTime approvedAt;
 
-    @Column(name = "canceled_at")
     private LocalDateTime canceledAt;
 
 
     /**
-     * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
-     * @filename : Payment
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
+     * @description : 엔티티 생성 전 기본값 설정
      */
-    public static Payment toEntity(User user, String membershipGrade, Integer originalAmount,
-        Integer discountAmount, String orderId) {
-        return Payment.builder()
-            .user(user)
-            .membershipGrade(membershipGrade)
-            .originalAmount(originalAmount)
-            .discountAmount(discountAmount)
-            .finalAmount(originalAmount - discountAmount)
-            .paymentMethod("TOSS_PAY")
-            .paymentStatus("PENDING")
-            .orderId(orderId)
-            .build();
+    @PrePersist
+    public void prePersist() {
+        if (this.membershipGrade == null) {
+            this.membershipGrade = MembershipGrade.PREMIUM;
+        }
+        if (this.paymentStatus == null) {
+            this.paymentStatus = PaymentStatus.READY;
+        }
+        if (this.discountAmount == null) {
+            this.discountAmount = 0;
+        }
+        if (this.isAutoPayment == null) {
+            this.isAutoPayment = false;
+        }
     }
 
     /**
-     * @description : completePayment - 결제 완료 처리
-     * @filename : Payment
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
+     * @description : 결제 생성 정적 팩토리 메서드
      */
-    public void completePayment(String paymentKey) {
-        this.paymentStatus = "COMPLETED";
+    public static Payment create(
+            User user,
+            Integer originalAmount,
+            Integer discountAmount,
+            String orderId,
+            String couponCode
+    ) {
+        Payment payment = new Payment();
+        payment.user = user;
+        payment.membershipGrade = MembershipGrade.PREMIUM;
+        payment.originalAmount = originalAmount;
+        payment.discountAmount = discountAmount;
+        payment.finalAmount = originalAmount - discountAmount;
+        payment.paymentStatus = PaymentStatus.READY;
+        payment.orderId = orderId;
+        payment.couponCode = couponCode;
+        payment.isAutoPayment = false;
+        return payment;
+    }
+
+    /**
+     * @description : 자동결제용 Payment 생성
+     */
+    public static Payment createForAutoPayment(
+            User user,
+            Integer originalAmount,
+            Integer discountAmount,
+            String orderId,
+            String billingKey
+    ) {
+        Payment payment = new Payment();
+        payment.user = user;
+        payment.membershipGrade = MembershipGrade.PREMIUM;
+        payment.originalAmount = originalAmount;
+        payment.discountAmount = discountAmount;
+        payment.finalAmount = originalAmount - discountAmount;
+        payment.paymentStatus = PaymentStatus.READY;
+        payment.orderId = orderId;
+        payment.billingKey = billingKey;
+        payment.isAutoPayment = true;
+        return payment;
+    }
+
+    /**
+     * @description : 결제 완료 처리
+     */
+    public void complete(String paymentKey, PaymentMethod paymentMethod, String billingKey) {
+        this.paymentStatus = PaymentStatus.DONE;
         this.paymentKey = paymentKey;
+        this.paymentMethod = paymentMethod;
+        this.billingKey = billingKey;
         this.approvedAt = LocalDateTime.now();
+
+        // 빌링키가 있으면 저장
+        if (billingKey != null && !billingKey.isBlank()) {
+            this.billingKey = billingKey;
+        }
     }
 
     /**
-     * @description : failPayment - 결제 실패 처리
-     * @filename : Payment
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
+     * @description : 결제 실패 처리
      */
-    public void failPayment() {
-        this.paymentStatus = "FAILED";
+    public void fail() {
+        this.paymentStatus = PaymentStatus.FAILED;
     }
 
     /**
-     * @description : cancelPayment - 결제 취소 처리
-     * @filename : Payment
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
+     * @description : 시스템 자동 취소 처리 (로그에만 이유 기록할 예정)
      */
-    public void cancelPayment() {
-        this.paymentStatus = "CANCELED";
+    public void cancelBySystem(String reason) {
+        this.paymentStatus = PaymentStatus.CANCELED;
         this.canceledAt = LocalDateTime.now();
     }
 }
