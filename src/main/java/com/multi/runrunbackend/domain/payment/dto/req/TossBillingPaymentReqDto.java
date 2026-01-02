@@ -1,9 +1,6 @@
 package com.multi.runrunbackend.domain.payment.dto.req;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 /**
  * @author : BoKyung
@@ -12,15 +9,21 @@ import lombok.NoArgsConstructor;
  * @since : 2026. 1. 1.
  */
 @Data
+@ToString
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class TossBillingPaymentReqDto {
 
+    @ToString.Exclude
     private String customerKey;
     private Integer amount;
     private String orderId;
     private String orderName;
+
+    @ToString.Exclude
     private String customerEmail;
+
+    @ToString.Exclude
     private String customerName;
 }
