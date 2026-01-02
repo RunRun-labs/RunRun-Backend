@@ -125,11 +125,6 @@ public class PathController {
         return "payment/pay";
     }
 
-    @GetMapping("/payment/widget")
-    public String paymentPayWidgetView() {
-        return "payment/widget";
-    }
-
     @GetMapping("/payment/history")
     public String paymentHistoryView() {
         return "payment/history";
