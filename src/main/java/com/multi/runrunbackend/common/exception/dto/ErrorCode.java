@@ -88,6 +88,8 @@ public enum ErrorCode {
     MEMBERSHIP_REQUIRED(HttpStatus.FORBIDDEN, "M004", "프리미엄 멤버십이 필요합니다."),
     MEMBERSHIP_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "M005", "활성화된 멤버십이 아닙니다."),
     MEMBERSHIP_NOT_CANCELED(HttpStatus.BAD_REQUEST, "M006", "해지 신청 상태가 아닙니다."),
+    INVALID_MEMBERSHIP_PERIOD(HttpStatus.BAD_REQUEST, "M007", "멤버십 기간은 1일 이상이어야 합니다."),
+    MEMBERSHIP_PERIOD_TOO_LONG(HttpStatus.BAD_REQUEST, "M008", "멤버십 기간은 최대 365일까지 설정할 수 있습니다."),
 
     /* ===== 결제 ===== */
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "결제 내역을 찾을 수 없습니다."),
