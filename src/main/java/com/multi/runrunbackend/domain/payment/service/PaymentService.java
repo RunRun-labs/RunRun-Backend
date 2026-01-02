@@ -115,7 +115,6 @@ public class PaymentService {
 
         // 중복 결제 체크
         if (payment.getPaymentStatus() == PaymentStatus.DONE) {
-            payment.cancelBySystem("중복 결제 감지");
             log.error("중복 결제 감지 - orderId: {}", req.getOrderId());
             throw new BusinessException(ErrorCode.PAYMENT_ALREADY_COMPLETED);
         }
@@ -376,7 +375,7 @@ public class PaymentService {
         String authKey = request.getAuthKey();
         String customerKey = request.getCustomerKey();
         Integer amount = request.getAmount();
-        
+
         // 결제 요청(Payment) 조회
         Payment payment = paymentRepository.findByOrderIdWithLock(orderId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.PAYMENT_NOT_FOUND));
