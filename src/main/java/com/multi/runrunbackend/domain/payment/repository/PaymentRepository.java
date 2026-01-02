@@ -28,4 +28,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      */
     Optional<Payment> findByOrderId(String orderId);
 
+
+    /**
+     * @description : 최근 빌링키 조회
+     */
+    Optional<Payment> findFirstByUserAndBillingKeyIsNotNullOrderByCreatedAtDesc(User user);
+
 }
