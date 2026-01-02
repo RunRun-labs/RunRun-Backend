@@ -271,7 +271,7 @@
 
         card.innerHTML = `
             <div class="payment-header">
-                <div class="payment-name">프리미엄 플랜</div>
+                <div class="payment-name">${payment.membershipGrade || '프리미엄 플랜'}</div>
                 <span class="status-badge ${statusClass}">${statusText}</span>
             </div>
             <div class="payment-amount">${payment.finalAmount.toLocaleString()}원</div>
