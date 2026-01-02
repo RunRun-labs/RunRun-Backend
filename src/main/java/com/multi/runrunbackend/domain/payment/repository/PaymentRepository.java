@@ -1,0 +1,25 @@
+package com.multi.runrunbackend.domain.payment.repository;
+
+import com.multi.runrunbackend.domain.payment.entity.Payment;
+import com.multi.runrunbackend.domain.user.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+/**
+ * @author : BoKyung
+ * @description : 결제 레포지토리
+ * @filename : PaymentRepository
+ * @since : 2026. 1. 1.
+ */
+@Repository
+public interface PaymentRepository extends JpaRepository<Payment, Long> {
+
+    /**
+     * @description : 특정 사용자의 결제 내역 조회
+     */
+    Page<Payment> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
+
+
+}
