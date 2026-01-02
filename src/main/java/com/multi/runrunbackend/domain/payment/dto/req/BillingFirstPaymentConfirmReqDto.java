@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * @author : BoKyung
@@ -14,9 +15,11 @@ import lombok.NoArgsConstructor;
  * @since : 2026. 1. 2.
  */
 @Data
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class BillingFirstPaymentConfirmReqDto {
+    @ToString.Exclude
     @NotBlank(message = "customerKey는 필수입니다")
     private String customerKey;
 
