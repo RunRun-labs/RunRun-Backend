@@ -105,7 +105,7 @@ public class PaymentService {
     public PaymentApproveResDto confirmPayment(CustomUser principal, PaymentApproveReqDto req) {
         User user = getUserOrThrow(principal);
 
-        Payment payment = paymentRepository.findByOrderId(req.getOrderId())
+        Payment payment = paymentRepository.findByOrderIdWithLock(req.getOrderId())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.PAYMENT_NOT_FOUND));
 
         // 본인 확인
@@ -324,7 +324,7 @@ public class PaymentService {
     public PaymentApproveResDto confirmFreePayment(CustomUser principal, String orderId) {
         User user = getUserOrThrow(principal);
 
-        Payment payment = paymentRepository.findByOrderId(orderId)
+        Payment payment = paymentRepository.findByOrderIdWithLock(orderId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.PAYMENT_NOT_FOUND));
 
         // 본인 확인
@@ -376,14 +376,9 @@ public class PaymentService {
         String authKey = request.getAuthKey();
         String customerKey = request.getCustomerKey();
         Integer amount = request.getAmount();
-
-
-        if (orderId == null || authKey == null || customerKey == null || amount == null) {
-            throw new BadRequestException(ErrorCode.INVALID_REQUEST);
-        }
-
+        
         // 결제 요청(Payment) 조회
-        Payment payment = paymentRepository.findByOrderId(orderId)
+        Payment payment = paymentRepository.findByOrderIdWithLock(orderId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.PAYMENT_NOT_FOUND));
 
         // 본인 확인
