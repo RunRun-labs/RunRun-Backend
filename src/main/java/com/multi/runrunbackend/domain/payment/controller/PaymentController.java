@@ -2,6 +2,8 @@ package com.multi.runrunbackend.domain.payment.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.payment.dto.req.BillingFirstPaymentConfirmReqDto;
+import com.multi.runrunbackend.domain.payment.dto.req.FreePaymentConfirmReqDto;
 import com.multi.runrunbackend.domain.payment.dto.req.PaymentApproveReqDto;
 import com.multi.runrunbackend.domain.payment.dto.req.PaymentRequestReqDto;
 import com.multi.runrunbackend.domain.payment.dto.res.PaymentApproveResDto;
@@ -18,8 +20,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 /**
  * @author : BoKyung
@@ -67,10 +67,9 @@ public class PaymentController {
     @PostMapping("/confirm-free")
     public ResponseEntity<ApiResponse<PaymentApproveResDto>> confirmFreePayment(
             @AuthenticationPrincipal CustomUser principal,
-            @Valid @RequestBody Map<String, String> request
+            @Valid @RequestBody FreePaymentConfirmReqDto request
     ) {
-        String orderId = request.get("orderId");
-        PaymentApproveResDto res = paymentService.confirmFreePayment(principal, orderId);
+        PaymentApproveResDto res = paymentService.confirmFreePayment(principal, request.getOrderId());
         return ResponseEntity.ok(
                 ApiResponse.success("무료 결제 처리 완료", res)
         );
@@ -79,7 +78,7 @@ public class PaymentController {
     @PostMapping("/billing/confirm")
     public ResponseEntity<ApiResponse<PaymentApproveResDto>> confirmBilling(
             @AuthenticationPrincipal CustomUser principal,
-            @RequestBody Map<String, Object> request
+            @Valid @RequestBody BillingFirstPaymentConfirmReqDto request
     ) {
         PaymentApproveResDto res = paymentService.confirmBillingFirstPayment(principal, request);
         return ResponseEntity.ok(ApiResponse.success("빌링키 발급 및 첫 결제 완료", res));
