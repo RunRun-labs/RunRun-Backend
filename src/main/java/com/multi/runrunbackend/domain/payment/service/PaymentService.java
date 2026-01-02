@@ -9,10 +9,7 @@ import com.multi.runrunbackend.domain.membership.repository.MembershipRepository
 import com.multi.runrunbackend.domain.payment.client.TossPaymentClient;
 import com.multi.runrunbackend.domain.payment.constant.PaymentMethod;
 import com.multi.runrunbackend.domain.payment.constant.PaymentStatus;
-import com.multi.runrunbackend.domain.payment.dto.req.PaymentApproveReqDto;
-import com.multi.runrunbackend.domain.payment.dto.req.PaymentRequestReqDto;
-import com.multi.runrunbackend.domain.payment.dto.req.TossBillingKeyIssueReqDto;
-import com.multi.runrunbackend.domain.payment.dto.req.TossBillingPaymentReqDto;
+import com.multi.runrunbackend.domain.payment.dto.req.*;
 import com.multi.runrunbackend.domain.payment.dto.res.*;
 import com.multi.runrunbackend.domain.payment.entity.Payment;
 import com.multi.runrunbackend.domain.payment.repository.PaymentRepository;
@@ -25,7 +22,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -372,19 +368,15 @@ public class PaymentService {
      * @description : 카드 자동결제(정기결제) 처리
      */
     @Transactional
-    public PaymentApproveResDto confirmBillingFirstPayment(CustomUser principal, Map<String, Object> request) {
+    public PaymentApproveResDto confirmBillingFirstPayment(CustomUser principal, BillingFirstPaymentConfirmReqDto request) {
 
         User user = getUserOrThrow(principal);
 
-        String orderId = (String) request.get("orderId");
-        String authKey = (String) request.get("authKey");
-        String customerKey = (String) request.get("customerKey");
+        String orderId = request.getOrderId();
+        String authKey = request.getAuthKey();
+        String customerKey = request.getCustomerKey();
+        Integer amount = request.getAmount();
 
-        Integer amount = null;
-        Object amountObj = request.get("amount");
-        if (amountObj instanceof Integer) amount = (Integer) amountObj;
-        else if (amountObj instanceof Long) amount = ((Long) amountObj).intValue();
-        else if (amountObj instanceof String) amount = Integer.parseInt((String) amountObj);
 
         if (orderId == null || authKey == null || customerKey == null || amount == null) {
             throw new BadRequestException(ErrorCode.INVALID_REQUEST);
