@@ -350,7 +350,12 @@ public class PaymentService {
         Membership membership = membershipRepository.findByUser(user)
                 .orElseGet(() -> membershipRepository.save(Membership.create(user)));
 
-        membership.reactivate();
+        String couponCode = payment.getCouponCode();
+        if ("TRIAL_1WEEK".equals(couponCode)) {
+            membership.activateForDays(7);
+        } else {
+            membership.reactivate();
+        }
 
         log.info("무료 결제 승인 완료 - orderId: {}, userId: {}", orderId, user.getId());
 
