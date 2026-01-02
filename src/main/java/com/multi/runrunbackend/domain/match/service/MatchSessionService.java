@@ -393,7 +393,7 @@ public class MatchSessionService {
       case KM_3 -> 3.0;
       case KM_5 -> 5.0;
       case KM_10 -> 10.0;
-      default -> 0.0;
+      default -> throw new ValidationException(ErrorCode.INVALID_DISTANCE_TYPE);
     };
   }
 }
