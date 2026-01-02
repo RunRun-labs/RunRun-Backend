@@ -67,6 +67,16 @@ public class Membership extends BaseEntity {
     }
 
     /**
+     * @description : 멤버십 1주권 사용하기 위해 기간 선택할 수 있는 메서드
+     */
+    public void activateForDays(int days) {
+        this.membershipStatus = MembershipStatus.ACTIVE;
+        this.startDate = LocalDateTime.now();
+        this.nextBillingDate = LocalDateTime.now().plusDays(days);
+        this.endDate = null;
+    }
+
+    /**
      * @description : 멤버십 갱신 (자동 결제 성공 시)
      */
     public void renew() {
