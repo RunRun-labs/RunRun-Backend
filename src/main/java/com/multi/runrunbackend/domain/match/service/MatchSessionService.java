@@ -1,15 +1,19 @@
 package com.multi.runrunbackend.domain.match.service;
 
 import com.multi.runrunbackend.common.constant.DistanceType;
+import com.multi.runrunbackend.common.exception.custom.BadRequestException;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.course.entity.Course;
+import com.multi.runrunbackend.domain.course.repository.CourseRepository;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
+import com.multi.runrunbackend.domain.match.dto.req.SoloRunStartReqDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingParticipantDto;
 import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
@@ -59,6 +63,7 @@ public class MatchSessionService {
   private final RecruitUserRepository recruitUserRepository;
   private final SessionUserRepository sessionUserRepository;
   private final RunningResultRepository runningResultRepository;
+  private final CourseRepository courseRepository;
 
 
   @Transactional
@@ -190,14 +195,6 @@ public class MatchSessionService {
     return session.getId();
   }
 
-  private double convertToKilometer(DistanceType distance) {
-    return switch (distance) {
-      case KM_3 -> 3.0;
-      case KM_5 -> 5.0;
-      case KM_10 -> 10.0;
-      default -> 0.0;
-    };
-  }
 
   /**
    * 대기방 정보 조회
@@ -341,10 +338,63 @@ public class MatchSessionService {
     return resultSlice.map(RunningRecordResDto::from);
   }
 
+  @Transactional
+  public Long createSoloSession(CustomUser principal, SoloRunStartReqDto reqDto) {
+
+    User user = getUser(principal);
+
+    Long courseId = reqDto.getCourseId();
+
+    if (courseId == null && reqDto.getDistance() == null) {
+      throw new BadRequestException(ErrorCode.DISTANCE_REQUIRED);
+    }
+
+    Course course = null;
+    Double distance = null;
+
+    if (courseId != null) {
+      course = courseRepository.findById(courseId)
+          .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+      distance = course.getDistanceM() / 1000.0;
+    } else {
+      distance = convertToKilometer(reqDto.getDistance());
+    }
+
+    MatchSession session = MatchSession.builder()
+        .duration(0)
+        .status(SessionStatus.STANDBY)
+        .targetDistance(distance)
+        .type(SessionType.SOLO)
+        .course(course)
+        .build();
+
+    matchSessionRepository.save(session);
+
+    SessionUser sessionUser = SessionUser.builder()
+        .matchSession(session)
+        .user(user)
+        .isReady(false)
+        .build();
+
+    sessionUserRepository.save(sessionUser);
+
+    log.info("솔로 세션 생성 완료 - SessionID: {}", session.getId());
+    return session.getId();
+  }
+
 
   private User getUser(CustomUser principal) {
     return userRepository.findByLoginId(principal.getLoginId())
         .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  private double convertToKilometer(DistanceType distance) {
+    return switch (distance) {
+      case KM_3 -> 3.0;
+      case KM_5 -> 5.0;
+      case KM_10 -> 10.0;
+      default -> 0.0;
+    };
   }
 }
 
