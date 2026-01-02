@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 
 /**
@@ -134,7 +135,7 @@ public class TossPaymentClient {
                                     })
                     )
                     .bodyToMono(TossPaymentResDto.class)
-                    .block();
+                    .block(Duration.ofSeconds(12));
 
             if (response == null) {
                 throw new ExternalApiException(ErrorCode.BILLING_PAYMENT_FAILED);
