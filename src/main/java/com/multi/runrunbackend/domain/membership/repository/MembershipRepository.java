@@ -34,4 +34,13 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
             LocalDateTime dateTime
     );
 
+    /**
+     * @description : 자동결제 대상 조회 (스케줄러용)
+     */
+    List<Membership> findByMembershipStatusAndNextBillingDateBetween(
+            MembershipStatus status,
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
 }
