@@ -38,7 +38,7 @@ public class PaymentScheduler {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime tomorrow = now.plusDays(1).withHour(0).withMinute(0).withSecond(0);
 
-        // 내일이 결제일인 활성 멤버십 조회
+        // 오늘이 결제일인 활성 멤버십 조회
         List<Membership> memberships = membershipRepository
                 .findByMembershipStatusAndNextBillingDateBetween(
                         MembershipStatus.ACTIVE,
