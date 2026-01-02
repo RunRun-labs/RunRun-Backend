@@ -49,6 +49,11 @@ public class PathController {
     return "match/ghost";
   }
 
+  @GetMapping("/match/solo")
+  public String soloView() {
+    return "match/solo";
+  }
+
   @GetMapping("/recruit")
   public String recruitListView() {
     return "recruit/recruit-list";
