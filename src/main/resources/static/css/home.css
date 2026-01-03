@@ -135,18 +135,6 @@ body {
     color: var(--text-strong);
 }
 
-.week-total-stats {
-    display: flex;
-    gap: 12px;
-    font-size: 13px;
-    color: var(--text-strong);
-}
-
-.week-stat,
-.total-stat {
-    font-weight: 400;
-}
-
 .today-stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

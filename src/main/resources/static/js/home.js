@@ -49,33 +49,26 @@ function updateNotificationBadge(count) {
 
 async function loadTodayStats() {
     const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-        return;
-    }
+    if (!accessToken) return;
+
     try {
-        const userResponse = await fetch("/users", {
+        const res = await fetch("/summary/today", {
             headers: {Authorization: `Bearer ${accessToken}`},
         });
 
-        let userWeight = 70;
-        if (userResponse.ok) {
-            const userData = await userResponse.json();
-            userWeight = userData?.data?.weightKg || 70;
-        }
+        if (!res.ok) throw new Error();
 
-        const todayStats = {
-            distance: 0.0,
-            duration: 0,
-            calories: 0,
-        };
+        const payload = await res.json();
+        const stats = payload.data;
 
-        if (todayStats.distance > 0) {
-            todayStats.calories = Math.round(todayStats.distance * userWeight * 1.036);
-        }
+        renderTodayStats({
+            distance: stats.distanceKm,
+            duration: stats.durationSec,
+            calories: stats.calories,
+        });
 
-        renderTodayStats(todayStats);
-    } catch (error) {
-        console.error("오늘의 통계 로드 실패:", error);
+    } catch (e) {
+        console.error("오늘 러닝 통계 실패", e);
     }
 }
 
@@ -160,7 +153,7 @@ function updateWeekLabel() {
     const weekNumber = getWeekNumber(weekStart);
 
     let label = `${month}월 ${getWeekLabel(weekNumber)}째 주`;
-    
+
     if (currentWeekOffset === 0) {
         label = `이번 주`;
     } else if (currentWeekOffset === -1) {
@@ -193,24 +186,26 @@ function getWeekLabel(weekNumber) {
 
 async function loadWeeklyStats() {
     const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-        renderWeeklyChart([]);
-        updateWeeklyTotals(0, 0);
-        return;
-    }
+    if (!accessToken) return;
 
     try {
-        // TODO: 실제 API 연동 시 주별 데이터 조회
-        const weeklyData = [0, 0, 0, 0, 0, 0, 0];
-        renderWeeklyChart(weeklyData);
-        
-        // 주별 총 거리와 시간 계산
-        const totalDistance = weeklyData.reduce((sum, dist) => sum + dist, 0);
-        const totalDuration = 0; // TODO: 실제 API에서 시간 데이터 가져오기
-        
-        updateWeeklyTotals(totalDistance, totalDuration);
-    } catch (error) {
-        console.error("주간 통계 로드 실패:", error);
+        const res = await fetch(`/summary/weekly?weekOffset=${currentWeekOffset}`, {
+            headers: {Authorization: `Bearer ${accessToken}`},
+        });
+
+        if (!res.ok) throw new Error();
+
+        const payload = await res.json();
+        const data = payload.data;
+
+        renderWeeklyChart(data.dailyDistances);
+        updateWeeklyTotals(
+            data.totalDistanceKm,
+            data.totalDurationSec
+        );
+
+    } catch (e) {
+        console.error("주간 러닝 통계 실패", e);
         renderWeeklyChart([]);
         updateWeeklyTotals(0, 0);
     }
@@ -231,7 +226,7 @@ function updateWeeklyTotals(distance, durationSeconds) {
         // durationSeconds를 시간:분 형식으로 변환
         const hours = Math.floor(durationSeconds / 3600);
         const minutes = Math.floor((durationSeconds % 3600) / 60);
-        
+
         if (hours > 0) {
             durationEl.textContent = `${hours}h ${minutes}m`;
         } else {
@@ -323,10 +318,10 @@ async function loadLatestChallengeForBanner() {
         // 모든 챌린지 저장 (네비게이션용)
         allChallenges = sortedChallenges;
         currentSlideIndex = 0;
-        
+
         // 모든 챌린지 렌더링
         renderChallengeBanner(sortedChallenges);
-        
+
         // 네비게이션 버튼 이벤트 리스너 추가
         initChallengeNavigation();
 
@@ -352,7 +347,7 @@ function renderChallengeBanner(challenges) {
             </div>
         `;
         slider.appendChild(emptySlide);
-        
+
         // 화살표 버튼 숨기기
         const prevBtn = document.querySelector('[data-role="challenge-prev"]');
         const nextBtn = document.querySelector('[data-role="challenge-next"]');
@@ -360,7 +355,7 @@ function renderChallengeBanner(challenges) {
         if (nextBtn) nextBtn.style.display = "none";
         return;
     }
-    
+
     // 화살표 버튼 표시 (챌린지가 1개 이상일 때만)
     const prevBtn = document.querySelector('[data-role="challenge-prev"]');
     const nextBtn = document.querySelector('[data-role="challenge-next"]');
@@ -430,14 +425,14 @@ function startChallengeSlide(totalSlides) {
 function initChallengeNavigation() {
     const prevBtn = document.querySelector('[data-role="challenge-prev"]');
     const nextBtn = document.querySelector('[data-role="challenge-next"]');
-    
+
     if (prevBtn) {
         prevBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             navigateChallenge(-1);
         });
     }
-    
+
     if (nextBtn) {
         nextBtn.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -451,29 +446,29 @@ function initChallengeNavigation() {
  */
 function navigateChallenge(direction) {
     if (allChallenges.length === 0) return;
-    
+
     // 자동 슬라이드 중지
     if (challengeSlideInterval) {
         clearInterval(challengeSlideInterval);
         challengeSlideInterval = null;
     }
-    
+
     // 인덱스 업데이트
     currentSlideIndex += direction;
-    
+
     // 순환 처리
     if (currentSlideIndex < 0) {
         currentSlideIndex = allChallenges.length - 1;
     } else if (currentSlideIndex >= allChallenges.length) {
         currentSlideIndex = 0;
     }
-    
+
     // 슬라이더 이동
     const slider = document.querySelector('[data-role="challenge-banner-slider"]');
     if (slider) {
         slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
     }
-    
+
     // 5초 후 자동 슬라이드 재개
     setTimeout(() => {
         if (allChallenges.length > 1) {
