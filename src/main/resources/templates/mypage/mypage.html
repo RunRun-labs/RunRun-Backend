@@ -102,42 +102,56 @@
         </div>
     </section>
 
-    <section class="weekly-section">
-        <div class="weekly-chips">
-            <button class="chip chip-filled" type="button">
-                <span class="chip-icon">🏃‍♂️</span>
-                <span th:text="${weekDistance}">21.4km</span>
+    <section class="my-content-section">
+        <div class="my-content-buttons">
+            <button class="my-content-button" type="button" data-role="my-courses">
+                <span class="button-icon">📍</span>
+                <span class="button-text">내 코스</span>
             </button>
-            <button class="chip chip-outline" type="button">
-                <span th:text="${weekLabel}">12월 둘째 주</span>
+            <button class="my-content-button" type="button" data-role="my-posts" disabled>
+                <span class="button-icon">📝</span>
+                <span class="button-text">내 게시글</span>
             </button>
-            <button class="chip chip-filled" type="button">
-                <span class="chip-icon">⏱</span>
-                <span th:text="${weekTime}">3h 14m</span>
-            </button>
-        </div>
-
-        <div class="weekly-chart">
-            <div class="chart-bars">
-                <div class="bar" style="--h: 0.35"></div>
-                <div class="bar" style="--h: 0.9"></div>
-                <div class="bar" style="--h: 0.5"></div>
-                <div class="bar" style="--h: 0.4"></div>
-                <div class="bar" style="--h: 0.75"></div>
-                <div class="bar" style="--h: 0.6"></div>
-                <div class="bar" style="--h: 0.8"></div>
-            </div>
-            <div class="chart-days">
-                <span>Mo</span>
-                <span>Tu</span>
-                <span>We</span>
-                <span>Th</span>
-                <span>Fr</span>
-                <span>Sa</span>
-                <span>Su</span>
-            </div>
         </div>
     </section>
+
+    <!-- 내 코스 모달 -->
+    <div class="course-modal" id="courseModal" data-role="course-modal">
+        <div class="course-modal-overlay" data-role="course-modal-overlay"></div>
+        <div class="course-modal-content">
+            <div class="course-modal-header">
+                <h2 class="course-modal-title">내 코스</h2>
+                <button class="course-modal-close" type="button" data-role="course-modal-close" aria-label="닫기">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="course-modal-options">
+                <button class="course-modal-option" type="button" data-role="course-option" data-type="liked">
+                    <span class="option-icon">❤️</span>
+                    <span class="option-text">좋아요 한 코스</span>
+                    <svg class="option-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="course-modal-option" type="button" data-role="course-option" data-type="favorited">
+                    <span class="option-icon">⭐</span>
+                    <span class="option-text">즐겨찾기 한 코스</span>
+                    <svg class="option-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="course-modal-option" type="button" data-role="course-option" data-type="my">
+                    <span class="option-icon">📌</span>
+                    <span class="option-text">내가 등록한 코스</span>
+                    <svg class="option-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <section class="run-list">
         <article class="run-card">

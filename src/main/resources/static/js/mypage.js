@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
     attachChallengeHandler();
     attachFriendHandler();
     attachSettingsHandler();
+    attachMyCoursesHandler();
+    attachMyPostsHandler();
     loadMyBodyInfo();
 });
 
@@ -152,4 +154,74 @@ function renderProfileImage(user) {
             initialEl.hidden = true;
         }
     }, {once: true});
+}
+
+function attachMyCoursesHandler() {
+    const myCoursesBtn = document.querySelector('[data-role="my-courses"]');
+    const modal = document.querySelector('[data-role="course-modal"]');
+    const modalOverlay = document.querySelector('[data-role="course-modal-overlay"]');
+    const modalClose = document.querySelector('[data-role="course-modal-close"]');
+    const courseOptions = document.querySelectorAll('[data-role="course-option"]');
+
+    if (!myCoursesBtn || !modal) return;
+
+    // 모달 열기
+    myCoursesBtn.addEventListener("click", () => {
+        modal.classList.add("active");
+        document.body.style.overflow = "hidden";
+    });
+
+    // 모달 닫기
+    const closeModal = () => {
+        modal.classList.remove("active");
+        document.body.style.overflow = "";
+    };
+
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", closeModal);
+    }
+
+    if (modalClose) {
+        modalClose.addEventListener("click", closeModal);
+    }
+
+    // ESC 키로 모달 닫기
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("active")) {
+            closeModal();
+        }
+    });
+
+    // 코스 옵션 클릭 처리
+    courseOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+            const type = option.getAttribute("data-type");
+            let url = "/course";
+
+            // 타입에 따라 쿼리 파라미터 추가 (나중에 필터 기능 구현 시 사용)
+            switch (type) {
+                case "liked":
+                    url = "/course?filter=liked";
+                    break;
+                case "favorited":
+                    url = "/course?filter=favorited";
+                    break;
+                case "my":
+                    url = "/course?filter=my";
+                    break;
+            }
+
+            window.location.href = url;
+        });
+    });
+}
+
+function attachMyPostsHandler() {
+    const myPostsBtn = document.querySelector('[data-role="my-posts"]');
+    if (!myPostsBtn) return;
+
+    myPostsBtn.addEventListener("click", () => {
+        // 피드 기능 구현 후 연동 예정
+        alert("피드 기능 구현 후 연동 예정입니다.");
+    });
 }
