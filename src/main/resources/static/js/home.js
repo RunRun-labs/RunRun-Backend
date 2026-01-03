@@ -3,8 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const bottomNavMount = document.getElementById("bottomNavMount");
     const bottomNavTemplate = document.getElementById("bottomNavTemplate");
     const notificationButton = document.querySelector('[data-role="notification-button"]');
-    const runningStatsButton = document.querySelector('[data-role="running-stats-button"]');
-    const courseFindButton = document.querySelector('[data-role="course-find-button"]');
 
     if (
         bottomNavMount &&
@@ -21,20 +19,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    if (runningStatsButton) {
-        runningStatsButton.addEventListener("click", () => {
-            console.log("러닝 통계 페이지로 이동 (추후 구현)");
-        });
-    }
-
-    if (courseFindButton) {
-        courseFindButton.addEventListener("click", () => {
-            window.location.href = "/course";
-        });
-    }
-
     loadNotificationCount();
     loadTodayStats();
+    initWeekSelector();
     loadWeeklyStats();
     loadLatestChallengeForBanner();
 });
@@ -121,19 +108,135 @@ function formatDuration(seconds) {
     return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 }
 
+// 주 선택 관련 전역 변수
+let currentWeekOffset = 0; // 0 = 이번 주, -1 = 지난 주, 1 = 다음 주 등
+
+/**
+ * 주 선택 기능 초기화
+ */
+function initWeekSelector() {
+    const prevBtn = document.querySelector('[data-role="week-prev"]');
+    const nextBtn = document.querySelector('[data-role="week-next"]');
+
+    if (prevBtn) {
+        prevBtn.addEventListener("click", () => {
+            if (currentWeekOffset > -3) { // 최대 한달 전까지 (4주)
+                currentWeekOffset--;
+                updateWeekLabel();
+                loadWeeklyStats();
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener("click", () => {
+            if (currentWeekOffset < 0) { // 현재 주까지만 (미래 주는 불가)
+                currentWeekOffset++;
+                updateWeekLabel();
+                loadWeeklyStats();
+            }
+        });
+    }
+
+    updateWeekLabel();
+}
+
+/**
+ * 주 레이블 업데이트
+ */
+function updateWeekLabel() {
+    const weekLabel = document.querySelector('[data-role="week-label"]');
+    if (!weekLabel) return;
+
+    const today = new Date();
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + (currentWeekOffset * 7));
+
+    const weekStart = getStartOfWeek(targetDate);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+
+    const month = weekStart.getMonth() + 1;
+    const weekNumber = getWeekNumber(weekStart);
+
+    let label = `${month}월 ${getWeekLabel(weekNumber)}째 주`;
+    
+    if (currentWeekOffset === 0) {
+        label = `이번 주`;
+    } else if (currentWeekOffset === -1) {
+        label = `지난 주`;
+    } else {
+        label = `${month}월 ${getWeekLabel(weekNumber)}째 주`;
+    }
+
+    weekLabel.textContent = label;
+}
+
+/**
+ * 주의 몇째 주인지 계산
+ */
+function getWeekNumber(date) {
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+    const firstDayOfWeek = firstDay.getDay() === 0 ? 7 : firstDay.getDay();
+    const dayOfMonth = date.getDate();
+    const weekNumber = Math.ceil((dayOfMonth + firstDayOfWeek - 1) / 7);
+    return weekNumber;
+}
+
+/**
+ * 주 레이블 한글 변환
+ */
+function getWeekLabel(weekNumber) {
+    const labels = ["첫", "둘", "셋", "넷", "다섯"];
+    return labels[weekNumber - 1] || weekNumber.toString();
+}
+
 async function loadWeeklyStats() {
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
         renderWeeklyChart([]);
+        updateWeeklyTotals(0, 0);
         return;
     }
 
     try {
+        // TODO: 실제 API 연동 시 주별 데이터 조회
         const weeklyData = [0, 0, 0, 0, 0, 0, 0];
         renderWeeklyChart(weeklyData);
+        
+        // 주별 총 거리와 시간 계산
+        const totalDistance = weeklyData.reduce((sum, dist) => sum + dist, 0);
+        const totalDuration = 0; // TODO: 실제 API에서 시간 데이터 가져오기
+        
+        updateWeeklyTotals(totalDistance, totalDuration);
     } catch (error) {
         console.error("주간 통계 로드 실패:", error);
         renderWeeklyChart([]);
+        updateWeeklyTotals(0, 0);
+    }
+}
+
+/**
+ * 주별 총 거리와 시간 업데이트
+ */
+function updateWeeklyTotals(distance, durationSeconds) {
+    const distanceEl = document.querySelector('[data-role="weekly-total-distance"]');
+    const durationEl = document.querySelector('[data-role="weekly-total-duration"]');
+
+    if (distanceEl) {
+        distanceEl.textContent = `${distance.toFixed(1)}km`;
+    }
+
+    if (durationEl) {
+        // durationSeconds를 시간:분 형식으로 변환
+        const hours = Math.floor(durationSeconds / 3600);
+        const minutes = Math.floor((durationSeconds % 3600) / 60);
+        
+        if (hours > 0) {
+            durationEl.textContent = `${hours}h ${minutes}m`;
+        } else {
+            durationEl.textContent = `${minutes}m`;
+        }
     }
 }
 
@@ -152,7 +255,7 @@ function renderWeeklyChart(distances) {
         for (let i = 0; i < 7; i++) {
             const bar = document.createElement("div");
             bar.className = "chart-bar";
-            bar.style.height = "13px";
+            bar.style.height = "24.631px"; // 최소 높이
             chartBars.appendChild(bar);
         }
         return;
@@ -163,7 +266,10 @@ function renderWeeklyChart(distances) {
         const bar = document.createElement("div");
         bar.className = "chart-bar";
         const heightRatio = distance / maxDistance;
-        const height = Math.max(13, 20 + 60 * heightRatio);
+        // 최소 높이: 약 24.631px, 최대 높이: 약 98.539px (Figma 디자인 기준)
+        const minHeight = 24.631;
+        const maxHeight = 98.539;
+        const height = Math.max(minHeight, minHeight + (maxHeight - minHeight) * heightRatio);
         bar.style.height = `${height}px`;
         chartBars.appendChild(bar);
     });
@@ -171,6 +277,7 @@ function renderWeeklyChart(distances) {
 
 let challengeSlideInterval = null;
 let currentSlideIndex = 0;
+let allChallenges = []; // 모든 챌린지 목록 저장
 
 /**
  * 챌린지 배너 로드 (수정됨)
@@ -213,9 +320,15 @@ async function loadLatestChallengeForBanner() {
             return (b.id || 0) - (a.id || 0);
         });
 
-        // 가장 최신 챌린지 1개 선택
-        const newest = sortedChallenges[0];
-        renderChallengeBanner([newest]);
+        // 모든 챌린지 저장 (네비게이션용)
+        allChallenges = sortedChallenges;
+        currentSlideIndex = 0;
+        
+        // 모든 챌린지 렌더링
+        renderChallengeBanner(sortedChallenges);
+        
+        // 네비게이션 버튼 이벤트 리스너 추가
+        initChallengeNavigation();
 
     } catch (error) {
         console.error("챌린지 로드 실패:", error);
@@ -225,6 +338,7 @@ async function loadLatestChallengeForBanner() {
 
 function renderChallengeBanner(challenges) {
     const slider = document.querySelector('[data-role="challenge-banner-slider"]');
+    const container = document.querySelector('[data-role="challenge-banner-container"]');
     if (!slider) return;
 
     slider.innerHTML = "";
@@ -238,7 +352,24 @@ function renderChallengeBanner(challenges) {
             </div>
         `;
         slider.appendChild(emptySlide);
+        
+        // 화살표 버튼 숨기기
+        const prevBtn = document.querySelector('[data-role="challenge-prev"]');
+        const nextBtn = document.querySelector('[data-role="challenge-next"]');
+        if (prevBtn) prevBtn.style.display = "none";
+        if (nextBtn) nextBtn.style.display = "none";
         return;
+    }
+    
+    // 화살표 버튼 표시 (챌린지가 1개 이상일 때만)
+    const prevBtn = document.querySelector('[data-role="challenge-prev"]');
+    const nextBtn = document.querySelector('[data-role="challenge-next"]');
+    if (challenges.length > 1) {
+        if (prevBtn) prevBtn.style.display = "flex";
+        if (nextBtn) nextBtn.style.display = "flex";
+    } else {
+        if (prevBtn) prevBtn.style.display = "none";
+        if (nextBtn) nextBtn.style.display = "none";
     }
 
     challenges.forEach((challenge) => {
@@ -254,8 +385,7 @@ function renderChallengeBanner(challenges) {
             />
             <div class="challenge-banner-overlay">
                 <h3 class="challenge-banner-title">${escapeHtml(challenge.title || "챌린지 제목")}</h3>
-                <p class="challenge-banner-desc">${escapeHtml(challenge.description || "")}</p>
-                <button class="challenge-banner-button" type="button">참여하기</button>
+                <button class="challenge-banner-button" type="button">상세보기</button>
             </div>
         `;
 
@@ -292,6 +422,64 @@ function startChallengeSlide(totalSlides) {
         currentSlideIndex = (currentSlideIndex + 1) % totalSlides;
         slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
     }, 3000);
+}
+
+/**
+ * 챌린지 네비게이션 초기화
+ */
+function initChallengeNavigation() {
+    const prevBtn = document.querySelector('[data-role="challenge-prev"]');
+    const nextBtn = document.querySelector('[data-role="challenge-next"]');
+    
+    if (prevBtn) {
+        prevBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            navigateChallenge(-1);
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            navigateChallenge(1);
+        });
+    }
+}
+
+/**
+ * 챌린지 네비게이션 (이전/다음)
+ */
+function navigateChallenge(direction) {
+    if (allChallenges.length === 0) return;
+    
+    // 자동 슬라이드 중지
+    if (challengeSlideInterval) {
+        clearInterval(challengeSlideInterval);
+        challengeSlideInterval = null;
+    }
+    
+    // 인덱스 업데이트
+    currentSlideIndex += direction;
+    
+    // 순환 처리
+    if (currentSlideIndex < 0) {
+        currentSlideIndex = allChallenges.length - 1;
+    } else if (currentSlideIndex >= allChallenges.length) {
+        currentSlideIndex = 0;
+    }
+    
+    // 슬라이더 이동
+    const slider = document.querySelector('[data-role="challenge-banner-slider"]');
+    if (slider) {
+        slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+    }
+    
+    // 5초 후 자동 슬라이드 재개
+    setTimeout(() => {
+        if (allChallenges.length > 1) {
+            startChallengeSlide(allChallenges.length);
+        }
+    }, 5000);
 }
 
 function escapeHtml(text) {

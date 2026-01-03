@@ -48,8 +48,9 @@ body {
 
 /* 헤더: RUNRUN 타이틀 + 알림 */
 .home-header {
+    margin-top: 40px;
     position: relative;
-    padding: 18px 0 20px;
+    padding: 60px 0 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -111,7 +112,8 @@ body {
 
 /* 오늘의 러닝 통계 배너 */
 .today-stats-section {
-    margin-bottom: 20px;
+    margin-top: 60px;
+    margin-bottom: 24px;
     padding: 16px;
     border-radius: 12px;
     border: 1px solid var(--stroke);
@@ -204,24 +206,104 @@ body {
     line-height: 1.2;
 }
 
-/* 요일별 러닝 통계 + 내 주변 코스 찾기 컨테이너 */
-.stats-course-container {
-    display: flex;
-    flex-direction: row !important;
-    gap: 12px;
+/* 요일별 러닝 통계 */
+.weekly-stats-section {
+    width: 100%;
     margin-bottom: 20px;
-    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 주별 통계 헤더 */
+.weekly-stats-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     width: 100%;
 }
 
-/* 요일별 러닝 통계 */
-.weekly-stats-section {
-    flex: 0 0 auto;
-    width: 146px;
-    min-width: 146px;
+/* 주별 통계 칩 (거리, 시간) */
+.weekly-stat-chip {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 8px;
+    padding: 4px 12px;
+    background: #ecfccb;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.weekly-distance-chip {
+    flex: 0 0 auto;
+}
+
+.weekly-duration-chip {
+    flex: 0 0 auto;
+}
+
+.weekly-stat-icon {
+    width: 18px;
+    height: 18px;
+    color: #1f2937;
+    flex-shrink: 0;
+}
+
+.weekly-duration-chip .weekly-stat-icon {
+    width: 13px;
+    height: 13px;
+}
+
+.weekly-stat-value {
+    font-family: "Roboto", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    line-height: 20px;
+}
+
+/* 주 선택 영역 */
+.weekly-week-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.week-nav-button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1f2937;
+    transition: opacity 0.2s;
+}
+
+.week-nav-button:hover {
+    opacity: 0.7;
+}
+
+.week-nav-button:active {
+    opacity: 0.5;
+}
+
+.week-nav-button svg {
+    width: 9px;
+    height: 14px;
+}
+
+.week-label {
+    font-family: "Roboto", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    white-space: nowrap;
 }
 
 .running-stats-button {
@@ -254,6 +336,7 @@ body {
 }
 
 .weekly-chart-container {
+    width: 100%;
     padding: 12px;
     border-radius: 12px;
     border: 1px solid var(--stroke);
@@ -262,37 +345,47 @@ body {
 }
 
 .chart-bars {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
     align-items: flex-end;
-    height: 80px;
-    gap: 4px;
-    padding: 0 8px;
+    height: 98.539px;
+    gap: 4.49px;
+    padding: 0 46px;
 }
 
 .chart-bar {
-    flex: 1;
-    min-width: 5.5px;
-    border-radius: 100px 100px 0 0;
-    background: var(--primary);
+    width: 12.73px;
+    max-width: 12.73px;
+    min-width: 12.73px;
+    border-radius: 5228.361px;
+    border: 0 solid #E5E7EB;
+    background: #BAFF29;
     transition: height 0.3s ease;
     position: relative;
+    margin: 0 auto;
+    justify-self: center;
 }
 
 .chart-days {
     margin-top: 8px;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 8px;
-    font-size: 8px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    align-items: center;
+    padding: 0 46px;
+    gap: 4.49px;
+    font-size: 9.654px;
     font-weight: 400;
-    color: var(--text-muted);
+    color: #6b7280;
     position: relative;
+    font-family: "Roboto", sans-serif;
+    line-height: 12.872px;
+    height: 18.213px;
 }
 
 .chart-days span {
-    flex: 1;
     text-align: center;
+    position: relative;
+    justify-self: center;
 }
 
 /* 내 주변 코스 찾기 */
@@ -370,33 +463,42 @@ body {
 .challenge-banner-container {
     position: relative;
     width: 100%;
-    height: 273px;
+    min-height: 180px;
+    height: auto;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
 }
 
+.challenge-banner-container:hover .challenge-nav-button {
+    opacity: 1;
+}
+
 .challenge-banner-slider {
     display: flex;
     width: 100%;
-    height: 100%;
+    min-height: 180px;
+    height: auto;
     transition: transform 0.5s ease;
 }
 
 .challenge-banner-slide {
     flex: 0 0 100%;
     width: 100%;
-    height: 100%;
+    min-height: 180px;
+    height: auto;
     position: relative;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 .challenge-banner-image {
     width: 100%;
-    height: 56.67%; /* 약 155px / 273px */
+    height: 120px;
     object-fit: cover;
     flex-shrink: 0;
 }
@@ -404,25 +506,22 @@ body {
 .challenge-banner-overlay {
     flex: 1;
     background: #fff;
-    padding: 20px 16px 16px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    min-height: 60px;
 }
 
 .challenge-banner-title {
-    margin: 0 0 8px;
+    margin: 0 0 12px;
     font-size: 20px;
     font-weight: 700;
     color: #111;
 }
 
 .challenge-banner-desc {
-    margin: 0 0 12px;
-    font-size: 13px;
-    font-weight: 400;
-    color: #444;
-    line-height: 1.4;
+    display: none; /* DESCRIPTION 숨기기 */
 }
 
 .challenge-banner-button {
@@ -436,6 +535,7 @@ body {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.15s ease;
+    white-space: nowrap;
 }
 
 .challenge-banner-button:hover {
@@ -445,6 +545,49 @@ body {
 
 .challenge-banner-button:active {
     transform: translateY(0);
+}
+
+/* 챌린지 네비게이션 화살표 */
+.challenge-nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    opacity: 0;
+    transition: opacity 0.3s ease, background-color 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.challenge-nav-button:hover {
+    background: rgba(255, 255, 255, 1);
+    color: #333;
+}
+
+.challenge-nav-button:active {
+    background: rgba(240, 240, 240, 1);
+}
+
+.challenge-nav-prev {
+    left: 12px;
+}
+
+.challenge-nav-next {
+    right: 12px;
+}
+
+.challenge-nav-button svg {
+    width: 24px;
+    height: 24px;
 }
 
 /* 하단 네비게이션 */
@@ -521,27 +664,13 @@ body {
         font-size: 13px;
     }
 
-    .stats-course-container {
-        flex-direction: row !important;
-        gap: 10px;
-    }
-
-    .weekly-stats-section {
-        width: auto;
-        min-width: 0;
-        flex: 1;
-    }
-
-    .course-find-button {
-        min-height: 120px;
-    }
 
     .chart-bars {
         height: 70px;
     }
 
     .challenge-banner-container {
-        height: 240px;
+        min-height: 160px;
     }
 }
 
@@ -564,27 +693,13 @@ body {
         padding: 12px;
     }
 
-    .stats-course-container {
-        flex-direction: row !important;
-        gap: 8px;
-    }
-
-    .weekly-stats-section {
-        width: auto;
-        min-width: 0;
-        flex: 1;
-    }
-
-    .course-find-button {
-        min-height: 100px;
-    }
 
     .chart-bars {
         height: 60px;
     }
 
     .challenge-banner-container {
-        height: 220px;
+        min-height: 150px;
     }
 
     .bottom-nav {
@@ -635,7 +750,7 @@ body {
     }
 
     .challenge-banner-container {
-        height: 300px;
+        min-height: 200px;
     }
 
     .bottom-nav {
