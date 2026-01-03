@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadingSpinner = document.getElementById("loadingSpinner");
   const emptyState = document.getElementById("emptyState");
   const sentinel = document.getElementById("sentinel");
+  const container = document.querySelector(".container");
 
   let currentDistance = "KM_3";
   let currentPage = 0;
@@ -42,10 +43,13 @@ document.addEventListener("DOMContentLoaded", () => {
         // 옵저버 해제
         if (observer) {
           observer.disconnect();
+          observer = null;
         }
 
-        // 스크롤 위치 초기화
-        window.scrollTo({top: 0, behavior: 'smooth'});
+        // 스크롤 위치 초기화 (.container 기준)
+        if (container) {
+          container.scrollTo({top: 0, behavior: 'smooth'});
+        }
 
         updateFilterTabs();
         loadBattleResults(true);
@@ -214,11 +218,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (result.success && result.data) {
         const data = result.data;
         
-        // Slice 구조: { content: [...], hasNext: boolean, number: number, size: number, ... }
+        // Slice 구조: { content: [...], hasNext: boolean, last: boolean, number: number, size: number, ... }
         const records = data.content || [];
         
-        // Slice의 hasNext 확인 (Spring Data Slice는 항상 hasNext 속성을 가짐)
-        hasNext = data.hasNext === true;
+        // Slice의 hasNext 확인 (고스트런과 동일한 로직)
+        // hasNext 필드가 없을 경우 !data.last를 확인
+        hasNext = data.hasNext !== undefined ? data.hasNext : !data.last;
 
         if (records.length === 0 && reset) {
           emptyState.style.display = "flex";
@@ -401,22 +406,21 @@ document.addEventListener("DOMContentLoaded", () => {
       observer = null;
     }
 
-    if (!sentinel || !hasNext) {
+    if (!sentinel || !hasNext || !container) {
       return;
     }
 
-    // 스크롤 컨테이너 찾기 (.container)
-    const scrollContainer = document.querySelector(".container");
-
     observer = new IntersectionObserver(
         (entries) => {
-          if (entries[0].isIntersecting && hasNext && !isLoading) {
-            loadBattleResults(false);
-          }
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && hasNext && !isLoading) {
+              loadBattleResults(false);
+            }
+          });
         },
         {
-          root: scrollContainer,
-          rootMargin: "100px",
+          root: container,
+          rootMargin: "200px",
           threshold: 0.1
         }
     );
