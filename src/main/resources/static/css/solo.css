@@ -244,6 +244,134 @@ body {
   transform: translateY(0);
 }
 
+/* 직접 입력 섹션 */
+.manual-input-section {
+  width: 100%;
+  margin-top: 32px;
+}
+
+.manual-input-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.manual-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.manual-distance-input {
+  width: 100%;
+  padding: 24px;
+  padding-right: 50px;
+  border: 2px solid var(--stroke);
+  border-radius: 16px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  transition: all 0.3s ease;
+  outline: none;
+  -moz-appearance: textfield;
+  text-align: center;
+  padding-left: 50px;
+  box-sizing: border-box;
+  line-height: 1.5;
+  height: auto;
+  text-indent: -8px;
+}
+
+.manual-distance-input::-webkit-outer-spin-button,
+.manual-distance-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.manual-distance-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.manual-distance-input:focus {
+  border-color: var(--neon-accent);
+  background: rgba(186, 255, 41, 0.05);
+  box-shadow: 0 0 0 4px rgba(186, 255, 41, 0.15),
+              0 0 12px rgba(186, 255, 41, 0.3);
+}
+
+.manual-distance-input:focus-visible {
+  outline: none;
+}
+
+.manual-input-unit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% + 16px), -50%);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.manual-distance-input:read-only {
+  background: rgba(186, 255, 41, 0.1);
+  border-color: var(--neon-accent);
+  color: var(--text-primary);
+  cursor: not-allowed;
+}
+
+.course-mode-notice {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.course-title-highlight {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* 코스 모드 안내 박스 스타일 */
+.info-box.course-mode {
+  background: rgba(186, 255, 41, 0.1);
+  border: 2px solid var(--neon-accent);
+}
+
+.info-box.course-mode .info-box-icon {
+  color: var(--neon-accent);
+}
+
+.info-box.course-mode .info-box-title {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.distance-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.distance-chip:disabled:hover {
+  border-color: var(--stroke);
+  background: var(--bg-card);
+  transform: none;
+}
+
 /* 하단 고정 버튼 */
 .start-button {
   position: fixed;

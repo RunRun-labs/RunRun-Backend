@@ -34,15 +34,15 @@
     </div>
 
     <!-- 안내 박스 -->
-    <div class="info-box">
+    <div class="info-box" id="infoBox">
       <div class="info-box-icon">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M10 2C5.58 2 2 5.58 2 10C2 14.42 5.58 18 10 18C14.42 18 18 14.42 18 10C18 5.58 14.42 2 10 2ZM10 15C9.45 15 9 14.55 9 14C9 13.45 9.45 13 10 13C10.55 13 11 13.45 11 14C11 14.55 10.55 15 10 15ZM11 11H9V6H11V11Z" fill="currentColor"/>
         </svg>
       </div>
       <div class="info-box-content">
-        <h3 class="info-box-title">목표 거리를 선택하세요</h3>
-        <p class="info-box-text">원하는 거리를 선택하고 솔로런을 시작하세요</p>
+        <h3 class="info-box-title" id="infoBoxTitle">목표 거리를 선택하세요</h3>
+        <p class="info-box-text" id="infoBoxText">원하는 거리를 선택하고 솔로런을 시작하세요</p>
       </div>
     </div>
 
@@ -50,6 +50,25 @@
     <section class="distance-section">
       <div class="distance-chips" id="distanceChips">
         <!-- JavaScript로 동적 생성 -->
+      </div>
+      
+      <!-- 직접 입력 섹션 -->
+      <div class="manual-input-section">
+        <label for="manualDistanceInput" class="manual-input-label" id="manualInputLabel">직접 입력</label>
+        <div class="manual-input-wrapper">
+          <input
+            type="number"
+            id="manualDistanceInput"
+            class="manual-distance-input"
+            min="0"
+            step="0.1"
+            inputmode="decimal"
+          />
+          <span class="manual-input-unit">km</span>
+        </div>
+        <p class="course-mode-notice" id="courseModeNotice" style="display: none;">
+          코스 지정 거리입니다
+        </p>
       </div>
     </section>
   </main>
