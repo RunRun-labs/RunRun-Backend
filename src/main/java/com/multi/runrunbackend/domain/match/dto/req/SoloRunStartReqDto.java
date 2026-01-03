@@ -16,6 +16,8 @@ public class SoloRunStartReqDto {
 
   private DistanceType distance;
 
+  private Double manualDistance;
+
   private Long courseId;
 
 
