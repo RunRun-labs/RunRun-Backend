@@ -49,6 +49,17 @@ public class PathController {
     return "match/ghost";
   }
 
+  @GetMapping("/match/battleList")
+  public String battleListView() {
+    return "match/battle-list";
+  }
+
+  @GetMapping("/match/battleDetail/{sessionId}")
+  public String battleDetailView(@PathVariable Long sessionId, Model model) {
+    model.addAttribute("sessionId", sessionId);
+    return "match/battle-detail";
+  }
+
   @GetMapping("/recruit")
   public String recruitListView() {
     return "recruit/recruit-list";
@@ -86,11 +97,11 @@ public class PathController {
     return "crew/crewDetailList";
   }
 
-    @GetMapping("/crews/{crewId}/edit")
-    public String crewEditPage(@PathVariable Long crewId, Model model) {
-        model.addAttribute("crewId", crewId);
-        return "crew/updateCrew";
-    }
+  @GetMapping("/crews/{crewId}/edit")
+  public String crewEditPage(@PathVariable Long crewId, Model model) {
+    model.addAttribute("crewId", crewId);
+    return "crew/updateCrew";
+  }
 
   @GetMapping("/crews/{crewId}/join")
   public String crewJoinPage(@PathVariable Long crewId, Model model) {
@@ -115,15 +126,15 @@ public class PathController {
     return "crew/crewMain";
   }
 
-    @GetMapping("/membership")
-    public String membership() {
-        return "membership/membership";
-    }
+  @GetMapping("/membership")
+  public String membership() {
+    return "membership/membership";
+  }
 
-    @GetMapping("/chat")
-    public String chatList() {
-        return "chat/chat-list";
-    }
+  @GetMapping("/chat")
+  public String chatList() {
+    return "chat/chat-list";
+  }
 
   @GetMapping("/chat/chat1")
   public String chat1() {
@@ -207,40 +218,40 @@ public class PathController {
     return "course/courseUpdate";
   }
 
-    @GetMapping("/test/gps")
-    public String gpsTestView() {
-        return "test/gps-test";
-    }
+  @GetMapping("/test/gps")
+  public String gpsTestView() {
+    return "test/gps-test";
+  }
 
   @GetMapping("/tts-test")
   public String ttsTestView() {
     return "tts-test";
   }
 
-    @GetMapping("/setting")
-    public String settingView() {
-        return "setting/setting";
-    }
+  @GetMapping("/setting")
+  public String settingView() {
+    return "setting/setting";
+  }
 
-    @GetMapping("/setting/blocked-users")
-    public String blockedUsersView() {
-        return "setting/blocked-users";
-    }
+  @GetMapping("/setting/blocked-users")
+  public String blockedUsersView() {
+    return "setting/blocked-users";
+  }
 
-    @GetMapping("/terms/view")
-    public String termsView() {
-        return "terms/terms-detail";
-    }
+  @GetMapping("/terms/view")
+  public String termsView() {
+    return "terms/terms-detail";
+  }
 
-    @GetMapping("/profile/{userId}")
-    public String userProfileView(@PathVariable Long userId, Model model) {
-        model.addAttribute("userId", userId);
-        return "user/user-profile";
-    }
+  @GetMapping("/profile/{userId}")
+  public String userProfileView(@PathVariable Long userId, Model model) {
+    model.addAttribute("userId", userId);
+    return "user/user-profile";
+  }
 
-    @GetMapping("/friends/list")
-    public String friendListView() {
-        return "friend/friend-list";
-    }
+  @GetMapping("/friends/list")
+  public String friendListView() {
+    return "friend/friend-list";
+  }
 
 }
