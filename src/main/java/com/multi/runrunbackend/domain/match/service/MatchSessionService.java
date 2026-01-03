@@ -356,8 +356,12 @@ public class MatchSessionService {
       course = courseRepository.findById(courseId)
           .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
       distance = course.getDistanceM() / 1000.0;
-    } else {
+    } else if (reqDto.getManualDistance() != null) {
+      distance = reqDto.getManualDistance();
+    } else if (reqDto.getDistance() != null) {
       distance = convertToKilometer(reqDto.getDistance());
+    } else {
+      throw new BadRequestException(ErrorCode.DISTANCE_REQUIRED);
     }
 
     MatchSession session = MatchSession.builder()
