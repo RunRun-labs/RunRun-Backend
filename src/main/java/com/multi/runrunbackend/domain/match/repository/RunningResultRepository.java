@@ -36,14 +36,14 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
 
   @Query("SELECT r FROM RunningResult r " +
       "WHERE r.user.id = :userId " +
-      "AND r.runStatus = :runStatus " +
+      "AND r.runStatus IN :runStatuses " +
       "AND r.isDeleted = false " +
       "AND (:minDistance IS NULL OR r.totalDistance > :minDistance) " +
-      "AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance) " +
-      "ORDER BY r.createdAt DESC")
-  Slice<RunningResult> findMySoloRecordsByDistance(
+      "AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance) "
+  )
+  Slice<RunningResult> findMyRecordsByStatuses(
       @Param("userId") Long userId,
-      @Param("runStatus") RunStatus runStatus,
+      @Param("runStatuses") List<RunStatus> runStatuses, // List로 변경
       @Param("minDistance") BigDecimal minDistance,
       @Param("maxDistance") BigDecimal maxDistance,
       Pageable pageable
