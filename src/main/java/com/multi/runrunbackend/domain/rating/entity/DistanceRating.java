@@ -1,4 +1,4 @@
-package com.multi.runrunbackend.domain.rating;
+package com.multi.runrunbackend.domain.rating.entity;
 
 import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
@@ -56,12 +56,43 @@ public class DistanceRating extends BaseEntity {
   @Builder.Default
   private Integer currentRating = 1000;
 
+  @Builder.Default
   @Enumerated(EnumType.STRING)
   @Column(name = "current_tier", length = 20, nullable = false)
-  private Tier currentTier;
+  private Tier currentTier = Tier.거북이;
+
 
   @Column(name = "win_count", nullable = false)
   @Builder.Default
   private Integer winCount = 0;
 
+  public void updateRating(int changePoint, int rank) {
+    this.currentRating += changePoint;
+    if (this.currentRating < 0) {
+      this.currentRating = 0;
+    }
+
+    if (rank == 1) {
+      this.winCount++;
+    }
+
+    updateTier();
+
+  }
+
+  private void updateTier() {
+    if (this.currentRating >= 2000) {
+      this.currentTier = Tier.장산범;
+    } else if (this.currentRating >= 1800) {
+      this.currentTier = Tier.호랑이;
+    } else if (this.currentRating >= 1600) {
+      this.currentTier = Tier.표범;
+    } else if (this.currentRating >= 1400) {
+      this.currentTier = Tier.사슴;
+    } else if (this.currentRating >= 1200) {
+      this.currentTier = Tier.토끼;
+    } else {
+      this.currentTier = Tier.거북이;
+    }
+  }
 }

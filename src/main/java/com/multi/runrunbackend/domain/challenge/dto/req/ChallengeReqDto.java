@@ -39,7 +39,6 @@ public class ChallengeReqDto {
     ;
 
     @NotNull(message = "시작일은 필수입니다.")
-    @FutureOrPresent(message = "시작일은 오늘 이후여야 합니다.")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
 

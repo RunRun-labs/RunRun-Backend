@@ -1,7 +1,7 @@
 package com.multi.runrunbackend.domain.rating.repository;
 
 import com.multi.runrunbackend.common.constant.DistanceType;
-import com.multi.runrunbackend.domain.rating.DistanceRating;
+import com.multi.runrunbackend.domain.rating.entity.DistanceRating;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

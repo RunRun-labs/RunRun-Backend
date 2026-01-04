@@ -16,6 +16,7 @@ import com.multi.runrunbackend.domain.match.repository.BattleResultRepository;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
+import com.multi.runrunbackend.domain.rating.service.DistanceRatingService;
 import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto.GpsData;
 import com.multi.runrunbackend.domain.running.battle.dto.res.BattleRankingResDto;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -53,6 +54,7 @@ public class BattleService {
   private final SimpMessagingTemplate messagingTemplate;
   private final RedisTemplate<String, Object> redisPubSubTemplate;
   private final ObjectMapper objectMapper;
+  private final DistanceRatingService distanceRatingService;
 
   /**
    * Ready 상태 토글
@@ -63,7 +65,7 @@ public class BattleService {
     if (isReady == null) {
       throw new ValidationException(ErrorCode.INVALID_READY_STATUS);
     }
-    
+
     SessionUser sessionUser = sessionUserRepository
         .findBySessionIdAndUserId(sessionId, userId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
@@ -130,6 +132,7 @@ public class BattleService {
 
   /**
    * 타임아웃 처리
+   *
    * @return Map<String, Object> - sessionId, started, alreadyStarted 포함
    */
   @Transactional
@@ -176,16 +179,16 @@ public class BattleService {
       log.info("🏁 남은 참가자끼리 배틀 시작: sessionId={}", sessionId);
       startBattle(sessionId);
       result.put("started", true);
-      
+
       // WebSocket 메시지 전송
       sendTimeoutStartMessage(sessionId);
       sendBattleStartMessage(sessionId);
-      
+
     } else {
       log.info("❌ 참가자 부족으로 매치 취소: sessionId={}", sessionId);
       cancelMatch(sessionId);
       result.put("started", false);
-      
+
       // WebSocket 메시지 전송
       sendTimeoutCancelMessage(sessionId);
     }
@@ -410,6 +413,8 @@ public class BattleService {
     MatchSession session = matchSessionRepository.findById(sessionId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
+    List<RunningResult> runningResults = new ArrayList<>();
+
     // 2. 각 참가자의 결과 저장
     for (BattleRankingResDto ranking : rankings) {
       User user = userRepository.findById(ranking.getUserId())
@@ -430,22 +435,15 @@ public class BattleService {
 
       runningResultRepository.save(runningResult);
 
-      // BattleResult 생성
-      BattleResult battleResult = BattleResult.builder()
-          .session(session)
-          .user(user)
-          .ranking(ranking.getRank())
-          .distanceType(determineDistanceType(session.getTargetDistance()))
-          .previousRating(1500)  // TODO: User에 rating 필드 추가 후 user.getRating()으로 변경
-          .currentRating(1500)   // TODO: 레이팅 계산 로직 추가
-          .runningResult(runningResult)
-          .build();
+      runningResults.add(runningResult);
 
-      battleResultRepository.save(battleResult);
-
-      log.info("✅ 배틀 결과 저장: sessionId={}, userId={}, rank={}, distance={}km",
-          sessionId, user.getId(), ranking.getRank(), runningResult.getTotalDistance());
     }
+
+    DistanceType distanceType = determineDistanceType(session.getTargetDistance());
+
+    distanceRatingService.processBattleResults(sessionId, runningResults, distanceType);
+
+    log.info("✅ 배틀 결과 저장 및 레이팅 정산 완료: sessionId={}", sessionId);
   }
 
   /**

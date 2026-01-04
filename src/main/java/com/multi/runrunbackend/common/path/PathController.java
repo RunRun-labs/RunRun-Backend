@@ -49,6 +49,22 @@ public class PathController {
     return "match/ghost";
   }
 
+  @GetMapping("/match/solo")
+  public String soloView() {
+    return "match/solo";
+  }
+
+  @GetMapping("/match/battleList")
+  public String battleListView() {
+    return "match/battle-list";
+  }
+
+  @GetMapping("/match/battleDetail/{sessionId}")
+  public String battleDetailView(@PathVariable Long sessionId, Model model) {
+    model.addAttribute("sessionId", sessionId);
+    return "match/battle-detail";
+  }
+
   @GetMapping("/recruit")
   public String recruitListView() {
     return "recruit/recruit-list";

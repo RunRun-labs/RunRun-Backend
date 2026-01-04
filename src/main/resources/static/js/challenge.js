@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (backButton) {
         backButton.addEventListener("click", () => {
-            if (window.history.length > 1) window.history.back();
-            else window.location.href = "/myPage";
+            // 챌린지 목록의 상위는 마이페이지
+            window.location.href = "/myPage";
         });
     }
 
