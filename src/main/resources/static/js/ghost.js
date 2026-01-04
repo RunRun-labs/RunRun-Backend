@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const container = document.querySelector(".container");
   const headerTitle = document.querySelector(".header-title");
   const headerSubtitle = document.querySelector(".header-subtitle");
+  const infoBox = document.querySelector(".info-box");
 
   // URL 파라미터 확인
   const urlParams = new URLSearchParams(window.location.search);
@@ -22,6 +23,13 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       headerTitle.textContent = "내 러닝 기록";
       headerSubtitle.textContent = "지금까지의 러닝 활동을 확인하세요";
+    }
+  }
+
+  // 안내 박스 표시/숨김 처리
+  if (infoBox) {
+    if (!isSelectMode) {
+      infoBox.style.display = "none";
     }
   }
 
