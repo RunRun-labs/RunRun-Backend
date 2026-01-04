@@ -243,8 +243,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
       if (result.success && result.data) {
         const sessionId = result.data;
-        // 세션 ID를 사용하여 러닝 페이지로 이동
-        window.location.href = `/match/session/${sessionId}`;
+        // 실시간 고스트런 페이지로 이동
+        window.location.href = `/match/ghost-run?sessionId=${sessionId}`;
       }
     } catch (error) {
       console.error("고스트런 시작 실패:", error);
