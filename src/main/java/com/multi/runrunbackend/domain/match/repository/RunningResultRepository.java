@@ -48,4 +48,17 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
       @Param("maxDistance") BigDecimal maxDistance,
       Pageable pageable
   );
+
+  /**
+   * 고스트런용: 사용자의 완료된 기록 조회
+   *
+   * @param userId 사용자 ID
+   * @return 완료된 런닝 기록 리스트
+   */
+  @Query("SELECT r FROM RunningResult r " +
+      "WHERE r.user.id = :userId " +
+      "AND r.runStatus = 'COMPLETED' " +
+      "AND r.isDeleted = false " +
+      "ORDER BY r.createdAt DESC")
+  List<RunningResult> findCompletedRecordsByUserId(@Param("userId") Long userId);
 }
