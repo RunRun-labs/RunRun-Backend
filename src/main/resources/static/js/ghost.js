@@ -7,6 +7,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const startButton = document.getElementById("startButton");
   const sentinel = document.getElementById("sentinel");
   const container = document.querySelector(".container");
+  const headerTitle = document.querySelector(".header-title");
+  const headerSubtitle = document.querySelector(".header-subtitle");
+
+  // URL 파라미터 확인
+  const urlParams = new URLSearchParams(window.location.search);
+  const isSelectMode = urlParams.get("mode") === "select";
+
+  // 상단바 타이틀 동적 변경
+  if (headerTitle && headerSubtitle) {
+    if (isSelectMode) {
+      headerTitle.textContent = "고스트런";
+      headerSubtitle.textContent = "과거의 나와 대결하기";
+    } else {
+      headerTitle.textContent = "내 러닝 기록";
+      headerSubtitle.textContent = "지금까지의 러닝 활동을 확인하세요";
+    }
+  }
+
+  // 하단 버튼 표시/숨김 처리
+  if (startButton) {
+    if (!isSelectMode) {
+      startButton.style.display = "none";
+    }
+  }
 
   let currentFilter = "ALL";
   let currentPage = 0;
@@ -190,7 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     try {
-      const response = await fetch(`/api/match/ghost?${params}`, {
+      const response = await fetch(`/api/running-results?${params}`, {
         method: "GET",
         headers: headers
       });
@@ -332,11 +356,70 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
+  // 배지 렌더링 함수
+  function renderRecordBadges(runningType, runStatus) {
+    const badges = [];
+    
+    // runningType 배지
+    if (runningType) {
+      let typeLabel = '';
+      let typeClass = '';
+      
+      switch (runningType) {
+        case 'SOLO':
+          typeLabel = '솔로';
+          typeClass = 'type-solo';
+          break;
+        case 'GHOST':
+          typeLabel = '고스트';
+          typeClass = 'type-ghost';
+          break;
+        case 'ONLINEBATTLE':
+          typeLabel = '온라인';
+          typeClass = 'type-onlinebattle';
+          break;
+        default:
+          typeLabel = runningType;
+          typeClass = `type-${runningType.toLowerCase()}`;
+      }
+      
+      badges.push(`<span class="record-badge ${typeClass}">${typeLabel}</span>`);
+    }
+    
+    // runStatus 배지
+    if (runStatus) {
+      let statusLabel = '';
+      let statusClass = '';
+      
+      switch (runStatus) {
+        case 'COMPLETED':
+          statusLabel = '완료';
+          statusClass = 'status-completed';
+          break;
+        case 'GIVE_UP':
+          statusLabel = '포기';
+          statusClass = 'status-give-up';
+          break;
+        default:
+          statusLabel = runStatus;
+          statusClass = `status-${runStatus.toLowerCase().replace('_', '-')}`;
+      }
+      
+      badges.push(`<span class="record-badge ${statusClass}">${statusLabel}</span>`);
+    }
+    
+    return badges.join('');
+  }
+
   // 기록 카드 렌더링
   function renderRecordCard(record, isBest = false) {
     const card = document.createElement("div");
-    card.className = `record-card ${selectedRecordId === record.runningResultId ? "selected" : ""}`;
+    const isCompleted = record.runStatus === 'COMPLETED';
+    const isSelectable = isCompleted;
+    
+    card.className = `record-card ${selectedRecordId === record.runningResultId ? "selected" : ""} ${!isSelectable ? "disabled" : ""}`;
     card.dataset.recordId = record.runningResultId;
+    card.dataset.runStatus = record.runStatus || '';
 
     const totalTimeFormatted = formatTime(record.totalTime);
     const avgPaceFormatted = formatPace(record.avgPace);
@@ -345,7 +428,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 거리 기반 타이틀 생성 (실제 거리 사용, 소수점 둘째 자리까지)
     const distance = record.totalDistance ? parseFloat(record.totalDistance).toFixed(2) : "0.00";
-    const title = `${distance}km 최고 기록`;
+    const title = `${distance}km 러닝`;
+
+    // 배지 렌더링
+    const badges = renderRecordBadges(record.runningType, record.runStatus);
 
     card.innerHTML = `
       <div class="record-card-header">
@@ -356,6 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="record-title-row">
             <h3 class="record-title">${title}</h3>
             ${isBest ? '<span class="best-badge">BEST</span>' : ''}
+            ${badges}
           </div>
           <div class="record-date">${dateFormatted}</div>
           <div class="record-stats">
@@ -390,8 +477,16 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
-    // 카드 클릭 이벤트
+    // 카드 클릭 이벤트 (COMPLETED 상태만 선택 가능)
     card.addEventListener("click", () => {
+      // COMPLETED 상태가 아닌 경우 선택 불가
+      if (!isSelectable) {
+        if (record.runStatus === 'GIVE_UP') {
+          alert('포기한 기록은 고스트런 상대로 선택할 수 없습니다.');
+        }
+        return;
+      }
+
       // 기존 선택 해제
       const prevSelected = document.querySelector(".record-card.selected");
       if (prevSelected) {

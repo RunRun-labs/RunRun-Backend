@@ -365,8 +365,9 @@ body {
 .record-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-wrap: wrap;
+  margin-bottom: 6px;
 }
 
 .record-title {
@@ -378,15 +379,60 @@ body {
 }
 
 .best-badge {
-  padding: 4px 8px;
-  background: var(--accent-gold);
+  padding: 2px 6px;
+  background: #D4A574;
   border-radius: 6px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  color: #000000;
+  color: #5C3A1F;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  line-height: 1;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  display: inline-block;
+}
+
+.record-badge {
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  display: inline-block;
+}
+
+.record-badge.type-onlinebattle {
+  background: #F5F5F5;
+  color: #3F51B5;
+}
+
+.record-badge.type-ghost {
+  background: #F5F5F5;
+  color: #3F51B5;
+}
+
+.record-badge.type-solo {
+  background: #F5F5F5;
+  color: #5F6368;
+}
+
+.record-badge.status-completed {
+  background: #E8EDE8;
+  color: #455A64;
+}
+
+.record-badge.status-give-up {
+  background: #F5E8E5;
+  color: #C47C5C;
+}
+
+.record-card.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.record-card.disabled:hover {
+  border-color: var(--stroke);
+  transform: none;
 }
 
 .record-date {
