@@ -2,20 +2,10 @@ package com.multi.runrunbackend.domain.payment.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseCreatedEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * @author : BoKyung
@@ -76,17 +66,17 @@ public class Payment extends BaseCreatedEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static Payment toEntity(User user, String membershipGrade, Integer originalAmount,
-        Integer discountAmount, String orderId) {
+                                   Integer discountAmount, String orderId) {
         return Payment.builder()
-            .user(user)
-            .membershipGrade(membershipGrade)
-            .originalAmount(originalAmount)
-            .discountAmount(discountAmount)
-            .finalAmount(originalAmount - discountAmount)
-            .paymentMethod("TOSS_PAY")
-            .paymentStatus("PENDING")
-            .orderId(orderId)
-            .build();
+                .user(user)
+                .membershipGrade(membershipGrade)
+                .originalAmount(originalAmount)
+                .discountAmount(discountAmount)
+                .finalAmount(originalAmount - discountAmount)
+                .paymentMethod("TOSS_PAY")
+                .paymentStatus("PENDING")
+                .orderId(orderId)
+                .build();
     }
 
     /**

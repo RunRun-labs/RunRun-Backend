@@ -18,6 +18,8 @@ import com.multi.runrunbackend.domain.crew.repository.CrewActivityRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewJoinRequestRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
+import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
+import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +50,7 @@ public class CrewService {
     private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
     private final FileStorage s3FileStorage;
+    private final MembershipRepository membershipRepository;
 
     /**
      * @param reqDto 크루 생성 요청 DTO
@@ -60,7 +63,7 @@ public class CrewService {
         User user = getUserOrThrow(principal);
 
         // 프리미엄 멤버십인지 검증
-//       validatePremiumMembership(user.get);
+        validatePremiumMembership(user);
 
         // 1인 1크루 생성 제한 검증
         validateNotAlreadyLeader(user.getId());
@@ -396,5 +399,21 @@ public class CrewService {
             return crew.getCrewImageUrl();
         }
 
+    }
+
+    /**
+     * @description : 멤버십 여부
+     */
+    private void validatePremiumMembership(User user) {
+        // ACTIVE 또는 CANCELED 상태의 멤버십만 확인
+        boolean hasValidMembership = membershipRepository
+                .existsByUser_IdAndMembershipStatusIn(
+                        user.getId(),
+                        List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
+                );
+
+        if (!hasValidMembership) {
+            throw new BusinessException(ErrorCode.MEMBERSHIP_REQUIRED);
+        }
     }
 }

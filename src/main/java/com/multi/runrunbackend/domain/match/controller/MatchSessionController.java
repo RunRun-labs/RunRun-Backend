@@ -5,6 +5,7 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.dto.req.OfflineMatchConfirmReqDto;
 import com.multi.runrunbackend.domain.match.dto.req.OnlineMatchJoinReqDto;
+import com.multi.runrunbackend.domain.match.dto.req.SoloRunStartReqDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.OfflineMatchConfirmResDto;
 import com.multi.runrunbackend.domain.match.dto.res.OnlineMatchStatusResDto;
@@ -148,5 +149,17 @@ public class MatchSessionController {
         pageable);
     return ResponseEntity.ok(ApiResponse.success("내 러닝 결과 조회 성공", records));
   }
+
+  @PostMapping("/solorun/start")
+  public ResponseEntity<ApiResponse<Long>> startSoloRun(
+      @AuthenticationPrincipal CustomUser principal,
+      @RequestBody SoloRunStartReqDto reqDto
+  ) {
+
+    Long sessionId = matchSessionService.createSoloSession(principal, reqDto);
+    return ResponseEntity.ok(ApiResponse.success("솔로런 세션 생성 성공 ", sessionId));
+
+  }
+
 
 }

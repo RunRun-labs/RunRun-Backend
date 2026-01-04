@@ -59,6 +59,22 @@ public class PathController {
         return "match/ghost-result";
     }
 
+  @GetMapping("/match/solo")
+  public String soloView() {
+    return "match/solo";
+  }
+
+  @GetMapping("/match/battleList")
+  public String battleListView() {
+    return "match/battle-list";
+  }
+
+  @GetMapping("/match/battleDetail/{sessionId}")
+  public String battleDetailView(@PathVariable Long sessionId, Model model) {
+    model.addAttribute("sessionId", sessionId);
+    return "match/battle-detail";
+  }
+
   @GetMapping("/recruit")
   public String recruitListView() {
     return "recruit/recruit-list";
@@ -96,10 +112,11 @@ public class PathController {
     return "crew/crewDetailList";
   }
 
-  @GetMapping("/crews/{crewId}/edit")
-  public String crewEditPage() {
-    return "crew/updateCrew";
-  }
+    @GetMapping("/crews/{crewId}/edit")
+    public String crewEditPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
+        return "crew/updateCrew";
+    }
 
   @GetMapping("/crews/{crewId}/join")
   public String crewJoinPage(@PathVariable Long crewId, Model model) {
@@ -123,6 +140,11 @@ public class PathController {
   public String crewMain() {
     return "crew/crewMain";
   }
+
+    @GetMapping("/membership")
+    public String membership() {
+        return "membership/membership";
+    }
 
     @GetMapping("/chat")
     public String chatList() {
