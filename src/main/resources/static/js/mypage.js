@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     attachMyCoursesHandler();
     attachMyPostsHandler();
     loadMyBodyInfo();
+    loadRunningRecords(); // 추후 API 연동 시 사용
 });
 
 async function loadMyBodyInfo() {
@@ -223,5 +224,61 @@ function attachMyPostsHandler() {
     myPostsBtn.addEventListener("click", () => {
         // 피드 기능 구현 후 연동 예정
         alert("피드 기능 구현 후 연동 예정입니다.");
+    });
+}
+
+/**
+ * 러닝 타입을 한국어로 변환
+ * RunningType enum 참고: SOLO("솔로"), OFFLINE("오프라인"), ONLINEBATTLE("온라인배틀"), GHOST("고스트")
+ */
+function getRunningTypeLabel(runningType) {
+    const typeMap = {
+        SOLO: "솔로",
+        OFFLINE: "오프라인",
+        ONLINEBATTLE: "온라인배틀",
+        GHOST: "고스트"
+    };
+    return typeMap[runningType] || runningType || "-";
+}
+
+/**
+ * 러닝 기록 로드 (추후 API 연동 예정)
+ */
+async function loadRunningRecords() {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            // 로그인하지 않은 경우 기본값 유지
+            return;
+        }
+
+        // TODO: 실제 API 엔드포인트로 교체 예정
+        // const res = await fetch("/api/running-results", {
+        //     headers: { Authorization: `Bearer ${token}` }
+        // });
+        // if (!res.ok) throw new Error("러닝 기록 조회 실패");
+        // const payload = await res.json();
+        // const records = payload?.data ?? [];
+        // renderRunningRecords(records);
+
+    } catch (e) {
+        console.error("러닝 기록 로드 실패:", e);
+    }
+}
+
+/**
+ * 러닝 기록 렌더링
+ */
+function renderRunningRecords(records) {
+    const runCards = document.querySelectorAll('.run-card');
+    
+    runCards.forEach((card, index) => {
+        const record = records[index];
+        if (!record) return;
+
+        const runTypeEl = card.querySelector('[data-role="run-type"]');
+        if (runTypeEl && record.runningType) {
+            runTypeEl.textContent = getRunningTypeLabel(record.runningType);
+        }
     });
 }

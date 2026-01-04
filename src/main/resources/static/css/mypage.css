@@ -377,9 +377,10 @@ body {
     font-weight: 600;
 }
 
-.run-note {
+.run-type {
     color: var(--text-muted);
     text-align: right;
+    font-weight: 600;
 }
 
 .run-title {
