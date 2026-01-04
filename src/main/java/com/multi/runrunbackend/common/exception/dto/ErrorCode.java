@@ -82,14 +82,14 @@ public enum ErrorCode {
     NOT_CREW_USER(HttpStatus.FORBIDDEN, "CR017", "크루원이 아닙니다."),
     CANNOT_ASSIGN_LEADER_TO_MEMBER(HttpStatus.FORBIDDEN, "CR018", "일반 멤버는 크루장이 될 수 없습니다. 부크루장 또는 운영진에게만 위임 가능합니다."),
     /* ===== 멤버십 ===== */
-    MEMBERSHIP_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "멤버십 정보를 찾을 수 없습니다."),
-    MEMBERSHIP_ALREADY_PREMIUM(HttpStatus.CONFLICT, "M002", "이미 프리미엄 멤버십입니다."),
-    MEMBERSHIP_ALREADY_CANCELED(HttpStatus.CONFLICT, "M003", "이미 해지 신청된 멤버십입니다."),
-    MEMBERSHIP_REQUIRED(HttpStatus.FORBIDDEN, "M004", "프리미엄 멤버십이 필요합니다."),
-    MEMBERSHIP_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "M005", "활성화된 멤버십이 아닙니다."),
-    MEMBERSHIP_NOT_CANCELED(HttpStatus.BAD_REQUEST, "M006", "해지 신청 상태가 아닙니다."),
-    INVALID_MEMBERSHIP_PERIOD(HttpStatus.BAD_REQUEST, "M007", "멤버십 기간은 1일 이상이어야 합니다."),
-    MEMBERSHIP_PERIOD_TOO_LONG(HttpStatus.BAD_REQUEST, "M008", "멤버십 기간은 최대 365일까지 설정할 수 있습니다."),
+    MEMBERSHIP_NOT_FOUND(HttpStatus.NOT_FOUND, "MM001", "멤버십 정보를 찾을 수 없습니다."),
+    MEMBERSHIP_ALREADY_PREMIUM(HttpStatus.CONFLICT, "MM002", "이미 프리미엄 멤버십입니다."),
+    MEMBERSHIP_ALREADY_CANCELED(HttpStatus.CONFLICT, "MM003", "이미 해지 신청된 멤버십입니다."),
+    MEMBERSHIP_REQUIRED(HttpStatus.FORBIDDEN, "MM004", "프리미엄 멤버십이 필요합니다."),
+    MEMBERSHIP_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "MM005", "활성화된 멤버십이 아닙니다."),
+    MEMBERSHIP_NOT_CANCELED(HttpStatus.BAD_REQUEST, "MM006", "해지 신청 상태가 아닙니다."),
+    INVALID_MEMBERSHIP_PERIOD(HttpStatus.BAD_REQUEST, "MM007", "멤버십 기간은 1일 이상이어야 합니다."),
+    MEMBERSHIP_PERIOD_TOO_LONG(HttpStatus.BAD_REQUEST, "MM008", "멤버십 기간은 최대 365일까지 설정할 수 있습니다."),
 
     /* ===== 결제 ===== */
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "결제 내역을 찾을 수 없습니다."),
