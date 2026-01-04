@@ -126,6 +126,18 @@ public class MatchSessionController {
 
   }
 
+  /**
+   * 고스트런 세션 정보 조회
+   */
+  @GetMapping("/ghost/session/{sessionId}")
+  public ResponseEntity<ApiResponse<Map<String, Object>>> getGhostSessionInfo(
+      @PathVariable Long sessionId,
+      @AuthenticationPrincipal CustomUser principal
+  ) {
+    Map<String, Object> info = matchSessionService.getGhostSessionInfo(sessionId);
+    return ResponseEntity.ok(ApiResponse.success("고스트런 세션 정보 조회 성공", info));
+  }
+
   @GetMapping("/ghost")
   public ResponseEntity<ApiResponse<Slice<RunningRecordResDto>>> getMyRunningRecords(
       @AuthenticationPrincipal CustomUser principal,
