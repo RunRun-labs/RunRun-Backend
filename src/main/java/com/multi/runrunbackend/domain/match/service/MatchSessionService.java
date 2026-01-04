@@ -31,7 +31,9 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -339,6 +341,36 @@ public class MatchSessionService {
     );
 
     return resultSlice.map(RunningRecordResDto::from);
+  }
+
+  /**
+   * 고스트런 세션 정보 조회
+   */
+  public Map<String, Object> getGhostSessionInfo(Long sessionId) {
+    MatchSession session = matchSessionRepository.findById(sessionId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+
+    RunningResult ghostRecord = session.getRunningResult();
+    if (ghostRecord == null) {
+      throw new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND);
+    }
+
+    Map<String, Object> info = new HashMap<>();
+    info.put("sessionId", session.getId());
+    info.put("targetDistance", session.getTargetDistance());
+    info.put("ghostRecord", Map.of(
+        "id", ghostRecord.getId(),
+        "totalDistance", ghostRecord.getTotalDistance(),
+        "totalTime", ghostRecord.getTotalTime(),
+        "avgPace", ghostRecord.getAvgPace(),
+        "startedAt", ghostRecord.getStartedAt(),
+        "splitPace", ghostRecord.getSplitPace()
+    ));
+
+    log.info("✅ 고스트 세션 정보 조회: sessionId={}, ghostRecordId={}",
+        sessionId, ghostRecord.getId());
+
+    return info;
   }
 
 
