@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initWeekSelector();
     loadWeeklyStats();
     loadLatestChallengeForBanner();
+    loadUserWeightInfo();
 });
 
 async function loadNotificationCount() {
@@ -52,7 +53,7 @@ async function loadTodayStats() {
     if (!accessToken) return;
 
     try {
-        const res = await fetch("/summary/today", {
+        const res = await fetch("/api/summary/today", {
             headers: {Authorization: `Bearer ${accessToken}`},
         });
 
@@ -72,6 +73,61 @@ async function loadTodayStats() {
     }
 }
 
+// 사용자 몸무게 정보 저장 (툴팁 표시용)
+let userWeightKg = null;
+
+/**
+ * 사용자 몸무게 정보 로드
+ */
+async function loadUserWeightInfo() {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) return;
+
+    try {
+        const res = await fetch("/users", {
+            headers: {Authorization: `Bearer ${accessToken}`},
+        });
+
+        if (!res.ok) return;
+
+        const payload = await res.json();
+        const user = payload?.data ?? null;
+        userWeightKg = user?.weightKg ?? null;
+
+        // 칼로리 툴팁 상태 업데이트
+        updateCaloriesTooltip();
+
+    } catch (e) {
+        console.error("사용자 정보 로드 실패:", e);
+    }
+}
+
+/**
+ * 칼로리 툴팁 표시 여부 업데이트
+ */
+function updateCaloriesTooltip() {
+    const caloriesStatItem = document.querySelector('[data-role="today-calories"]')?.closest('.stat-item');
+    if (!caloriesStatItem) return;
+
+    // 칼로리 값 확인
+    const caloriesEl = document.querySelector('[data-role="today-calories"]');
+    if (!caloriesEl) return;
+
+    const caloriesText = caloriesEl.textContent.trim();
+    const caloriesValue = parseFloat(caloriesText.replace(/[^0-9.]/g, '')) || 0;
+
+    // 칼로리가 0이고 몸무게가 없을 때 툴팁 표시
+    if (caloriesValue === 0 && (userWeightKg === null || userWeightKg === undefined || userWeightKg === 0)) {
+        caloriesStatItem.classList.add('calories-tooltip');
+        caloriesStatItem.setAttribute('data-tooltip', '프로필에서 몸무게를 설정하면 칼로리를 계산할 수 있습니다');
+        // 클릭 이벤트 리스너 추가
+        attachCaloriesTooltipClickHandler();
+    } else {
+        caloriesStatItem.classList.remove('calories-tooltip');
+        caloriesStatItem.removeAttribute('data-tooltip');
+    }
+}
+
 function renderTodayStats(stats) {
     const distanceEl = document.querySelector('[data-role="today-distance"]');
     const durationEl = document.querySelector('[data-role="today-duration"]');
@@ -88,6 +144,21 @@ function renderTodayStats(stats) {
     if (caloriesEl) {
         caloriesEl.innerHTML = `${stats.calories}<span class="stat-unit">kcal</span>`;
     }
+
+    // 칼로리 렌더링 후 툴팁 상태 업데이트
+    updateCaloriesTooltip();
+}
+
+/**
+ * 칼로리 툴팁 클릭 이벤트 처리 (프로필 편집 페이지로 이동)
+ */
+function attachCaloriesTooltipClickHandler() {
+    const caloriesStatItem = document.querySelector('.calories-tooltip');
+    if (!caloriesStatItem) return;
+
+    caloriesStatItem.addEventListener('click', () => {
+        window.location.href = '/myPage/edit';
+    });
 }
 
 function formatDuration(seconds) {
@@ -189,7 +260,7 @@ async function loadWeeklyStats() {
     if (!accessToken) return;
 
     try {
-        const res = await fetch(`/summary/weekly?weekOffset=${currentWeekOffset}`, {
+        const res = await fetch(`/api/summary/weekly?weekOffset=${currentWeekOffset}`, {
             headers: {Authorization: `Bearer ${accessToken}`},
         });
 
@@ -248,25 +319,33 @@ function renderWeeklyChart(distances) {
     chartBars.innerHTML = "";
     if (!Array.isArray(distances) || distances.length === 0) {
         for (let i = 0; i < 7; i++) {
-            const bar = document.createElement("div");
-            bar.className = "chart-bar";
-            bar.style.height = "24.631px"; // 최소 높이
-            chartBars.appendChild(bar);
+            const circle = document.createElement("div");
+            circle.className = "chart-circle";
+            chartBars.appendChild(circle);
         }
         return;
     }
 
     const maxDistance = Math.max(...distances, 0.1);
-    distances.forEach((distance) => {
-        const bar = document.createElement("div");
-        bar.className = "chart-bar";
-        const heightRatio = distance / maxDistance;
-        // 최소 높이: 약 24.631px, 최대 높이: 약 98.539px (Figma 디자인 기준)
-        const minHeight = 24.631;
-        const maxHeight = 98.539;
-        const height = Math.max(minHeight, minHeight + (maxHeight - minHeight) * heightRatio);
-        bar.style.height = `${height}px`;
-        chartBars.appendChild(bar);
+    distances.forEach((distance, index) => {
+        if (distance === 0 || distance < 0.01) {
+            // 거리가 0일 때는 동그란 원 생성
+            const circle = document.createElement("div");
+            circle.className = "chart-circle";
+            circle.setAttribute("data-day-index", index);
+            chartBars.appendChild(circle);
+        } else {
+            // 거리가 있을 때는 막대 그래프 생성
+            const bar = document.createElement("div");
+            bar.className = "chart-bar";
+            const heightRatio = distance / maxDistance;
+            // 최소 높이: 약 24.631px, 최대 높이: 약 98.539px (Figma 디자인 기준)
+            const minHeight = 24.631;
+            const maxHeight = 98.539;
+            const height = Math.max(minHeight, minHeight + (maxHeight - minHeight) * heightRatio);
+            bar.style.height = `${height}px`;
+            chartBars.appendChild(bar);
+        }
     });
 }
 

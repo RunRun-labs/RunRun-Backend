@@ -186,6 +186,57 @@ body {
     margin-left: 2px;
 }
 
+/* 칼로리 툴팁 스타일 */
+.calories-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.calories-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: #333;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 400;
+    white-space: nowrap;
+    border-radius: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.calories-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 2px;
+    border: 6px solid transparent;
+    border-top-color: #333;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1001;
+}
+
+.calories-tooltip:hover::after,
+.calories-tooltip:hover::before {
+    opacity: 1;
+}
+
+.calories-tooltip:hover {
+    cursor: pointer;
+}
+
 .stat-desc {
     margin: 0;
     font-size: 15px;
@@ -352,6 +403,18 @@ body {
     position: relative;
     margin: 0 auto;
     justify-self: center;
+}
+
+.chart-circle {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #BAFF29;
+    position: relative;
+    margin: 0 auto;
+    justify-self: center;
+    align-self: flex-end;
+    /* 막대 그래프의 시작점(하단)과 동일한 위치에 정렬 */
 }
 
 .chart-days {
