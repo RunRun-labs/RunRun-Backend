@@ -405,6 +405,24 @@ body {
     font-size: 11px;
 }
 
+.run-pace {
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+}
+
+.run-pace-label {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.run-pace-value {
+    color: var(--text-strong);
+    font-weight: 600;
+}
+
 .run-share {
     margin-top: 4px;
     align-self: flex-end;

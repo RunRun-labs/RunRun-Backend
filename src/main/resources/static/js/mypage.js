@@ -8,7 +8,14 @@ document.addEventListener("DOMContentLoaded", () => {
     attachMyCoursesHandler();
     attachMyPostsHandler();
     loadMyBodyInfo();
-    loadRunningRecords(); // 추후 API 연동 시 사용
+
+    // 실제 스크롤이 발생하는 컨테이너를 기준으로 무한 스크롤 동작
+    initInfiniteScroll();
+
+    // '스크롤(또는 휠/터치) 입력' 이후에만 다음 페이지 로드
+    attachUserScrollGate();
+
+    loadRunningRecords(0, true); // 초기 로드 (첫 페이지, 초기화)
 });
 
 async function loadMyBodyInfo() {
@@ -241,28 +248,62 @@ function getRunningTypeLabel(runningType) {
     return typeMap[runningType] || runningType || "-";
 }
 
+// 러닝 기록 무한 스크롤 관련 전역 변수
+let currentPage = 0;
+let hasNext = true;
+let isLoading = false;
+let userHasInteracted = false; // 사용자가 실제로 스크롤을 했는지
+let scrollObserver = null; // IntersectionObserver 인스턴스
+
 /**
- * 러닝 기록 로드 (추후 API 연동 예정)
+ * 러닝 기록 로드 (API 연동)
  */
-async function loadRunningRecords() {
+async function loadRunningRecords(page = 0, reset = false) {
+    if (isLoading || (!hasNext && !reset)) return;
+
+    isLoading = true;
     try {
         const token = localStorage.getItem("accessToken");
         if (!token) {
-            // 로그인하지 않은 경우 기본값 유지
+            isLoading = false;
             return;
         }
 
-        // TODO: 실제 API 엔드포인트로 교체 예정
-        // const res = await fetch("/api/running-results", {
-        //     headers: { Authorization: `Bearer ${token}` }
-        // });
-        // if (!res.ok) throw new Error("러닝 기록 조회 실패");
-        // const payload = await res.json();
-        // const records = payload?.data ?? [];
-        // renderRunningRecords(records);
+        const res = await fetch(`/api/records?page=${page}&size=4&sort=startedAt,desc`, {
+            headers: {Authorization: `Bearer ${token}`}
+        });
+
+        if (!res.ok) throw new Error("러닝 기록 조회 실패");
+
+        const payload = await res.json();
+        const sliceData = payload?.data;
+
+        if (!sliceData) {
+            isLoading = false;
+            return;
+        }
+
+        const records = sliceData.content || [];
+        // Page 객체의 last 속성 사용
+        hasNext = !(sliceData.last ?? true);
+        currentPage = page;
+
+        if (reset) {
+            const runList = document.querySelector('[data-role="run-list"]');
+            if (runList) runList.innerHTML = "";
+        }
+
+        if (records.length > 0) {
+            renderRunningRecords(records);
+        }
+
+        // 무한 스크롤 업데이트
+        updateScrollSentinel();
 
     } catch (e) {
         console.error("러닝 기록 로드 실패:", e);
+    } finally {
+        isLoading = false;
     }
 }
 
@@ -270,15 +311,230 @@ async function loadRunningRecords() {
  * 러닝 기록 렌더링
  */
 function renderRunningRecords(records) {
-    const runCards = document.querySelectorAll('.run-card');
-    
-    runCards.forEach((card, index) => {
-        const record = records[index];
-        if (!record) return;
+    const runList = document.querySelector('[data-role="run-list"]');
+    if (!runList) return;
 
-        const runTypeEl = card.querySelector('[data-role="run-type"]');
-        if (runTypeEl && record.runningType) {
-            runTypeEl.textContent = getRunningTypeLabel(record.runningType);
-        }
+    records.forEach(record => {
+        const card = createRunCard(record);
+        runList.appendChild(card);
     });
+}
+
+/**
+ * 러닝 기록 카드 생성
+ */
+function createRunCard(record) {
+    const article = document.createElement('article');
+    article.className = 'run-card';
+
+    // 날짜 포맷팅
+    const date = new Date(record.startedAt);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayOfWeek = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'][date.getDay()];
+    const formattedDate = `${month}/${day} ${dayOfWeek}`;
+
+    // 시간 포맷팅 (초 -> MM:SS 또는 HH:MM:SS)
+    const timeStr = formatDuration(record.totalTimeSec);
+
+    // 거리 포맷팅
+    const distanceStr = record.totalDistanceKm ? record.totalDistanceKm.toFixed(1) : '0.0';
+
+    // 페이스 포맷팅 (분/km)
+    const paceStr = formatPace(record.avgPace);
+
+    // 코스 이미지 URL
+    const imageUrl = record.courseThumbnailUrl || null;
+    const courseTitle = record.courseTitle || '러닝';
+
+    // 이미지가 있을 때만 img 태그 추가
+    const thumbContent = imageUrl
+        ? `<img src="${imageUrl}" alt="${courseTitle}" onerror="this.style.display='none'" />`
+        : '';
+
+    article.innerHTML = `
+        <div class="run-thumb">
+            ${thumbContent}
+        </div>
+        <div class="run-content">
+            <div class="run-header">
+                <span class="run-date">${formattedDate}</span>
+                <span class="run-type">${getRunningTypeLabel(record.runningType)}</span>
+            </div>
+            <p class="run-title">${courseTitle}</p>
+            <div class="run-stats">
+                <span class="run-stat">
+                    <span class="run-icon">🏃‍♂️</span>
+                    <span>${distanceStr}km</span>
+                </span>
+                <span class="run-stat">
+                    <span class="run-icon">⏱</span>
+                    <span>${timeStr}</span>
+                </span>
+            </div>
+            <div class="run-pace">
+                <span class="run-pace-label">평균 페이스</span>
+                <span class="run-pace-value">${paceStr}</span>
+            </div>
+            <button class="run-share" type="button">피드에 공유</button>
+        </div>
+    `;
+
+    return article;
+}
+
+/**
+ * 시간 포맷팅 (초 -> MM:SS 또는 HH:MM:SS)
+ */
+function formatDuration(seconds) {
+    if (!seconds || seconds === 0) return "00:00";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) {
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+    return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+/**
+ * 페이스 포맷팅 (분/km)
+ */
+function formatPace(pace) {
+    if (!pace || pace === 0) return "-";
+    // pace는 BigDecimal로 분/km 단위
+    const minutes = Math.floor(pace);
+    const seconds = Math.floor((pace - minutes) * 60);
+    return `${minutes}'${String(seconds).padStart(2, "0")}"`;
+}
+
+/**
+ * 무한 스크롤 초기화
+ */
+function initInfiniteScroll() {
+    // CSS 구조상 .mypage-page에 height 제한이 없어 body 스크롤이 발생할 가능성이 높음
+    // 따라서 root를 null(viewport)로 설정하여 어디서 스크롤하든 감지되도록 함
+    const observerOptions = {
+        root: null,
+        rootMargin: "200px", // 하단 여유
+        threshold: 0
+    };
+
+    scrollObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+
+            if (!userHasInteracted) {
+                console.log('Sentinel intersecting but waiting for user scroll interaction');
+                continue;
+            }
+
+            if (!hasNext || isLoading) continue;
+
+            console.log("Sentinel intersecting, loading next page:", currentPage + 1);
+            loadRunningRecords(currentPage + 1, false);
+        }
+    }, observerOptions);
+}
+
+/**
+ * 무한 스크롤 센티넬 요소 관리
+ */
+function updateScrollSentinel() {
+    const runList = document.querySelector('[data-role="run-list"]');
+    if (!runList) return;
+
+    // 기존 센티넬 제거
+    const oldSentinel = document.getElementById("scrollSentinel");
+    if (oldSentinel) {
+        if (scrollObserver) scrollObserver.unobserve(oldSentinel);
+        oldSentinel.remove();
+    }
+
+    if (!hasNext || !scrollObserver) {
+        console.log("No more data to load, hasNext:", hasNext, "observer:", !!scrollObserver);
+        return;
+    }
+
+    const sentinel = document.createElement("div");
+    sentinel.id = "scrollSentinel";
+    sentinel.style.height = "1px";
+    sentinel.style.width = "100%";
+    sentinel.style.visibility = "hidden";
+
+    // 리스트 끝에 센티넬 추가
+    runList.appendChild(sentinel);
+
+    // 사용자가 스크롤한 후에만 센티널 관찰 시작 (초기 로드 시 자동 로드 방지)
+    if (userHasInteracted) {
+        requestAnimationFrame(() => {
+            const sentinelEl = document.getElementById("scrollSentinel");
+            if (!sentinelEl || !scrollObserver) return;
+            scrollObserver.observe(sentinelEl);
+            console.log("Sentinel observed (root: viewport) hasNext:", hasNext);
+        });
+    } else {
+        console.log("Sentinel created but not observed yet (waiting for user interaction)");
+    }
+}
+
+/**
+ * 사용자 스크롤 상호작용 감지 (무한 스크롤 활성화)
+ */
+function attachUserScrollGate() {
+    const markInteracted = () => {
+        if (userHasInteracted) return;
+        userHasInteracted = true;
+        console.log('User interaction detected: infinite scroll enabled');
+
+        // 이벤트 리스너 정리
+        window.removeEventListener('scroll', markInteracted);
+        window.removeEventListener('wheel', markInteracted);
+        window.removeEventListener('touchmove', markInteracted);
+
+        const page = document.querySelector('.mypage-page');
+        if (page) {
+            page.removeEventListener('scroll', markInteracted);
+            page.removeEventListener('wheel', markInteracted);
+            page.removeEventListener('touchmove', markInteracted);
+        }
+
+        // [추가] 인터랙션 감지 시점에 센티넬을 관찰 시작
+        // 초기 로드 시 센티널이 이미 화면 안에 있을 수 있으므로, 인터랙션 후에 관찰 시작
+        const sentinel = document.getElementById("scrollSentinel");
+        if (sentinel && scrollObserver) {
+            requestAnimationFrame(() => {
+                const sentinelEl = document.getElementById("scrollSentinel");
+                if (!sentinelEl || !scrollObserver) return;
+
+                // 센티널 관찰 시작
+                scrollObserver.observe(sentinelEl);
+                console.log("Sentinel observed after user interaction, hasNext:", hasNext);
+
+                // 인터랙션 감지 시점에 센티넬이 이미 화면 안에 있다면 즉시 로드
+                // (Observer는 이미 교차 중인 상태에서는 콜백을 다시 호출하지 않기 때문)
+                if (hasNext && !isLoading) {
+                    const rect = sentinelEl.getBoundingClientRect();
+                    // rootMargin(200px)과 동일하게 여유를 둠
+                    if (rect.top <= window.innerHeight + 200) {
+                        console.log("Sentinel already visible upon interaction, loading next page:", currentPage + 1);
+                        loadRunningRecords(currentPage + 1, false);
+                    }
+                }
+            });
+        }
+    };
+
+    // window와 .mypage-page 모두에 이벤트 등록 (어디서 스크롤이 발생하든 감지)
+    // scroll 뿐만 아니라 wheel, touchmove도 감지하여 사용자 의도를 파악
+    window.addEventListener('scroll', markInteracted, {passive: true});
+    window.addEventListener('wheel', markInteracted, {passive: true});
+    window.addEventListener('touchmove', markInteracted, {passive: true});
+
+    const page = document.querySelector('.mypage-page');
+    if (page) {
+        page.addEventListener('scroll', markInteracted, {passive: true});
+        page.addEventListener('wheel', markInteracted, {passive: true});
+        page.addEventListener('touchmove', markInteracted, {passive: true});
+    }
 }
