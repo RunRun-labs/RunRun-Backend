@@ -11,6 +11,9 @@ import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,8 @@ public class RunningResultService {
   public Slice<RunningRecordResDto> getMyRunningResults(
       CustomUser principal,
       RunningResultFilterType filterType,
+      LocalDate startDate,
+      LocalDate endDate,
       Pageable pageable
   ) {
     User user = getUser(principal);
@@ -45,6 +50,9 @@ public class RunningResultService {
         RunStatus.GIVE_UP
     );
 
+    LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
+    LocalDateTime end = (endDate != null) ? endDate.atTime(LocalTime.MAX) : null;
+
     BigDecimal min = calculateMinDistance(filterType);
     BigDecimal max = calculateMaxDistance(filterType);
 
@@ -53,6 +61,8 @@ public class RunningResultService {
         targetStatuses,
         min,
         max,
+        start,
+        end,
         pageable
     );
 
