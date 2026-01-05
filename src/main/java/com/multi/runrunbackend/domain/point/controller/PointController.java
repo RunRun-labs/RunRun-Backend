@@ -2,6 +2,9 @@ package com.multi.runrunbackend.domain.point.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.point.dto.req.CursorPage;
+import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
 import com.multi.runrunbackend.domain.point.service.PointService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -32,5 +36,22 @@ public class PointController {
         return ResponseEntity.ok(ApiResponse.success("포인트 메인 조회 성공", response));
     }
 
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<CursorPage<PointHistoryListResDto>>> getPointHistory(
+            @AuthenticationPrincipal CustomUser principal,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String filter
+    ) {
+        PointHistoryListReqDto reqDto = new PointHistoryListReqDto();
+        reqDto.setCursor(cursor);
+        reqDto.setSize(size);
+        reqDto.setFilter(filter);
+
+        CursorPage<PointHistoryListResDto> response = pointService.getPointHistoryList(
+                principal.getUserId(), reqDto
+        );
+        return ResponseEntity.ok(ApiResponse.success("포인트 내역 조회 성공", response));
+    }
 
 }
