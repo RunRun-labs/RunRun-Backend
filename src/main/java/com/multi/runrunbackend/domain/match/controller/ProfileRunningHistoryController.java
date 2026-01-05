@@ -12,6 +12,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,22 +28,50 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/records")
 public class ProfileRunningHistoryController {
 
-    private final ProfileRunningHistoryService runningRecordService;
+    private final ProfileRunningHistoryService profileRunningHistoryService;
 
     /**
      * 마이페이지 - 내 러닝 기록 조회
      */
-    @GetMapping
+    @GetMapping("/me")
     public ResponseEntity<ApiResponse<Slice<ProfileRunningHistoryResDto>>> getMyRunningRecords(
             @AuthenticationPrincipal CustomUser principal,
-            @PageableDefault(size = 4, sort = "startedAt", direction = Sort.Direction.DESC)
-            Pageable pageable
+            @PageableDefault(
+                    size = 4,
+                    sort = "startedAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ) {
         Slice<ProfileRunningHistoryResDto> result =
-                runningRecordService.getMyRunningRecords(principal, pageable);
+                profileRunningHistoryService.getMyRunningRecords(principal, pageable);
 
         return ResponseEntity.ok(
                 ApiResponse.success("내 러닝 기록 조회 성공", result)
+        );
+    }
+
+    /**
+     * 타인 러닝 기록 조회
+     */
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<Slice<ProfileRunningHistoryResDto>>> getUserRunningRecords(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUser principal,
+            @PageableDefault(
+                    size = 4,
+                    sort = "startedAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        Slice<ProfileRunningHistoryResDto> result =
+                profileRunningHistoryService.getUserRunningRecords(
+                        userId,
+                        principal,
+                        pageable
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success("러닝 기록 조회 성공", result)
         );
     }
 }
