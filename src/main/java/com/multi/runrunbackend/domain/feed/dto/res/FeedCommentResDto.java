@@ -22,7 +22,8 @@ public class FeedCommentResDto {
     private String content;
 
     private Long userId;
-    private String userName;
+    //    private String userName;
+    private String userLoginId;
     private String profileImageUrl;
 
     private LocalDateTime createdAt;
@@ -34,7 +35,8 @@ public class FeedCommentResDto {
                 .commentId(comment.getId())
                 .content(comment.getContent())
                 .userId(user.getId())
-                .userName(user.getName())
+//                .userName(user.getName())
+                .userLoginId(user.getLoginId())
                 .profileImageUrl(user.getProfileImageUrl())
                 .createdAt(comment.getCreatedAt())
                 .build();

@@ -27,7 +27,8 @@ public class FeedPostResDto {
 
     // 작성자
     private Long userId;
-    private String userName;
+    //    private String userName;
+    private String userLoginId;
     private String profileImageUrl;
 
     // 러닝 정보
@@ -58,7 +59,8 @@ public class FeedPostResDto {
                 .content(feedPost.getContent())
                 .createdAt(feedPost.getCreatedAt())
                 .userId(u.getId())
-                .userName(u.getName())
+//                .userName(u.getName())
+                .userLoginId(u.getLoginId())
                 .profileImageUrl(u.getProfileImageUrl())
                 .runningResultId(r.getId())
                 .totalDistance(r.getTotalDistance())
