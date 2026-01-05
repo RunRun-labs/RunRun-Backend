@@ -259,4 +259,9 @@ public class PathController {
         return "friend/friend-list";
     }
 
+  @GetMapping("/notification")
+  public String notificationListView() {
+    return "notification/notification-list";
+  }
+
 }
