@@ -8,6 +8,7 @@ import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
 import com.multi.runrunbackend.domain.point.dto.req.PointUseReqDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointShopDetailResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointShopListResDto;
 import com.multi.runrunbackend.domain.point.service.PointService;
 import jakarta.validation.Valid;
@@ -81,4 +82,14 @@ public class PointController {
         return ResponseEntity.ok(ApiResponse.success("포인트 상점 조회 성공", response));
     }
 
+    @GetMapping("/shop/{productId}")
+    public ResponseEntity<ApiResponse<PointShopDetailResDto>> getPointShopDetail(
+            @AuthenticationPrincipal CustomUser principal,
+            @PathVariable Long productId
+    ) {
+        PointShopDetailResDto response = pointService.getPointShopDetail(
+                principal.getUserId(), productId
+        );
+        return ResponseEntity.ok(ApiResponse.success("포인트 상품 상세 조회 성공", response));
+    }
 }
