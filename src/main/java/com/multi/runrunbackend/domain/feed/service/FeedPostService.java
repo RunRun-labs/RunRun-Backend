@@ -1,12 +1,10 @@
 package com.multi.runrunbackend.domain.feed.service;
 
-import com.multi.runrunbackend.common.exception.custom.DuplicateException;
-import com.multi.runrunbackend.common.exception.custom.InvalidRequestException;
-import com.multi.runrunbackend.common.exception.custom.NotFoundException;
-import com.multi.runrunbackend.common.exception.custom.TokenException;
+import com.multi.runrunbackend.common.exception.custom.*;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.feed.dto.req.FeedPostCreateReqDto;
+import com.multi.runrunbackend.domain.feed.dto.req.FeedPostUpdateReqDto;
 import com.multi.runrunbackend.domain.feed.dto.res.FeedPostResDto;
 import com.multi.runrunbackend.domain.feed.entity.FeedPost;
 import com.multi.runrunbackend.domain.feed.repository.FeedPostRepository;
@@ -16,6 +14,8 @@ import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,6 +71,68 @@ public class FeedPostService {
 
         return FeedPostResDto.from(saved);
     }
+
+    /**
+     * 피드 삭제
+     */
+    public void deleteFeed(Long feedId, CustomUser principal) {
+        User user = getUserByPrincipal(principal);
+
+        FeedPost feedPost = feedPostRepository.findById(feedId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.FEED_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(feedPost.getIsDeleted())) {
+            throw new InvalidRequestException(ErrorCode.FEED_ALREADY_DELETED);
+        }
+
+        if (!feedPost.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException(ErrorCode.FEED_FORBIDDEN);
+        }
+
+        feedPost.delete();
+    }
+
+    /*
+     * 피드 수정
+     */
+    public FeedPostResDto updateFeedPost(
+            Long feedId,
+            FeedPostUpdateReqDto req,
+            CustomUser principal
+    ) {
+        User user = getUserByPrincipal(principal);
+
+        FeedPost feedPost = feedPostRepository.findByIdAndIsDeletedFalse(feedId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.FEED_NOT_FOUND));
+
+        if (!feedPost.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException(ErrorCode.FEED_FORBIDDEN);
+        }
+
+        feedPost.updateContent(req.getContent());
+
+        return FeedPostResDto.from(feedPost);
+    }
+
+    /**
+     * 피드 전체 조회
+     */
+    public Page<FeedPostResDto> getFeedList(Pageable pageable) {
+        return feedPostRepository.findAllByIsDeletedFalse(pageable)
+                .map(FeedPostResDto::from);
+    }
+
+    /**
+     * 내가 작성한 피드 조회
+     */
+    public Page<FeedPostResDto> getMyFeedList(CustomUser principal, Pageable pageable) {
+        User user = getUserByPrincipal(principal);
+
+        return feedPostRepository
+                .findByUserIdAndIsDeletedFalse(user.getId(), pageable)
+                .map(FeedPostResDto::from);
+    }
+
 
     private User getUserByPrincipal(CustomUser principal) {
         if (principal == null) {
