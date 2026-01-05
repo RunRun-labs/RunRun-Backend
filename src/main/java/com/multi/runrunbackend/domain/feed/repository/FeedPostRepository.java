@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  *
@@ -26,4 +27,6 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
     Optional<FeedPost> findByIdAndIsDeletedFalse(Long id);
 
     boolean existsByRunningResultId(Long runningResultId);
+
+    Page<FeedPost> findByIsDeletedFalseAndUserIdNotIn(Pageable pageable, Set<Long> excludedUserIds);
 }
