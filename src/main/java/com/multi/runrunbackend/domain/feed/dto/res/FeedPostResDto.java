@@ -22,46 +22,48 @@ import java.time.LocalDateTime;
 public class FeedPostResDto {
 
     private Long feedId;
+    private String content;
+    private LocalDateTime createdAt;
 
-    // 러닝 결과
-    private Long runningResultId;
-    private BigDecimal totalDistance;
-    private Integer totalTime;
-    private BigDecimal avgPace;
-    private LocalDateTime startedAt;
-
-    // runningType 노출
-    private RunningType runningType;
-    private String runningTypeDescription;
-
-    // 사용자
+    // 작성자
     private Long userId;
     private String userName;
     private String profileImageUrl;
 
-    // 피드 내용
-    private String content;
+    // 러닝 정보
+    private Long runningResultId;
+    private BigDecimal totalDistance;
+    private Integer totalTime;
+    private BigDecimal avgPace;
+    private RunningType runningType;
+    private String runningTypeDescription;
 
-    private LocalDateTime createdAt;
+    // 좋아요
+    private long likeCount;
+    
 
-    public static FeedPostResDto from(FeedPost feedPost) {
+    public static FeedPostResDto from(
+            FeedPost feedPost,
+            long likeCount
+
+    ) {
         RunningResult r = feedPost.getRunningResult();
         User u = feedPost.getUser();
 
         return FeedPostResDto.builder()
                 .feedId(feedPost.getId())
+                .content(feedPost.getContent())
+                .createdAt(feedPost.getCreatedAt())
+                .userId(u.getId())
+                .userName(u.getName())
+                .profileImageUrl(u.getProfileImageUrl())
                 .runningResultId(r.getId())
                 .totalDistance(r.getTotalDistance())
                 .totalTime(r.getTotalTime())
                 .avgPace(r.getAvgPace())
-                .startedAt(r.getStartedAt())
                 .runningType(r.getRunningType())
                 .runningTypeDescription(r.getRunningType().getDescription())
-                .userId(u.getId())
-                .userName(u.getName())
-                .profileImageUrl(u.getProfileImageUrl())
-                .content(feedPost.getContent())
-                .createdAt(feedPost.getCreatedAt())
+                .likeCount(likeCount)
                 .build();
     }
 }
