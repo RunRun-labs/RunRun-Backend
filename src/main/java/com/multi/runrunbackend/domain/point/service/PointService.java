@@ -260,6 +260,45 @@ public class PointService {
         pointHistoryRepository.save(history);
     }
 
+    /**
+     * 크루 가입 시 포인트 차감 (동시성 제어)
+     */
+    @Transactional
+    public void deductPointsForCrewJoin(Long userId, Integer amount, String reason) {
+        if (amount == null || amount <= 0) {
+            throw new BadRequestException(ErrorCode.INVALID_POINT_AMOUNT);
+        }
+
+        User user = getUserById(userId);
+
+        UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
+
+        if (userPoint.getTotalPoint() < amount) {
+            throw new BusinessException(ErrorCode.INSUFFICIENT_POINT);
+        }
+
+        // FIFO 차감
+        int remainingAmount = amount;
+        List<PointExpiration> activePoints = pointExpirationRepository
+                .findActivePointsByUserIdOrderByEarnedAt(userId);
+
+        for (PointExpiration expiration : activePoints) {
+            if (remainingAmount <= 0) break;
+
+            int deductAmount = Math.min(remainingAmount, expiration.getRemainingPoint());
+            expiration.usePoint(deductAmount);
+            remainingAmount -= deductAmount;
+        }
+
+        userPoint.subtractPoint(amount);
+
+        PointHistory history = PointHistory.toEntity(
+                user, null, "USE", amount, reason
+        );
+        pointHistoryRepository.save(history);
+    }
+
     // ========================================
     // @description : 메서드 모음
     // ========================================
