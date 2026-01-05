@@ -26,7 +26,6 @@ import com.multi.runrunbackend.domain.point.repository.UserPointRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -362,9 +361,8 @@ public class PointService {
     }
 
     /**
-     * 포인트 만료 처리
+     * 포인트 만료 처리 (스케줄러 처리)
      */
-    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void expirePoints() {
         LocalDateTime now = LocalDateTime.now();
