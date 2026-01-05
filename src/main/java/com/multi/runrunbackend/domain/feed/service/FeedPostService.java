@@ -7,17 +7,22 @@ import com.multi.runrunbackend.domain.feed.dto.req.FeedPostCreateReqDto;
 import com.multi.runrunbackend.domain.feed.dto.req.FeedPostUpdateReqDto;
 import com.multi.runrunbackend.domain.feed.dto.res.FeedPostResDto;
 import com.multi.runrunbackend.domain.feed.entity.FeedPost;
+import com.multi.runrunbackend.domain.feed.repository.FeedLikeRepository;
 import com.multi.runrunbackend.domain.feed.repository.FeedPostRepository;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
+import com.multi.runrunbackend.domain.user.repository.UserBlockRepository;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -35,6 +40,8 @@ public class FeedPostService {
     private final UserRepository userRepository;
     private final RunningResultRepository runningResultRepository;
     private final FeedPostRepository feedPostRepository;
+    private final FeedLikeRepository feedLikeRepository;
+    private final UserBlockRepository userBlockRepository;
 
     /**
      * 러닝 결과 피드 공유
@@ -43,15 +50,14 @@ public class FeedPostService {
             CustomUser principal,
             FeedPostCreateReqDto req
     ) {
-
         User user = getUserByPrincipal(principal);
 
-        RunningResult runningResult = runningResultRepository
-                .findByIdAndUserId(req.getRunningResultId(), user.getId())
-                .orElseThrow(() ->
-                        new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND)
-                );
-
+        RunningResult runningResult =
+                runningResultRepository
+                        .findByIdAndUserId(req.getRunningResultId(), user.getId())
+                        .orElseThrow(() ->
+                                new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND)
+                        );
 
         if (runningResult.getRunStatus() != RunStatus.COMPLETED) {
             throw new InvalidRequestException(ErrorCode.RUNNING_RESULT_NOT_COMPLETED);
@@ -69,7 +75,7 @@ public class FeedPostService {
 
         FeedPost saved = feedPostRepository.save(feedPost);
 
-        return FeedPostResDto.from(saved);
+        return FeedPostResDto.from(saved, 0L);
     }
 
     /**
@@ -111,26 +117,72 @@ public class FeedPostService {
 
         feedPost.updateContent(req.getContent());
 
-        return FeedPostResDto.from(feedPost);
+        long likeCount =
+                feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
+
+        return FeedPostResDto.from(feedPost, likeCount);
     }
+
 
     /**
      * 피드 전체 조회
      */
-    public Page<FeedPostResDto> getFeedList(Pageable pageable) {
-        return feedPostRepository.findAllByIsDeletedFalse(pageable)
-                .map(FeedPostResDto::from);
+    @Transactional(readOnly = true)
+    public Page<FeedPostResDto> getFeedList(
+            Pageable pageable,
+            CustomUser principal
+    ) {
+        User me = getUserByPrincipal(principal);
+
+        // 1️⃣ 내가 차단한 유저
+        Set<Long> excludedUserIds = userBlockRepository
+                .findAllByBlockerId(me.getId())
+                .stream()
+                .map(ub -> ub.getBlockedUser().getId())
+                .collect(Collectors.toSet());
+
+        // 2️⃣ 나를 차단한 유저
+        userBlockRepository
+                .findAllByBlockedUserId(me.getId())
+                .stream()
+                .map(ub -> ub.getBlocker().getId())
+                .forEach(excludedUserIds::add);
+
+        Page<FeedPost> feedPosts;
+
+        if (excludedUserIds.isEmpty()) {
+            feedPosts = feedPostRepository.findAllByIsDeletedFalse(pageable);
+        } else {
+            feedPosts = feedPostRepository
+                    .findByIsDeletedFalseAndUserIdNotIn(pageable, excludedUserIds);
+        }
+
+        return feedPosts.map(feedPost -> {
+            long likeCount =
+                    feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
+
+            return FeedPostResDto.from(feedPost, likeCount);
+        });
     }
 
     /**
      * 내가 작성한 피드 조회
      */
-    public Page<FeedPostResDto> getMyFeedList(CustomUser principal, Pageable pageable) {
+    @Transactional(readOnly = true)
+    public Page<FeedPostResDto> getMyFeedList(
+            CustomUser principal,
+            Pageable pageable
+    ) {
         User user = getUserByPrincipal(principal);
 
         return feedPostRepository
                 .findByUserIdAndIsDeletedFalse(user.getId(), pageable)
-                .map(FeedPostResDto::from);
+                .map(feedPost -> {
+                    long likeCount =
+                            feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
+
+                    return FeedPostResDto.from(feedPost, likeCount);
+                });
     }
 
 
