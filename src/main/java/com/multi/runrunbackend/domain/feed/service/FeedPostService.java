@@ -7,6 +7,7 @@ import com.multi.runrunbackend.domain.feed.dto.req.FeedPostCreateReqDto;
 import com.multi.runrunbackend.domain.feed.dto.req.FeedPostUpdateReqDto;
 import com.multi.runrunbackend.domain.feed.dto.res.FeedPostResDto;
 import com.multi.runrunbackend.domain.feed.entity.FeedPost;
+import com.multi.runrunbackend.domain.feed.repository.FeedCommentRepository;
 import com.multi.runrunbackend.domain.feed.repository.FeedLikeRepository;
 import com.multi.runrunbackend.domain.feed.repository.FeedPostRepository;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
@@ -42,6 +43,7 @@ public class FeedPostService {
     private final FeedPostRepository feedPostRepository;
     private final FeedLikeRepository feedLikeRepository;
     private final UserBlockRepository userBlockRepository;
+    private final FeedCommentRepository feedCommentRepository;
 
     /**
      * 러닝 결과 피드 공유
@@ -75,7 +77,7 @@ public class FeedPostService {
 
         FeedPost saved = feedPostRepository.save(feedPost);
 
-        return FeedPostResDto.from(saved, 0L);
+        return FeedPostResDto.from(saved, 0L, 0L);
     }
 
     /**
@@ -119,8 +121,10 @@ public class FeedPostService {
 
         long likeCount =
                 feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
+        long commentCount =
+                feedCommentRepository.countByFeedPostAndIsDeletedFalse(feedPost);
 
-        return FeedPostResDto.from(feedPost, likeCount);
+        return FeedPostResDto.from(feedPost, likeCount, commentCount);
     }
 
 
@@ -160,8 +164,9 @@ public class FeedPostService {
         return feedPosts.map(feedPost -> {
             long likeCount =
                     feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
-
-            return FeedPostResDto.from(feedPost, likeCount);
+            long commentCount =
+                    feedCommentRepository.countByFeedPostAndIsDeletedFalse(feedPost);
+            return FeedPostResDto.from(feedPost, likeCount, commentCount);
         });
     }
 
@@ -180,8 +185,10 @@ public class FeedPostService {
                 .map(feedPost -> {
                     long likeCount =
                             feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
+                    long commentCount =
+                            feedCommentRepository.countByFeedPostAndIsDeletedFalse(feedPost);
 
-                    return FeedPostResDto.from(feedPost, likeCount);
+                    return FeedPostResDto.from(feedPost, likeCount, commentCount);
                 });
     }
 
