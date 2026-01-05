@@ -2,6 +2,9 @@ package com.multi.runrunbackend.domain.point.service;
 
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.point.dto.req.CursorPage;
+import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
 import com.multi.runrunbackend.domain.point.entity.UserPoint;
 import com.multi.runrunbackend.domain.point.repository.PointExpirationRepository;
@@ -91,6 +94,13 @@ public class PointService {
                 .upcomingExpiry(expiryInfo)
                 .summary(summary)
                 .build();
+    }
+
+    /**
+     * 포인트 내역 조회 (커서 기반 페이징)
+     */
+    public CursorPage<PointHistoryListResDto> getPointHistoryList(Long userId, PointHistoryListReqDto reqDto) {
+        return pointHistoryRepository.searchPointHistory(reqDto, userId);
     }
     // ========================================
     // @description : 메서드 모음
