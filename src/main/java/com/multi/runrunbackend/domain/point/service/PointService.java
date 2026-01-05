@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.exception.custom.BadRequestException;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
 import com.multi.runrunbackend.domain.point.dto.req.CursorPage;
@@ -12,6 +13,7 @@ import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
 import com.multi.runrunbackend.domain.point.dto.req.PointUseReqDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointShopListResDto;
 import com.multi.runrunbackend.domain.point.entity.PointExpiration;
 import com.multi.runrunbackend.domain.point.entity.PointHistory;
 import com.multi.runrunbackend.domain.point.entity.PointProduct;
@@ -29,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author : BoKyung
@@ -46,6 +49,7 @@ public class PointService {
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
     private final PointProductRepository pointProductRepository;
+    private final FileStorage fileStorage;
 
     private static final int DAILY_LIMIT = 500;
     private static final double PREMIUM_MULTIPLIER = 1.5;
@@ -299,6 +303,39 @@ public class PointService {
         pointHistoryRepository.save(history);
     }
 
+    /**
+     * 포인트 상점 목록 조회
+     */
+    public PointShopListResDto getPointShop(Long userId) {
+
+        Integer myPoints = userPointRepository.getTotalPointByUserId(userId);
+
+        // 상품 목록 조회
+        List<PointProduct> products = pointProductRepository
+                .findByIsDeletedFalseAndIsAvailableTrue();
+
+        // DTO 변환
+        List<PointShopListResDto.ShopItemDto> productDtos = products.stream()
+                .map(product -> {
+                    // S3 key면 변환, 외부 URL이면 그대로
+                    String imageUrl = resolveImageUrl(product.getProductImageUrl());
+
+                    return PointShopListResDto.ShopItemDto.builder()
+                            .productId(product.getId())
+                            .productName(product.getProductName())
+                            .requiredPoint(product.getRequiredPoint())
+                            .productImageUrl(imageUrl)
+                            .canPurchase(myPoints >= product.getRequiredPoint())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return PointShopListResDto.builder()
+                .myPoints(myPoints)
+                .products(productDtos)
+                .build();
+    }
+
     // ========================================
     // @description : 메서드 모음
     // ========================================
@@ -330,5 +367,19 @@ public class PointService {
     private PointProduct findProductById(Long productId) {
         return pointProductRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
+    }
+
+    /**
+     * 이미지 URL 변환 (S3 key → HTTPS)
+     */
+    private String resolveImageUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return "";
+        }
+        // S3 key면 HTTPS로 변환, 외부 URL이면 그대로
+        if (!imageUrl.startsWith("http")) {
+            return fileStorage.toHttpsUrl(imageUrl);
+        }
+        return imageUrl;
     }
 }
