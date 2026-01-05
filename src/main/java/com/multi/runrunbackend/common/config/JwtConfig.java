@@ -23,68 +23,69 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity(prePostEnabled = true)
 public class JwtConfig {
 
-    private final TokenProvider tokenProvider;
-    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final RedisTemplate<String, String> redisTemplate;
+  private final TokenProvider tokenProvider;
+  private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+  private final RedisTemplate<String, String> redisTemplate;
 
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .sessionManagement(
-                        sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                ).authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/auth/**",
-                                "/login",
-                                "/signup",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/public/**",
-                                "/error",
-                                "/img/**",
-                                "/chat/**",
-                                "/ws/**",
-                                "/myPage/**",
-                                "/friends/**",
-                                "/profile/**",
-                                "/course_auto/**",
-                                "/files/**",
-                                "/challenge/**",
-                                "/course",
-                                "/courseCreate",
-                                "/courseDetail/**",
-                                "/courseUpdate/**",
-                                "/course_manual/**",
-                                "/crews/new",
-                                "/crews/**",
-                                "/match/**",
-                                "/recruit/**",
-                                "/setting/**",
-                                "/terms/**",
-                                "/tts-test",
-                                "/membership/**"
-                        ).permitAll()
-                        .requestMatchers(
-                                PathRequest.toStaticResources().atCommonLocations()
-                        ).permitAll()
-                        .anyRequest().authenticated()
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.csrf(AbstractHttpConfigurer::disable)
+        .formLogin(AbstractHttpConfigurer::disable)
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .sessionManagement(
+            sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        ).authorizeHttpRequests(auth -> auth
+            .requestMatchers(
+                "/auth/**",
+                "/login",
+                "/signup",
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/public/**",
+                "/error",
+                "/img/**",
+                "/chat/**",
+                "/ws/**",
+                "/myPage/**",
+                "/friends/**",
+                "/profile/**",
+                "/course_auto/**",
+                "/files/**",
+                "/challenge/**",
+                "/course",
+                "/courseCreate",
+                "/courseDetail/**",
+                "/courseUpdate/**",
+                "/course_manual/**",
+                "/crews/new",
+                "/crews/**",
+                "/match/**",
+                "/recruit/**",
+                "/setting/**",
+                "/terms/**",
+                "/tts-test",
+                "/membership/**",
+                "/notification"
+            ).permitAll()
+            .requestMatchers(
+                PathRequest.toStaticResources().atCommonLocations()
+            ).permitAll()
+            .anyRequest().authenticated()
 
-                ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                        UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                        exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                                .accessDeniedHandler(jwtAccessDeniedHandler));
+        ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
+            UsernamePasswordAuthenticationFilter.class).exceptionHandling(
+            exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .accessDeniedHandler(jwtAccessDeniedHandler));
 
-        return http.build();
+    return http.build();
 
-    }
+  }
 
 }
