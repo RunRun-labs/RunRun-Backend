@@ -26,6 +26,7 @@ import com.multi.runrunbackend.domain.point.repository.UserPointRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -358,6 +359,26 @@ public class PointService {
                 .myPoints(myPoints)
                 .canPurchase(myPoints >= product.getRequiredPoint() && product.getIsAvailable())
                 .build();
+    }
+
+    /**
+     * 포인트 만료 처리
+     */
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void expirePoints() {
+        LocalDateTime now = LocalDateTime.now();
+        List<PointExpiration> expiredPoints = pointExpirationRepository.findExpiredPoints(now);
+
+        for (PointExpiration expiration : expiredPoints) {
+            if (expiration.getRemainingPoint() > 0) {
+                UserPoint userPoint = userPointRepository.findByUserId(expiration.getUser().getId())
+                        .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
+
+                userPoint.subtractPoint(expiration.getRemainingPoint());
+                expiration.expire();
+            }
+        }
     }
 
     // ========================================
