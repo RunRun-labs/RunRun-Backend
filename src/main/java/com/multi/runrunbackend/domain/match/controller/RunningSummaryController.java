@@ -8,10 +8,7 @@ import com.multi.runrunbackend.domain.match.service.RunningSummaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  *
@@ -65,4 +62,33 @@ public class RunningSummaryController {
                 ApiResponse.success("주간 러닝 요약 조회 성공", resDto)
         );
     }
+
+    /**
+     * 타인 주간 러닝 요약
+     */
+    @GetMapping("/weekly/{userId}")
+    public ResponseEntity<ApiResponse<WeeklyRunningSummaryResDto>> weeklyByUser(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUser principal,
+            @RequestParam(defaultValue = "0") int weekOffset
+    ) {
+        RunningSummaryService.WeeklySummaryResult result =
+                runningSummaryService.getWeeklySummaryByUser(
+                        userId,
+                        principal,
+                        weekOffset
+                );
+
+        WeeklyRunningSummaryResDto resDto =
+                WeeklyRunningSummaryResDto.from(
+                        result.dailyDistances(),
+                        result.totalDistance(),
+                        result.totalTime()
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success("주간 러닝 요약 조회 성공", resDto)
+        );
+    }
+
 }
