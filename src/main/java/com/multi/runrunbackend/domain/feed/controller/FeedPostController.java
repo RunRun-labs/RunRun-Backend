@@ -85,9 +85,12 @@ public class FeedPostController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<FeedPostResDto>>> getFeedList(
             @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable
+            Pageable pageable,
+            @AuthenticationPrincipal CustomUser principal
     ) {
-        Page<FeedPostResDto> feeds = feedPostService.getFeedList(pageable);
+        Page<FeedPostResDto> feeds =
+                feedPostService.getFeedList(pageable, principal);
+
         return ResponseEntity.ok(
                 ApiResponse.success("피드 목록 조회 성공", feeds)
         );
