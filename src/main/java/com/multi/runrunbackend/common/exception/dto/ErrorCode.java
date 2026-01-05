@@ -91,7 +91,6 @@ public enum ErrorCode {
 
     /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
-
             HttpStatus.INTERNAL_SERVER_ERROR,
             "F001",
             "파일 업로드에 실패했습니다."
@@ -115,16 +114,31 @@ public enum ErrorCode {
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F005", "파일 삭제에 실패했습니다."),
 
     /*===== 피드 관련=====*/
+    FEED_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "FEED_001",
+            "피드를 찾을 수 없습니다."
+    ),
+    FEED_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "FEED_002",
+            "해당 피드에 대한 권한이 없습니다."
+    ),
     RUNNING_RESULT_NOT_COMPLETED(
             HttpStatus.BAD_REQUEST,
-            "P001",
+            "FEED_003",
             "완료되지 않은 러닝은 피드에 공유할 수 없습니다."
     ),
-
     FEED_POST_ALREADY_EXISTS(
             HttpStatus.CONFLICT,
-            "P002",
+            "FEED_004",
             "이미 피드에 공유된 러닝 결과입니다."
+
+    ),
+    FEED_ALREADY_DELETED(
+            HttpStatus.BAD_REQUEST,
+            "FEED_005",
+            "이미 삭제된 피드입니다."
     ),
     /* ===== 챌린지 ===== */
     ALREADY_JOINED(
