@@ -2,9 +2,10 @@ package com.multi.runrunbackend.domain.feed.repository;
 
 import com.multi.runrunbackend.domain.feed.entity.FeedComment;
 import com.multi.runrunbackend.domain.feed.entity.FeedPost;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -16,11 +17,14 @@ import java.util.Optional;
  */
 public interface FeedCommentRepository extends JpaRepository<FeedComment, Long> {
 
-    List<FeedComment> findByFeedPostIdAndIsDeletedFalse(Long feedPostId);
-
     Optional<FeedComment> findByIdAndIsDeletedFalse(Long id);
 
-    long countByFeedPostIdAndIsDeletedFalse(Long feedPostId);
 
     long countByFeedPostAndIsDeletedFalse(FeedPost feedPost);
+
+    Page<FeedComment> findByFeedPostAndIsDeletedFalse(
+            FeedPost feedPost,
+            Pageable pageable
+    );
+
 }

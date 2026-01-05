@@ -6,6 +6,7 @@ import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.feed.dto.req.FeedCommentCreateReqDto;
+import com.multi.runrunbackend.domain.feed.dto.res.FeedCommentResDto;
 import com.multi.runrunbackend.domain.feed.entity.FeedComment;
 import com.multi.runrunbackend.domain.feed.entity.FeedPost;
 import com.multi.runrunbackend.domain.feed.repository.FeedCommentRepository;
@@ -13,13 +14,15 @@ import com.multi.runrunbackend.domain.feed.repository.FeedPostRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
  * @author : kimyongwon
- * @description : 피드 댓글 등록/삭제 서비스
+ * @description : 피드 댓글 등록/삭제/조회 서비스
  * @filename : FeedCommentService
  * @since : 26. 1. 5. 오후 1:03 월요일
  */
@@ -71,6 +74,22 @@ public class FeedCommentService {
         }
 
         comment.delete();
+    }
+
+    /**
+     * 댓글 목록 조회
+     */
+    public Page<FeedCommentResDto> getComments(
+            Long feedId,
+            Pageable pageable
+    ) {
+        FeedPost feedPost = feedPostRepository
+                .findByIdAndIsDeletedFalse(feedId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.FEED_NOT_FOUND));
+
+        return feedCommentRepository
+                .findByFeedPostAndIsDeletedFalse(feedPost, pageable)
+                .map(FeedCommentResDto::from);
     }
 
     /* 공통 */
