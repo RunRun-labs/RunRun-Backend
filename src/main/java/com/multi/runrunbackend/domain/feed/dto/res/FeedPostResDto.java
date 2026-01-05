@@ -40,11 +40,14 @@ public class FeedPostResDto {
 
     // 좋아요
     private long likeCount;
-    
+
+    //댓글
+    private long commentCount;
 
     public static FeedPostResDto from(
             FeedPost feedPost,
-            long likeCount
+            long likeCount,
+            long commentCount
 
     ) {
         RunningResult r = feedPost.getRunningResult();
@@ -64,6 +67,7 @@ public class FeedPostResDto {
                 .runningType(r.getRunningType())
                 .runningTypeDescription(r.getRunningType().getDescription())
                 .likeCount(likeCount)
+                .commentCount(commentCount)
                 .build();
     }
 }
