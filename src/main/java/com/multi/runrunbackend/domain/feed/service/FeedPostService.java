@@ -1,5 +1,7 @@
 package com.multi.runrunbackend.domain.feed.service;
 
+import com.multi.runrunbackend.common.exception.custom.DuplicateException;
+import com.multi.runrunbackend.common.exception.custom.InvalidRequestException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
@@ -52,11 +54,11 @@ public class FeedPostService {
 
 
         if (runningResult.getRunStatus() != RunStatus.COMPLETED) {
-            throw new IllegalStateException("완료된 러닝만 피드에 공유할 수 있습니다.");
+            throw new InvalidRequestException(ErrorCode.RUNNING_RESULT_NOT_COMPLETED);
         }
 
         if (feedPostRepository.existsByRunningResultId(runningResult.getId())) {
-            throw new IllegalStateException("이미 피드에 공유된 러닝 결과입니다.");
+            throw new DuplicateException(ErrorCode.FEED_POST_ALREADY_EXISTS);
         }
 
         FeedPost feedPost = FeedPost.create(

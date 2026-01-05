@@ -114,6 +114,18 @@ public enum ErrorCode {
     ),
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F005", "파일 삭제에 실패했습니다."),
 
+    /*===== 피드 관련=====*/
+    RUNNING_RESULT_NOT_COMPLETED(
+            HttpStatus.BAD_REQUEST,
+            "P001",
+            "완료되지 않은 러닝은 피드에 공유할 수 없습니다."
+    ),
+
+    FEED_POST_ALREADY_EXISTS(
+            HttpStatus.CONFLICT,
+            "P002",
+            "이미 피드에 공유된 러닝 결과입니다."
+    ),
     /* ===== 챌린지 ===== */
     ALREADY_JOINED(
             HttpStatus.CONFLICT,
@@ -267,13 +279,13 @@ public enum ErrorCode {
     AGE_RESTRICTION(HttpStatus.BAD_REQUEST, "R015", "참여 가능 나이가 아닙니다."),
     GENDER_RESTRICTION(HttpStatus.BAD_REQUEST, "R016", "참여 가능 성별이 아닙니다."),
     BIRTHDATE_REQUIRED(HttpStatus.BAD_REQUEST, "R017", "권한이 없는 나이대 입니다."),
-  /*=====매칭=====*/
-  RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "러닝 결과를 찾을 수 없습니다."),
-  /*===== 배틀 결과 =====*/
-  BATTLE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀 결과를 찾을 수 없습니다."),
-  DISTANCE_REQUIRED(HttpStatus.BAD_REQUEST, "M002", "코스 선택 안할 시 거리 선택은 필수 입니다."),
-  INVALID_DISTANCE_TYPE(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 거리 타입입니다."),
-  /*===== 세션/채팅 =====*/
+    /*=====매칭=====*/
+    RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "러닝 결과를 찾을 수 없습니다."),
+    /*===== 배틀 결과 =====*/
+    BATTLE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀 결과를 찾을 수 없습니다."),
+    DISTANCE_REQUIRED(HttpStatus.BAD_REQUEST, "M002", "코스 선택 안할 시 거리 선택은 필수 입니다."),
+    INVALID_DISTANCE_TYPE(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 거리 타입입니다."),
+    /*===== 세션/채팅 =====*/
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
     SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
     NOT_SESSION_HOST(HttpStatus.FORBIDDEN, "SES_003", "방장만 실행할 수 있습니다."),
