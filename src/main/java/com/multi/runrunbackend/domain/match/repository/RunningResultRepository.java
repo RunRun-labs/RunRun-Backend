@@ -91,12 +91,12 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             LocalDateTime end
     );
 
-    /*
-     * 마이페이지 러닝 기록 조회
+
+    /**
+     * 사용자의 완료된 러닝 기록 조회
      */
-    Slice<RunningResult> findByUserIdAndRunStatus(
-            Long userId,
-            RunStatus runStatus,
+    Slice<RunningResult> findCompletedByUser(
+            User user,
             Pageable pageable
     );
 }
