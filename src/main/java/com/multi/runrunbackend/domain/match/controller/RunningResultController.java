@@ -5,11 +5,13 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
 import com.multi.runrunbackend.domain.match.service.RunningResultService;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,11 +36,16 @@ public class RunningResultController {
   public ResponseEntity<ApiResponse<Slice<RunningRecordResDto>>> getMyResults(
       @AuthenticationPrincipal CustomUser principal,
       @RequestParam(required = false, defaultValue = "ALL") RunningResultFilterType filter,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
       @PageableDefault(size = 10, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable
   ) {
-    Slice<RunningRecordResDto> results = runningResultService.getMyRunningResults(principal, filter,
+    Slice<RunningRecordResDto> results = runningResultService.getMyRunningResults(principal,
+        filter,
+        startDate,
+        endDate,
         pageable);
-    return ResponseEntity.ok(ApiResponse.success("기록 조회 성공", results));
+    return ResponseEntity.ok(ApiResponse.success("내 러닝 기록 조회 성공", results));
   }
 
 }
