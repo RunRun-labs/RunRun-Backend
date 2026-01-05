@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/feeds/{feedId}/comments")
+@RequestMapping("/api/feed/{feedId}/comments")
 public class FeedCommentController {
 
     private final FeedCommentService feedCommentService;
