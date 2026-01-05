@@ -13,6 +13,7 @@ import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
 import com.multi.runrunbackend.domain.point.dto.req.PointUseReqDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointShopDetailResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointShopListResDto;
 import com.multi.runrunbackend.domain.point.entity.PointExpiration;
 import com.multi.runrunbackend.domain.point.entity.PointHistory;
@@ -333,6 +334,29 @@ public class PointService {
         return PointShopListResDto.builder()
                 .myPoints(myPoints)
                 .products(productDtos)
+                .build();
+    }
+
+    /**
+     * 포인트 상품 상세 조회
+     */
+    public PointShopDetailResDto getPointShopDetail(Long userId, Long productId) {
+
+        PointProduct product = findProductById(productId);
+        Integer myPoints = userPointRepository.getTotalPointByUserId(userId);
+
+        // S3 URL 변환
+        String imageUrl = resolveImageUrl(product.getProductImageUrl());
+
+        return PointShopDetailResDto.builder()
+                .productId(product.getId())
+                .productName(product.getProductName())
+                .productDescription(product.getProductDescription())
+                .requiredPoint(product.getRequiredPoint())
+                .productImageUrl(imageUrl)
+                .isAvailable(product.getIsAvailable())
+                .myPoints(myPoints)
+                .canPurchase(myPoints >= product.getRequiredPoint() && product.getIsAvailable())
                 .build();
     }
 
