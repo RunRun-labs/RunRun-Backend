@@ -178,7 +178,7 @@ public class PointService {
         User user = getUserById(userId);
 
         // UserPoint 적립
-        UserPoint userPoint = userPointRepository.findByUserId(userId)
+        UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
                 .orElseGet(() -> {
                     UserPoint newPoint = UserPoint.toEntity(user);
                     return userPointRepository.save(newPoint);
@@ -370,7 +370,7 @@ public class PointService {
 
         for (PointExpiration expiration : expiredPoints) {
             if (expiration.getRemainingPoint() > 0) {
-                UserPoint userPoint = userPointRepository.findByUserId(expiration.getUser().getId())
+                UserPoint userPoint = userPointRepository.findByUserIdWithLock(expiration.getUser().getId())
                         .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
 
                 userPoint.subtractPoint(expiration.getRemainingPoint());
