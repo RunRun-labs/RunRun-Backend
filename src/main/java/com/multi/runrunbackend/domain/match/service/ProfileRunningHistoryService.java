@@ -5,7 +5,7 @@ import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
-import com.multi.runrunbackend.domain.match.dto.res.MyRunningRecordResDto;
+import com.multi.runrunbackend.domain.match.dto.res.ProfileRunningHistoryResDto;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
@@ -19,18 +19,18 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author : kimyongwon
  * @description : 마이페이지 - 내 러닝 기록 조회 Service
- * @filename : MyRunningRecordService
+ * @filename : ProfileRunningHistoryService
  * @since : 26. 1. 4. 오후 7:29 일요일
  */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class MyRunningRecordService {
+public class ProfileRunningHistoryService {
 
     private final RunningResultRepository runningResultRepository;
     private final UserRepository userRepository;
 
-    public Slice<MyRunningRecordResDto> getMyRunningRecords(
+    public Slice<ProfileRunningHistoryResDto> getMyRunningRecords(
             CustomUser principal,
             Pageable pageable
     ) {
@@ -42,7 +42,7 @@ public class MyRunningRecordService {
                         RunStatus.COMPLETED,
                         pageable
                 )
-                .map(MyRunningRecordResDto::from);
+                .map(ProfileRunningHistoryResDto::from);
     }
 
     private User getUserByPrincipal(CustomUser principal) {

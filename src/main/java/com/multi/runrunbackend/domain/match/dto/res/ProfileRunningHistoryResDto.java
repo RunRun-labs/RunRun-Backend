@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  */
 @Getter
 @Builder
-public class MyRunningRecordResDto {
+public class ProfileRunningHistoryResDto {
 
     private Long runningResultId;
 
@@ -40,10 +40,10 @@ public class MyRunningRecordResDto {
     private String courseTitle;
     private String courseThumbnailUrl;
 
-    public static MyRunningRecordResDto from(RunningResult r) {
+    public static ProfileRunningHistoryResDto from(RunningResult r) {
         Course c = r.getCourse();
 
-        return MyRunningRecordResDto.builder()
+        return ProfileRunningHistoryResDto.builder()
                 .runningResultId(r.getId())
                 .startedAt(r.getStartedAt())
                 .totalDistanceKm(r.getTotalDistance())
