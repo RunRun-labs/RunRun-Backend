@@ -140,6 +140,16 @@ public enum ErrorCode {
             "FEED_005",
             "이미 삭제된 피드입니다."
     ),
+    FEED_ALREADY_LIKED(
+            HttpStatus.CONFLICT,
+            "FEED_006",
+            "이미 좋아요한 피드입니다."
+    ),
+    FEED_NOT_LIKED(
+            HttpStatus.NOT_FOUND,
+            "FEED_007",
+            "해당 피드 좋아요 내역을 찾을 수 없습니다."
+    ),
     /* ===== 챌린지 ===== */
     ALREADY_JOINED(
             HttpStatus.CONFLICT,
