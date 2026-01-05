@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.crew.constant.CrewRecruitStatus;
 import com.multi.runrunbackend.domain.crew.constant.CrewRole;
@@ -47,6 +48,7 @@ public class CrewJoinService {
     private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
     private final PointService pointService;
+    private final FileStorage fileStorage;
 
     private static final int CREW_JOIN_POINT = 100;
 
@@ -287,14 +289,39 @@ public class CrewJoinService {
         List<Object[]> results = crewUserRepository
                 .findAllWithParticipationCountAndLastActivity(crewId);
 
-        // DTO 변환
+        // DTO 변환 + S3 URL 변환
         return results.stream()
                 .map(result -> {
                     CrewUser crewUser = (CrewUser) result[0];
                     Long participationCount = (Long) result[1];
                     LocalDateTime lastActivityDate = (LocalDateTime) result[2];
 
-                    return CrewUserResDto.fromEntity(crewUser, participationCount.intValue(), lastActivityDate);
+                    // DTO 생성
+                    CrewUserResDto dto = CrewUserResDto.fromEntity(
+                            crewUser,
+                            participationCount.intValue(),
+                            lastActivityDate
+                    );
+
+                    // S3 URL 변환
+                    String profileImageUrl = dto.getProfileImageUrl();
+                    if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                        // S3 key면 HTTPS URL로 변환
+                        if (!profileImageUrl.startsWith("http")) {
+                            profileImageUrl = fileStorage.toHttpsUrl(profileImageUrl);
+                        }
+                    }
+
+                    // 변환된 URL로 새 DTO 생성
+                    return CrewUserResDto.builder()
+                            .userId(dto.getUserId())
+                            .userName(dto.getUserName())
+                            .profileImageUrl(profileImageUrl)
+                            .role(dto.getRole())
+                            .createdAt(dto.getCreatedAt())
+                            .participationCount(dto.getParticipationCount())
+                            .lastActivityDate(dto.getLastActivityDate())
+                            .build();
                 })
                 .toList();
 
