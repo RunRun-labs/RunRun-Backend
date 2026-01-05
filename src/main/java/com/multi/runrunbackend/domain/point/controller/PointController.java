@@ -5,6 +5,7 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.point.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.point.dto.req.PointEarnReqDto;
 import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
+import com.multi.runrunbackend.domain.point.dto.req.PointUseReqDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
 import com.multi.runrunbackend.domain.point.service.PointService;
@@ -53,7 +54,6 @@ public class PointController {
         return ResponseEntity.ok(ApiResponse.success("포인트 내역 조회 성공", response));
     }
 
-
     @PostMapping("/earn")
     public ResponseEntity<ApiResponse<Void>> earnPoints(
             @AuthenticationPrincipal CustomUser principal,
@@ -61,6 +61,15 @@ public class PointController {
     ) {
         pointService.earnPoints(principal.getUserId(), requestDto);
         return ResponseEntity.ok(ApiResponse.successNoData("포인트 적립 성공"));
+    }
+
+    @PostMapping("/use")
+    public ResponseEntity<ApiResponse<Void>> usePoints(
+            @AuthenticationPrincipal CustomUser principal,
+            @Valid @RequestBody PointUseReqDto requestDto
+    ) {
+        pointService.usePoints(principal.getUserId(), requestDto);
+        return ResponseEntity.ok(ApiResponse.successNoData("포인트 사용 성공"));
     }
 
 }
