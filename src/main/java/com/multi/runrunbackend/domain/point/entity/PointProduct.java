@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.point.entity;
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * @author : BoKyung
@@ -16,6 +17,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class PointProduct extends BaseEntity {
 
     @Id
@@ -54,13 +56,4 @@ public class PointProduct extends BaseEntity {
                 .build();
     }
 
-    /**
-     * @description : updateAvailability - 상품 판매 가능 여부 변경
-     * @filename : PointProduct
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
-     */
-    public void updateAvailability(Boolean isAvailable) {
-        this.isAvailable = isAvailable;
-    }
 }
