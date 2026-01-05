@@ -1,11 +1,13 @@
 package com.multi.runrunbackend.domain.match.service;
 
+import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
+import com.multi.runrunbackend.domain.user.repository.UserBlockRepository;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class RunningSummaryService {
 
     private final UserRepository userRepository;
     private final RunningResultRepository runningResultRepository;
+    private final UserBlockRepository userBlockRepository;
 
     /**
      * 오늘 러닝 요약
@@ -64,14 +67,45 @@ public class RunningSummaryService {
     }
 
     /**
-     * 주간 러닝 요약
+     * 내 주간 러닝 요약
      */
     public WeeklySummaryResult getWeeklySummary(
             CustomUser principal,
             int weekOffset
     ) {
-        User user = getUserByPrincipal(principal);
+        User me = getUserByPrincipal(principal);
+        return getWeeklySummaryInternal(me, weekOffset);
+    }
 
+    /**
+     * 타인 주간 러닝 요약
+     */
+    public WeeklySummaryResult getWeeklySummaryByUser(
+            Long userId,
+            CustomUser principal,
+            int weekOffset
+    ) {
+        User me = getUserByPrincipal(principal);
+
+        User target = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        // 🔒 차단 관계 확인
+        if (userBlockRepository.existsByBlockerAndBlockedUser(me, target)
+                || userBlockRepository.existsByBlockerAndBlockedUser(target, me)) {
+            throw new ForbiddenException(ErrorCode.USER_BLOCKED);
+        }
+
+        return getWeeklySummaryInternal(target, weekOffset);
+    }
+
+    /**
+     * 공통 주간 집계 로직
+     */
+    private WeeklySummaryResult getWeeklySummaryInternal(
+            User user,
+            int weekOffset
+    ) {
         LocalDate monday =
                 LocalDate.now()
                         .with(DayOfWeek.MONDAY)
@@ -82,7 +116,9 @@ public class RunningSummaryService {
 
         List<Object[]> rows =
                 runningResultRepository.findWeeklySummary(
-                        user.getId(), start, end
+                        user.getId(),
+                        start,
+                        end
                 );
 
         List<BigDecimal> dailyDistances =
@@ -92,11 +128,11 @@ public class RunningSummaryService {
         int totalTime = 0;
 
         for (Object[] row : rows) {
-            int dayOfWeek = ((Number) row[0]).intValue(); // 1=일
+            int dayOfWeek = ((Number) row[0]).intValue(); // 0=일
             BigDecimal dist = (BigDecimal) row[1];
             int time = ((Number) row[2]).intValue();
 
-            int index = (dayOfWeek + 5) % 7; // 월=0
+            int index = (dayOfWeek + 6) % 7; // 월=0
             dailyDistances.set(index, dist);
 
             totalDistance = totalDistance.add(dist);
@@ -109,7 +145,6 @@ public class RunningSummaryService {
                 totalTime
         );
     }
-
 
     private int calculateCalories(BigDecimal distanceKm, Integer weightKg) {
         if (distanceKm == null || weightKg == null) return 0;
