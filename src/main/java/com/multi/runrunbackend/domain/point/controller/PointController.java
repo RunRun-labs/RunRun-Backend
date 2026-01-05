@@ -1,0 +1,36 @@
+package com.multi.runrunbackend.domain.point.controller;
+
+import com.multi.runrunbackend.common.response.ApiResponse;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
+import com.multi.runrunbackend.domain.point.service.PointService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * @author : BoKyung
+ * @description : 포인트 컨트롤러
+ * @filename : PointController
+ * @since : 2026. 01. 02. 금요일
+ */
+@RestController
+@RequestMapping("/api/points")
+@RequiredArgsConstructor
+public class PointController {
+
+    private final PointService pointService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PointMainResDto>> getPointMain(
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        PointMainResDto response = pointService.getPointMain(principal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("포인트 메인 조회 성공", response));
+    }
+
+
+}
