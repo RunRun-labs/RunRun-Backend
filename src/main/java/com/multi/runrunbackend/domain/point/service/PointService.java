@@ -9,13 +9,16 @@ import com.multi.runrunbackend.domain.membership.repository.MembershipRepository
 import com.multi.runrunbackend.domain.point.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.point.dto.req.PointEarnReqDto;
 import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
+import com.multi.runrunbackend.domain.point.dto.req.PointUseReqDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
 import com.multi.runrunbackend.domain.point.entity.PointExpiration;
 import com.multi.runrunbackend.domain.point.entity.PointHistory;
+import com.multi.runrunbackend.domain.point.entity.PointProduct;
 import com.multi.runrunbackend.domain.point.entity.UserPoint;
 import com.multi.runrunbackend.domain.point.repository.PointExpirationRepository;
 import com.multi.runrunbackend.domain.point.repository.PointHistoryRepository;
+import com.multi.runrunbackend.domain.point.repository.PointProductRepository;
 import com.multi.runrunbackend.domain.point.repository.UserPointRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
@@ -42,6 +45,7 @@ public class PointService {
     private final PointExpirationRepository pointExpirationRepository;
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
+    private final PointProductRepository pointProductRepository;
 
     private static final int DAILY_LIMIT = 500;
     private static final double PREMIUM_MULTIPLIER = 1.5;
@@ -188,6 +192,74 @@ public class PointService {
         pointExpirationRepository.save(expiration);
     }
 
+    /**
+     * 포인트 사용 (FIFO + 동시성 제어)
+     */
+    @Transactional
+    public void usePoints(Long userId, PointUseReqDto requestDto) {
+        // 금액 유효성 검증
+        if (requestDto.getAmount() == null || requestDto.getAmount() <= 0) {
+            throw new BadRequestException(ErrorCode.INVALID_POINT_AMOUNT);
+        }
+
+        if (requestDto.getReason() == null || requestDto.getReason().isBlank()) {
+            throw new BadRequestException(ErrorCode.REASON_REQUIRED);
+        }
+
+        // 유효한 reason인지 검증
+        List<String> validReasons = List.of(
+                "CREW_JOIN", "PRODUCT_EXCHANGE",
+                "MEMBERSHIP_TRIAL", "LUCKY_BOX"
+        );
+
+        if (!validReasons.contains(requestDto.getReason())) {
+            throw new BadRequestException(ErrorCode.INVALID_INPUT);
+        }
+
+        User user = getUserById(userId);
+
+        // 동시성 제어 - 비관적 락
+        UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
+
+        // 잔액 확인
+        if (userPoint.getTotalPoint() < requestDto.getAmount()) {
+            throw new BusinessException(ErrorCode.INSUFFICIENT_POINT);
+        }
+
+        // FIFO 순서로 포인트 차감
+        int remainingAmount = requestDto.getAmount();
+        List<PointExpiration> activePoints = pointExpirationRepository
+                .findActivePointsByUserIdOrderByEarnedAt(userId);
+
+        for (PointExpiration expiration : activePoints) {
+            if (remainingAmount <= 0) break;
+
+            int deductAmount = Math.min(remainingAmount, expiration.getRemainingPoint());
+            expiration.usePoint(deductAmount);
+            remainingAmount -= deductAmount;
+        }
+
+        // UserPoint 차감
+        userPoint.subtractPoint(requestDto.getAmount());
+
+        // PointHistory 저장
+        PointProduct pointProduct = null;
+        if (requestDto.getPointProductId() != null) {
+            pointProduct = findProductById(requestDto.getPointProductId());
+
+            // 상품이 판매 가능한지 확인
+            if (!pointProduct.getIsAvailable()) {
+                throw new BusinessException(ErrorCode.POINT_PRODUCT_NOT_AVAILABLE);
+            }
+        }
+
+        PointHistory history = PointHistory.toEntity(
+                user, pointProduct, "USE", requestDto.getAmount(), requestDto.getReason()
+        );
+        pointHistoryRepository.save(history);
+    }
+
     // ========================================
     // @description : 메서드 모음
     // ========================================
@@ -211,5 +283,13 @@ public class PointService {
         return membershipRepository.findByUser(user)
                 .map(membership -> membership.getMembershipStatus() == MembershipStatus.ACTIVE)
                 .orElse(false);
+    }
+
+    /**
+     * 상품 조회
+     */
+    private PointProduct findProductById(Long productId) {
+        return pointProductRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
     }
 }
