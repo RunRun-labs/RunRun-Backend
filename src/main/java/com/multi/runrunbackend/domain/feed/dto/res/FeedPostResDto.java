@@ -5,6 +5,7 @@ import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.user.entity.User;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
  * @filename : FeedPostResDto
  * @since : 26. 1. 3. 오후 9:03 토요일
  */
+@Getter
 @Builder
 public class FeedPostResDto {
 
