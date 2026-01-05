@@ -90,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (backBtn) {
         backBtn.addEventListener("click", () => {
+            // 수정 화면의 상위는 상세 화면
             window.location.href = `/challenge/${challengeId}`;
         });
     }
@@ -381,7 +382,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: formData,
             });
 
-            if (!response.ok) throw new Error("수정 실패");
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "수정 실패");
+            }
 
             setMessage("챌린지가 수정되었습니다!", "success");
             setTimeout(() => {
