@@ -17,6 +17,7 @@ import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import com.multi.runrunbackend.domain.crew.repository.CrewJoinRequestRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
+import com.multi.runrunbackend.domain.point.service.PointService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,9 @@ public class CrewJoinService {
     private final CrewUserRepository crewUserRepository;
     private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
+    private final PointService pointService;
+
+    private static final int CREW_JOIN_POINT = 100;
 
     /**
      * @param crewId    가입 신청할 크루 ID
@@ -151,7 +155,7 @@ public class CrewJoinService {
      * @param crewId        크루 ID
      * @param principal     가입 신청하는 회원
      * @param joinRequestId 처리할 가입 신청 ID
-     * @description : 크루장이 가입 신청을 승인 (승인 시 크루원으로 추가)
+     * @description : 크루장이 가입 신청을 승인 (승인 시 크루원으로 추가) -> 100P 차감
      */
     @Transactional
     public void approveJoinRequest(Long crewId, CustomUser principal, Long joinRequestId) {
@@ -176,6 +180,13 @@ public class CrewJoinService {
         // 승인 시점에 다시 1인 1크루 정책 확인 (동시성 이슈 방지)
         validateNotInAnotherCrew(joinRequest.getUser().getId());
 
+        // 포인트 차감(100p)
+        pointService.deductPointsForCrewJoin(
+                joinRequest.getUser().getId(),
+                CREW_JOIN_POINT,
+                "CREW_JOIN"
+        );
+
         // 승인 처리
         joinRequest.approve();
 
@@ -195,7 +206,7 @@ public class CrewJoinService {
      * @param crewId        크루 ID
      * @param principal     가입 신청하는 회원
      * @param joinRequestId 거절할 가입 신청 ID
-     * @description : 크루장이 가입 신청을 거절 TODO (포인트 구현 시, 포인트가 환불 예정)
+     * @description : 크루장이 가입 신청을 거절
      */
     @Transactional
     public void rejectJoinRequest(Long crewId, CustomUser principal, Long joinRequestId) {
