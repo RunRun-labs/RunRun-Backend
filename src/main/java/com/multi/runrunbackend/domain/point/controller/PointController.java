@@ -3,17 +3,16 @@ package com.multi.runrunbackend.domain.point.controller;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.point.dto.req.CursorPage;
+import com.multi.runrunbackend.domain.point.dto.req.PointEarnReqDto;
 import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
 import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
 import com.multi.runrunbackend.domain.point.service.PointService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author : BoKyung
@@ -52,6 +51,16 @@ public class PointController {
                 principal.getUserId(), reqDto
         );
         return ResponseEntity.ok(ApiResponse.success("포인트 내역 조회 성공", response));
+    }
+
+
+    @PostMapping("/earn")
+    public ResponseEntity<ApiResponse<Void>> earnPoints(
+            @AuthenticationPrincipal CustomUser principal,
+            @Valid @RequestBody PointEarnReqDto requestDto
+    ) {
+        pointService.earnPoints(principal.getUserId(), requestDto);
+        return ResponseEntity.ok(ApiResponse.successNoData("포인트 적립 성공"));
     }
 
 }
