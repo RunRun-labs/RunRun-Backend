@@ -88,7 +88,19 @@ public enum ErrorCode {
     MEMBERSHIP_REQUIRED(HttpStatus.FORBIDDEN, "M004", "프리미엄 멤버십이 필요합니다."),
     MEMBERSHIP_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "M005", "활성화된 멤버십이 아닙니다."),
     MEMBERSHIP_NOT_CANCELED(HttpStatus.BAD_REQUEST, "M006", "해지 신청 상태가 아닙니다."),
-
+    // ========== Point (포인트) ==========
+    POINT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "포인트 정보를 찾을 수 없습니다"),
+    INSUFFICIENT_POINT(HttpStatus.BAD_REQUEST, "P002", "포인트가 부족합니다"),
+    DAILY_POINT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "P003", "하루 최대 500P까지만 적립 가능합니다"),
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "포인트 상품을 찾을 수 없습니다"),
+    POINT_PRODUCT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "P005", "현재 구매할 수 없는 상품입니다"),
+    POINT_EXPIRATION_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "포인트 유효기간 정보를 찾을 수 없습니다"),
+    INVALID_POINT_AMOUNT(HttpStatus.BAD_REQUEST, "P007", "유효하지 않은 포인트 금액입니다"),
+    POINT_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "P008", "포인트 내역을 찾을 수 없습니다"),
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "P009", "잘못된 입력값입니다"),
+    POINT_AMOUNT_TOO_SMALL(HttpStatus.BAD_REQUEST, "P010", "포인트는 최소 1P 이상이어야 합니다"),
+    POINT_AMOUNT_TOO_LARGE(HttpStatus.BAD_REQUEST, "P011", "한 번에 최대 500P까지만 적립 가능합니다"),
+    REASON_REQUIRED(HttpStatus.BAD_REQUEST, "P012", "사유는 필수입니다"),
     /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
 
@@ -267,9 +279,9 @@ public enum ErrorCode {
     AGE_RESTRICTION(HttpStatus.BAD_REQUEST, "R015", "참여 가능 나이가 아닙니다."),
     GENDER_RESTRICTION(HttpStatus.BAD_REQUEST, "R016", "참여 가능 성별이 아닙니다."),
     BIRTHDATE_REQUIRED(HttpStatus.BAD_REQUEST, "R017", "권한이 없는 나이대 입니다."),
-  /*=====매칭=====*/
-  RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "러닝 결과를 찾을 수 없습니다."),
-  /*===== 세션/채팅 =====*/
+    /*=====매칭=====*/
+    RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "러닝 결과를 찾을 수 없습니다."),
+    /*===== 세션/채팅 =====*/
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
     SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
     NOT_SESSION_HOST(HttpStatus.FORBIDDEN, "SES_003", "방장만 실행할 수 있습니다."),
