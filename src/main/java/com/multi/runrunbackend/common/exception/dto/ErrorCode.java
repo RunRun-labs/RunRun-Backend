@@ -150,6 +150,16 @@ public enum ErrorCode {
             "FEED_007",
             "해당 피드 좋아요 내역을 찾을 수 없습니다."
     ),
+    FEED_COMMENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "FEED_008",
+            "피드 댓글을 찾을 수 없습니다."
+    ),
+    FEED_COMMENT_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "FEED_009",
+            "해당 피드 댓글에 대한 권한이 없습니다."
+    ),
     /* ===== 챌린지 ===== */
     ALREADY_JOINED(
             HttpStatus.CONFLICT,
