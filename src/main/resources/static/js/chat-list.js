@@ -47,7 +47,7 @@ async function loadChatList() {
       return;
     }
 
-    const response = await fetch('/api/chat/rooms', {
+    const response = await fetch('/api/chat/all-rooms', {  // ⭐ 통합 API로 변경
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -133,9 +133,8 @@ function updateNextRunning(chatRooms) {
 // 필터 카운트 업데이트
 function updateFilterCounts(chatRooms) {
   const allCount = chatRooms.length;
-  const offlineCount = chatRooms.length; // 현재 모두 오프라인
-  const onlineCount = 0; // TODO: 온라인 배틀 구분 필요
-  const crewCount = 0; // TODO: 크루 구분 필요
+  const offlineCount = chatRooms.filter(r => r.chatType === 'OFFLINE').length;
+  const crewCount = chatRooms.filter(r => r.chatType === 'CREW').length;
 
   const filterButtons = document.querySelectorAll('.filter-btn');
   filterButtons.forEach(btn => {
@@ -149,9 +148,6 @@ function updateFilterCounts(chatRooms) {
         case 'offline':
           countEl.textContent = offlineCount;
           break;
-        case 'online':
-          countEl.textContent = onlineCount;
-          break;
         case 'crew':
           countEl.textContent = crewCount;
           break;
@@ -160,7 +156,7 @@ function updateFilterCounts(chatRooms) {
   });
 }
 
-// 채팅방 리스트 렌더링 (백엔드 데이터 구조에 맞춤)
+// 채팅방 리스트 렌더링 (오프라인 + 크루 통합)
 function renderChatList(chatRooms) {
   const listContainer = document.getElementById('chat-list');
   if (!listContainer) return;
@@ -173,9 +169,115 @@ function renderChatList(chatRooms) {
   }
 
   chatRooms.forEach(room => {
+    // ⭐ chatType에 따라 다르게 렌더링
+    if (room.chatType === 'CREW') {
+      renderCrewChatItem(listContainer, room);
+    } else {
+      renderOfflineChatItem(listContainer, room);
+    }
+  });
+}
+
+// ⭐ 크루 채팅방 아이템 렌더링
+function renderCrewChatItem(container, room) {
+  const item = document.createElement('a');
+  item.className = 'chat-item';
+  item.href = `/chat/crew?roomId=${room.chatRoomId}`;  // ⭐ 경로 수정
+
+  // 아바타
+  const avatar = document.createElement('div');
+  avatar.className = 'chat-avatar avatar-gray';
+  avatar.innerHTML = '<svg class="chat-avatar-icon" width="24" height="29" viewBox="0 0 24 29" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0Z" fill="#E5E7EB"/></svg>';
+
+  // 콘텐츠
+  const content = document.createElement('div');
+  content.className = 'chat-content';
+
+  // 헤더
+  const headerRow = document.createElement('div');
+  headerRow.className = 'chat-header-row';
+
+  const titleRow = document.createElement('div');
+  titleRow.className = 'chat-title-row';
+
+  const title = document.createElement('span');
+  title.className = 'chat-title';
+  title.textContent = room.chatRoomTitle || '제목 없음';
+  titleRow.appendChild(title);
+
+  // 크루 뱃지
+  const crewBadge = document.createElement('span');
+  crewBadge.className = 'chat-status-badge scheduled';
+  crewBadge.textContent = '크루';
+  crewBadge.style.backgroundColor = '#10B981';  // 녹색
+  titleRow.appendChild(crewBadge);
+
+  headerRow.appendChild(titleRow);
+
+  // 시간
+  const time = document.createElement('span');
+  time.className = 'chat-time';
+  time.textContent = formatTime(room.lastMessageTime);
+  headerRow.appendChild(time);
+
+  content.appendChild(headerRow);
+
+  // 크루 정보 태그
+  const tags = document.createElement('div');
+  tags.className = 'chat-tags';
+  
+  if (room.crewDescription) {
+    const descTag = document.createElement('span');
+    descTag.className = 'chat-tag';
+    descTag.textContent = room.crewDescription;
+    tags.appendChild(descTag);
+  }
+
+  const memberTag = document.createElement('span');
+  memberTag.className = 'chat-tag';
+  memberTag.textContent = `👥 ${room.currentParticipants}명`;
+  tags.appendChild(memberTag);
+
+  content.appendChild(tags);
+
+  // 푸터
+  const footer = document.createElement('div');
+  footer.className = 'chat-footer';
+
+  const message = document.createElement('div');
+  message.className = 'chat-message';
+  message.textContent = room.lastMessageContent 
+    ? `${room.lastMessageSender}: ${room.lastMessageContent}` 
+    : '메시지가 없습니다.';
+  footer.appendChild(message);
+
+  const footerRight = document.createElement('div');
+  footerRight.className = 'chat-footer-right';
+
+  // 읽지 않은 메시지
+  if (room.unreadCount && room.unreadCount > 0) {
+    const unreadBadge = document.createElement('div');
+    unreadBadge.className = 'chat-unread-badge';
+    if (room.unreadCount > 9) {
+      unreadBadge.classList.add('small');
+    }
+    unreadBadge.textContent = room.unreadCount > 99 ? '99+' : room.unreadCount;
+    footerRight.appendChild(unreadBadge);
+  }
+
+  footer.appendChild(footerRight);
+  content.appendChild(footer);
+
+  item.appendChild(avatar);
+  item.appendChild(content);
+  container.appendChild(item);
+}
+
+// ⭐ 오프라인 채팅방 아이템 렌더링 (기존 로직)
+function renderOfflineChatItem(container, room) {
     const item = document.createElement('a');
     item.className = 'chat-item';
-    item.href = `/chat/chat1?sessionId=${room.sessionId}`;
+    item.href = `/chat/chat1?sessionId=${room.chatRoomId}`;  // ⭐ sessionId → chatRoomId
 
     // 아바타
     const avatar = document.createElement('div');
@@ -195,7 +297,7 @@ function renderChatList(chatRooms) {
 
     const title = document.createElement('span');
     title.className = 'chat-title';
-    title.textContent = room.title || '제목 없음';
+    title.textContent = room.chatRoomTitle || '제목 없음';  // ⭐ title → chatRoomTitle
     titleRow.appendChild(title);
 
     // 상태 뱃지
@@ -284,9 +386,10 @@ function renderChatList(chatRooms) {
 
     item.appendChild(avatar);
     item.appendChild(content);
-    listContainer.appendChild(item);
-  });
+    container.appendChild(item);
 }
+
+
 
 // 모임 시간 포맷팅
 function formatMeetingTime(meetingAt) {
@@ -343,16 +446,10 @@ function filterChatList(filter) {
       filteredRooms = chatRooms;
       break;
     case 'offline':
-      // OFFLINE 타입만 필터링 (sessionStatus가 WAITING 또는 IN_PROGRESS)
-      filteredRooms = chatRooms;
-      break;
-    case 'online':
-      // 온라인 배틀은 현재 구현되지 않음
-      filteredRooms = [];
+      filteredRooms = chatRooms.filter(room => room.chatType === 'OFFLINE');
       break;
     case 'crew':
-      // 크루는 현재 구현되지 않음
-      filteredRooms = [];
+      filteredRooms = chatRooms.filter(room => room.chatType === 'CREW');
       break;
     default:
       filteredRooms = chatRooms;
@@ -373,7 +470,7 @@ function searchChatList(query) {
 
   // 제목, 장소, 최근 메시지에서 검색
   const searchResults = chatRooms.filter(room => {
-    const title = room.title || '';
+    const title = room.chatRoomTitle || '';  // ⭐ title → chatRoomTitle
     const place = room.meetingPlace || '';
     const lastMessage = room.lastMessageContent || '';
     
@@ -410,29 +507,47 @@ function connectWebSocket() {
 
     // 모든 참여 중인 채팅방 구독
     chatRooms.forEach(room => {
-      subscribeToChat(room.sessionId);
+      // ⭐ chatType에 따라 다르게 구독
+      if (room.chatType === 'CREW') {
+        subscribeToCrewChat(room.chatRoomId);  // 크루 채팅
+      } else {
+        subscribeToOfflineChat(room.chatRoomId);  // ⭐ sessionId → chatRoomId
+      }
     });
   }, function(error) {
     console.error('WebSocket 연결 실패:', error);
   });
 }
 
-// 특정 채팅방 구독
-function subscribeToChat(sessionId) {
+// 오프라인 채팅방 구독
+function subscribeToOfflineChat(sessionId) {
   if (!stompClient || !stompClient.connected) return;
 
   stompClient.subscribe('/sub/chat/' + sessionId, function(response) {
     const message = JSON.parse(response.body);
     
     // 새 메시지 수신 시 해당 채팅방의 unreadCount 증가
-    handleNewMessage(sessionId, message);
+    handleNewOfflineMessage(sessionId, message);
   });
 }
 
-// 새 메시지 처리
-function handleNewMessage(sessionId, message) {
-  // chatRooms 배열에서 해당 채팅방 찾기
-  const roomIndex = chatRooms.findIndex(room => room.sessionId === sessionId);
+// ⭐ 크루 채팅방 구독
+function subscribeToCrewChat(roomId) {
+  if (!stompClient || !stompClient.connected) return;
+
+  stompClient.subscribe('/sub/crew-chat/' + roomId, function(response) {
+    const message = JSON.parse(response.body);
+    console.log('⭐ 채팅방 목록: 크루 메시지 수신 roomId=' + roomId, message);
+    
+    // 새 메시지 수신 시 해당 채팅방의 unreadCount 증가
+    handleNewCrewMessage(roomId, message);
+  });
+}
+
+// 오프라인 채팅 새 메시지 처리
+function handleNewOfflineMessage(sessionId, message) {
+  // chatRooms 배열에서 해당 채팅방 찾기 (⭐ chatRoomId로 찾기)
+  const roomIndex = chatRooms.findIndex(room => room.chatRoomId === sessionId);
   if (roomIndex === -1) return;
 
   const room = chatRooms[roomIndex];
@@ -479,9 +594,45 @@ function handleNewMessage(sessionId, message) {
   filterChatList(filter);
 }
 
+// ⭐ 크루 채팅 새 메시지 처리
+function handleNewCrewMessage(roomId, message) {
+  // chatRooms 배열에서 해당 채팅방 찾기
+  const roomIndex = chatRooms.findIndex(room => room.chatRoomId === roomId);
+  if (roomIndex === -1) return;
+
+  const room = chatRooms[roomIndex];
+
+  // unreadCount 증가
+  room.unreadCount = (room.unreadCount || 0) + 1;
+
+  // 최근 메시지 업데이트
+  room.lastMessageContent = message.content;
+  room.lastMessageSender = message.senderName;
+  room.lastMessageTime = message.createdAt || new Date().toISOString();
+
+  console.log('⭐ 채팅방 목록: 크루 채팅 업데이트 roomId=' + roomId + ', unreadCount=' + room.unreadCount);
+
+  // 채팅방 목록 재정렬 (최신 메시지가 맨 위로)
+  chatRooms.sort((a, b) => {
+    const timeA = a.lastMessageTime ? new Date(a.lastMessageTime) : null;
+    const timeB = b.lastMessageTime ? new Date(b.lastMessageTime) : null;
+    
+    if (!timeA && !timeB) return 0;
+    if (!timeA) return 1;
+    if (!timeB) return -1;
+    
+    return timeB - timeA;
+  });
+
+  // 전체 목록 다시 렌더링 (정렬된 순서로)
+  const activeFilter = document.querySelector('.filter-btn.active');
+  const filter = activeFilter ? activeFilter.dataset.filter : 'all';
+  filterChatList(filter);
+}
+
 // 특정 채팅방 UI 업데이트
 function updateChatRoomUI(room) {
-  const chatItem = document.querySelector(`a.chat-item[href="/chat/chat1?sessionId=${room.sessionId}"]`);
+  const chatItem = document.querySelector(`a.chat-item[href="/chat/chat1?sessionId=${room.chatRoomId}"]`);  // ⭐ chatRoomId
   if (!chatItem) return;
 
   // 최근 메시지 업데이트
@@ -550,8 +701,8 @@ async function updateRoomReadyCount(sessionId) {
     const readyCount = participants.filter(p => p.isReady).length;
     const currentParticipants = participants.length;
 
-    // chatRooms 배열에서 해당 방 찾아서 업데이트
-    const roomIndex = chatRooms.findIndex(room => room.sessionId === sessionId);
+    // chatRooms 배열에서 해당 방 찾아서 업데이트 (⭐ chatRoomId로 찾기)
+    const roomIndex = chatRooms.findIndex(room => room.chatRoomId === sessionId);
     if (roomIndex !== -1) {
       chatRooms[roomIndex].readyCount = readyCount;
       chatRooms[roomIndex].currentParticipants = currentParticipants;
