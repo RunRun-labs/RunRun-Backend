@@ -1,0 +1,146 @@
+:root {
+  --bg-primary: #171821;
+  --bg-secondary: #21222d;
+  --accent: #baff29;
+  --text-primary: #ffffff;
+  --text-secondary: #d2d2d2;
+  --text-muted: #949494;
+  --sidebar-width: 175px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', 'Nunito Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+/* 사이드바 스타일 */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-primary);
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 22px;
+}
+
+.sidebar-logo {
+  font-family: 'Fugaz One', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: 400;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 22px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.sidebar-item:hover {
+  background: rgba(186, 255, 41, 0.1);
+}
+
+.sidebar-item.active {
+  background: var(--accent);
+  color: var(--bg-primary);
+  font-weight: 600;
+}
+
+.sidebar-item span {
+  display: block;
+}
+
+/* 메인 컨텐츠 영역 */
+.main-content {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 17px;
+  width: calc(100% - var(--sidebar-width));
+}
+
+/* 검색창 스타일 */
+.search-bar-container {
+  margin-bottom: 23px;
+}
+
+.search-box {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  height: 44px;
+  width: 504px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.search-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+
+.search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+/* 컨텐츠 래퍼 */
+.content-wrapper {
+  flex: 1;
+  width: 100%;
+}
+

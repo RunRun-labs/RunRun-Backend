@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 내 발급된 쿠폰</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/my-coupons.css" th:href="@{/css/my-coupons.css}">
+</head>
+<body>
+  <div class="page">
+    <!-- Top Navigation -->
+    <div th:replace="~{common/top-nav :: topNav}"></div>
+
+    <!-- Main Content -->
+    <main class="coupon-content">
+      <!-- Coupon Code Input Section -->
+      <div class="coupon-input-section">
+        <div class="coupon-input-container">
+          <input
+              type="text"
+              placeholder="쿠폰 코드를 입력해주세요"
+              class="coupon-code-input"
+              id="couponCodeInput"
+          />
+          <button class="coupon-submit-btn" type="button" id="submitCouponBtn">
+            입력하기
+          </button>
+        </div>
+      </div>
+
+      <!-- Coupon Count -->
+      <div class="coupon-count-section">
+        <p class="coupon-count-text" id="couponCountText">보유 쿠폰 0장</p>
+      </div>
+
+      <!-- Coupon List -->
+      <div class="coupon-list" id="couponList">
+        <!-- Loading state -->
+        <div class="loading-message" id="loadingMessage">
+          <p>쿠폰을 불러오는 중...</p>
+        </div>
+        
+        <!-- Empty state -->
+        <div class="empty-message" id="emptyMessage" style="display: none;">
+          <p>보유한 쿠폰이 없습니다.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+  </div>
+
+  <script src="/js/my-coupons.js" th:src="@{/js/my-coupons.js}"></script>
+</body>
+</html>
+

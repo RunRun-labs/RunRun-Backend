@@ -9,5 +9,6 @@ package com.multi.runrunbackend.domain.coupon.constant;
 public enum CouponIssueStatus {
     AVAILABLE,
     USED,
-    EXPIRED
+    EXPIRED,
+    DELETED
 }
