@@ -37,7 +37,7 @@ jwt:
   access-token-expire-time: ${ACCESS_TOKEN_EXPIRE_TIME_MS}
   refresh-token-expire-time: ${REFRESH_TOKEN_EXPIRE_TIME_MS}
 server:
-  port: 8081
+  port: 8080
 
 aws:
   region: ${AWS_REGION}
