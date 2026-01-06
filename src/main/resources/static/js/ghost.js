@@ -46,6 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let isLoading = false;
   let selectedRecordId = null;
   let allRecords = []; // 모든 기록을 저장하여 섹션 그룹핑에 사용
+  let startDate = null;
+  let endDate = null;
 
   // 필터 타입 정의 (백엔드 RunningResultFilterType Enum과 일치)
   const filterTypes = [
@@ -204,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // API 호출
-  async function fetchRecords(page = 0, filter = "ALL") {
+  async function fetchRecords(page = 0, filter = "ALL", start = null, end = null) {
     const token = getToken();
     const headers = {
       "Content-Type": "application/json"
@@ -220,6 +222,14 @@ document.addEventListener("DOMContentLoaded", () => {
       size: "10",
       sort: "startedAt,DESC"
     });
+
+    // 날짜 파라미터 추가 (ISO DATE 형식: YYYY-MM-DD)
+    if (start) {
+      params.append("startDate", start);
+    }
+    if (end) {
+      params.append("endDate", end);
+    }
 
     try {
       const response = await fetch(`/api/running-results?${params}`, {
@@ -599,7 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
     emptyState.style.display = "none";
 
     try {
-      const data = await fetchRecords(currentPage, currentFilter);
+      const data = await fetchRecords(currentPage, currentFilter, startDate, endDate);
       // Slice 응답 구조: content 배열과 hasNext boolean
       const records = Array.isArray(data) ? data : (data.content || []);
       hasNext = data.hasNext !== undefined ? data.hasNext : (records.length >= 10);
@@ -658,6 +668,125 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     observer.observe(sentinel);
+  }
+
+  // 날짜 필터 관련 요소
+  const startDateInput = document.getElementById("startDate");
+  const endDateInput = document.getElementById("endDate");
+  const resetDateBtn = document.getElementById("resetDateBtn");
+  const dateQuickButtons = document.querySelectorAll(".date-quick-btn");
+
+  // 날짜를 ISO 형식(YYYY-MM-DD)으로 변환
+  function formatDateToISO(date) {
+    if (!date) return null;
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  // 날짜 필터 적용
+  function applyDateFilter() {
+    startDate = startDateInput.value ? formatDateToISO(startDateInput.value) : null;
+    endDate = endDateInput.value ? formatDateToISO(endDateInput.value) : null;
+    
+    // 필터 적용 시 리셋
+    currentPage = 0;
+    hasNext = true;
+    selectedRecordId = null;
+    allRecords = [];
+    updateStartButton();
+    
+    // 스크롤 위치 초기화
+    if (container) {
+      container.scrollTop = 0;
+    }
+    
+    loadRecords(true);
+  }
+
+  // 기간 선택 버튼 클릭
+  dateQuickButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      // 모든 버튼에서 active 제거
+      dateQuickButtons.forEach((b) => b.classList.remove("active"));
+      // 클릭한 버튼에 active 추가
+      btn.classList.add("active");
+
+      const period = btn.dataset.period;
+      const today = new Date();
+      const todayISO = formatDateToISO(today);
+
+      if (period === "all") {
+        startDateInput.value = "";
+        endDateInput.value = "";
+        startDate = null;
+        endDate = null;
+      } else if (period === "week") {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        const weekAgoISO = formatDateToISO(weekAgo);
+        startDateInput.value = weekAgoISO;
+        endDateInput.value = todayISO;
+        startDate = weekAgoISO;
+        endDate = todayISO;
+      } else if (period === "month") {
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(today.getMonth() - 1);
+        const monthAgoISO = formatDateToISO(monthAgo);
+        startDateInput.value = monthAgoISO;
+        endDateInput.value = todayISO;
+        startDate = monthAgoISO;
+        endDate = todayISO;
+      }
+
+      applyDateFilter();
+    });
+  });
+
+  // 날짜 입력 변경 시
+  if (startDateInput) {
+    startDateInput.addEventListener("change", () => {
+      // 시작일이 종료일보다 늦으면 종료일을 시작일로 설정
+      if (endDateInput.value && startDateInput.value > endDateInput.value) {
+        endDateInput.value = startDateInput.value;
+      }
+      // 기간 선택 버튼의 active 제거 (수동 입력 시)
+      dateQuickButtons.forEach((b) => b.classList.remove("active"));
+      applyDateFilter();
+    });
+  }
+
+  if (endDateInput) {
+    endDateInput.addEventListener("change", () => {
+      // 종료일이 시작일보다 빠르면 시작일을 종료일로 설정
+      if (startDateInput.value && endDateInput.value < startDateInput.value) {
+        startDateInput.value = endDateInput.value;
+      }
+      // 기간 선택 버튼의 active 제거 (수동 입력 시)
+      dateQuickButtons.forEach((b) => b.classList.remove("active"));
+      applyDateFilter();
+    });
+  }
+
+  // 날짜 초기화 버튼
+  if (resetDateBtn) {
+    resetDateBtn.addEventListener("click", () => {
+      startDateInput.value = "";
+      endDateInput.value = "";
+      startDate = null;
+      endDate = null;
+      
+      // 전체 버튼 활성화
+      dateQuickButtons.forEach((b) => b.classList.remove("active"));
+      const allBtn = document.querySelector('.date-quick-btn[data-period="all"]');
+      if (allBtn) {
+        allBtn.classList.add("active");
+      }
+      
+      applyDateFilter();
+    });
   }
 
   // 초기화
