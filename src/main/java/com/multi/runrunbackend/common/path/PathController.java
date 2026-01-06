@@ -75,10 +75,10 @@ public class PathController {
         return "crew/crewJoinRequestList";
     }
 
-  @GetMapping("/chat")
-  public String chatList() {
-    return "chat/chat-list";
-  }
+    @GetMapping("/chat")
+    public String chatList() {
+        return "chat/chat-list";
+    }
 
     @GetMapping("/chat/chat1")
     public String chat1() {
@@ -144,8 +144,8 @@ public class PathController {
 
     @GetMapping("/courseDetail/{course_id}")
     public String courseDetailView(
-            @PathVariable(name = "course_id") Long courseId,
-            Model model
+        @PathVariable(name = "course_id") Long courseId,
+        Model model
     ) {
 
         model.addAttribute("courseId", courseId);
@@ -154,22 +154,28 @@ public class PathController {
 
     @GetMapping("/courseUpdate/{course_id}")
     public String courseUpdateView(
-            @PathVariable(name = "course_id") Long courseId,
-            Model model
+        @PathVariable(name = "course_id") Long courseId,
+        Model model
     ) {
 
         model.addAttribute("courseId", courseId);
         return "course/courseUpdate";
     }
 
-  @GetMapping("/test/gps")
-  public String gpsTestView() {
-    return "test/gps-test";
-  }
+    @GetMapping("/test/gps")
+    public String gpsTestView() {
+        return "test/gps-test";
+    }
 
     @GetMapping("/tts-test")
     public String ttsTestView() {
         return "tts-test";
+    }
+
+    @GetMapping("/running/{sessionId}")
+    public String runningView(@PathVariable(name = "sessionId") Long sessionId, Model model) {
+        model.addAttribute("sessionId", sessionId);
+        return "running/running";
     }
 
 }
