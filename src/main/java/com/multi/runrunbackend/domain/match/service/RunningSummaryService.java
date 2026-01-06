@@ -5,10 +5,15 @@ import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.friend.entity.Friend;
+import com.multi.runrunbackend.domain.friend.repository.FriendRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
+import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
 import com.multi.runrunbackend.domain.user.entity.User;
+import com.multi.runrunbackend.domain.user.entity.UserSetting;
 import com.multi.runrunbackend.domain.user.repository.UserBlockRepository;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import com.multi.runrunbackend.domain.user.repository.UserSettingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +41,8 @@ public class RunningSummaryService {
     private final UserRepository userRepository;
     private final RunningResultRepository runningResultRepository;
     private final UserBlockRepository userBlockRepository;
+    private final FriendRepository friendRepository;
+    private final UserSettingRepository userSettingRepository;
 
     /**
      * 오늘 러닝 요약
@@ -90,11 +97,8 @@ public class RunningSummaryService {
         User target = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
-        // 🔒 차단 관계 확인
-        if (userBlockRepository.existsByBlockerAndBlockedUser(me, target)
-                || userBlockRepository.existsByBlockerAndBlockedUser(target, me)) {
-            throw new ForbiddenException(ErrorCode.USER_BLOCKED);
-        }
+        validateProfileAccess(me, target);
+
 
         return getWeeklySummaryInternal(target, weekOffset);
     }
@@ -154,6 +158,72 @@ public class RunningSummaryService {
                 .intValue();
     }
 
+    /*
+     * 오늘 러닝 요약 결과 record
+     * */
+    public record TodaySummaryResult(
+            BigDecimal distance,
+            Integer time,
+            Integer calories
+    ) {
+
+    }
+
+    public record WeeklySummaryResult(
+            List<BigDecimal> dailyDistances,
+            BigDecimal totalDistance,
+            Integer totalTime
+    ) {
+
+    }
+
+    /**
+     * 프로필 접근 권한 검증
+     */
+    private void validateProfileAccess(User me, User target) {
+
+        if (me.getId().equals(target.getId())) {
+            return;
+        }
+
+
+        if (userBlockRepository.existsByBlockerAndBlockedUser(me, target)
+                || userBlockRepository.existsByBlockerAndBlockedUser(target, me)) {
+            throw new ForbiddenException(ErrorCode.USER_BLOCKED);
+        }
+
+        UserSetting setting =
+                userSettingRepository.findByUserId(target.getId())
+                        .orElseGet(() ->
+                                userSettingRepository.save(
+                                        UserSetting.createDefault(target)
+                                )
+                        );
+
+        ProfileVisibility visibility = setting.getProfileVisibility();
+
+        switch (visibility) {
+            case PUBLIC -> {
+
+            }
+
+            case FRIENDS_ONLY -> {
+                boolean isFriend =
+                        friendRepository.findBetweenUsers(me, target)
+                                .filter(Friend::isAccepted)
+                                .isPresent();
+
+                if (!isFriend) {
+                    throw new ForbiddenException(ErrorCode.PROFILE_FRIENDS_ONLY);
+                }
+            }
+
+            case PRIVATE -> {
+                throw new ForbiddenException(ErrorCode.PROFILE_PRIVATE);
+            }
+        }
+    }
+
     private User getUserByPrincipal(CustomUser principal) {
         if (principal == null) {
             throw new TokenException(ErrorCode.UNAUTHORIZED);
@@ -163,22 +233,5 @@ public class RunningSummaryService {
                 .orElseThrow(() ->
                         new NotFoundException(ErrorCode.USER_NOT_FOUND)
                 );
-    }
-
-    /*
-     *
-     * */
-    public record TodaySummaryResult(
-            BigDecimal distance,
-            Integer time,
-            Integer calories
-    ) {
-    }
-
-    public record WeeklySummaryResult(
-            List<BigDecimal> dailyDistances,
-            BigDecimal totalDistance,
-            Integer totalTime
-    ) {
     }
 }
