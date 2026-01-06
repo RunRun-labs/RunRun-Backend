@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 온라인 매칭</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/online-match.css" th:href="@{/css/online-match.css}">
+</head>
+<body>
+<div class="page">
+  <header class="header">
+    <button class="back-button" type="button" aria-label="뒤로가기">
+      <img
+          th:src="@{/img/icons/back.png}"
+          alt="뒤로가기 아이콘"
+      />
+    </button>
+    <h1 class="header-title">온라인 매칭</h1>
+  </header>
+
+  <main class="match-content">
+    <section class="match-settings">
+    <div class="setting-group">
+      <h2 class="setting-title">거리 선택</h2>
+      <div class="option-buttons">
+        <button class="option-card" data-value="KM_3" data-type="distance" type="button">
+          <span class="card-value">3km</span>
+          <span class="card-tip">약 180kcal</span>
+        </button>
+        <button class="option-card" data-value="KM_5" data-type="distance" type="button">
+          <span class="card-value">5km</span>
+          <span class="card-tip">약 300kcal</span>
+        </button>
+        <button class="option-card" data-value="KM_10" data-type="distance" type="button">
+          <span class="card-value">10km</span>
+          <span class="card-tip">약 600kcal</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <h2 class="setting-title">인원 선택</h2>
+      <div class="option-buttons">
+        <button class="option-card" data-value="2" data-type="participant" type="button">
+          <span class="card-value">2명</span>
+        </button>
+        <button class="option-card" data-value="3" data-type="participant" type="button">
+          <span class="card-value">3명</span>
+        </button>
+        <button class="option-card" data-value="4" data-type="participant" type="button">
+          <span class="card-value">4명</span>
+        </button>
+      </div>
+    </div>
+    </section>
+
+    <button class="start-button" id="startButton" type="button" disabled>
+      매칭 시작
+    </button>
+  </main>
+</div>
+
+<!-- 매칭 중 오버레이 -->
+<div class="matching-overlay" id="matchingOverlay" style="display: none;">
+  <div class="radar-background">
+    <div class="radar-grid"></div>
+  </div>
+  
+  <div class="matching-content">
+    <!-- 레이더 파장 애니메이션 -->
+    <div class="radar-container">
+      <div class="radar-ripple"></div>
+      <div class="radar-ripple"></div>
+      <div class="radar-ripple"></div>
+      
+      <!-- 중심 유저 프로필 -->
+      <div class="center-profile">
+        <div class="profile-image-wrapper">
+          <img id="userProfileImage" class="profile-image" src="" alt="프로필" />
+          <div class="profile-label">YOU</div>
+        </div>
+      </div>
+      
+      <!-- 상대방 프로필들 (MATCH FOUND 시 표시) -->
+      <div class="opponent-profiles" id="opponentProfiles"></div>
+      
+      <!-- 연결선 (MATCH FOUND 시 표시) -->
+      <svg class="connection-lines" id="connectionLines" style="display: none;">
+        <line class="connection-line" x1="50%" y1="50%" x2="0" y2="0" />
+      </svg>
+    </div>
+    
+    <!-- 상태 텍스트 -->
+    <div class="status-section">
+      <h2 class="status-title" id="statusTitle">SEARCHING FOR PLAYERS...</h2>
+      <p class="status-subtitle" id="statusSubtitle">Finding users with similar skill and latency.</p>
+      <div class="match-found-section" id="matchFoundSection" style="display: none;">
+        <div class="match-found-text" id="matchFoundText">MATCH FOUND!</div>
+        <div class="countdown-text" id="countdownText"></div>
+      </div>
+    </div>
+    
+    <!-- 취소 버튼 (WAITING 상태일 때만 표시) -->
+    <button class="cancel-button" id="cancelButton" type="button">
+      매칭 취소
+    </button>
+  </div>
+</div>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/online-match.js" th:src="@{/js/online-match.js}"></script>
+</body>
+</html>
+

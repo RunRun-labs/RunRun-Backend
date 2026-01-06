@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 배틀 기록</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/battle-list.css" th:href="@{/css/battle-list.css}">
+</head>
+<body>
+<div class="container">
+  <main class="page">
+    <!-- 상단 고정 영역 (헤더 + 필터) -->
+    <div class="sticky-header-wrapper">
+      <header class="header">
+        <button type="button" id="backBtn" class="back-button" aria-label="뒤로가기">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <h1 class="header-title">배틀 기록</h1>
+      </header>
+
+      <!-- 필터 탭 섹션 -->
+      <section class="filter-section">
+        <div class="filter-tabs" id="filterTabs">
+          <button class="filter-tab active" data-distance="KM_3">3KM</button>
+          <button class="filter-tab" data-distance="KM_5">5KM</button>
+          <button class="filter-tab" data-distance="KM_10">10KM</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- 배틀 기록 목록 -->
+    <section class="battle-list-section">
+      <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+        <p>로딩 중...</p>
+      </div>
+      <div id="battleList" class="battle-list">
+        <!-- JavaScript로 동적 생성 -->
+      </div>
+      <div id="sentinel" style="height: 1px;"></div>
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <p>배틀 기록이 없습니다.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/battle-list.js" th:src="@{/js/battle-list.js}"></script>
+</body>
+</html>
+

@@ -2,20 +2,14 @@ package com.multi.runrunbackend.domain.challenge.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.challenge.constant.ChallengeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-import java.time.LocalDate;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDate;
 
 /**
  * @author : kimyongwon
@@ -27,6 +21,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "challenge")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("is_deleted = false")
 public class Challenge extends BaseEntity {
 
     @Id
@@ -44,7 +39,7 @@ public class Challenge extends BaseEntity {
     private Double targetValue;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(length = 500)
@@ -56,11 +51,43 @@ public class Challenge extends BaseEntity {
     @Column(nullable = false)
     private LocalDate endDate;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Builder
+    public Challenge(String title, ChallengeType challengeType, Double targetValue,
+                     String description, String imageUrl, LocalDate startDate, LocalDate endDate) {
+        this.title = title;
+        this.challengeType = challengeType;
+        this.targetValue = targetValue;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public void update(String title, ChallengeType challengeType, Double targetValue,
+                       String description, LocalDate startDate, LocalDate endDate) {
+        this.title = title;
+        this.challengeType = challengeType;
+        this.targetValue = targetValue;
+        this.description = description;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public void deleteChallenge() {
+        this.isDeleted = true;
+    }
+
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 
     @PrePersist
     public void prePersist() {
         if (this.startDate != null && this.endDate != null
-            && this.startDate.isAfter(this.endDate)) {
+                && this.startDate.isAfter(this.endDate)) {
             throw new IllegalStateException("시작일은 종료일보다 이전이어야 합니다.");
         }
     }

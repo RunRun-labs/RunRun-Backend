@@ -1,14 +1,10 @@
 package com.multi.runrunbackend.domain.crew.dto.req;
 
-import com.multi.runrunbackend.domain.crew.entity.Crew;
-import com.multi.runrunbackend.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 
 /**
  * @author : BoKyung
@@ -16,6 +12,7 @@ import lombok.NoArgsConstructor;
  * @filename : CrewCreateReqDto
  * @since : 25. 12. 18. 목요일
  */
+@Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -53,20 +50,4 @@ public class CrewCreateReqDto {
     @Size(max = 100, message = "정기모임일시는 100자 이내로 입력해주세요.")
     private String activityTime;
 
-    /**
-     * @param user 크루장
-     * @description : toEntity : DTO → Entity 변환
-     */
-    public Crew toEntity(User user) {
-        return Crew.create(
-                this.crewName,
-                this.crewDescription,
-                this.crewImageUrl,
-                this.region,
-                this.distance,
-                this.averagePace,
-                this.activityTime,
-                user
-        );
-    }
 }

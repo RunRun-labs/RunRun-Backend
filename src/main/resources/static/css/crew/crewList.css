@@ -355,15 +355,19 @@ body {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    min-width: 0;
 }
 
 .crew-card__title {
     font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--text-primary);
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: clip;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .crew-card__badge {
@@ -393,6 +397,8 @@ body {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .crew-card__details {
@@ -408,10 +414,21 @@ body {
     gap: 4px;
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .detail-icon {
+    font-size: 16px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    margin-right: 4px;
     color: var(--text-tertiary);
+}
+
+.detail-icon svg {
+    display: none;
 }
 
 .crew-card__running-info {
@@ -421,8 +438,21 @@ body {
 }
 
 .running-info__item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.running-icon {
+    font-size: 14px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    margin-right: 2px;
 }
 
 .running-info__label {
@@ -432,6 +462,58 @@ body {
 .running-info__value {
     font-weight: 600;
     color: var(--text-primary);
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.status-badge.participating {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.status-badge.pending {
+    background-color: #FFC107;
+    color: #333;
+}
+
+/* 참여중 배지 */
+.crew-card__badge--approved {
+    background-color: white;
+    color: #5A4100;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* 요청중 배지 (기존) */
+.crew-card__badge--pending {
+    background-color: white;
+    color: #5A4100;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.char-count {
+    text-align: right;
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.char-count.over-limit {
+    color: #ff4444;
+    font-weight: bold;
 }
 
 /* =========================
@@ -566,6 +648,19 @@ body {
 
     .crew-list {
         grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* 모바일 (768px 이하) */
+@media (max-width: 768px) {
+    .crew-card__description {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.5;
+        -webkit-line-clamp: 3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 }
 

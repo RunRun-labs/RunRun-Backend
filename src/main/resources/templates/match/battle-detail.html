@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 배틀 결과</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/battle-detail.css" th:href="@{/css/battle-detail.css}">
+</head>
+<body>
+<div class="container">
+  <main class="page">
+    <!-- 상단 고정 헤더 -->
+    <div class="sticky-header-wrapper">
+      <header class="header">
+        <button type="button" id="backBtn" class="back-button" aria-label="뒤로가기">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="header-content">
+          <h1 class="header-title">배틀 결과</h1>
+          <div class="header-badges" id="headerBadges"></div>
+        </div>
+      </header>
+    </div>
+
+    <!-- 랭킹 리스트 -->
+    <section class="ranking-section">
+      <div class="ranking-list" id="rankingList">
+        <!-- JavaScript로 동적 생성 -->
+      </div>
+    </section>
+  </main>
+</div>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script th:inline="javascript">
+  // 세션 ID (Thymeleaf에서 안전하게 전달)
+  const sessionId = /*[[${sessionId}]]*/ null;
+</script>
+<script src="/js/battle-detail.js" th:src="@{/js/battle-detail.js}"></script>
+</body>
+</html>
+

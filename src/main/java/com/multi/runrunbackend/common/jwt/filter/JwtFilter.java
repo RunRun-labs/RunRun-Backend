@@ -45,6 +45,7 @@ public class JwtFilter extends OncePerRequestFilter {
             "/static/**",
             "/css/**",
             "/js/**",
+            "/test/**",
             "/crews/new",
             "/crews/**"
 

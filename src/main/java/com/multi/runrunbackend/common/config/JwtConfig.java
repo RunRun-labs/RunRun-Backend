@@ -54,8 +54,11 @@ public class JwtConfig {
                     "/chat/**",
                     "/ws/**",
                     "/myPage/**",
+                    "/friends/**",
+                    "/profile/**",
                     "/course_auto/**",
                     "/files/**",
+                    "/challenge/**",
                     "/course",
                     "/courseCreate",
                     "/courseDetail/**",
@@ -65,7 +68,14 @@ public class JwtConfig {
                     "/crews/**",
                     "/match/**",
                     "/recruit/**",
+                    "/setting/**",
+                    "/terms/**",
                     "/tts-test",
+                    "/membership/**",
+                    "/payment/pay",
+                    "/payment/history",
+                    "/payment/success",
+                    "/payment/fail",
                     "/admin/coupon/create",
                     "/admin/coupon/inquiry",
                     "/admin/coupon/update/**",
@@ -76,7 +86,6 @@ public class JwtConfig {
                     "/coupon/my",
                     "/coupon/event",
                     "/api/admin/coupons/public/**"
-
                 ).permitAll()
                 .requestMatchers(
                     PathRequest.toStaticResources().atCommonLocations()

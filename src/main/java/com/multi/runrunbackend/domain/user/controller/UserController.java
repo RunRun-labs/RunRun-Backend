@@ -1,11 +1,10 @@
 package com.multi.runrunbackend.domain.user.controller;
 
-import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
+import com.multi.runrunbackend.domain.user.dto.res.UserProfileResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
-import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import com.multi.runrunbackend.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
     private final UserService userService;
-    private final FileStorage fileStorage;
-    private final UserRepository userRepository;
 
 
     @GetMapping
@@ -45,8 +42,19 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("내 정보 조회 성공", res));
     }
 
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<UserProfileResDto>> getUserProfile(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        UserProfileResDto res = userService.getUserProfile(userId, principal);
+        return ResponseEntity.ok(
+                ApiResponse.success("사용자 프로필 조회 성공", res)
+        );
+    }
+
     @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<ApiResponse<Void>> updateUser(
+    public ResponseEntity<ApiResponse> updateUser(
 
             @RequestPart(value = "request") @Valid UserUpdateReqDto req,
             @RequestPart(value = "file", required = false) MultipartFile file,
@@ -55,6 +63,16 @@ public class UserController {
 
         userService.updateUser(req, file, principal);
         return ResponseEntity.ok(ApiResponse.success("프로필 수정 성공", null));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> withdraw(
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        userService.deleteUser(principal);
+        return ResponseEntity.ok(
+                ApiResponse.success("회원 탈퇴가 완료되었습니다.", null)
+        );
     }
 
 }

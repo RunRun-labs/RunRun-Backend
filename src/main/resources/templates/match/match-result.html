@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 대결 결과</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/match-result.css" th:href="@{/css/match-result.css}">
+</head>
+<body>
+<main class="page">
+  <div class="result-container">
+    <!-- Header Section -->
+    <header class="header-section">
+      <button class="header-button" type="button" aria-label="뒤로가기" id="back-button">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.25 13.5L6.75 9L11.25 4.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <div class="header-content">
+        <h1 class="header-title">대결 결과</h1>
+      </div>
+      
+      <button class="header-button" type="button" aria-label="공유" id="share-button">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.5 12.06C13.1475 12.06 12.825 12.18 12.5625 12.375L6.9375 9.4425C6.975 9.3 7.0125 9.1575 7.0125 9C7.0125 8.8425 6.975 8.7 6.9375 8.5575L12.525 5.6475C12.8025 5.8575 13.1475 5.94 13.5 5.94C14.325 5.94 15 5.265 15 4.44C15 3.615 14.325 3 13.5 3C12.675 3 12 3.675 12 4.5C12 4.6575 12.0375 4.8 12.075 4.9425L6.4875 7.8525C6.21 7.6425 5.865 7.56 5.5125 7.56C4.6875 7.56 4.0125 8.235 4.0125 9.06C4.0125 9.885 4.6875 10.56 5.5125 10.56C5.865 10.56 6.21 10.4775 6.4875 10.2675L12.075 13.1775C12.0375 13.32 12 13.4625 12 13.62C12 14.445 12.675 15.12 13.5 15.12C14.325 15.12 15 14.445 15 13.62C15 12.795 14.325 12.12 13.5 12.12V12.06Z" fill="white"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Result Banner Section -->
+    <section class="result-banner">
+      <div class="completion-badge">
+        <span>🏁 Loading...</span>
+      </div>
+      <div class="rank-display">
+        <span class="rank-number">-</span>
+        <span class="rank-text">등</span>
+      </div>
+      <div class="result-message">
+        <span class="message-text">결과를 불러오는 중...</span>
+      </div>
+    </section>
+
+    <!-- My Record Section -->
+    <section class="my-record-section">
+      <div class="record-card">
+        <div class="record-header">
+          <div class="record-icon">
+            <svg width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 0L11 26M0 13L22 13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="record-info">
+            <h2 class="record-title">나의 기록</h2>
+            <p class="record-date">-</p>
+          </div>
+        </div>
+        <div class="record-stats">
+          <div class="stat-box">
+            <div class="stat-value">-</div>
+            <div class="stat-label">완주 시간</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value-wrapper">
+              <span class="stat-value">-</span>
+              <span class="stat-unit">/km</span>
+            </div>
+            <div class="stat-label">평균 페이스</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value-wrapper">
+              <span class="stat-value">-</span>
+              <span class="stat-unit">km</span>
+            </div>
+            <div class="stat-label">총 거리</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final Ranking Section -->
+    <section class="ranking-section">
+      <div class="ranking-header">
+        <h2 class="ranking-title">🏆 최종 순위</h2>
+      </div>
+      <div class="ranking-list">
+        <!-- 동적으로 생성됨 -->
+      </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="comparison-section" style="display: none;">
+      <div class="comparison-header">
+        <h2 class="comparison-title">📊 1위와 기록 비교</h2>
+      </div>
+      <div class="comparison-table">
+        <div class="comparison-header-row">
+          <div class="comparison-user">
+            <div class="user-avatar user-me">
+              <svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 0L9 21M0 10.5L18 10.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="user-name">나</div>
+          </div>
+          <div class="comparison-user">
+            <div class="user-avatar user-winner">
+              <svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 0L9 21M0 10.5L18 10.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="user-name">-</div>
+          </div>
+        </div>
+        <div class="comparison-row">
+          <div class="comparison-label">완주 시간</div>
+          <div class="comparison-values">
+            <div class="comparison-value">-</div>
+            <div class="comparison-value winner">-</div>
+          </div>
+        </div>
+        <div class="comparison-row">
+          <div class="comparison-label">평균 페이스</div>
+          <div class="comparison-values">
+            <div class="comparison-value">-</div>
+            <div class="comparison-value winner">-</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Action Buttons Section -->
+    <section class="action-section">
+      <button class="action-button home-button" type="button" id="home-button">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.25 6.75L9 1.5L15.75 6.75V15C15.75 15.4142 15.4142 15.75 15 15.75H10.5V11.25H7.5V15.75H3C2.58579 15.75 2.25 15.4142 2.25 15V6.75Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>홈으로</span>
+      </button>
+      <button class="action-button rematch-button" type="button" id="rematch-button">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1.5 9C1.5 5.27208 4.52208 2.25 8.25 2.25C10.0622 2.25 11.7015 2.9505 12.9375 4.0625L10.5 6.5H16.5V0.5L14.0625 2.9375C12.4505 1.3495 10.4378 0.5 8.25 0.5C3.69365 0.5 0 4.19365 0 8.75C0 13.3063 3.69365 17 8.25 17C11.5221 17 14.3063 15.1937 15.75 12.5L13.875 11.625C12.7063 13.8125 10.6875 15.5 8.25 15.5C4.52208 15.5 1.5 12.4779 1.5 8.75V9Z" fill="white"/>
+        </svg>
+        <span>재대결 신청</span>
+      </button>
+    </section>
+  </div>
+</main>
+
+<script src="/js/match-result.js" th:src="@{/js/match-result.js}"></script>
+</body>
+</html>
+
