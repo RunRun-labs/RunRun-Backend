@@ -136,6 +136,26 @@ public class PathController {
         return "membership/membership";
     }
 
+    @GetMapping("/payment/pay")
+    public String paymentPayView() {
+        return "payment/pay";
+    }
+
+    @GetMapping("/payment/history")
+    public String paymentHistoryView() {
+        return "payment/history";
+    }
+
+    @GetMapping("/payment/success")
+    public String paymentSuccessView() {
+        return "payment/success";
+    }
+
+    @GetMapping("/payment/fail")
+    public String paymentFailView() {
+        return "payment/fail";
+    }
+
     @GetMapping("/chat")
     public String chatList() {
         return "chat/chat-list";

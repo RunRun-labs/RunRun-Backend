@@ -71,7 +71,11 @@ public class JwtConfig {
                                 "/setting/**",
                                 "/terms/**",
                                 "/tts-test",
-                                "/membership/**"
+                                "/membership/**",
+                                "/payment/pay",
+                                "/payment/history",
+                                "/payment/success",
+                                "/payment/fail"
                         ).permitAll()
                         .requestMatchers(
                                 PathRequest.toStaticResources().atCommonLocations()
