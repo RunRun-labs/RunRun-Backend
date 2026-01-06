@@ -11,7 +11,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
     open-in-view: false
     properties:
       hibernate:
@@ -38,7 +37,7 @@ jwt:
   access-token-expire-time: ${ACCESS_TOKEN_EXPIRE_TIME_MS}
   refresh-token-expire-time: ${REFRESH_TOKEN_EXPIRE_TIME_MS}
 server:
-  port: 8080
+  port: 8081
 
 aws:
   region: ${AWS_REGION}
