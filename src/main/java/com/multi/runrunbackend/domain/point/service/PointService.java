@@ -4,17 +4,12 @@ import com.multi.runrunbackend.common.exception.custom.BadRequestException;
 import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
-import com.multi.runrunbackend.domain.point.dto.req.CursorPage;
-import com.multi.runrunbackend.domain.point.dto.req.PointEarnReqDto;
-import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
-import com.multi.runrunbackend.domain.point.dto.req.PointUseReqDto;
-import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
-import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
-import com.multi.runrunbackend.domain.point.dto.res.PointShopDetailResDto;
-import com.multi.runrunbackend.domain.point.dto.res.PointShopListResDto;
+import com.multi.runrunbackend.domain.point.dto.req.*;
+import com.multi.runrunbackend.domain.point.dto.res.*;
 import com.multi.runrunbackend.domain.point.entity.PointExpiration;
 import com.multi.runrunbackend.domain.point.entity.PointHistory;
 import com.multi.runrunbackend.domain.point.entity.PointProduct;
@@ -26,12 +21,18 @@ import com.multi.runrunbackend.domain.point.repository.UserPointRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -87,18 +88,24 @@ public class PointService {
         );
 
         // 소멸 예정 포인트
-        LocalDateTime nextMonthEnd = LocalDateTime.now().plusMonths(1)
-                .withDayOfMonth(1).minusDays(1);
-        Integer expiringPoints = pointExpirationRepository.getExpiringPointsInPeriod(
-                userId, LocalDateTime.now(), nextMonthEnd
-        );
+        List<PointExpiration> activeExpirations = pointExpirationRepository
+                .findActivePointsByUserIdOrderByExpiresAt(userId);
 
-        PointMainResDto.UpcomingExpiryInfo expiryInfo =
-                PointMainResDto.UpcomingExpiryInfo.builder()
-                        .expiryDate(nextMonthEnd.format(
-                                DateTimeFormatter.ofPattern("yyyy.MM dd일까지")))
-                        .expiringPoints(expiringPoints)
-                        .build();
+        PointMainResDto.UpcomingExpiryInfo expiryInfo;
+        if (!activeExpirations.isEmpty()) {
+            PointExpiration earliest = activeExpirations.get(0);
+            expiryInfo = PointMainResDto.UpcomingExpiryInfo.builder()
+                    .expiryDate(earliest.getExpiresAt()
+                            .format(DateTimeFormatter.ofPattern("yyyy년 M월 d일")))
+                    .expiringPoints(earliest.getRemainingPoint())
+                    .build();
+        } else {
+            // 포인트 없을 때 기본값
+            expiryInfo = PointMainResDto.UpcomingExpiryInfo.builder()
+                    .expiryDate("-")
+                    .expiringPoints(0)
+                    .build();
+        }
 
         Integer earnedTotal = pointHistoryRepository.getTotalPointsByType(userId, "EARN");
         Integer usedTotal = pointHistoryRepository.getTotalPointsByType(userId, "USE");
@@ -358,6 +365,130 @@ public class PointService {
                 .myPoints(myPoints)
                 .canPurchase(myPoints >= product.getRequiredPoint() && product.getIsAvailable())
                 .build();
+    }
+
+    // ========================================
+    // 관리자 - 포인트 상품 관리
+    // ========================================
+
+    /**
+     * 포인트 상품 목록 조회 (관리자)
+     */
+    @Transactional(readOnly = true)
+    public PointProductPageResDto getProductList(
+            Boolean isAvailable,
+            String keyword,
+            Pageable pageable
+    ) {
+        String safeKeyword =
+                (keyword == null || keyword.isBlank()) ? null : keyword.trim().toLowerCase();
+
+        Specification<PointProduct> spec = (root, query, cb) ->
+                cb.equal(root.get("isDeleted"), false);
+
+        if (isAvailable != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("isAvailable"), isAvailable));
+        }
+
+        if (safeKeyword != null) {
+            spec = spec.and((root, query, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("productName")), "%" + safeKeyword + "%"),
+                    cb.like(cb.lower(root.get("productDescription")), "%" + safeKeyword + "%")
+            ));
+        }
+
+        Page<PointProduct> page = pointProductRepository.findAll(spec, pageable);
+
+        // HTTPS URL로 변환
+        List<PointProductListItemResDto> items = page.getContent().stream()
+                .map(p -> PointProductListItemResDto.from(
+                        p,
+                        resolveImageUrl(p.getProductImageUrl())
+                ))
+                .collect(Collectors.toList());
+
+        return new PointProductPageResDto(
+                items,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.hasNext(),
+                page.hasPrevious()
+        );
+    }
+
+    /**
+     * 포인트 상품 생성 (관리자)
+     */
+    @Transactional
+    public PointProductCreateResDto createProduct(PointProductCreateReqDto req) {
+        PointProduct product = PointProduct.builder()
+                .productName(req.getProductName())
+                .productDescription(req.getProductDescription())
+                .requiredPoint(req.getRequiredPoint())
+                .productImageUrl(req.getProductImageUrl())
+                .isAvailable(req.getIsAvailable())
+                .build();
+
+        PointProduct saved = pointProductRepository.save(product);
+        return PointProductCreateResDto.of(saved.getId());
+    }
+
+    /**
+     * 포인트 상품 수정 (관리자)
+     */
+    @Transactional
+    public PointProductUpdateResDto updateProduct(Long productId, PointProductUpdateReqDto req) {
+        PointProduct product = findProductById(productId);
+        product.update(req);
+        return PointProductUpdateResDto.of(product.getId());
+    }
+
+    /**
+     * 포인트 상품 이미지 업로드 (관리자)
+     */
+    public Map<String, String> uploadProductImage(MultipartFile file) {
+        // 파일 검증
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException(ErrorCode.INVALID_INPUT);
+        }
+
+        // 파일 크기 체크 (5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new BadRequestException(ErrorCode.FILE_SIZE_EXCEEDED);
+        }
+
+        // 이미지 파일인지 확인
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new BadRequestException(ErrorCode.INVALID_FILE_TYPE);
+        }
+
+        try {
+            // S3에 업로드
+            String s3Key = fileStorage.upload(file, FileDomainType.POINT_PRODUCT, 0L);
+            String httpsUrl = fileStorage.toHttpsUrl(s3Key);
+
+            Map<String, String> result = new HashMap<>();
+            result.put("key", s3Key);
+            result.put("url", httpsUrl);
+
+            return result;
+
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    /**
+     * 포인트 상품 삭제 (관리자)
+     */
+    @Transactional
+    public void deleteProduct(Long productId) {
+        PointProduct product = findProductById(productId);
+        product.delete();
     }
 
     /**
