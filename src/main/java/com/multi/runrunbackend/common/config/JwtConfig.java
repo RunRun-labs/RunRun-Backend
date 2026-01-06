@@ -72,7 +72,8 @@ public class JwtConfig {
                                 "/terms/**",
                                 "/tts-test",
                                 "/membership/**",
-                                "/points/**"
+                                "/points/**",
+                                "/admin/**"
                         ).permitAll()
                         .requestMatchers(
                                 PathRequest.toStaticResources().atCommonLocations()
