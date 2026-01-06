@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  *
  * @author : kimyongwon
- * @description : 마이페이지 - 러닝 기록 조회 Service
+ * @description : 프로필 러닝 기록 조회 Service
  * @filename : ProfileRunningHistoryService
  * @since : 26. 1. 4. 오후 7:29 일요일
  */
@@ -68,7 +68,7 @@ public class ProfileRunningHistoryService {
 
 
         validateProfileAccess(me, target);
-        
+
         return runningResultRepository
                 .findCompletedByUser(target, pageable)
                 .map(ProfileRunningHistoryResDto::from);
