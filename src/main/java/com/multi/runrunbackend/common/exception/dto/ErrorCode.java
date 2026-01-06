@@ -26,7 +26,9 @@ public enum ErrorCode {
     FRIEND_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "FR004", "해당 친구 요청에 대한 권한이 없습니다."),
     NOT_PENDING_FRIEND_REQUEST(HttpStatus.BAD_REQUEST, "FR005", "대기 중인 친구 요청이 아닙니다."),
     FRIEND_NOT_FOUND(HttpStatus.NOT_FOUND, "FR006", "친구 관계를 찾을 수 없습니다."),
-
+    /* ===== 프로필 조회 ===== */
+    PROFILE_FRIENDS_ONLY(HttpStatus.FORBIDDEN, "PR001", "친구에게만 공개된 프로필입니다."),
+    PROFILE_PRIVATE(HttpStatus.FORBIDDEN, "PR002", "비공개 프로필입니다."),
     /* ==== 토큰 ====*/
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A001", "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "만료된 토큰입니다."),

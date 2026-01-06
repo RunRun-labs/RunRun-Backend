@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.challenge.repository;
 
 import com.multi.runrunbackend.domain.challenge.constant.UserChallengeStatus;
 import com.multi.runrunbackend.domain.challenge.entity.UserChallenge;
+import com.multi.runrunbackend.domain.user.entity.User;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -43,4 +44,6 @@ public interface UserChallengeRepository extends JpaRepository<UserChallenge, Lo
             @Param("status") UserChallengeStatus status,
             @Param("criteriaDate") LocalDate criteriaDate
     );
+
+    List<UserChallenge> findByUserAndStatus(User user, UserChallengeStatus userChallengeStatus);
 }
