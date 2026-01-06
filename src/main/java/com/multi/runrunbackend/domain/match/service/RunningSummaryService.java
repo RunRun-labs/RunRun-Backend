@@ -35,7 +35,6 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class RunningSummaryService {
 
     private final UserRepository userRepository;
@@ -47,6 +46,7 @@ public class RunningSummaryService {
     /**
      * 오늘 러닝 요약
      */
+    @Transactional(readOnly = true)
     public TodaySummaryResult getTodaySummary(CustomUser principal) {
         User user = getUserByPrincipal(principal);
 
@@ -76,6 +76,7 @@ public class RunningSummaryService {
     /**
      * 내 주간 러닝 요약
      */
+    @Transactional(readOnly = true)
     public WeeklySummaryResult getWeeklySummary(
             CustomUser principal,
             int weekOffset
@@ -87,6 +88,7 @@ public class RunningSummaryService {
     /**
      * 타인 주간 러닝 요약
      */
+    @Transactional(readOnly = true)
     public WeeklySummaryResult getWeeklySummaryByUser(
             Long userId,
             CustomUser principal,
@@ -194,11 +196,7 @@ public class RunningSummaryService {
 
         UserSetting setting =
                 userSettingRepository.findByUserId(target.getId())
-                        .orElseGet(() ->
-                                userSettingRepository.save(
-                                        UserSetting.createDefault(target)
-                                )
-                        );
+                        .orElse(UserSetting.createDefault(target));
 
         ProfileVisibility visibility = setting.getProfileVisibility();
 
