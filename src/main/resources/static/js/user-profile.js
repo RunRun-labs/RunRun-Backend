@@ -24,6 +24,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    // 자신의 프로필 페이지에 접근한 경우 마이페이지로 리디렉션
+    const currentUserId = localStorage.getItem("userId");
+    if (currentUserId && Number(currentUserId) === userId) {
+        window.location.href = "/myPage";
+        return;
+    }
+
     attachBackButtonHandler();
     attachFriendButtonHandler(userId);
     attachBlockButtonHandler(userId);
