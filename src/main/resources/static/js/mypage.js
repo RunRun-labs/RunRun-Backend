@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
     attachMyPostsHandler();
     loadMyBodyInfo();
 
+    // 초기 로드 시 빈 상태 숨김
+    hideEmptyState();
+
     // 실제 스크롤이 발생하는 컨테이너를 기준으로 무한 스크롤 동작
     initInfiniteScroll();
 
@@ -269,7 +272,7 @@ async function loadRunningRecords(page = 0, reset = false) {
             return;
         }
 
-        const res = await fetch(`/api/records?page=${page}&size=4&sort=startedAt,desc`, {
+        const res = await fetch(`/api/records/me?page=${page}&size=4&sort=startedAt,desc`, {
             headers: {Authorization: `Bearer ${token}`}
         });
 
@@ -293,8 +296,19 @@ async function loadRunningRecords(page = 0, reset = false) {
             if (runList) runList.innerHTML = "";
         }
 
+        // 기록이 있으면 렌더링하고 빈 상태 숨김
         if (records.length > 0) {
             renderRunningRecords(records);
+            hideEmptyState();
+        } else if (reset && currentPage === 0) {
+            // 초기 로드 시 기록이 없으면 빈 상태 표시
+            showEmptyState();
+        } else {
+            // 추가 페이지 로드 시 기록이 없으면 빈 상태는 유지 (이미 표시되어 있을 수 있음)
+            // 빈 상태가 이미 표시되어 있지 않다면 숨김
+            if (currentPage > 0) {
+                hideEmptyState();
+            }
         }
 
         // 무한 스크롤 업데이트
@@ -314,10 +328,43 @@ function renderRunningRecords(records) {
     const runList = document.querySelector('[data-role="run-list"]');
     if (!runList) return;
 
+    // 기록이 있으면 빈 상태 먼저 숨김
+    hideEmptyState();
+
     records.forEach(record => {
         const card = createRunCard(record);
         runList.appendChild(card);
     });
+}
+
+/**
+ * 빈 상태 표시
+ */
+function showEmptyState() {
+    const emptyState = document.getElementById("runListEmpty");
+    const runList = document.querySelector('[data-role="run-list"]');
+    if (emptyState) {
+        emptyState.removeAttribute("hidden");
+        emptyState.style.display = "flex";
+    }
+    if (runList) {
+        runList.style.display = "none";
+    }
+}
+
+/**
+ * 빈 상태 숨김
+ */
+function hideEmptyState() {
+    const emptyState = document.getElementById("runListEmpty");
+    const runList = document.querySelector('[data-role="run-list"]');
+    if (emptyState) {
+        emptyState.setAttribute("hidden", "hidden");
+        emptyState.style.display = "none";
+    }
+    if (runList) {
+        runList.style.display = "flex";
+    }
 }
 
 /**

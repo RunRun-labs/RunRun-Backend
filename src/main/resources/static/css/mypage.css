@@ -423,6 +423,32 @@ body {
     font-weight: 600;
 }
 
+/* 러닝 기록 빈 상태 */
+.run-list-empty {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px 20px;
+}
+
+.empty-text-large {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text-muted);
+    line-height: 1.2;
+}
+
+.empty-text-small {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-muted);
+    line-height: 1.5;
+    text-align: center;
+}
+
 .run-share {
     margin-top: 4px;
     align-self: flex-end;
