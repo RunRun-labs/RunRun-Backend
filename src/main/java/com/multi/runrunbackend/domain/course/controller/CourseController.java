@@ -13,6 +13,7 @@ import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseCreateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseDetailResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseListResDto;
+import com.multi.runrunbackend.domain.course.dto.res.CoursePathResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseUpdateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.service.CourseService;
@@ -117,6 +118,15 @@ public class CourseController {
     ) {
         return ResponseEntity.ok(
             ApiResponse.success("코스 상세 조회 성공", courseService.getCourse(principal, courseId)));
+    }
+
+    @GetMapping("/{course_id}/path")
+    public ResponseEntity<ApiResponse<CoursePathResDto>> getCoursePath(
+        @AuthenticationPrincipal CustomUser principal,
+        @PathVariable(name = "course_id") Long courseId
+    ) {
+        return ResponseEntity.ok(
+            ApiResponse.success("코스 경로 조회 성공", courseService.getCoursePath(principal, courseId)));
     }
 
     @PutMapping(
