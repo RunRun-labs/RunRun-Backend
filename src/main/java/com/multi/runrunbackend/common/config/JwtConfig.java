@@ -86,6 +86,9 @@ public class JwtConfig {
                     "/coupon/my",
                     "/coupon/event",
                     "/api/admin/coupons/public/**",
+                    "/points/**",
+                    "/admin/**",
+                    "/api/admin/coupons/public/**",
                     "/notification"
                 ).permitAll()
                 .requestMatchers(
@@ -93,10 +96,10 @@ public class JwtConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
 
-            ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                    .accessDeniedHandler(jwtAccessDeniedHandler));
+                ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
+                        UsernamePasswordAuthenticationFilter.class).exceptionHandling(
+                        exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                .accessDeniedHandler(jwtAccessDeniedHandler));
 
         return http.build();
 
