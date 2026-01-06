@@ -72,6 +72,10 @@ public class JwtConfig {
                                 "/terms/**",
                                 "/tts-test",
                                 "/membership/**",
+                                "/payment/pay",
+                                "/payment/history",
+                                "/payment/success",
+                                "/payment/fail",
                                 "/running/**"
                         ).permitAll()
                         .requestMatchers(
@@ -79,10 +83,10 @@ public class JwtConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
 
-            ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                    .accessDeniedHandler(jwtAccessDeniedHandler));
+                ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
+                        UsernamePasswordAuthenticationFilter.class).exceptionHandling(
+                        exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                .accessDeniedHandler(jwtAccessDeniedHandler));
 
         return http.build();
 
