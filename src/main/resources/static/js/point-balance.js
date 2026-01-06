@@ -58,7 +58,7 @@ async function loadPointBalance() {
 
         // 소멸 예정 포인트
         document.getElementById('expiryInfo').textContent =
-            `${data.upcomingExpiry.expiryDate}까지 ${data.upcomingExpiry.expiringPoints}P 소멸 예정`;
+            `${data.upcomingExpiry.expiryDate} ${data.upcomingExpiry.expiringPoints}P 소멸 예정`;
 
         // 총 적립 포인트
         document.getElementById('totalPoints').textContent =
