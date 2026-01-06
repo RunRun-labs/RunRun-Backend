@@ -136,6 +136,26 @@ public class PathController {
         return "membership/membership";
     }
 
+    @GetMapping("/payment/pay")
+    public String paymentPayView() {
+        return "payment/pay";
+    }
+
+    @GetMapping("/payment/history")
+    public String paymentHistoryView() {
+        return "payment/history";
+    }
+
+    @GetMapping("/payment/success")
+    public String paymentSuccessView() {
+        return "payment/success";
+    }
+
+    @GetMapping("/payment/fail")
+    public String paymentFailView() {
+        return "payment/fail";
+    }
+
     @GetMapping("/chat")
     public String chatList() {
         return "chat/chat-list";
@@ -263,5 +283,58 @@ public class PathController {
   public String notificationListView() {
     return "notification/notification-list";
   }
+
+    @GetMapping("/admin/coupon/inquiry")
+    public String adminCouponInquiryView() {
+        return "admin/coupon-inquiry";
+    }
+
+    @GetMapping("/admin/coupon/create")
+    public String adminCouponCreateView() {
+        return "admin/coupon-create";
+    }
+
+    @GetMapping("/admin/coupon/update/{coupon_id}")
+    public String adminCouponUpdateView(
+        @PathVariable(name = "coupon_id") Long couponId,
+        Model model
+    ) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-update";
+    }
+
+    @GetMapping("/admin/coupon-role/inquiry")
+    public String adminCouponRoleInquiryView() {
+        return "admin/coupon-role-inquiry";
+    }
+
+    @GetMapping("/admin/coupon-role/create")
+    public String adminCouponRoleCreateView() {
+        return "admin/coupon-role-create";
+    }
+
+    @GetMapping("/admin/coupon-role/update/{coupon_role_id}")
+    public String adminCouponRoleUpdateView(
+        @PathVariable(name = "coupon_role_id") Long couponRoleId,
+        Model model
+    ) {
+        model.addAttribute("couponRoleId", couponRoleId);
+        return "admin/coupon-role-update";
+    }
+
+    @GetMapping("/admin/coupon/select")
+    public String adminCouponSelectView() {
+        return "admin/coupon-select";
+    }
+
+    @GetMapping("/coupon/my")
+    public String myCouponsView() {
+        return "coupon/my-coupons";
+    }
+
+    @GetMapping("/coupon/event")
+    public String couponEventView() {
+        return "coupon/coupon-event";
+    }
 
 }

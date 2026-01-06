@@ -78,3 +78,9 @@ coupon:
   code:
     single:
       length: ${COUPON_SINGLE_CODE_LENGTH}
+
+
+toss:
+  payments:
+    client-key: ${TOSS_CLIENT_KEY}
+    secret-key: ${TOSS_SECRET_KEY}
