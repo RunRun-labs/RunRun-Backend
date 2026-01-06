@@ -81,7 +81,7 @@ public enum ErrorCode {
     CREW_RECRUITMENT_CLOSED(HttpStatus.CONFLICT, "CR016", "모집이 마감된 크루입니다."),
     NOT_CREW_USER(HttpStatus.FORBIDDEN, "CR017", "크루원이 아닙니다."),
     CANNOT_ASSIGN_LEADER_TO_MEMBER(HttpStatus.FORBIDDEN, "CR018",
-        "일반 멤버는 크루장이 될 수 없습니다. 부크루장 또는 운영진에게만 위임 가능합니다."),
+            "일반 멤버는 크루장이 될 수 없습니다. 부크루장 또는 운영진에게만 위임 가능합니다."),
     CREW_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "CR009", "모집중인 크루가 아닙니다."),
     /* ===== 멤버십 ===== */
     MEMBERSHIP_NOT_FOUND(HttpStatus.NOT_FOUND, "MM001", "멤버십 정보를 찾을 수 없습니다."),
@@ -90,6 +90,8 @@ public enum ErrorCode {
     MEMBERSHIP_REQUIRED(HttpStatus.FORBIDDEN, "MM004", "프리미엄 멤버십이 필요합니다."),
     MEMBERSHIP_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "MM005", "활성화된 멤버십이 아닙니다."),
     MEMBERSHIP_NOT_CANCELED(HttpStatus.BAD_REQUEST, "MM006", "해지 신청 상태가 아닙니다."),
+    INVALID_MEMBERSHIP_PERIOD(HttpStatus.BAD_REQUEST, "MM007", "멤버십 기간은 1일 이상이어야 합니다."),
+    MEMBERSHIP_PERIOD_TOO_LONG(HttpStatus.BAD_REQUEST, "MM008", "멤버십 기간은 최대 365일까지 설정할 수 있습니다."),
 
     /* ===== 결제 ===== */
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "결제 내역을 찾을 수 없습니다."),
@@ -296,13 +298,13 @@ public enum ErrorCode {
     AGE_RESTRICTION(HttpStatus.BAD_REQUEST, "R015", "참여 가능 나이가 아닙니다."),
     GENDER_RESTRICTION(HttpStatus.BAD_REQUEST, "R016", "참여 가능 성별이 아닙니다."),
     BIRTHDATE_REQUIRED(HttpStatus.BAD_REQUEST, "R017", "권한이 없는 나이대 입니다."),
-  /*=====매칭=====*/
-  RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "러닝 결과를 찾을 수 없습니다."),
-  /*===== 배틀 결과 =====*/
-  BATTLE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀 결과를 찾을 수 없습니다."),
-  DISTANCE_REQUIRED(HttpStatus.BAD_REQUEST, "M002", "코스 선택 안할 시 거리 선택은 필수 입니다."),
-  INVALID_DISTANCE_TYPE(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 거리 타입입니다."),
-  /*===== 세션/채팅 =====*/
+    /*=====매칭=====*/
+    RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "러닝 결과를 찾을 수 없습니다."),
+    /*===== 배틀 결과 =====*/
+    BATTLE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀 결과를 찾을 수 없습니다."),
+    DISTANCE_REQUIRED(HttpStatus.BAD_REQUEST, "M002", "코스 선택 안할 시 거리 선택은 필수 입니다."),
+    INVALID_DISTANCE_TYPE(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 거리 타입입니다."),
+    /*===== 세션/채팅 =====*/
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
     SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
     NOT_SESSION_HOST(HttpStatus.FORBIDDEN, "SES_003", "방장만 실행할 수 있습니다."),
