@@ -2012,10 +2012,11 @@ function subscribeToChatMessages() {
   stompClient.subscribe(`/sub/chat/${sessionId}`, (message) => {
     try {
       const data = JSON.parse(message.body);
-      // ✅ 러닝 종료 시스템 메시지 수신 시 결과 모달 표시 (방장/참여자 모두, 코스/자유러닝 모두)
+      // ✅ 러닝 종료 시스템 메시지 수신 시 결과 모달 표시 (참여자)
       if (
         data.messageType === "SYSTEM" &&
-        data.content === "🏁 런닝이 종료되었습니다! 수고하셨습니다!"
+        (data.content.includes("런닝이 종료") ||
+          data.content.includes("러닝이 종료"))
       ) {
         console.log("🏁 런닝 종료 시스템 메시지 수신 - 결과 모달 표시");
 

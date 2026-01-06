@@ -3,7 +3,12 @@ package com.multi.runrunbackend.common.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.multi.runrunbackend.domain.chat.service.RedisSubscriber;
+import com.multi.runrunbackend.domain.running.battle.service.BattleRedisSubscriber;
 import com.multi.runrunbackend.domain.running.service.RunningStatsSubscriber;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +24,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @EnableCaching
 public class RedisConfig {
 
+  @Value("${spring.data.redis.host}")
+  private String host;
+
+  @Value("${spring.data.redis.port}")
+  private int port;
+
   @Bean
   public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
     RedisTemplate<String, String> template = new RedisTemplate<>();
@@ -29,27 +40,25 @@ public class RedisConfig {
   }
 
   /**
-   * GPS 데이터 저장용 RedisTemplate
-   * - String으로 저장 (JSON 문자열)
+   * GPS 데이터 저장용 RedisTemplate - String으로 저장 (JSON 문자열)
    */
   @Bean
   public RedisTemplate<String, String> gpsRedisTemplate(
       RedisConnectionFactory connectionFactory) {
-    
+
     RedisTemplate<String, String> template = new RedisTemplate<>();
     template.setConnectionFactory(connectionFactory);
     template.setKeySerializer(RedisSerializer.string());
-    
+
     // String 직렬화 사용 (JSON 문자열)
     template.setValueSerializer(RedisSerializer.string());
-    
+
     return template;
   }
 
 
   /**
-   * 채팅메시지 같은 객체를 Pub/Sub으로 전송
-   * String으로 직렬화 (JSON 문자열) - @class 필드 없음
+   * 채팅메시지 같은 객체를 Pub/Sub으로 전송 String으로 직렬화 (JSON 문자열) - @class 필드 없음
    */
   @Bean
   public RedisTemplate<String, Object> redisPubSubTemplate(
@@ -58,16 +67,15 @@ public class RedisConfig {
     RedisTemplate<String, Object> template = new RedisTemplate<>();
     template.setConnectionFactory(connectionFactory);
     template.setKeySerializer(RedisSerializer.string());
-    
+
     // String으로 직렬화 (가장 안전한 방법, deprecated 없음)
     template.setValueSerializer(RedisSerializer.string());
-    
+
     return template;
   }
 
   /**
-   * PatternTopic - Redis Pub/Sub에서 사용할 채널 패턴 정의
-   * chat:* 패턴으로 모든 세션 채널 수신
+   * PatternTopic - Redis Pub/Sub에서 사용할 채널 패턴 정의 chat:* 패턴으로 모든 세션 채널 수신
    */
   @Bean
   public PatternTopic chatTopic() {
@@ -83,6 +91,14 @@ public class RedisConfig {
   }
 
   /**
+   * 배틀 WebSocket 토픽 - battle:* 패턴
+   */
+  @Bean
+  public PatternTopic battleTopic() {
+    return new PatternTopic("battle:*");
+  }
+
+  /**
    * Redis Pub/Sub 메시지 리스너 컨테이너 - Redis메시지를 수신하는 컨테이너
    */
   @Bean
@@ -90,18 +106,23 @@ public class RedisConfig {
       RedisConnectionFactory connectionFactory,
       MessageListenerAdapter chatListenerAdapter,
       MessageListenerAdapter runningListenerAdapter,
+      MessageListenerAdapter battleListenerAdapter,
       PatternTopic chatTopic,
-      PatternTopic runningTopic
+      PatternTopic runningTopic,
+      PatternTopic battleTopic
   ) {
     RedisMessageListenerContainer container = new RedisMessageListenerContainer();
     container.setConnectionFactory(connectionFactory);
-    
+
     // 채팅 메시지 리스너
     container.addMessageListener(chatListenerAdapter, chatTopic);
-    
+
     // GPS 통계 리스너
     container.addMessageListener(runningListenerAdapter, runningTopic);
-    
+
+    // 배틀 WebSocket 리스너
+    container.addMessageListener(battleListenerAdapter, battleTopic);
+
     return container;
   }
 
@@ -121,11 +142,32 @@ public class RedisConfig {
     return new MessageListenerAdapter(subscriber, "handleMessage");
   }
 
+  /**
+   * 배틀 WebSocket 리스너 어댑터
+   */
+  @Bean
+  public MessageListenerAdapter battleListenerAdapter(BattleRedisSubscriber subscriber) {
+    return new MessageListenerAdapter(subscriber, "onMessage");
+  }
+
   @Bean
   public ObjectMapper objectMapper() {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
     return mapper;
+  }
+
+  @Bean
+  public RedissonClient redissonClient() {
+    Config config = new Config();
+    config.useSingleServer()
+        .setAddress("redis://" + host + ":" + port)
+        .setConnectionPoolSize(10)
+        .setConnectionMinimumIdleSize(5)
+        .setTimeout(3000)
+        .setRetryAttempts(3)
+        .setRetryInterval(1500);
+    return Redisson.create(config);
   }
 
 }

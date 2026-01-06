@@ -206,6 +206,35 @@ body {
     justify-self: end;
 }
 
+/* 선호 지역 텍스트 줄바꿈 */
+.region-text,
+.preferred-region,
+.user-region,
+.meta-item-region {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: keep-all !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.5;
+}
+
+/* 카드 내 텍스트 요소들 */
+.request-card .info-item,
+.apply-card .info-item,
+.join-card .info-item {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: keep-all !important;
+}
+
+/* 긴 텍스트 대응 */
+.info-value {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: keep-all !important;
+    max-width: 100%;
+}
+
 /* 메타 아이템 공통 스타일 */
 .join-request-card__meta-item {
     font-size: 11px;

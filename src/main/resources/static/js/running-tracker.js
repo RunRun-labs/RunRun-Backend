@@ -104,13 +104,13 @@ class RunningTracker {
     }
 
     this.watchId = navigator.geolocation.watchPosition(
-        (position) => this.onGPSUpdate(position),
-        (error) => this.onGPSError(error),
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0,
-        }
+      (position) => this.onGPSUpdate(position),
+      (error) => this.onGPSError(error),
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+      }
     );
   }
 
@@ -165,10 +165,10 @@ class RunningTracker {
       if (this.lastPosition) {
         const prev = this.lastPosition.coords;
         const distKm = this.calculateDistance(
-            prev.latitude,
-            prev.longitude,
-            coords.latitude,
-            coords.longitude
+          prev.latitude,
+          prev.longitude,
+          coords.latitude,
+          coords.longitude
         );
         if (Number.isFinite(distKm) && distKm > 0.03) {
           // 30m 이상은 점프로 간주
@@ -190,19 +190,19 @@ class RunningTracker {
 
     // heading: 브라우저가 제공하면 우선 사용, 없으면 이동 벡터로 계산
     const nativeHeading =
-        coords.heading != null && Number.isFinite(coords.heading)
-            ? coords.heading
-            : null;
+      coords.heading != null && Number.isFinite(coords.heading)
+        ? coords.heading
+        : null;
 
     let distKm = null;
     let dtSec = null;
     if (this.lastPosition) {
       const prev = this.lastPosition.coords;
       distKm = this.calculateDistance(
-          prev.latitude,
-          prev.longitude,
-          coords.latitude,
-          coords.longitude
+        prev.latitude,
+        prev.longitude,
+        coords.latitude,
+        coords.longitude
       );
 
       // 점프 필터: "튀는 좌표"는 전송/누적/기준좌표 업데이트를 모두 하지 않는다.
@@ -224,10 +224,10 @@ class RunningTracker {
         this.heading = nativeHeading;
       } else if (distKm > 0.001) {
         this.heading = this.calculateBearing(
-            prev.latitude,
-            prev.longitude,
-            coords.latitude,
-            coords.longitude
+          prev.latitude,
+          prev.longitude,
+          coords.latitude,
+          coords.longitude
         );
       }
     } else {
@@ -255,18 +255,18 @@ class RunningTracker {
     try {
       let speedMps = null;
       if (
-          coords.speed != null &&
-          Number.isFinite(coords.speed) &&
-          coords.speed > 0
+        coords.speed != null &&
+        Number.isFinite(coords.speed) &&
+        coords.speed > 0
       ) {
         speedMps = coords.speed; // m/s
       } else if (
-          distKm != null &&
-          Number.isFinite(distKm) &&
-          distKm >= 0 &&
-          dtSec != null &&
-          Number.isFinite(dtSec) &&
-          dtSec > 0
+        distKm != null &&
+        Number.isFinite(distKm) &&
+        distKm >= 0 &&
+        dtSec != null &&
+        Number.isFinite(dtSec) &&
+        dtSec > 0
       ) {
         speedMps = (distKm * 1000) / dtSec;
       }
@@ -274,15 +274,15 @@ class RunningTracker {
       if (speedMps != null && Number.isFinite(speedMps)) {
         const now2 = Date.now();
         const canAlert =
-            now2 - this.lastTooFastAlertAt > this.tooFastAlertCooldownMs;
+          now2 - this.lastTooFastAlertAt > this.tooFastAlertCooldownMs;
 
         if (speedMps >= this.tooFastHardMps) {
           if (canAlert) {
             console.warn("속도가 너무 빠릅니다(hard):", speedMps, "m/s");
             window.dispatchEvent(
-                new CustomEvent("running:tooFast", {
-                  detail: {speedMps, hard: true},
-                })
+              new CustomEvent("running:tooFast", {
+                detail: { speedMps, hard: true },
+              })
             );
             this.lastTooFastAlertAt = now2;
           }
@@ -291,9 +291,9 @@ class RunningTracker {
           if (this.tooFastSoftCount >= 3 && canAlert) {
             console.warn("속도가 너무 빠릅니다(soft):", speedMps, "m/s");
             window.dispatchEvent(
-                new CustomEvent("running:tooFast", {
-                  detail: {speedMps, hard: false},
-                })
+              new CustomEvent("running:tooFast", {
+                detail: { speedMps, hard: false },
+              })
             );
             this.lastTooFastAlertAt = now2;
             this.tooFastSoftCount = 0;
@@ -337,10 +337,9 @@ class RunningTracker {
     };
     if (this.includeMatchedDistanceM) {
       gpsData.matchedDistanceM =
-          this.matchedDistanceM != null && Number.isFinite(
-              this.matchedDistanceM)
-              ? Math.max(0, Math.round(this.matchedDistanceM))
-              : 0;
+        this.matchedDistanceM != null && Number.isFinite(this.matchedDistanceM)
+          ? Math.max(0, Math.round(this.matchedDistanceM))
+          : 0;
     }
 
     try {
@@ -356,8 +355,8 @@ class RunningTracker {
     const dLat = this.toRad(lat2 - lat1);
     const dLon = this.toRad(lon2 - lon1);
     const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(this.toRad(lat1)) *
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRad(lat1)) *
         Math.cos(this.toRad(lat2)) *
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
@@ -374,8 +373,7 @@ class RunningTracker {
     const Δλ = toRad(lon2 - lon1);
     const y = Math.sin(Δλ) * Math.cos(φ2);
     const x =
-        Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(
-            Δλ);
+      Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
     const θ = Math.atan2(y, x);
     return (toDeg(θ) + 360) % 360;
   }

@@ -37,41 +37,47 @@ public class JwtConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-            .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(AbstractHttpConfigurer::disable)
-            .sessionManagement(
-                sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            ).authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/auth/**",
-                    "/login",
-                    "/signup",
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/public/**",
-                    "/error",
-                    "/img/**",
-                    "/chat/**",
-                    "/ws/**",
-                    "/myPage/**",
-                    "/course_auto/**",
-                    "/files/**",
-                    "/course",
-                    "/courseCreate",
-                    "/courseDetail/**",
-                    "/courseUpdate/**",
-                    "/course_manual/**",
-                    "/crews/new",
-                    "/crews/**",
-                    "/match/**",
-                    "/recruit/**",
-                    "/tts-test",
-                    "/running/**"
-                ).permitAll()
-                .requestMatchers(
-                    PathRequest.toStaticResources().atCommonLocations()
-                ).permitAll()
-                .anyRequest().authenticated()
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .sessionManagement(
+                        sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                ).authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/auth/**",
+                                "/login",
+                                "/signup",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/public/**",
+                                "/error",
+                                "/img/**",
+                                "/chat/**",
+                                "/ws/**",
+                                "/myPage/**",
+                                "/friends/**",
+                                "/profile/**",
+                                "/course_auto/**",
+                                "/files/**",
+                                "/challenge/**",
+                                "/course",
+                                "/courseCreate",
+                                "/courseDetail/**",
+                                "/courseUpdate/**",
+                                "/course_manual/**",
+                                "/crews/new",
+                                "/crews/**",
+                                "/match/**",
+                                "/recruit/**",
+                                "/setting/**",
+                                "/terms/**",
+                                "/tts-test",
+                                "/membership/**",
+                                "/running/**"
+                        ).permitAll()
+                        .requestMatchers(
+                                PathRequest.toStaticResources().atCommonLocations()
+                        ).permitAll()
+                        .anyRequest().authenticated()
 
             ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
                 UsernamePasswordAuthenticationFilter.class).exceptionHandling(

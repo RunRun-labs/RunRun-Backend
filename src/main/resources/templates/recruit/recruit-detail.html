@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="/css/recruit-detail.css" th:href="@{/css/recruit-detail.css}">
   <script
       type="text/javascript"
-      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services,clusterer">
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=8b23243ecce1d67f7d49784724586afa&libraries=services,clusterer">
   </script>
 </head>
 <body>
@@ -33,14 +33,20 @@
     <h1 class="header-title">모집글 상세보기</h1>
   </header>
 
-  <!-- 제목 섹션 -->
-  <section class="title-section">
-    <h1 id="recruitTitle" class="recruit-title"></h1>
-  </section>
+  <!-- 코스 이미지 (있을 때만 표시) -->
+  <div id="courseImageSection" class="course-image-section" style="display: none;">
+    <img id="courseImage" src="" alt="코스 이미지">
+  </div>
 
   <!-- 카카오맵 섹션 -->
   <section class="map-section">
     <div id="map" class="map-container"></div>
+  </section>
+
+  <!-- 제목 섹션 -->
+  <section class="title-section">
+    <label class="field-label">제목</label>
+    <div id="recruitTitle" class="field-input"></div>
   </section>
 
   <!-- 상세 정보 섹션 -->
@@ -93,17 +99,37 @@
           <span id="ageRange" class="detail-value"></span>
         </div>
       </div>
+
+      <!-- 작성자 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">작성자</span>
+          <span id="authorLoginId" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 작성일자 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">작성일자</span>
+          <span id="createdAt" class="detail-value"></span>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- 설명 섹션 -->
   <section class="description-section">
-    <h2 class="section-title">상세 설명</h2>
-    <p id="recruitContent" class="description-content"></p>
+    <label class="field-label">상세 설명</label>
+    <div id="recruitContent" class="field-textarea"></div>
   </section>
 
   <!-- 액션 버튼 섹션 -->
   <div class="action-button-section">
+    <div id="editDeleteButtons" class="edit-delete-buttons" style="display: none;">
+      <button id="editButton" type="button" class="edit-button">수정하기</button>
+      <button id="deleteButton" type="button" class="delete-button">삭제하기</button>
+    </div>
     <button id="actionButton" type="button" class="action-button" style="display: none;"></button>
     <p id="actionDisabledText" class="action-disabled-text" style="display: none;"></p>
     <button id="startRunningButton" type="button" class="action-button"
@@ -111,6 +137,9 @@
     </button>
   </div>
 </main>
+
+<!-- Toast Container -->
+<div class="toast-container"></div>
 
 <div
     id="bottomNavMount"

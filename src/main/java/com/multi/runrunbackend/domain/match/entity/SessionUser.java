@@ -50,4 +50,11 @@ public class SessionUser extends BaseSoftDeleteEntity {
 
     @Column(name = "last_read_at")
     private java.time.LocalDateTime lastReadAt;
+
+    /**
+     * Ready 상태 업데이트
+     */
+    public void updateReady(boolean isReady) {
+        this.isReady = isReady;
+    }
 }

@@ -108,6 +108,21 @@ public class User extends BaseEntity {
         this.name = name;
     }
 
+    public void deleteAccount() {
+        this.isDeleted = true;
+        this.loginId = "deleted_" + this.id;
+        this.email = "deleted_" + this.id + "@deleted.user";
+        this.name = "NULL";
+        //this.password = "";
+        this.gender = "U";
+        this.birthDate = LocalDate.now();
+
+        this.profileImageUrl = null;
+        this.heightCm = null;
+        this.weightKg = null;
+
+        this.role = "ROLE_DELETED";
+    }
     public void updateTTS(TtsVoicePack ttsVoicePack) {
         this.ttsVoicePack = ttsVoicePack;
     }

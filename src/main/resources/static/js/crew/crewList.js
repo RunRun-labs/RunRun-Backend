@@ -509,6 +509,7 @@ function createCrewCard(crew) {
 
     const distance = crew.distance
         ? `<span class="running-info__item">
+             <span class="running-icon">🏃</span>
              <span class="running-info__label">거리:</span>
              <span class="running-info__value">${escapeHtml(crew.distance)}</span>
            </span>`
@@ -516,10 +517,11 @@ function createCrewCard(crew) {
 
     const pace = crew.averagePace
         ? `<span class="running-info__item">
+             <span class="running-icon">⏱️</span>
              <span class="running-info__label">페이스:</span>
              <span class="running-info__value">${escapeHtml(crew.averagePace)}</span>
            </span>`
-        : '<span class="running-info__item"><span class="running-info__label">페이스:</span><span class="running-info__value">-</span></span>';
+        : '<span class="running-info__item"><span class="running-icon">⏱️</span><span class="running-info__label">페이스:</span><span class="running-info__value">-</span></span>';
 
     const defaultImageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI0Y1RjVGNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+6rCA7J2AIOyVlOydgCDsiqTsmYg8L3RleHQ+PC9zdmc+';
     const imageUrl = crew.crewImageUrl && crew.crewImageUrl.trim()
@@ -541,17 +543,11 @@ function createCrewCard(crew) {
             </div>
             <div class="crew-card__details">
                 <div class="crew-card__detail-item">
-                    <svg class="detail-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 1C5.23858 1 3 3.23858 3 6C3 9.25 8 15 8 15C8 15 13 9.25 13 6C13 3.23858 10.7614 1 8 1Z" stroke="currentColor" stroke-width="1.5"/>
-                        <circle cx="8" cy="6" r="1.5" fill="currentColor"/>
-                    </svg>
+                    <span class="detail-icon">📍</span>
                     <span>${escapeHtml(crew.region || '위치 미정')}</span>
                 </div>
                 <div class="crew-card__detail-item">
-                    <svg class="detail-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8Z" stroke="currentColor" stroke-width="1.5"/>
-                        <path d="M2 14C2 11.2386 4.23858 9 7 9H9C11.7614 9 14 11.2386 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
+                    <span class="detail-icon">👥</span>
                     <span>${crew.memberCount || 0}명 참여중</span>
                 </div>
             </div>

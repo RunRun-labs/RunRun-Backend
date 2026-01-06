@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
     attachProfileEditHandler();
     attachProfileImageClickHandler();
     attachChallengeHandler();
+    attachFriendHandler();
+    attachSettingsHandler();
     loadMyBodyInfo();
 });
 
@@ -86,6 +88,24 @@ function attachChallengeHandler() {
 
     challengeBtn.addEventListener("click", () => {
         window.location.href = "/challenge";
+    });
+}
+
+function attachFriendHandler() {
+    const friendBtn = document.querySelector('.profile-actions .action-pill:nth-child(2)');
+    if (!friendBtn) return;
+
+    friendBtn.addEventListener("click", () => {
+        window.location.href = "/friends/list";
+    });
+}
+
+function attachSettingsHandler() {
+    const settingsBtn = document.querySelector('[data-role="settings"]');
+    if (!settingsBtn) return;
+
+    settingsBtn.addEventListener("click", () => {
+        window.location.href = "/setting";
     });
 }
 

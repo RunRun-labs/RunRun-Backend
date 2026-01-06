@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 온라인 대기방</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/match-waiting.css" th:href="@{/css/match-waiting.css}">
+  
+  <!-- WebSocket Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+<main class="page">
+  <div class="waiting-room">
+    <!-- Header Section -->
+    <header class="header-section">
+      <button class="back-button" type="button" aria-label="뒤로가기">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12.5 15L7.5 10L12.5 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <div class="header-content">
+        <div class="match-badge">
+          <span class="badge-text">⚡ 매칭 완료</span>
+        </div>
+        <h1 class="challenge-title">5KM 스피드 대결</h1>
+        <p class="challenge-subtitle">모든 참가자가 준비되면 시작됩니다</p>
+      </div>
+    </header>
+
+    <!-- Challenge Info Card -->
+    <section class="challenge-info-section">
+      <div class="challenge-info-card">
+        <div class="info-item">
+          <div class="info-value">
+            <span class="value-number" id="target-distance-km">-</span>
+            <span class="value-unit">km</span>
+          </div>
+          <div class="info-label">목표 거리</div>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-item">
+          <div class="info-value">
+            <span class="value-number" id="participant-count">-</span>
+            <span class="value-unit">명</span>
+          </div>
+          <div class="info-label">참가자</div>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-item">
+          <div class="info-icon">
+            <svg width="28" height="34" viewBox="0 0 28 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 2L14 14L26 2" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 12L14 24L26 12" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 22L14 34L26 22" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="info-label">스피드전</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Countdown Section -->
+    <section class="countdown-section">
+      <p class="countdown-label">시작까지 남은 시간</p>
+      <div class="countdown-timer">
+        <span class="timer-minutes">05</span>
+        <span class="timer-separator">:</span>
+        <span class="timer-seconds">00</span>
+      </div>
+      <p class="countdown-note">전원 준비 완료 시 즉시 시작</p>
+    </section>
+
+    <!-- Participants Section -->
+    <section class="participants-section">
+      <div class="participants-header">
+        <h2 class="participants-title">👥 참가자</h2>
+        <div class="ready-status">
+          <span class="ready-text" id="ready-count">0/0 준비완료</span>
+        </div>
+      </div>
+      <div class="participants-grid" id="participants-grid">
+        <!-- JavaScript로 동적 생성 -->
+      </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="action-section">
+      <button class="ready-button" type="button">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16.6667 5L7.5 14.1667L3.33334 10" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>준비완료</span>
+      </button>
+      <button class="cancel-button" type="button">대결 취소하기</button>
+    </section>
+  </div>
+</main>
+
+<script>
+  // URL에서 sessionId 가져오기
+  const urlParams = new URLSearchParams(window.location.search);
+  const SESSION_ID = parseInt(urlParams.get('sessionId')) || 1;
+  // MY_USER_ID는 JavaScript에서 myUserId로 설정됨
+</script>
+
+<script src="/js/match-waiting.js" th:src="@{/js/match-waiting.js}"></script>
+</body>
+</html>
+

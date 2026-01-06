@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @NoArgsConstructor
-public class MatchConfirmReqDto {
+public class OfflineMatchConfirmReqDto {
 
   private Long recruitId;
 }
