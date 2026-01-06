@@ -80,7 +80,11 @@ public class RecruitService {
     return RecruitCreateResDto.from(recruit);
   }
 
-  public Slice<RecruitListResDto> getRecruitList(RecruitListReqDto req, Pageable pageable) {
+  public Slice<RecruitListResDto> getRecruitList(RecruitListReqDto req, CustomUser principal,
+      Pageable pageable) {
+
+    User user = getUser(principal);
+
     String sortBy = (req.getSortBy() != null && !req.getSortBy().isEmpty())
         ? req.getSortBy()
         : "latest";
@@ -116,6 +120,8 @@ public class RecruitService {
         startOfDay,
         endOfDay,
         req.getRegion(),
+        req.getIsParticipated(),
+        user.getId(),
         dynamicPageable
     );
 
