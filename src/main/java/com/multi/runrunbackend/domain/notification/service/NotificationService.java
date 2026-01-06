@@ -16,6 +16,7 @@ import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.io.IOException;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -29,7 +30,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * @filename : NotificationService
  * @since : 2026-01-05 월요일
  */
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -112,6 +113,13 @@ public class NotificationService {
     }
 
     notification.markAsRead();
+  }
+
+  @Transactional(readOnly = true)
+  public long getUnreadCount(CustomUser principal) {
+    Long receiverId = getUser(principal).getId();
+    log.info("조회 요청 유저: {}, 내부 ID: {}", principal.getLoginId(), receiverId); // [추가]
+    return notificationRepository.countByReceiver_IdAndIsReadFalse(receiverId);
   }
 
   private User getUser(CustomUser principal) {
