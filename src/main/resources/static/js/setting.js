@@ -38,6 +38,7 @@ function attachBackButtonHandler() {
 // 메뉴 항목 핸들러
 function attachMenuHandlers() {
     const notificationSettingsBtn = document.querySelector('[data-role="notification-settings"]');
+    const profileVisibilityBtn = document.querySelector('[data-role="profile-visibility"]');
     const blockedUsersBtn = document.querySelector('[data-role="blocked-users"]');
     const logoutBtn = document.querySelector('[data-role="logout"]');
     const accountDeleteBtn = document.querySelector('[data-role="account-delete"]');
@@ -45,11 +46,19 @@ function attachMenuHandlers() {
     const ttsSettingsBtn = document.querySelector('[data-role="tts-settings"]');
     const modalCloseBtn = document.querySelector(".modal-close");
     const saveSettingsBtn = document.querySelector('[data-role="save-settings"]');
+    const saveVisibilitySettingsBtn = document.querySelector('[data-role="save-visibility-settings"]');
 
     // 알림 설정 모달 열기
     if (notificationSettingsBtn) {
         notificationSettingsBtn.addEventListener("click", () => {
             openNotificationModal();
+        });
+    }
+
+    // 공개 범위 설정 모달 열기
+    if (profileVisibilityBtn) {
+        profileVisibilityBtn.addEventListener("click", () => {
+            openProfileVisibilityModal();
         });
     }
 
@@ -219,6 +228,41 @@ function attachMenuHandlers() {
             await saveUserSettings();
         });
     }
+
+    // 공개 범위 설정 저장
+    if (saveVisibilitySettingsBtn) {
+        saveVisibilitySettingsBtn.addEventListener("click", async () => {
+            await saveProfileVisibilitySettings();
+        });
+    }
+
+    // 공개 범위 설정 모달 닫기
+    const profileVisibilityModalCloseBtn = document.querySelector('[data-role="close-profile-visibility-modal"]');
+    if (profileVisibilityModalCloseBtn) {
+        profileVisibilityModalCloseBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeProfileVisibilityModal();
+        });
+    }
+
+    // 공개 범위 설정 모달 배경 클릭 시 닫기
+    const profileVisibilityModalOverlay = document.querySelector('[data-role="profile-visibility-modal"]');
+    if (profileVisibilityModalOverlay) {
+        profileVisibilityModalOverlay.addEventListener("click", (e) => {
+            if (e.target === profileVisibilityModalOverlay) {
+                closeProfileVisibilityModal();
+            }
+        });
+
+        // 모달 콘텐츠 클릭 시 닫히지 않도록
+        const profileVisibilityModalContent = profileVisibilityModalOverlay.querySelector(".modal-content");
+        if (profileVisibilityModalContent) {
+            profileVisibilityModalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+        }
+    }
 }
 
 // 사용자 설정 로드
@@ -245,6 +289,7 @@ async function loadUserSettings() {
 
         if (settings) {
             updateNotificationToggles(settings);
+            updateProfileVisibilityRadio(settings);
         }
     } catch (error) {
         console.error("Failed to load user settings:", error);
@@ -281,6 +326,24 @@ function openTermsModal() {
 // 약관/정책 모달 닫기
 function closeTermsModal() {
     const modal = document.querySelector('[data-role="terms-modal"]');
+    if (modal) {
+        modal.setAttribute("hidden", "hidden");
+        document.body.style.overflow = "";
+    }
+}
+
+// 공개 범위 설정 모달 열기
+function openProfileVisibilityModal() {
+    const modal = document.querySelector('[data-role="profile-visibility-modal"]');
+    if (modal) {
+        modal.removeAttribute("hidden");
+        document.body.style.overflow = "hidden";
+    }
+}
+
+// 공개 범위 설정 모달 닫기
+function closeProfileVisibilityModal() {
+    const modal = document.querySelector('[data-role="profile-visibility-modal"]');
     if (modal) {
         modal.setAttribute("hidden", "hidden");
         document.body.style.overflow = "";
@@ -371,6 +434,24 @@ function updateNotificationToggles(settings) {
     }
 }
 
+// 공개 범위 라디오 버튼 상태 업데이트
+function updateProfileVisibilityRadio(settings) {
+    const visibility = settings.profileVisibility || "PUBLIC";
+    const publicRadio = document.querySelector('[data-role="visibility-public"]');
+    const friendsRadio = document.querySelector('[data-role="visibility-friends"]');
+    const privateRadio = document.querySelector('[data-role="visibility-private"]');
+
+    if (publicRadio) {
+        publicRadio.checked = visibility === "PUBLIC";
+    }
+    if (friendsRadio) {
+        friendsRadio.checked = visibility === "FRIENDS_ONLY";
+    }
+    if (privateRadio) {
+        privateRadio.checked = visibility === "PRIVATE";
+    }
+}
+
 // 사용자 설정 저장
 async function saveUserSettings() {
     try {
@@ -408,6 +489,48 @@ async function saveUserSettings() {
         closeNotificationModal();
     } catch (error) {
         console.error("Failed to save user settings:", error);
+        alert(error.message || "설정 저장 중 오류가 발생했습니다.");
+    }
+}
+
+// 공개 범위 설정 저장
+async function saveProfileVisibilitySettings() {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            window.location.href = "/login";
+            return;
+        }
+
+        const selectedRadio = document.querySelector('input[name="profileVisibility"]:checked');
+        if (!selectedRadio) {
+            alert("공개 범위를 선택해주세요.");
+            return;
+        }
+
+        const profileVisibility = selectedRadio.value;
+
+        const response = await fetch("/users/settings", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                profileVisibility: profileVisibility
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error?.message || "설정 저장 실패");
+        }
+
+        alert("설정이 저장되었습니다.");
+        closeProfileVisibilityModal();
+    } catch (error) {
+        console.error("Failed to save profile visibility settings:", error);
         alert(error.message || "설정 저장 중 오류가 발생했습니다.");
     }
 }
