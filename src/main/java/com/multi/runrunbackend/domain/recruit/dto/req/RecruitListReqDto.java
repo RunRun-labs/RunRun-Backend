@@ -2,7 +2,6 @@ package com.multi.runrunbackend.domain.recruit.dto.req;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
 import java.time.LocalDate;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,8 +23,9 @@ public class RecruitListReqDto {
   @DecimalMax("180.0")
   private Double longitude;
 
-  @Min(0)
+  @DecimalMin(value = "0.0", inclusive = false)
   private Double radiusKm;
+
   private String keyword;
   private String sortBy;
 
@@ -33,4 +33,6 @@ public class RecruitListReqDto {
   private LocalDate date;
 
   private String region;
+
+  private Boolean isParticipated;
 }
