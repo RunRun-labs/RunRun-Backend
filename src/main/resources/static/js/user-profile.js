@@ -29,14 +29,14 @@ document.addEventListener("DOMContentLoaded", () => {
     attachBlockButtonHandler(userId);
     attachBlockModalHandlers(userId);
     loadUserProfile(userId);
-    
+
     // 초기 로드 시 빈 상태 숨김
     hideEmptyState();
-    
+
     // 주간 요약 및 러닝 기록 로드
     initWeekSelector(userId);
     loadWeeklyStats(userId);
-    
+
     // 러닝 기록 무한 스크롤 초기화
     initInfiniteScroll(userId);
     attachUserScrollGate(userId);
@@ -199,7 +199,7 @@ function getCounterpart(friendDto) {
 function getCounterpartUserId(friendDto) {
     const counterpart = getCounterpart(friendDto);
     if (!counterpart) return null;
-    
+
     // userId 필드 확인 (타입 변환)
     const userId = counterpart.userId || counterpart.id || null;
     return userId != null ? Number(userId) : null;
@@ -229,7 +229,7 @@ async function requestFriend(userId) {
         if (!res.ok) {
             const errorData = await res.json().catch(() => ({}));
             const errorMessage = errorData.message || "친구 신청 실패";
-            
+
             // 이미 친구 요청이 존재하는 경우
             if (res.status === 409 || errorMessage.includes("이미")) {
                 alert("이미 친구 요청이 존재합니다.");
@@ -237,7 +237,7 @@ async function requestFriend(userId) {
                 await checkFriendStatus(targetUserId);
                 return;
             }
-            
+
             throw new Error(errorMessage);
         }
 
@@ -313,7 +313,7 @@ async function acceptReceivedFriendRequest(targetUserId) {
 
         const receivedData = await receivedRes.json();
         const receivedRequests = receivedData?.data ?? [];
-        
+
         // 헬퍼 함수를 사용하여 안전하게 찾기
         const receivedRequest = receivedRequests.find(req => {
             const counterpartUserId = getCounterpartUserId(req);
@@ -370,17 +370,17 @@ async function checkFriendStatus(targetUserId) {
         const receivedRes = await fetch("/friends/requests/received", {
             headers: {"Authorization": `Bearer ${token}`}
         });
-        
+
         if (receivedRes.ok) {
             const receivedData = await receivedRes.json();
             const receivedRequests = receivedData?.data ?? [];
-            
+
             // 헬퍼 함수를 사용하여 안전하게 찾기
             const receivedRequest = receivedRequests.find(req => {
                 const counterpartUserId = getCounterpartUserId(req);
                 return counterpartUserId !== null && counterpartUserId === targetId;
             });
-            
+
             if (receivedRequest) {
                 updateFriendButtonStatus("received", receivedRequest.friendId);
                 return;
@@ -391,17 +391,17 @@ async function checkFriendStatus(targetUserId) {
         const sentRes = await fetch("/friends/requests/sent", {
             headers: {"Authorization": `Bearer ${token}`}
         });
-        
+
         if (sentRes.ok) {
             const sentData = await sentRes.json();
             const sentRequests = sentData?.data ?? [];
-            
+
             // 헬퍼 함수를 사용하여 안전하게 찾기
             const sentRequest = sentRequests.find(req => {
                 const counterpartUserId = getCounterpartUserId(req);
                 return counterpartUserId !== null && counterpartUserId === targetId;
             });
-            
+
             if (sentRequest) {
                 updateFriendButtonStatus("sent", sentRequest.friendId);
                 return;
@@ -411,36 +411,36 @@ async function checkFriendStatus(targetUserId) {
         // 3. 친구 목록 확인 (여러 페이지 확인)
         let page = 0;
         let hasNext = true;
-        
+
         while (hasNext) {
             const friendsRes = await fetch(`/friends?page=${page}&size=20`, {
                 headers: {"Authorization": `Bearer ${token}`}
             });
-            
+
             if (!friendsRes.ok) {
                 break;
             }
-            
+
             const friendsData = await friendsRes.json();
             const sliceData = friendsData?.data ?? {};
             const friends = sliceData?.content ?? [];
-            
+
             // 헬퍼 함수를 사용하여 안전하게 찾기
             const friend = friends.find(f => {
                 const counterpartUserId = getCounterpartUserId(f);
-                return counterpartUserId !== null && 
-                       counterpartUserId === targetId && 
-                       f.status === "ACCEPTED";
+                return counterpartUserId !== null &&
+                    counterpartUserId === targetId &&
+                    f.status === "ACCEPTED";
             });
-            
+
             if (friend) {
                 updateFriendButtonStatus("accepted", friend.friendId);
                 return;
             }
-            
+
             hasNext = sliceData?.hasNext ?? false;
             page++;
-            
+
             // 최대 3페이지까지만 확인 (60명까지)
             if (page >= 3) {
                 break;
@@ -700,7 +700,29 @@ async function loadWeeklyStats(userId) {
             headers: {Authorization: `Bearer ${token}`},
         });
 
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+            // 403 에러인 경우 공개 범위 확인
+            if (res.status === 403) {
+                try {
+                    const errorData = await res.json();
+                    const errorCode = errorData?.code || errorData?.errorCode;
+
+                    // 비공개 또는 친구만 공개인 경우 주간 통계는 0으로 표시
+                    if (errorCode === "PR002" || errorCode === "PR001") {
+                        renderWeeklyChart([]);
+                        updateWeeklyTotals(0, 0);
+                        return;
+                    }
+                } catch (parseError) {
+                    console.error("에러 응답 파싱 실패:", parseError);
+                    // 파싱 실패해도 403이면 0으로 표시
+                    renderWeeklyChart([]);
+                    updateWeeklyTotals(0, 0);
+                    return;
+                }
+            }
+            throw new Error();
+        }
 
         const payload = await res.json();
         const data = payload.data;
@@ -799,12 +821,45 @@ async function loadRunningRecords(userId, page = 0, reset = false) {
             headers: {Authorization: `Bearer ${token}`}
         });
 
-        if (!res.ok) throw new Error("러닝 기록 조회 실패");
+        if (!res.ok) {
+            // 403 에러인 경우 공개 범위 확인
+            if (res.status === 403) {
+                try {
+                    const errorData = await res.json();
+                    const errorCode = errorData?.code || errorData?.errorCode;
+
+                    if (errorCode === "PR002") {
+                        // 비공개 프로필
+                        if (reset && page === 0) {
+                            showProfileRestricted("비공개 프로필입니다");
+                        }
+                        isLoading = false;
+                        return;
+                    } else if (errorCode === "PR001") {
+                        // 친구만 공개
+                        if (reset && page === 0) {
+                            showProfileRestricted("친구공개 프로필입니다");
+                        }
+                        isLoading = false;
+                        return;
+                    }
+                } catch (parseError) {
+                    console.error("에러 응답 파싱 실패:", parseError);
+                }
+            }
+            throw new Error("러닝 기록 조회 실패");
+        }
 
         const payload = await res.json();
         const sliceData = payload?.data;
 
         if (!sliceData) {
+            // 데이터가 없을 때 초기 로드면 빈 상태 표시
+            if (reset && page === 0) {
+                const runList = document.querySelector('[data-role="run-list"]');
+                if (runList) runList.innerHTML = "";
+                showEmptyState("사용자의 러닝 기록이 없습니다");
+            }
             isLoading = false;
             return;
         }
@@ -824,7 +879,7 @@ async function loadRunningRecords(userId, page = 0, reset = false) {
             hideEmptyState();
         } else if (reset && currentPage === 0) {
             // 초기 로드 시 기록이 없으면 빈 상태 표시
-            showEmptyState();
+            showEmptyState("사용자의 러닝 기록이 없습니다");
         } else {
             // 추가 페이지 로드 시 기록이 없으면 빈 상태는 유지 (이미 표시되어 있을 수 있음)
             // 빈 상태가 이미 표시되어 있지 않다면 숨김
@@ -838,6 +893,12 @@ async function loadRunningRecords(userId, page = 0, reset = false) {
 
     } catch (e) {
         console.error("러닝 기록 로드 실패:", e);
+        // 초기 로드 시 에러가 발생하면 빈 상태 표시
+        if (reset && page === 0) {
+            const runList = document.querySelector('[data-role="run-list"]');
+            if (runList) runList.innerHTML = "";
+            showEmptyState("사용자의 러닝 기록이 없습니다");
+        }
     } finally {
         isLoading = false;
     }
@@ -862,10 +923,16 @@ function renderRunningRecords(records) {
 /**
  * 빈 상태 표시
  */
-function showEmptyState() {
+function showEmptyState(message = "사용자의 러닝 기록이 없습니다") {
     const emptyState = document.getElementById("runListEmpty");
     const runList = document.querySelector('[data-role="run-list"]');
+    const weeklyStatsSection = document.querySelector('.weekly-stats-section');
+
     if (emptyState) {
+        const messageEl = document.getElementById("emptyStateMessage");
+        if (messageEl) {
+            messageEl.textContent = message;
+        }
         emptyState.removeAttribute("hidden");
         emptyState.style.display = "flex";
     }
@@ -887,6 +954,20 @@ function hideEmptyState() {
     if (runList) {
         runList.style.display = "flex";
     }
+}
+
+/**
+ * 프로필 제한 상태 표시 (비공개 또는 친구만 공개)
+ */
+function showProfileRestricted(message) {
+    // 러닝 기록 리스트 숨기기
+    const runList = document.querySelector('[data-role="run-list"]');
+    if (runList) {
+        runList.style.display = "none";
+    }
+
+    // 빈 상태 표시
+    showEmptyState(message);
 }
 
 /**
