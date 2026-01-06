@@ -56,22 +56,22 @@ document.addEventListener("DOMContentLoaded", () => {
         <path d="M9 11l3 3L22 4"/>
         <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
       </svg>`,
-      CREW: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      RECRUIT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
       </svg>`,
-      CHAT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      RUNNING: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
       </svg>`,
-      RECRUIT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      CHALLENGE: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
         <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
       </svg>`,
-      RUNNING: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      CREW: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
       </svg>`,
-      CHALLENGE: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      CHAT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
         <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
       </svg>`,
@@ -80,11 +80,19 @@ document.addEventListener("DOMContentLoaded", () => {
         <circle cx="8.5" cy="7" r="4"/>
         <path d="M20 8v6M23 11h-6"/>
       </svg>`,
-      ADVERTISEMENT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      FEED: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
         <path d="M9 9h6v6H9z"/>
       </svg>`,
-      COUPON: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      POINT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z"/>
+        <path d="M9 12h6"/>
+      </svg>`,
+      PAYMENT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z"/>
+        <path d="M9 12h6"/>
+      </svg>`,
+      SYSTEM: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z"/>
         <path d="M9 12h6"/>
       </svg>`,
@@ -104,32 +112,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const routeMap = {
-      CREW_CHAT_ROOM: `/chat`,
-      OFFLINE_CHAT_ROOM: `/chat`,
-      RECRUIT: `/recruit/${relatedId}`,
-      CREW: `/crews/${relatedId}`,
-      CREW_JOIN_REQUEST: `/crews/${relatedId}/join-requests`,
-      CREW_USER: `/crews/${relatedId}/users`,
-      CREW_ACTIVITY: `/crews/${relatedId}`,
-      CREW_ACTIVITY_USER: `/crews/${relatedId}`,
-      ONLINE_BATTLE: `/match/online`,
-      SOLORUN: `/match/solo`,
-      GHOSTRUN: `/match/ghost`,
-      BATTLE_RESULT: `/match/battleDetail/${relatedId}`,
-      RUNNING_RESULT: `/match/result/${relatedId}`,
-      CHALLENGE: `/challenge/${relatedId}`,
-      FEED_POST: `/feed/${relatedId}`,
-      MEMBERSHIP: `/membership`,
-      PAYMENT: `/payment/${relatedId}`,
-      USER_POINT: `/my`,
-      POINT_HISTORY: `/my`,
-      POINT_EXPIRATION: `/my`,
-      POINT_PRODUCT: `/my`,
-      RATING: `/my`,
-      AD: `/`,
-      COUPON: `/my`,
-      COURSE: `/course/${relatedId}`,
-      USERS: `/user/${relatedId}`
+      RECRUIT: ``,
+      OFFLINE: ``,
+      ONLINE: ``,
+      SOLORUN: ``,
+      GHOSTRUN: ``,
+      CREW_CHAT: ``,
+      CREW: ``,
+      CREW_JOIN_REQUEST: ``,
+      CREW_USER: ``,
+      MEMBERSHIP: ``,
+      PAYMENT: ``,
+      POINT_EXPIRATION: ``,
+      CHALLENGE: ``,
+      FEED_POST: ``,
+      FEED: ``,
+      FRIEND: ``,
     };
 
     return routeMap[relatedType] || null;
