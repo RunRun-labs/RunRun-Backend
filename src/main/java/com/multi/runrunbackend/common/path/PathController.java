@@ -308,6 +308,11 @@ public class PathController {
         return "friend/friend-list";
     }
 
+  @GetMapping("/notification")
+  public String notificationListView() {
+    return "notification/notification-list";
+  }
+
     @GetMapping("/admin/coupon/inquiry")
     public String adminCouponInquiryView() {
         return "admin/coupon-inquiry";

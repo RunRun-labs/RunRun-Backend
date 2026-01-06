@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+
 /**
  * 런닝 결과 Repository
  *
@@ -50,6 +51,29 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             @Param("maxDistance") BigDecimal maxDistance,
             Pageable pageable
     );
+
+    @Query("SELECT r FROM RunningResult r " +
+            "WHERE r.user.id = :userId " +
+            "AND r.runStatus IN :runStatuses " +
+            "AND r.isDeleted = false " +
+            "AND (:minDistance IS NULL OR r.totalDistance > :minDistance) " +
+            "AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance) " +
+            "AND (CAST(:startDate AS timestamp) IS NULL OR r.startedAt >= :startDate) " +
+            "AND (CAST(:endDate AS timestamp) IS NULL OR r.startedAt <= :endDate)"
+    )
+    Slice<RunningResult> findMyRecordsByStatuses(
+            @Param("userId") Long userId,
+            @Param("runStatuses") List<RunStatus> runStatuses, // List로 변경
+            @Param("minDistance") BigDecimal minDistance,
+            @Param("maxDistance") BigDecimal maxDistance,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable
+    );
+
+
+
+
 
 
 
@@ -91,7 +115,6 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             LocalDateTime end
     );
 
-
     /**
      * 사용자의 완료된 러닝 기록 조회
      */
@@ -99,4 +122,6 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             User user,
             Pageable pageable
     );
+
+
 }
