@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         setMessage("로그인 성공! 홈으로 이동합니다.");
-        window.location.href = "/test";
+        window.location.href = "/home";
       } catch (error) {
         setMessage(error.message || "로그인 중 오류가 발생했습니다.");
       } finally {
