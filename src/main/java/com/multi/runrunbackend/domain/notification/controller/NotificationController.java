@@ -50,4 +50,11 @@ public class NotificationController {
     return ResponseEntity.ok(ApiResponse.success("알림 읽음 처리 완료", null));
   }
 
+  @GetMapping("/unread-count")
+  public ResponseEntity<ApiResponse<Long>> getUnreadCount(
+      @AuthenticationPrincipal CustomUser principal
+  ) {
+    long count = notificationService.getUnreadCount(principal);
+    return ResponseEntity.ok(ApiResponse.success("읽지 않은 알림 개수 조회 성공", count));
+  }
 }
