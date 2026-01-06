@@ -170,6 +170,10 @@ public class PointService {
                     userId, startOfDay, endOfDay
             );
 
+            if (todayEarned == null) {
+                todayEarned = 0;
+            }
+
             if (todayEarned + requestDto.getAmount() > DAILY_LIMIT) {
                 throw new BusinessException(ErrorCode.DAILY_POINT_LIMIT_EXCEEDED);
             }
@@ -316,7 +320,9 @@ public class PointService {
      */
     public PointShopListResDto getPointShop(Long userId) {
 
-        Integer myPoints = userPointRepository.getTotalPointByUserId(userId);
+        final int myPoints = java.util.Optional
+                .ofNullable(userPointRepository.getTotalPointByUserId(userId))
+                .orElse(0);
 
         // 상품 목록 조회
         List<PointProduct> products = pointProductRepository
@@ -350,7 +356,10 @@ public class PointService {
     public PointShopDetailResDto getPointShopDetail(Long userId, Long productId) {
 
         PointProduct product = findProductById(productId);
-        Integer myPoints = userPointRepository.getTotalPointByUserId(userId);
+
+        final int myPoints = java.util.Optional
+                .ofNullable(userPointRepository.getTotalPointByUserId(userId))
+                .orElse(0);
 
         // S3 URL 변환
         String imageUrl = resolveImageUrl(product.getProductImageUrl());
