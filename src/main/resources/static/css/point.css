@@ -1,0 +1,647 @@
+/* 전체 초기화 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    background: #f8f9fa;
+    overflow-x: hidden;
+}
+
+/* 컨테이너 */
+.point-container {
+    max-width: 428px;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+    padding-bottom: 70px;
+}
+
+/* ========== 헤더 ========== */
+.point-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    background: white;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.back-btn {
+    font-size: 28px;
+    cursor: pointer;
+    margin-right: 15px;
+    color: #333;
+}
+
+.point-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+/* ========== 상단 탭 네비게이션 ========== */
+.top-nav {
+    display: flex;
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 20px;
+}
+
+.top-nav-item {
+    flex: 1;
+    padding: 16px 0;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 500;
+    color: #999;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.top-nav-item.active {
+    color: #333;
+    border-bottom-color: #a5d6a7;
+    font-weight: 600;
+}
+
+/* ========== 포인트 카드 (메인) ========== */
+.point-card {
+    background: linear-gradient(135deg, #d4f1d6 0%, #b8e6bb 100%);
+    margin: 20px;
+    padding: 30px 24px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.point-card-label {
+    font-size: 14px;
+    color: #2e7d32;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.point-amount {
+    font-size: 48px;
+    font-weight: 700;
+    color: #1b5e20;
+    margin: 8px 0 24px 0;
+    letter-spacing: -1px;
+}
+
+.point-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: white;
+    color: #2e7d32;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== 포인트 적립 방법 (메인) ========== */
+.earn-methods {
+    padding: 0 20px 20px 20px;
+}
+
+.earn-methods h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    color: #333;
+}
+
+.earn-method-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.earn-method-item:last-child {
+    margin-bottom: 0;
+}
+
+.earn-method-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.earn-method-icon {
+    font-size: 36px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.earn-method-text h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: #333;
+}
+
+.earn-method-text p {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+}
+
+.earn-method-point {
+    font-size: 20px;
+    font-weight: 700;
+    color: #4caf50;
+}
+
+/* ========== 잔액 조회 화면 ========== */
+.balance-card {
+    background: linear-gradient(135deg, #d4f1d6 0%, #b8e6bb 100%);
+    margin: 20px;
+    padding: 30px 24px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.balance-summary {
+    display: flex;
+    gap: 12px;
+    margin: 0 20px 20px 20px;
+}
+
+.balance-box {
+    flex: 1;
+    padding: 20px 16px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.balance-box.earn {
+    background: #e3f2fd;
+}
+
+.balance-box.use {
+    background: #ffebee;
+}
+
+.balance-box-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.balance-box-amount {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.balance-box.earn .balance-box-amount {
+    color: #2196f3;
+}
+
+.balance-box.use .balance-box-amount {
+    color: #f44336;
+}
+
+/* 소멸 예정 포인트 */
+.expiry-notice {
+    background: #fffde7;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 0 20px 20px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.expiry-notice .icon {
+    font-size: 24px;
+}
+
+.expiry-notice-content strong {
+    display: block;
+    font-size: 13px;
+    color: #f57c00;
+    margin-bottom: 4px;
+}
+
+.expiry-notice-content p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+}
+
+/* 포인트 상세 */
+.point-detail {
+    background: white;
+    padding: 0 20px 20px 20px;
+}
+
+.point-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-top: 8px;
+}
+
+.point-detail-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: #333;
+}
+
+.view-history-btn {
+    background: transparent;
+    border: 1.5px solid #a5d6a7;
+    color: #2e7d32;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.view-history-btn:hover {
+    background: #f1f8f4;
+}
+
+.point-detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.point-detail-item:last-child {
+    border-bottom: none;
+}
+
+.point-detail-label {
+    font-size: 15px;
+    color: #666;
+}
+
+.point-detail-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* ========== 포인트 내역 ========== */
+.history-filter {
+    padding: 16px 20px;
+    display: flex;
+    gap: 8px;
+    background: white;
+}
+
+.filter-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 20px;
+    background: #f5f5f5;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn.active {
+    background: #d4f1d6;
+    color: #1b5e20;
+}
+
+.history-list {
+    padding: 0 20px;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-info h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+    color: #333;
+}
+
+.history-info p {
+    font-size: 13px;
+    color: #999;
+    margin: 0;
+}
+
+.history-amount {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.history-amount.earn {
+    color: #4caf50;
+}
+
+.history-amount.use {
+    color: #f44336;
+}
+
+/* ========== 포인트 상점 ========== */
+.shop-header {
+    background: linear-gradient(135deg, #d4f1d6 0%, #b8e6bb 100%);
+    padding: 20px 24px;
+    margin: 20px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.shop-header-left h2 {
+    font-size: 14px;
+    color: #2e7d32;
+    margin: 0 0 6px 0;
+    font-weight: 500;
+}
+
+.shop-header .point-amount {
+    font-size: 32px;
+    margin: 0;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 0 20px 20px 20px;
+}
+
+.product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #f0f0f0;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.product-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+}
+
+.product-info {
+    padding: 14px;
+}
+
+.product-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: #333;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 40px;
+}
+
+.product-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #4caf50;
+    margin-bottom: 10px;
+}
+
+.product-buy-btn {
+    width: 100%;
+    padding: 10px;
+    background: #d4f1d6;
+    border: none;
+    border-radius: 8px;
+    color: #1b5e20;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.product-buy-btn:hover {
+    background: #b8e6bb;
+}
+
+.product-buy-btn:disabled {
+    background: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* ========== 모달 ========== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 24px;
+    padding: 30px 24px;
+    max-width: 340px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.modal-product-name {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.modal-product-description {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.modal-product-price {
+    font-size: 28px;
+    font-weight: 700;
+    color: #4caf50;
+    margin-bottom: 24px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-btn-cancel {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.modal-btn-cancel:hover {
+    background: #e0e0e0;
+}
+
+.modal-btn-confirm {
+    background: #4caf50;
+    color: white;
+}
+
+.modal-btn-confirm:hover {
+    background: #45a049;
+}
+
+.modal-btn-confirm:disabled {
+    background: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* ========== 하단 네비게이션 ========== */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 428px;
+    width: 100%;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    color: #666;
+    font-size: 11px;
+    padding: 4px 12px;
+    transition: all 0.2s;
+}
+
+.nav-item .icon {
+    font-size: 24px;
+}
+
+.nav-item.active {
+    color: #4caf50;
+}
+
+.nav-item.active .icon {
+    transform: scale(1.1);
+}
+
+/* 로딩 상태 */
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-size: 14px;
+}
+
+/* 빈 상태 */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state-text {
+    font-size: 15px;
+    color: #666;
+}

@@ -323,15 +323,25 @@ function closeAllDropdowns(event) {
 function createAvatar(member, isLeader) {
     const avatarClass = isLeader ? 'member-avatar leader-avatar' : 'member-avatar';
 
-    if (member.profileImageUrl) {
-        return `<div class="${avatarClass}">
-                    <img src="${escapeHtml(member.profileImageUrl)}" alt="${escapeHtml(member.userName)}" onerror="this.parentElement.innerHTML='<div class=\\'avatar-placeholder\\'>${escapeHtml(member.userName.charAt(0))}</div>'">
-                </div>`;
-    } else {
+    // 프로필 이미지 처리
+    if (member.profileImageUrl && member.profileImageUrl.trim() !== '') {
         const initial = member.userName ? member.userName.charAt(0).toUpperCase() : '?';
-        return `<div class="${avatarClass}">
-                    <div class="avatar-placeholder">${initial}</div>
-                </div>`;
+        return `
+            <div class="${avatarClass}">
+                <img src="${escapeHtml(member.profileImageUrl)}" 
+                     alt="${escapeHtml(member.userName)}" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="avatar-placeholder" style="display:none;">${initial}</div>
+            </div>
+        `;
+    } else {
+        // 프로필 이미지 없을 때
+        const initial = member.userName ? member.userName.charAt(0).toUpperCase() : '?';
+        return `
+            <div class="${avatarClass}">
+                <div class="avatar-placeholder">${initial}</div>
+            </div>
+        `;
     }
 }
 

@@ -156,6 +156,31 @@ public class PathController {
         return "payment/fail";
     }
 
+    @GetMapping("/points")
+    public String point() {
+        return "point/point";
+    }
+
+    @GetMapping("/points/balance")
+    public String pointBalance() {
+        return "point/pointBalance";
+    }
+
+    @GetMapping("/points/history")
+    public String pointHistory() {
+        return "point/pointHistory";
+    }
+
+    @GetMapping("/points/shop")
+    public String pointShop() {
+        return "point/pointShop";
+    }
+
+    @GetMapping("/admin/points/products")
+    public String pointProductAdminView() {
+        return "point/pointAdmin";
+    }
+
     @GetMapping("/chat")
     public String chatList() {
         return "chat/chat-list";
