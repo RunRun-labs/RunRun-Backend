@@ -113,21 +113,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const routeMap = {
       RECRUIT: ``,
-      OFFLINE: ``,
-      ONLINE: ``,
-      SOLORUN: ``,
-      GHOSTRUN: ``,
-      CREW_CHAT: ``,
-      CREW: ``,
-      CREW_JOIN_REQUEST: ``,
-      CREW_USER: ``,
+      OFFLINE: `/chat/chat1?sessionId=${relatedId}`,
+      ONLINE: `/match/waiting?sessionId=${relatedId}`,
+      SOLORUN: `/match/solo?sessionId=${relatedId}`,
+      GHOSTRUN: `/match/ghost?sessionId=${relatedId}`,
+      CREW_CHAT: `/chat/crew?roomId=${relatedId}`,
+      CREW: `/crews/${relatedId}`,
+      CREW_JOIN_REQUEST: `/crews/${relatedId}/join`,
+      CREW_USER: `/crews/${relatedId}/users`,
       MEMBERSHIP: ``,
       PAYMENT: ``,
       POINT_EXPIRATION: ``,
-      CHALLENGE: ``,
+      CHALLENGE: `/challenge/${relatedId}`,
       FEED_POST: ``,
-      FEED: ``,
-      FRIEND: ``,
+      FEED: `/feed/${relatedId}`,
+      FRIEND: `/friends/list`,
     };
 
     return routeMap[relatedType] || null;
