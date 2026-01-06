@@ -7,6 +7,100 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedCourseId = null;
   let selectedAddress = null;
   let recruitId = null;
+  let isDistanceLocked = false;
+  let DRAFT_KEY = null;
+  let isLocationLockedByCourse = false;
+
+  // 러닝(코스) 선택 페이지에서 돌아올 때 query param으로 받은 값을 우선 적용
+  function applyCourseFromQueryParams() {
+    try {
+      const u = new URL(window.location.href);
+      const courseId = u.searchParams.get("courseId");
+      const courseName = u.searchParams.get("courseName");
+      const courseDistanceKm = u.searchParams.get("courseDistanceKm");
+      if (courseId) {
+        selectedCourseId = parseInt(courseId, 10);
+        const courseInput = document.getElementById("course");
+        if (courseInput) {
+          courseInput.value = courseName || "코스 선택됨";
+        }
+        if (courseDistanceKm) {
+          setDistanceLock(parseFloat(courseDistanceKm));
+          updateConditionSummary();
+        }
+        // ✅ 코스 출발지 자동 세팅 + 출발지 잠금
+        applyCourseStartLocationIfNeeded();
+        return true;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return false;
+  }
+
+  async function fetchCourseDetail(courseId) {
+    if (!courseId) return null;
+    const token = localStorage.getItem("accessToken") || getCookie("accessToken");
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`/api/courses/${courseId}`, {
+      method: "GET",
+      headers,
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !body?.success) {
+      throw new Error(body?.message || "코스 정보를 불러올 수 없습니다.");
+    }
+    return body.data;
+  }
+
+  function setLocationLockByCourse(locked) {
+    isLocationLockedByCourse = locked === true;
+    const locationSummaryEl = document.getElementById("locationSummary");
+    if (locationSummaryEl) {
+      if (isLocationLockedByCourse) locationSummaryEl.classList.add("locked");
+      else locationSummaryEl.classList.remove("locked");
+    }
+  }
+
+  async function applyCourseStartLocationIfNeeded() {
+    if (!selectedCourseId) {
+      setLocationLockByCourse(false);
+      return;
+    }
+    try {
+      setLocationLockByCourse(true);
+      const course = await fetchCourseDetail(selectedCourseId);
+      const lat = course?.startLat;
+      const lng = course?.startLng;
+      const addr = course?.address;
+      if (lat == null || lng == null || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+        throw new Error("코스 출발지 좌표가 없습니다.");
+      }
+      selectedLat = Number(lat);
+      selectedLng = Number(lng);
+      selectedAddress = addr ? String(addr) : "코스 출발지";
+      try {
+        updateLocationSummary();
+      } catch (e) {
+        // ignore
+      }
+      // 지도(모달)가 이미 만들어져 있으면 마커도 동기화
+      try {
+        if (map) {
+          const latlng = new kakao.maps.LatLng(selectedLat, selectedLng);
+          map.setCenter(latlng);
+          if (marker) marker.setMap(null);
+          marker = new kakao.maps.Marker({ position: latlng, map });
+        }
+      } catch (e) {
+        // ignore
+      }
+    } catch (e) {
+      console.warn("코스 출발지 자동 적용 실패:", e?.message || e);
+      showToast(e?.message || "코스 출발지를 불러올 수 없습니다.", "error");
+    }
+  }
 
   const selectedTags = {
     distance: null,
@@ -14,6 +108,140 @@ document.addEventListener("DOMContentLoaded", () => {
     ages: [],
     gender: null,
   };
+
+  function setDistanceLock(distanceKm) {
+    if (distanceKm === null || distanceKm === undefined || Number.isNaN(distanceKm)) {
+      return;
+    }
+
+    isDistanceLocked = true;
+    selectedTags.distance = distanceKm;
+
+    // 거리 칩(3/5/10) 잠금 + 선택 해제
+    document.querySelectorAll('.chip[data-distance]').forEach((chip) => {
+      chip.classList.remove("selected");
+      chip.disabled = true;
+      chip.classList.add("disabled");
+    });
+  }
+
+  function saveDraft(extra = {}) {
+    if (!DRAFT_KEY) return;
+    try {
+      const title = document.getElementById("title")?.value ?? "";
+      const content = document.getElementById("content")?.value ?? "";
+      const maxParticipants = document.getElementById("maxParticipants")?.value ?? "";
+      const meetingDate = document.getElementById("meetingDate")?.value ?? "";
+      const meetingTime = document.getElementById("meetingTime")?.value ?? "";
+      const courseText = document.getElementById("course")?.value ?? "";
+
+      const draft = {
+        savedAt: Date.now(),
+        recruitId,
+        title,
+        content,
+        maxParticipants,
+        meetingDate,
+        meetingTime,
+        selectedLat,
+        selectedLng,
+        selectedAddress,
+        selectedCourseId,
+        courseText,
+        isDistanceLocked,
+        selectedTags: {
+          distance: selectedTags.distance,
+          pace: selectedTags.pace,
+          ages: Array.isArray(selectedTags.ages) ? [...selectedTags.ages] : [],
+          gender: selectedTags.gender,
+        },
+        ...extra,
+      };
+
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function restoreDraft() {
+    if (!DRAFT_KEY) return false;
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return false;
+      const draft = JSON.parse(raw);
+      if (!draft || typeof draft !== "object") return false;
+
+      // 다른 글 draft면 무시
+      if (draft.recruitId != null && String(draft.recruitId) !== String(recruitId)) {
+        return false;
+      }
+
+      // 너무 오래된 초안은 무시 (1시간)
+      if (draft.savedAt && Date.now() - draft.savedAt > 60 * 60 * 1000) {
+        sessionStorage.removeItem(DRAFT_KEY);
+        return false;
+      }
+
+      const titleEl = document.getElementById("title");
+      const contentEl = document.getElementById("content");
+      const maxEl = document.getElementById("maxParticipants");
+      const dateEl = document.getElementById("meetingDate");
+      const timeEl = document.getElementById("meetingTime");
+      const courseEl = document.getElementById("course");
+
+      if (titleEl && typeof draft.title === "string") titleEl.value = draft.title;
+      if (contentEl && typeof draft.content === "string") contentEl.value = draft.content;
+      if (maxEl && draft.maxParticipants != null) maxEl.value = String(draft.maxParticipants);
+      if (dateEl && typeof draft.meetingDate === "string") dateEl.value = draft.meetingDate;
+      if (timeEl && typeof draft.meetingTime === "string") timeEl.value = draft.meetingTime;
+
+      if (typeof draft.selectedLat === "number") selectedLat = draft.selectedLat;
+      if (typeof draft.selectedLng === "number") selectedLng = draft.selectedLng;
+      if (typeof draft.selectedAddress === "string") selectedAddress = draft.selectedAddress;
+      if (draft.selectedCourseId != null) selectedCourseId = Number(draft.selectedCourseId);
+      if (courseEl && typeof draft.courseText === "string" && draft.courseText) {
+        courseEl.value = draft.courseText;
+      }
+
+      if (draft.selectedTags && typeof draft.selectedTags === "object") {
+        selectedTags.distance = draft.selectedTags.distance ?? null;
+        selectedTags.pace = draft.selectedTags.pace ?? null;
+        selectedTags.ages = Array.isArray(draft.selectedTags.ages) ? [...draft.selectedTags.ages] : [];
+        selectedTags.gender = draft.selectedTags.gender ?? null;
+      }
+
+      if (draft.isDistanceLocked) {
+        setDistanceLock(Number(selectedTags.distance));
+      }
+
+      // UI 반영
+      try {
+        updateLocationSummary();
+      } catch (e) {
+        // ignore
+      }
+      try {
+        updateChipSelection();
+      } catch (e) {
+        // ignore
+      }
+      try {
+        updateConditionSummary();
+      } catch (e) {
+        // ignore
+      }
+      try {
+        generateTimeOptions();
+      } catch (e) {
+        // ignore
+      }
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
   // URL에서 recruitId 추출
   function extractRecruitIdFromUrl() {
@@ -99,6 +327,11 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("course").value = data.courseImageUrl ? "코스 선택됨" : "";
     }
 
+    // query param이 있으면(방금 선택해서 돌아온 경우) 서버값보다 우선
+    applyCourseFromQueryParams();
+    // ✅ 코스가 선택된 상태면 출발지는 코스 출발지로 강제 + 잠금
+    await applyCourseStartLocationIfNeeded();
+
     // 러닝 조건
     if (data.targetDistance) {
       selectedTags.distance = data.targetDistance;
@@ -131,6 +364,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  DRAFT_KEY = `recruitDraft:update:${recruitId}`;
+
   // 모집글 데이터 로드
   async function loadRecruitData() {
     try {
@@ -152,6 +387,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok && result.success) {
         await initEditForm(result.data);
+        // initEditForm 이후에도 한 번 더(레이스 방지)
+        applyCourseFromQueryParams();
+        await applyCourseStartLocationIfNeeded();
       } else {
         showToast(result.message || "모집글을 불러올 수 없습니다.", "error");
         setTimeout(() => {
@@ -442,6 +680,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (locationModal && locationSummary && closeLocationModalBtn
       && confirmLocationModalBtn) {
     function openLocationModal() {
+      if (isLocationLockedByCourse) {
+        showToast("코스를 선택한 경우 출발지는 코스 출발지로 고정됩니다.", "error");
+        return;
+      }
       locationModal.classList.add("show");
       document.body.style.overflow = "hidden";
 
@@ -490,9 +732,16 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "/recruit";
   });
 
-  document.getElementById("course").addEventListener("click", () => {
-    showToast("코스 조회 기능은 추후 구현 예정입니다.", "error");
-  });
+  // 러닝(코스) 선택: 코스 목록 -> 코스 상세의 '확인' 버튼으로 선택 확정
+  const courseInputEl = document.getElementById("course");
+  if (courseInputEl) {
+    courseInputEl.addEventListener("click", () => {
+      // 코스 선택하러 가기 전에 현재 작성 중 값 저장
+      saveDraft({ from: "courseSelect" });
+      const returnTo = window.location.pathname + window.location.search;
+      window.location.href = `/course?selectMode=recruit&returnTo=${encodeURIComponent(returnTo)}`;
+    });
+  }
 
   // 모달 열기/닫기
   const conditionModal = document.getElementById("conditionBottomSheet");
@@ -983,6 +1232,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        try {
+          if (DRAFT_KEY) sessionStorage.removeItem(DRAFT_KEY);
+        } catch (e) {
+          // ignore
+        }
         showToast("모집글이 성공적으로 수정되었습니다.", "success");
         setTimeout(() => {
           window.location.href = `/recruit/${recruitId}`;
@@ -1092,5 +1346,12 @@ document.addEventListener("DOMContentLoaded", () => {
   updateLocationSummary();
 
   // 모집글 데이터 로드 (페이지 로드 시)
-  loadRecruitData();
+  // - 코스 선택하러 나갔다가 돌아온 경우: draft 복원 후 서버 로드로 덮어쓰지 않음
+  const restored = restoreDraft();
+  if (!restored) {
+    loadRecruitData();
+  } else {
+    // 코스 선택 복귀 query param이 있으면 draft 위에 최종 반영
+    applyCourseFromQueryParams();
+  }
 });

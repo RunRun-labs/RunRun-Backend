@@ -1,0 +1,769 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f5f5;
+  overflow: hidden;
+}
+
+.page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: white;
+}
+
+/* 상단 네비게이션 */
+.top-nav {
+  position: relative;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  background-color: white;
+  z-index: 10;
+}
+
+.back-button {
+  position: absolute;
+  left: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #252525;
+}
+
+.back-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+.page-title {
+  font-family: 'Nunito Sans', 'Noto Sans KR', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  color: #252525;
+  text-align: center;
+}
+
+/* 지도 컨테이너 */
+.map-container {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+/* GPS 정확도 디버그 배지(러닝 중 정확도 확인용) */
+.gps-accuracy-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 25;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  color: rgba(17, 24, 39, 0.92);
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  display: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+.gps-accuracy-badge.show {
+  display: block;
+}
+
+/* 토스트(WS/속도/이탈 알림) */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 10050;
+  max-width: min(420px, 92vw);
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  color: #111827;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.info {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.toast.warn {
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+.toast.success {
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+/* 현재 위치(또는 방장 위치)로 이동 버튼 */
+.locate-button {
+  position: absolute;
+  right: 16px;
+  /* 하단바(공통 bottom-nav)에 가리지 않도록 위로 띄움 */
+  bottom: calc(16px + 80px + env(safe-area-inset-bottom));
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  color: #111827;
+  font-size: 20px;
+  font-weight: 900;
+  z-index: 20;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.locate-button:active {
+  transform: translateY(1px);
+}
+
+/* 방향 화살표 (CustomOverlay content) */
+.runner-heading {
+  width: 20px;
+  height: 20px;
+  transform-origin: 50% 50%;
+}
+
+.runner-heading::before {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 14px solid rgba(17, 24, 39, 0.9);
+  margin: 0 auto;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+}
+
+.runner-heading.host::before {
+  border-bottom-color: rgba(16, 185, 129, 0.95);
+}
+
+/* 방향 콘(러닝앱 느낌) */
+.runner-heading-cone {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 26px solid rgba(59, 130, 246, 0.35);
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.22));
+  transform-origin: 50% 80%;
+}
+
+.runner-heading-cone.host {
+  border-bottom-color: rgba(16, 185, 129, 0.35);
+}
+
+/* 출발점 마커 (CustomOverlay) */
+.start-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-4px);
+}
+
+.start-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #111827;
+  border: 3px solid #baff29;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.start-label {
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.92);
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+}
+
+/* 러너 핀 (CustomOverlay) */
+.runner-pin {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.95);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+  border: 3px solid rgba(255, 255, 255, 0.95);
+}
+
+.runner-pin.host {
+  background: rgba(16, 185, 129, 0.95);
+}
+
+.runner-pin-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0) 55%
+  );
+}
+
+/* 통계 정보 오버레이 */
+.stats-overlay {
+  position: absolute;
+  bottom: 200px;
+  left: 30px;
+  right: 30px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  z-index: 5;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  padding: 12px 16px;
+  backdrop-filter: blur(10px);
+}
+
+.stat-value {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: white;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.stat-item:nth-child(2) .stat-value {
+  font-size: 20px;
+}
+
+.stat-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 10px;
+  color: #aaa;
+  text-align: center;
+}
+
+/* 채팅방 버튼 */
+.chat-button {
+  position: absolute;
+  bottom: 120px;
+  left: 30px;
+  right: 30px;
+  height: 52px;
+  background-color: #baff29;
+  border: 1px solid #baff29;
+  border-radius: 12px;
+  font-family: 'Nunito Sans', 'Noto Sans KR', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #252525;
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.chat-button:hover {
+  background-color: #a8e826;
+}
+
+.chat-button:active {
+  background-color: #96d123;
+}
+
+/* ==========================
+   러닝 결과 모달
+========================== */
+.running-result-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.running-result-modal-overlay.show {
+  display: flex;
+}
+
+.running-result-modal {
+  width: min(420px, 92vw);
+  max-height: min(70vh, 640px);
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 10px 16px;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.result-header h2 {
+  font-size: 16px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.result-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #111827;
+  padding: 6px 8px;
+}
+
+/* 결과 로딩(러닝 결과 처리 지연 대비) */
+.result-loading {
+  display: none;
+  padding: 16px;
+  text-align: center;
+  color: #111827;
+  font-weight: 900;
+}
+
+.result-loading.show {
+  display: block;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  border: 3px solid rgba(17, 24, 39, 0.2);
+  border-top-color: rgba(17, 24, 39, 0.9);
+  animation: spin 0.9s linear infinite;
+}
+
+.loading-text {
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(17, 24, 39, 0.85);
+}
+
+/* ============================================ */
+/* 자유러닝(코스 없음) - 처리 단계 오버레이/코스 저장 모달 */
+/* ============================================ */
+
+.global-loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.global-loading-overlay.show {
+  display: flex;
+}
+
+.global-loading-card {
+  width: min(92vw, 360px);
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px 16px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.free-run-course-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+}
+
+.free-run-course-modal-overlay.show {
+  display: flex;
+}
+
+.free-run-course-modal {
+  width: min(94vw, 420px);
+  max-height: 86vh;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.free-run-course-header {
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.free-run-course-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.free-run-course-subtitle {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  line-height: 1.35;
+}
+
+.free-run-course-body {
+  padding: 14px 16px;
+  overflow: auto;
+}
+
+.free-run-field {
+  margin-bottom: 12px;
+}
+
+.free-run-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.free-run-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.free-run-input,
+.free-run-textarea {
+  width: 100%;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  outline: none;
+  background: #fff;
+}
+
+.free-run-textarea {
+  resize: none;
+}
+
+.free-run-course-footer {
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.free-run-primary {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  background: #111827;
+  cursor: pointer;
+}
+
+.free-run-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.result-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.result-card {
+  background: rgba(17, 24, 39, 0.06);
+  border-radius: 12px;
+  padding: 10px 10px;
+  text-align: center;
+}
+
+.result-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(17, 24, 39, 0.65);
+}
+
+.result-value {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.result-segments {
+  padding: 0 16px 12px;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.segments-title {
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(17, 24, 39, 0.75);
+  margin-bottom: 8px;
+}
+
+.segments-list {
+  overflow-y: auto;
+  border: 1px solid #eef0f3;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.segment-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 2px;
+  border-bottom: 1px dashed #e5e7eb;
+  font-size: 13px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.segment-item:last-child {
+  border-bottom: none;
+}
+
+.segment-km {
+  color: rgba(17, 24, 39, 0.8);
+}
+
+.segment-pace {
+  color: #111827;
+}
+
+.result-actions {
+  padding: 12px 16px 16px;
+  border-top: 1px solid #eef0f3;
+}
+
+.result-primary {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid #baff29;
+  background: #baff29;
+  font-weight: 900;
+  font-size: 15px;
+  color: #252525;
+  cursor: pointer;
+}
+
+/* 시작 버튼 */
+.start-button {
+  display: none; /* 러닝은 채팅방에서 시작하므로 러닝 페이지에선 시작 버튼 미노출 */
+  position: absolute;
+  bottom: 178px;
+  left: 30px;
+  right: 30px;
+  height: 52px;
+  background: #111827;
+  border: 1px solid #111827;
+  border-radius: 12px;
+  font-family: 'Nunito Sans', 'Noto Sans KR', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: white;
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.start-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.start-hint {
+  display: none; /* 시작 버튼 미노출과 함께 힌트도 숨김 */
+  position: absolute;
+  bottom: 240px;
+  left: 30px;
+  right: 30px;
+  z-index: 5;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.9);
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+
+/* 하단 네비게이션 */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background-color: white;
+  border-top: 1px solid #baff29;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  padding: 16px 0;
+  z-index: 10;
+}
+
+.bottom-nav .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #252525;
+  cursor: pointer;
+}
+
+.bottom-nav .nav-item img {
+  width: 30px;
+  height: 30px;
+}
+
+.bottom-nav .nav-item span {
+  font-family: 'Fugaz One', sans-serif;
+  font-size: 10px;
+  color: #252525;
+}
+
+/* 반응형 */
+@media (max-width: 480px) {
+  .stats-overlay {
+    bottom: 180px;
+    left: 20px;
+    right: 20px;
+    gap: 12px;
+  }
+
+  .stat-item {
+    padding: 10px 12px;
+  }
+
+  .stat-value {
+    font-size: 14px;
+  }
+
+  .stat-item:nth-child(2) .stat-value {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+  }
+
+  .chat-button {
+    bottom: 100px;
+    left: 20px;
+    right: 20px;
+    height: 48px;
+    font-size: 14px;
+  }
+
+  .start-button {
+    bottom: 156px;
+    left: 20px;
+    right: 20px;
+    height: 48px;
+    font-size: 14px;
+  }
+
+  .start-hint {
+    bottom: 212px;
+    left: 20px;
+    right: 20px;
+  }
+}
+
