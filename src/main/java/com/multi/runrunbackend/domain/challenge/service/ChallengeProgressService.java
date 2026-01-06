@@ -23,14 +23,15 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ChallengeProgressService {
 
     private final UserChallengeRepository userChallengeRepository;
 
     /**
      * 러닝 종료 시 챌린지 진행도 반영
+     *
      */
+    @Transactional // 여기에 트랜잭션 경계 설정
     public void applyRunningResult(RunningResult runningResult) {
 
 
@@ -56,6 +57,7 @@ public class ChallengeProgressService {
                 continue;
             }
 
+            // 아래 private 메서드들은 이 메서드의 트랜잭션에 참여합니다.
             switch (challenge.getChallengeType()) {
                 case DISTANCE -> applyDistanceChallenge(uc, runningResult);
                 case TIME -> applyTimeChallenge(uc, runningResult);
