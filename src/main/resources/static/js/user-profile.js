@@ -29,6 +29,18 @@ document.addEventListener("DOMContentLoaded", () => {
     attachBlockButtonHandler(userId);
     attachBlockModalHandlers(userId);
     loadUserProfile(userId);
+    
+    // 초기 로드 시 빈 상태 숨김
+    hideEmptyState();
+    
+    // 주간 요약 및 러닝 기록 로드
+    initWeekSelector(userId);
+    loadWeeklyStats(userId);
+    
+    // 러닝 기록 무한 스크롤 초기화
+    initInfiniteScroll(userId);
+    attachUserScrollGate(userId);
+    loadRunningRecords(userId, 0, true);
 });
 
 async function loadUserProfile(userId) {
@@ -587,6 +599,520 @@ async function blockUser(userId, shouldReport) {
     } catch (e) {
         console.error("Error blocking user:", e);
         alert(e.message || "사용자 차단에 실패했습니다.");
+    }
+}
+
+// 주 선택 관련 전역 변수
+let currentWeekOffset = 0; // 0 = 이번 주, -1 = 지난 주, 1 = 다음 주 등
+
+/**
+ * 주 선택 기능 초기화
+ */
+function initWeekSelector(userId) {
+    const prevBtn = document.querySelector('[data-role="week-prev"]');
+    const nextBtn = document.querySelector('[data-role="week-next"]');
+
+    if (prevBtn) {
+        prevBtn.addEventListener("click", () => {
+            if (currentWeekOffset > -3) { // 최대 한달 전까지 (4주)
+                currentWeekOffset--;
+                updateWeekLabel();
+                loadWeeklyStats(userId);
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener("click", () => {
+            if (currentWeekOffset < 0) { // 현재 주까지만 (미래 주는 불가)
+                currentWeekOffset++;
+                updateWeekLabel();
+                loadWeeklyStats(userId);
+            }
+        });
+    }
+
+    updateWeekLabel();
+}
+
+/**
+ * 주 레이블 업데이트
+ */
+function updateWeekLabel() {
+    const weekLabel = document.querySelector('[data-role="week-label"]');
+    if (!weekLabel) return;
+
+    const today = new Date();
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + (currentWeekOffset * 7));
+
+    const weekStart = getStartOfWeek(targetDate);
+    const month = weekStart.getMonth() + 1;
+    const weekNumber = getWeekNumber(weekStart);
+
+    let label = `${month}월 ${getWeekLabel(weekNumber)}째 주`;
+
+    if (currentWeekOffset === 0) {
+        label = `이번 주`;
+    } else if (currentWeekOffset === -1) {
+        label = `지난 주`;
+    } else {
+        label = `${month}월 ${getWeekLabel(weekNumber)}째 주`;
+    }
+
+    weekLabel.textContent = label;
+}
+
+/**
+ * 주의 몇째 주인지 계산
+ */
+function getWeekNumber(date) {
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+    const firstDayOfWeek = firstDay.getDay() === 0 ? 7 : firstDay.getDay();
+    const dayOfMonth = date.getDate();
+    const weekNumber = Math.ceil((dayOfMonth + firstDayOfWeek - 1) / 7);
+    return weekNumber;
+}
+
+/**
+ * 주 레이블 한글 변환
+ */
+function getWeekLabel(weekNumber) {
+    const labels = ["첫", "둘", "셋", "넷", "다섯"];
+    return labels[weekNumber - 1] || weekNumber.toString();
+}
+
+function getStartOfWeek(date) {
+    const d = new Date(date);
+    const diff = d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+}
+
+/**
+ * 주간 러닝 요약 로드
+ */
+async function loadWeeklyStats(userId) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    try {
+        const res = await fetch(`/api/summary/weekly/${userId}?weekOffset=${currentWeekOffset}`, {
+            headers: {Authorization: `Bearer ${token}`},
+        });
+
+        if (!res.ok) throw new Error();
+
+        const payload = await res.json();
+        const data = payload.data;
+
+        renderWeeklyChart(data.dailyDistances);
+        updateWeeklyTotals(
+            data.totalDistanceKm,
+            data.totalDurationSec
+        );
+
+    } catch (e) {
+        console.error("주간 러닝 통계 실패", e);
+        renderWeeklyChart([]);
+        updateWeeklyTotals(0, 0);
+    }
+}
+
+/**
+ * 주별 총 거리와 시간 업데이트
+ */
+function updateWeeklyTotals(distance, durationSeconds) {
+    const distanceEl = document.querySelector('[data-role="weekly-total-distance"]');
+    const durationEl = document.querySelector('[data-role="weekly-total-duration"]');
+
+    if (distanceEl) {
+        const distanceKm = distance ? parseFloat(distance) : 0;
+        distanceEl.textContent = `${distanceKm.toFixed(1)}km`;
+    }
+
+    if (durationEl) {
+        const hours = Math.floor(durationSeconds / 3600);
+        const minutes = Math.floor((durationSeconds % 3600) / 60);
+        durationEl.textContent = `${hours}h ${minutes}m`;
+    }
+}
+
+function renderWeeklyChart(distances) {
+    const chartBars = document.querySelector('[data-role="chart-bars"]');
+    if (!chartBars) return;
+    chartBars.innerHTML = "";
+    if (!Array.isArray(distances) || distances.length === 0) {
+        for (let i = 0; i < 7; i++) {
+            const circle = document.createElement("div");
+            circle.className = "chart-circle";
+            chartBars.appendChild(circle);
+        }
+        return;
+    }
+
+    const maxDistance = Math.max(...distances, 0.1);
+    distances.forEach((distance, index) => {
+        const distValue = distance ? parseFloat(distance) : 0;
+        if (distValue === 0 || distValue < 0.01) {
+            // 거리가 0일 때는 동그란 원 생성
+            const circle = document.createElement("div");
+            circle.className = "chart-circle";
+            circle.setAttribute("data-day-index", index);
+            chartBars.appendChild(circle);
+        } else {
+            // 거리가 있을 때는 막대 그래프 생성
+            const bar = document.createElement("div");
+            bar.className = "chart-bar";
+            const heightRatio = distValue / maxDistance;
+            // 최소 높이: 약 24.631px, 최대 높이: 약 98.539px (Figma 디자인 기준)
+            const minHeight = 24.631;
+            const maxHeight = 98.539;
+            const height = Math.max(minHeight, minHeight + (maxHeight - minHeight) * heightRatio);
+            bar.style.height = `${height}px`;
+            chartBars.appendChild(bar);
+        }
+    });
+}
+
+// 러닝 기록 무한 스크롤 관련 전역 변수
+let currentPage = 0;
+let hasNext = true;
+let isLoading = false;
+let userHasInteracted = false;
+let scrollObserver = null;
+
+/**
+ * 러닝 기록 로드 (API 연동)
+ */
+async function loadRunningRecords(userId, page = 0, reset = false) {
+    if (isLoading || (!hasNext && !reset)) return;
+
+    isLoading = true;
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            isLoading = false;
+            return;
+        }
+
+        const res = await fetch(`/api/records/${userId}?page=${page}&size=4&sort=startedAt,desc`, {
+            headers: {Authorization: `Bearer ${token}`}
+        });
+
+        if (!res.ok) throw new Error("러닝 기록 조회 실패");
+
+        const payload = await res.json();
+        const sliceData = payload?.data;
+
+        if (!sliceData) {
+            isLoading = false;
+            return;
+        }
+
+        const records = sliceData.content || [];
+        hasNext = sliceData.hasNext ?? false;
+        currentPage = page;
+
+        if (reset) {
+            const runList = document.querySelector('[data-role="run-list"]');
+            if (runList) runList.innerHTML = "";
+        }
+
+        // 기록이 있으면 렌더링하고 빈 상태 숨김
+        if (records.length > 0) {
+            renderRunningRecords(records);
+            hideEmptyState();
+        } else if (reset && currentPage === 0) {
+            // 초기 로드 시 기록이 없으면 빈 상태 표시
+            showEmptyState();
+        } else {
+            // 추가 페이지 로드 시 기록이 없으면 빈 상태는 유지 (이미 표시되어 있을 수 있음)
+            // 빈 상태가 이미 표시되어 있지 않다면 숨김
+            if (currentPage > 0) {
+                hideEmptyState();
+            }
+        }
+
+        // 무한 스크롤 업데이트
+        updateScrollSentinel();
+
+    } catch (e) {
+        console.error("러닝 기록 로드 실패:", e);
+    } finally {
+        isLoading = false;
+    }
+}
+
+/**
+ * 러닝 기록 렌더링
+ */
+function renderRunningRecords(records) {
+    const runList = document.querySelector('[data-role="run-list"]');
+    if (!runList) return;
+
+    // 기록이 있으면 빈 상태 먼저 숨김
+    hideEmptyState();
+
+    records.forEach(record => {
+        const card = createRunCard(record);
+        runList.appendChild(card);
+    });
+}
+
+/**
+ * 빈 상태 표시
+ */
+function showEmptyState() {
+    const emptyState = document.getElementById("runListEmpty");
+    const runList = document.querySelector('[data-role="run-list"]');
+    if (emptyState) {
+        emptyState.removeAttribute("hidden");
+        emptyState.style.display = "flex";
+    }
+    if (runList) {
+        runList.style.display = "none";
+    }
+}
+
+/**
+ * 빈 상태 숨김
+ */
+function hideEmptyState() {
+    const emptyState = document.getElementById("runListEmpty");
+    const runList = document.querySelector('[data-role="run-list"]');
+    if (emptyState) {
+        emptyState.setAttribute("hidden", "hidden");
+        emptyState.style.display = "none";
+    }
+    if (runList) {
+        runList.style.display = "flex";
+    }
+}
+
+/**
+ * 러닝 기록 카드 생성 (피드에 공유 버튼 제외)
+ */
+function createRunCard(record) {
+    const article = document.createElement('article');
+    article.className = 'run-card';
+
+    // 날짜 포맷팅
+    const date = new Date(record.startedAt);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayOfWeek = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'][date.getDay()];
+    const formattedDate = `${month}/${day} ${dayOfWeek}`;
+
+    // 시간 포맷팅 (초 -> MM:SS 또는 HH:MM:SS)
+    const timeStr = formatDuration(record.totalTimeSec);
+
+    // 거리 포맷팅
+    const distanceStr = record.totalDistanceKm ? record.totalDistanceKm.toFixed(1) : '0.0';
+
+    // 페이스 포맷팅 (분/km)
+    const paceStr = formatPace(record.avgPace);
+
+    // 코스 이미지 URL
+    const imageUrl = record.courseThumbnailUrl || null;
+    const courseTitle = record.courseTitle || '러닝';
+
+    // 러닝 타입 레이블
+    const runningTypeLabel = getRunningTypeLabel(record.runningType);
+
+    // 이미지가 있을 때만 img 태그 추가
+    const thumbContent = imageUrl
+        ? `<img src="${imageUrl}" alt="${courseTitle}" onerror="this.style.display='none'" />`
+        : '';
+
+    article.innerHTML = `
+        <div class="run-thumb">
+            ${thumbContent}
+        </div>
+        <div class="run-content">
+            <div class="run-header">
+                <span class="run-date">${formattedDate}</span>
+                <span class="run-type">${runningTypeLabel}</span>
+            </div>
+            <p class="run-title">${courseTitle}</p>
+            <div class="run-stats">
+                <span class="run-stat">
+                    <span class="run-icon">🏃‍♂️</span>
+                    <span>${distanceStr}km</span>
+                </span>
+                <span class="run-stat">
+                    <span class="run-icon">⏱</span>
+                    <span>${timeStr}</span>
+                </span>
+            </div>
+            <div class="run-pace">
+                <span class="run-pace-label">평균 페이스</span>
+                <span class="run-pace-value">${paceStr}</span>
+            </div>
+        </div>
+    `;
+
+    return article;
+}
+
+/**
+ * 시간 포맷팅 (초 -> MM:SS 또는 HH:MM:SS)
+ */
+function formatDuration(seconds) {
+    if (!seconds || seconds === 0) return "00:00";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) {
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+    return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+/**
+ * 페이스 포맷팅 (분/km)
+ */
+function formatPace(pace) {
+    if (!pace || pace === 0) return "-";
+    const minutes = Math.floor(pace);
+    const seconds = Math.floor((pace - minutes) * 60);
+    return `${minutes}'${String(seconds).padStart(2, "0")}"`;
+}
+
+/**
+ * 러닝 타입 레이블
+ */
+function getRunningTypeLabel(runningType) {
+    const typeMap = {
+        SOLO: "솔로",
+        OFFLINE: "오프라인",
+        ONLINEBATTLE: "온라인배틀",
+        GHOST: "고스트"
+    };
+    return typeMap[runningType] || runningType || "-";
+}
+
+/**
+ * 무한 스크롤 초기화
+ */
+function initInfiniteScroll(userId) {
+    const observerOptions = {
+        root: null,
+        rootMargin: "200px",
+        threshold: 0
+    };
+
+    scrollObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+
+            if (!userHasInteracted) {
+                console.log('Sentinel intersecting but waiting for user scroll interaction');
+                continue;
+            }
+
+            if (!hasNext || isLoading) continue;
+
+            console.log("Sentinel intersecting, loading next page:", currentPage + 1);
+            loadRunningRecords(userId, currentPage + 1, false);
+        }
+    }, observerOptions);
+}
+
+/**
+ * 무한 스크롤 센티넬 요소 관리
+ */
+function updateScrollSentinel() {
+    const runList = document.querySelector('[data-role="run-list"]');
+    if (!runList) return;
+
+    // 기존 센티넬 제거
+    const oldSentinel = document.getElementById("scrollSentinel");
+    if (oldSentinel) {
+        if (scrollObserver) scrollObserver.unobserve(oldSentinel);
+        oldSentinel.remove();
+    }
+
+    if (!hasNext || !scrollObserver) {
+        console.log("No more data to load, hasNext:", hasNext, "observer:", !!scrollObserver);
+        return;
+    }
+
+    const sentinel = document.createElement("div");
+    sentinel.id = "scrollSentinel";
+    sentinel.style.height = "1px";
+    sentinel.style.width = "100%";
+    sentinel.style.visibility = "hidden";
+
+    // 리스트 끝에 센티넬 추가
+    runList.appendChild(sentinel);
+
+    // 사용자가 스크롤한 후에만 센티널 관찰 시작 (초기 로드 시 자동 로드 방지)
+    if (userHasInteracted) {
+        requestAnimationFrame(() => {
+            const sentinelEl = document.getElementById("scrollSentinel");
+            if (!sentinelEl || !scrollObserver) return;
+            scrollObserver.observe(sentinelEl);
+            console.log("Sentinel observed (root: viewport) hasNext:", hasNext);
+        });
+    } else {
+        console.log("Sentinel created but not observed yet (waiting for user interaction)");
+    }
+}
+
+/**
+ * 사용자 스크롤 상호작용 감지 (무한 스크롤 활성화)
+ */
+function attachUserScrollGate(userId) {
+    const markInteracted = () => {
+        if (userHasInteracted) return;
+        userHasInteracted = true;
+        console.log('User interaction detected: infinite scroll enabled');
+
+        // 이벤트 리스너 정리
+        window.removeEventListener('scroll', markInteracted);
+        window.removeEventListener('wheel', markInteracted);
+        window.removeEventListener('touchmove', markInteracted);
+
+        const page = document.querySelector('.mypage-page');
+        if (page) {
+            page.removeEventListener('scroll', markInteracted);
+            page.removeEventListener('wheel', markInteracted);
+            page.removeEventListener('touchmove', markInteracted);
+        }
+
+        // [추가] 인터랙션 감지 시점에 센티넬을 관찰 시작
+        const sentinel = document.getElementById("scrollSentinel");
+        if (sentinel && scrollObserver) {
+            requestAnimationFrame(() => {
+                const sentinelEl = document.getElementById("scrollSentinel");
+                if (!sentinelEl || !scrollObserver) return;
+
+                // 센티널 관찰 시작
+                scrollObserver.observe(sentinelEl);
+                console.log("Sentinel observed after user interaction, hasNext:", hasNext);
+
+                // 인터랙션 감지 시점에 센티넬이 이미 화면 안에 있다면 즉시 로드
+                if (hasNext && !isLoading) {
+                    const rect = sentinelEl.getBoundingClientRect();
+                    if (rect.top <= window.innerHeight + 200) {
+                        console.log("Sentinel already visible upon interaction, loading next page:", currentPage + 1);
+                        loadRunningRecords(userId, currentPage + 1, false);
+                    }
+                }
+            });
+        }
+    };
+
+    // window와 .mypage-page 모두에 이벤트 등록
+    window.addEventListener('scroll', markInteracted, {passive: true});
+    window.addEventListener('wheel', markInteracted, {passive: true});
+    window.addEventListener('touchmove', markInteracted, {passive: true});
+
+    const page = document.querySelector('.mypage-page');
+    if (page) {
+        page.addEventListener('scroll', markInteracted, {passive: true});
+        page.addEventListener('wheel', markInteracted, {passive: true});
+        page.addEventListener('touchmove', markInteracted, {passive: true});
     }
 }
 
