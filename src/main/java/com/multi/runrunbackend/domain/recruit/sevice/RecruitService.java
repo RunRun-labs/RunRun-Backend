@@ -5,6 +5,8 @@ import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.course.entity.Course;
+import com.multi.runrunbackend.domain.course.repository.CourseRepository;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
 import com.multi.runrunbackend.domain.recruit.constant.GenderLimit;
 import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
@@ -42,246 +44,245 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class RecruitService {
 
-  private final RecruitRepository recruitRepository;
-  private final UserRepository userRepository;
-  private final RecruitUserRepository recruitUserRepository;
-  private final MatchSessionService matchSessionService;
-//  private final CourseRepository courseRepository;
+    private final RecruitRepository recruitRepository;
+    private final UserRepository userRepository;
+    private final RecruitUserRepository recruitUserRepository;
+    private final MatchSessionService matchSessionService;
+    private final CourseRepository courseRepository;
 
 
-  @Transactional
-  public RecruitCreateResDto createRecruit(CustomUser principal, RecruitCreateReqDto request) {
+    @Transactional
+    public RecruitCreateResDto createRecruit(CustomUser principal, RecruitCreateReqDto request) {
 
-    User user = getUser(principal);
+        User user = getUser(principal);
 
-    request.validate();
+        request.validate();
 
-    if (request.getGenderLimit() != GenderLimit.BOTH) {
-      if (!request.getGenderLimit().name().equals(user.getGender())) {
-        throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
-      }
+        if (request.getGenderLimit() != GenderLimit.BOTH) {
+            if (!request.getGenderLimit().name().equals(user.getGender())) {
+                throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
+            }
+        }
+
+        int hostAge = calculateAge(user.getBirthDate());
+        if (hostAge < request.getAgeMin() || hostAge > request.getAgeMax()) {
+            throw new ValidationException(ErrorCode.AGE_RESTRICTION);
+        }
+
+        Course course = null;
+        if (request.getCourseId() != null) {
+            course = courseRepository.findById(request.getCourseId())
+                .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
+        }
+
+        Recruit recruit = request.toEntity(user, course);  //코스
+
+        recruitRepository.save(recruit);
+
+        return RecruitCreateResDto.from(recruit);
     }
 
-    int hostAge = calculateAge(user.getBirthDate());
-    if (hostAge < request.getAgeMin() || hostAge > request.getAgeMax()) {
-      throw new ValidationException(ErrorCode.AGE_RESTRICTION);
+    public Slice<RecruitListResDto> getRecruitList(RecruitListReqDto req, Pageable pageable) {
+        String sortBy = (req.getSortBy() != null && !req.getSortBy().isEmpty())
+            ? req.getSortBy()
+            : "latest";
+
+        Sort sort = switch (sortBy) {
+            case "distance" -> JpaSort.unsafe(Sort.Direction.ASC, "distance");
+            case "meetingSoon" -> Sort.by(Sort.Direction.ASC, "meeting_at");
+            default -> Sort.by(Sort.Direction.DESC, "created_at");
+        };
+
+        Pageable dynamicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+            sort);
+
+        LocalDateTime startOfDay = null;
+        LocalDateTime endOfDay = null;
+
+        if (req.getDate() != null) {
+            startOfDay = req.getDate().atStartOfDay();
+            endOfDay = req.getDate().atTime(23, 59, 59);
+        }
+
+        Double searchRadius = req.getRadiusKm();
+
+        if (req.getRegion() != null && !req.getRegion().isEmpty()) {
+            searchRadius = null;
+        }
+
+        Slice<Recruit> recruits = recruitRepository.findRecruitsWithFilters(
+            req.getLatitude(),
+            req.getLongitude(),
+            searchRadius,
+            req.getKeyword(),
+            startOfDay,
+            endOfDay,
+            req.getRegion(),
+            dynamicPageable
+        );
+
+        return recruits.map(recruit -> {
+            Double dist = (req.getLatitude() != null && req.getLongitude() != null)
+                ? calculateDistance(req.getLatitude(), req.getLongitude(), recruit.getLatitude(),
+                recruit.getLongitude())
+                : null;
+            return RecruitListResDto.from(recruit, dist);
+        });
     }
 
-//    Course course = null;
-//    if (request.getCourseId() != null) {
-//      course = courseRepository.findById(request.getCourseId())
-//          .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
-//    }
-
-    Recruit recruit = request.toEntity(user, null);  //코스
-
-    recruitRepository.save(recruit);
-
-    return RecruitCreateResDto.from(recruit);
-  }
-
-  public Slice<RecruitListResDto> getRecruitList(RecruitListReqDto req, Pageable pageable) {
-    String sortBy = (req.getSortBy() != null && !req.getSortBy().isEmpty())
-        ? req.getSortBy()
-        : "latest";
-
-    Sort sort = switch (sortBy) {
-      case "distance" -> JpaSort.unsafe(Sort.Direction.ASC, "distance");
-      case "meetingSoon" -> Sort.by(Sort.Direction.ASC, "meeting_at");
-      default -> Sort.by(Sort.Direction.DESC, "created_at");
-    };
-
-    Pageable dynamicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
-        sort);
-
-    LocalDateTime startOfDay = null;
-    LocalDateTime endOfDay = null;
-
-    if (req.getDate() != null) {
-      startOfDay = req.getDate().atStartOfDay();
-      endOfDay = req.getDate().atTime(23, 59, 59);
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double theta = lon1 - lon2;
+        double dist = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2)) +
+            Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(
+                Math.toRadians(theta));
+        dist = Math.acos(dist);
+        dist = Math.toDegrees(dist);
+        dist = dist * 60 * 1.1515 * 1.609344;
+        return dist;
     }
 
-    Double searchRadius = req.getRadiusKm();
 
-    if (req.getRegion() != null && !req.getRegion().isEmpty()) {
-      searchRadius = null;
+    public RecruitDetailResDto getRecruitDetail(Long recruitId, CustomUser principal) {
+        Recruit recruit = getActiveRecruitOrThrow(recruitId);
+        User user = getUser(principal);
+        Long userId = user.getId();
+        boolean isParticipant = false;
+        isParticipant = recruitUserRepository.existsByRecruitAndUser(recruit, user);
+
+        return RecruitDetailResDto.from(recruit, userId, isParticipant);
     }
 
-    Slice<Recruit> recruits = recruitRepository.findRecruitsWithFilters(
-        req.getLatitude(),
-        req.getLongitude(),
-        searchRadius,
-        req.getKeyword(),
-        startOfDay,
-        endOfDay,
-        req.getRegion(),
-        dynamicPageable
-    );
+    @Transactional
+    public void updateRecruit(Long recruitId, CustomUser principal, RecruitUpdateReqDto req) {
+        User user = getUser(principal);
+        Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
-    return recruits.map(recruit -> {
-      Double dist = (req.getLatitude() != null && req.getLongitude() != null)
-          ? calculateDistance(req.getLatitude(), req.getLongitude(), recruit.getLatitude(),
-          recruit.getLongitude())
-          : null;
-      return RecruitListResDto.from(recruit, dist);
-    });
-  }
+        if (!recruit.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException(ErrorCode.RECRUIT_UPDATE_DENIED);
+        }
 
-  private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    double theta = lon1 - lon2;
-    double dist = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2)) +
-        Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(
-            Math.toRadians(theta));
-    dist = Math.acos(dist);
-    dist = Math.toDegrees(dist);
-    dist = dist * 60 * 1.1515 * 1.609344;
-    return dist;
-  }
+        if (recruit.getCurrentParticipants() > 1) {
+            throw new ForbiddenException(ErrorCode.RECRUIT_HAS_PARTICIPANTS);
+        }
 
+        req.validate();
 
-  public RecruitDetailResDto getRecruitDetail(Long recruitId, CustomUser principal) {
-    Recruit recruit = getActiveRecruitOrThrow(recruitId);
-    User user = getUser(principal);
-    Long userId = user.getId();
+        if (req.getGenderLimit() != null && req.getGenderLimit() != GenderLimit.BOTH) {
+            if (!req.getGenderLimit().name().equals(user.getGender())) {
+                throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
+            }
+        }
 
-    boolean isParticipant = false;
-    isParticipant = recruitUserRepository.existsByRecruitAndUser(recruit, user);
+        int hostAge = calculateAge(user.getBirthDate());
+        if (hostAge < req.getAgeMin() || hostAge > req.getAgeMax()) {
+            throw new ValidationException(ErrorCode.AGE_RESTRICTION);
+        }
 
-    return RecruitDetailResDto.from(recruit, userId, isParticipant);
-  }
-
-  @Transactional
-  public void updateRecruit(Long recruitId, CustomUser principal, RecruitUpdateReqDto req) {
-    User user = getUser(principal);
-    Recruit recruit = getActiveRecruitOrThrow(recruitId);
-
-    if (!recruit.getUser().getId().equals(user.getId())) {
-      throw new ForbiddenException(ErrorCode.RECRUIT_UPDATE_DENIED);
+        recruit.update(req);
     }
 
-    if (recruit.getCurrentParticipants() > 1) {
-      throw new ForbiddenException(ErrorCode.RECRUIT_HAS_PARTICIPANTS);
-    }
+    @Transactional
+    public void deleteRecruit(Long recruitId, CustomUser principal) {
+        User user = getUser(principal);
+        Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
-    req.validate();
+        if (!recruit.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException(ErrorCode.RECRUIT_DELETE_DENIED);
+        }
 
-    if (req.getGenderLimit() != null && req.getGenderLimit() != GenderLimit.BOTH) {
-      if (!req.getGenderLimit().name().equals(user.getGender())) {
-        throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
-      }
-    }
+        if (recruit.getCurrentParticipants() > 1) {
+            throw new ForbiddenException(ErrorCode.RECRUIT_HAS_PARTICIPANTS);
+        }
 
-    int hostAge = calculateAge(user.getBirthDate());
-    if (hostAge < req.getAgeMin() || hostAge > req.getAgeMax()) {
-      throw new ValidationException(ErrorCode.AGE_RESTRICTION);
-    }
-
-    recruit.update(req);
-  }
-
-  @Transactional
-  public void deleteRecruit(Long recruitId, CustomUser principal) {
-    User user = getUser(principal);
-    Recruit recruit = getActiveRecruitOrThrow(recruitId);
-
-    if (!recruit.getUser().getId().equals(user.getId())) {
-      throw new ForbiddenException(ErrorCode.RECRUIT_DELETE_DENIED);
-    }
-
-    if (recruit.getCurrentParticipants() > 1) {
-      throw new ForbiddenException(ErrorCode.RECRUIT_HAS_PARTICIPANTS);
-    }
-
-    recruitRepository.delete(recruit);
-  }
-
-  @Transactional
-  public void joinRecruit(Long recruitId, CustomUser principal) {
-    User user = getUser(principal);
-    Recruit recruit = getActiveRecruitOrThrow(recruitId);
-
-    if (recruitUserRepository.existsByRecruitAndUser(recruit, user)) {
-      throw new ValidationException(ErrorCode.ALREADY_PARTICIPATED);
-    }
-
-    if (recruit.getCurrentParticipants() >= recruit.getMaxParticipants()) {
-      throw new ValidationException(ErrorCode.RECRUIT_FULL);
-    }
-
-    if (LocalDateTime.now().plusHours(1).isAfter(recruit.getMeetingAt())) {
-      throw new ValidationException(ErrorCode.RECRUIT_TIME_OVER);
-    }
-
-    if (recruit.getGenderLimit() != GenderLimit.BOTH) {
-      if (!recruit.getGenderLimit().name().equals(user.getGender())) {
-        throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
-      }
-    }
-
-    int userAge = calculateAge(user.getBirthDate());
-
-    if (userAge < recruit.getAgeMin() || userAge > recruit.getAgeMax()) {
-      throw new ValidationException(ErrorCode.AGE_RESTRICTION);
-    }
-
-    RecruitUser recruitUser = RecruitUser.builder()
-        .recruit(recruit)
-        .user(user)
-        .build();
-    recruitUserRepository.save(recruitUser);
-
-    recruit.increaseParticipants();
-
-    if (recruit.getCurrentParticipants().equals(recruit.getMaxParticipants())) {
-      matchSessionService.createOfflineSessionBySystem(recruit.getId());
-    }
-  }
-
-  @Transactional
-  public void leaveRecruit(Long recruitId, CustomUser principal) {
-    User user = getUser(principal);
-    Recruit recruit = getActiveRecruitOrThrow(recruitId);
-
-    RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_PARTICIPATED));
-
-    if (recruit.getUser().getId().equals(user.getId())) {
-      Optional<RecruitUser> nextLeader = recruitUserRepository
-          .findFirstByRecruitAndUserNotOrderByCreatedAtAsc(recruit, user);
-
-      if (nextLeader.isPresent()) {
-        recruit.changeHost(nextLeader.get().getUser());
-      } else {
         recruitRepository.delete(recruit);
-      }
     }
 
-    recruitUserRepository.delete(recruitUser);
-    recruit.decreaseParticipants();
+    @Transactional
+    public void joinRecruit(Long recruitId, CustomUser principal) {
+        User user = getUser(principal);
+        Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
-  }
+        if (recruitUserRepository.existsByRecruitAndUser(recruit, user)) {
+            throw new ValidationException(ErrorCode.ALREADY_PARTICIPATED);
+        }
 
-  private Recruit getActiveRecruitOrThrow(Long recruitId) {
-    Recruit recruit = recruitRepository.findById(recruitId)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+        if (recruit.getCurrentParticipants() >= recruit.getMaxParticipants()) {
+            throw new ValidationException(ErrorCode.RECRUIT_FULL);
+        }
 
-    if (recruit.getStatus() == RecruitStatus.COMPLETED) {
-      throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
+        if (LocalDateTime.now().plusHours(1).isAfter(recruit.getMeetingAt())) {
+            throw new ValidationException(ErrorCode.RECRUIT_TIME_OVER);
+        }
+
+        if (recruit.getGenderLimit() != GenderLimit.BOTH) {
+            if (!recruit.getGenderLimit().name().equals(user.getGender())) {
+                throw new ValidationException(ErrorCode.GENDER_RESTRICTION);
+            }
+        }
+
+        int userAge = calculateAge(user.getBirthDate());
+
+        if (userAge < recruit.getAgeMin() || userAge > recruit.getAgeMax()) {
+            throw new ValidationException(ErrorCode.AGE_RESTRICTION);
+        }
+
+        RecruitUser recruitUser = RecruitUser.builder()
+            .recruit(recruit)
+            .user(user)
+            .build();
+        recruitUserRepository.save(recruitUser);
+
+        recruit.increaseParticipants();
+
+        if (recruit.getCurrentParticipants().equals(recruit.getMaxParticipants())) {
+            matchSessionService.createOfflineSessionBySystem(recruit.getId());
+        }
     }
-    return recruit;
-  }
 
-  private int calculateAge(java.time.LocalDate birthDate) {
-    if (birthDate == null) {
-      throw new ValidationException(ErrorCode.BIRTHDATE_REQUIRED);
+    @Transactional
+    public void leaveRecruit(Long recruitId, CustomUser principal) {
+        User user = getUser(principal);
+        Recruit recruit = getActiveRecruitOrThrow(recruitId);
+
+        RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_PARTICIPATED));
+
+        if (recruit.getUser().getId().equals(user.getId())) {
+            Optional<RecruitUser> nextLeader = recruitUserRepository
+                .findFirstByRecruitAndUserNotOrderByCreatedAtAsc(recruit, user);
+
+            if (nextLeader.isPresent()) {
+                recruit.changeHost(nextLeader.get().getUser());
+            } else {
+                recruitRepository.delete(recruit);
+            }
+        }
+
+        recruitUserRepository.delete(recruitUser);
+        recruit.decreaseParticipants();
+
     }
-    return java.time.Period.between(birthDate, java.time.LocalDate.now()).getYears();
-  }
 
-  private User getUser(CustomUser principal) {
-    return userRepository.findByLoginId(principal.getLoginId())
-        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-  }
+    private Recruit getActiveRecruitOrThrow(Long recruitId) {
+        Recruit recruit = recruitRepository.findById(recruitId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
+
+        if (recruit.getStatus() == RecruitStatus.COMPLETED) {
+            throw new NotFoundException(ErrorCode.INVALID_RECRUIT);
+        }
+        return recruit;
+    }
+
+    private int calculateAge(java.time.LocalDate birthDate) {
+        if (birthDate == null) {
+            throw new ValidationException(ErrorCode.BIRTHDATE_REQUIRED);
+        }
+        return java.time.Period.between(birthDate, java.time.LocalDate.now()).getYears();
+    }
+
+    private User getUser(CustomUser principal) {
+        return userRepository.findByLoginId(principal.getLoginId())
+            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+    }
 
 }
