@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.user.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseTimeEntity;
+import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,7 +10,7 @@ import lombok.NoArgsConstructor;
 /**
  *
  * @author : kimyongwon
- * @description : 사용자 개인 환경 설정 엔티티 - 알림 허용 여부 - 야간 알림 허용 여부 - TTS 안내 간격
+ * @description : 사용자 개인 환경 설정 엔티티 - 알림 허용 여부 - 야간 알림 허용 여부 - 프로필 공개범위
  * @filename : UserSetting
  * @since : 25. 12. 17. 오전 11:46 수요일
  */
@@ -36,14 +37,19 @@ public class UserSetting extends BaseTimeEntity {
     private boolean notificationEnabled = true;
 
     @Column(name = "night_notification_enabled", nullable = false)
-    private boolean nightNotificationEnabled = false;
+    private boolean nightNotificationEnabled = true;
 
     @Column(name = "tts_interval", nullable = false)
     private int ttsInterval = 1;
 
+    @Column(name = "profile_visibility", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ProfileVisibility profileVisibility = ProfileVisibility.PUBLIC;
+
     public static UserSetting createDefault(User user) {
         UserSetting setting = new UserSetting();
         setting.user = user;
+        setting.profileVisibility = ProfileVisibility.PUBLIC;
         return setting;
     }
 
@@ -52,5 +58,7 @@ public class UserSetting extends BaseTimeEntity {
         this.nightNotificationEnabled = nightEnabled;
     }
 
-
+    public void updateProfileVisibility(ProfileVisibility visibility) {
+        this.profileVisibility = visibility;
+    }
 }

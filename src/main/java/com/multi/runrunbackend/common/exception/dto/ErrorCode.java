@@ -26,7 +26,9 @@ public enum ErrorCode {
     FRIEND_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "FR004", "해당 친구 요청에 대한 권한이 없습니다."),
     NOT_PENDING_FRIEND_REQUEST(HttpStatus.BAD_REQUEST, "FR005", "대기 중인 친구 요청이 아닙니다."),
     FRIEND_NOT_FOUND(HttpStatus.NOT_FOUND, "FR006", "친구 관계를 찾을 수 없습니다."),
-
+    /* ===== 프로필 조회 ===== */
+    PROFILE_FRIENDS_ONLY(HttpStatus.FORBIDDEN, "PR001", "친구에게만 공개된 프로필입니다."),
+    PROFILE_PRIVATE(HttpStatus.FORBIDDEN, "PR002", "비공개 프로필입니다."),
     /* ==== 토큰 ====*/
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A001", "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "만료된 토큰입니다."),
@@ -80,21 +82,53 @@ public enum ErrorCode {
     CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR015", "크루원을 찾을 수 없습니다."),
     CREW_RECRUITMENT_CLOSED(HttpStatus.CONFLICT, "CR016", "모집이 마감된 크루입니다."),
     NOT_CREW_USER(HttpStatus.FORBIDDEN, "CR017", "크루원이 아닙니다."),
-    CANNOT_ASSIGN_LEADER_TO_MEMBER(HttpStatus.FORBIDDEN, "CR018", "일반 멤버는 크루장이 될 수 없습니다. 부크루장 또는 운영진에게만 위임 가능합니다."),
+    CANNOT_ASSIGN_LEADER_TO_MEMBER(HttpStatus.FORBIDDEN, "CR018",
+            "일반 멤버는 크루장이 될 수 없습니다. 부크루장 또는 운영진에게만 위임 가능합니다."),
+    CREW_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "CR019", "모집중인 크루가 아닙니다."),
     /* ===== 멤버십 ===== */
-    MEMBERSHIP_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "멤버십 정보를 찾을 수 없습니다."),
-    MEMBERSHIP_ALREADY_PREMIUM(HttpStatus.CONFLICT, "M002", "이미 프리미엄 멤버십입니다."),
-    MEMBERSHIP_ALREADY_CANCELED(HttpStatus.CONFLICT, "M003", "이미 해지 신청된 멤버십입니다."),
-    MEMBERSHIP_REQUIRED(HttpStatus.FORBIDDEN, "M004", "프리미엄 멤버십이 필요합니다."),
-    MEMBERSHIP_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "M005", "활성화된 멤버십이 아닙니다."),
-    MEMBERSHIP_NOT_CANCELED(HttpStatus.BAD_REQUEST, "M006", "해지 신청 상태가 아닙니다."),
+    MEMBERSHIP_NOT_FOUND(HttpStatus.NOT_FOUND, "MM001", "멤버십 정보를 찾을 수 없습니다."),
+    MEMBERSHIP_ALREADY_PREMIUM(HttpStatus.CONFLICT, "MM002", "이미 프리미엄 멤버십입니다."),
+    MEMBERSHIP_ALREADY_CANCELED(HttpStatus.CONFLICT, "MM003", "이미 해지 신청된 멤버십입니다."),
+    MEMBERSHIP_REQUIRED(HttpStatus.FORBIDDEN, "MM004", "프리미엄 멤버십이 필요합니다."),
+    MEMBERSHIP_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "MM005", "활성화된 멤버십이 아닙니다."),
+    MEMBERSHIP_NOT_CANCELED(HttpStatus.BAD_REQUEST, "MM006", "해지 신청 상태가 아닙니다."),
+    INVALID_MEMBERSHIP_PERIOD(HttpStatus.BAD_REQUEST, "MM007", "멤버십 기간은 1일 이상이어야 합니다."),
+    MEMBERSHIP_PERIOD_TOO_LONG(HttpStatus.BAD_REQUEST, "MM008", "멤버십 기간은 최대 365일까지 설정할 수 있습니다."),
+
+    /* ===== 결제 ===== */
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PM001", "결제 내역을 찾을 수 없습니다."),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PM002", "결제 금액이 일치하지 않습니다."),
+    PAYMENT_ALREADY_COMPLETED(HttpStatus.CONFLICT, "PM003", "이미 완료된 결제입니다."),
+    PAYMENT_APPROVAL_FAILED(HttpStatus.BAD_GATEWAY, "PM004", "결제 승인에 실패했습니다."),
+    PAYMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "PM005", "해당 결제에 대한 권한이 없습니다."),
+    /* ===== 토스 API ===== */
+    TOSS_API_FAILED(HttpStatus.BAD_GATEWAY, "PM006", "토스페이먼츠 API 호출에 실패했습니다."),
+    /* ===== 빌링키 ===== */
+    BILLING_KEY_ISSUE_FAILED(HttpStatus.BAD_GATEWAY, "PM007", "빌링키 발급에 실패했습니다."),
+    BILLING_PAYMENT_FAILED(HttpStatus.BAD_GATEWAY, "PM008", "빌링키 결제에 실패했습니다."),
+    BILLING_KEY_NOT_FOUND(HttpStatus.NOT_FOUND, "PM009", "빌링키를 찾을 수 없습니다."),
+    // ========== Point (포인트) ==========
+    POINT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "포인트 정보를 찾을 수 없습니다"),
+    INSUFFICIENT_POINT(HttpStatus.BAD_REQUEST, "P002", "포인트가 부족합니다"),
+    DAILY_POINT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "P003", "하루 최대 500P까지만 적립 가능합니다"),
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "포인트 상품을 찾을 수 없습니다"),
+    POINT_PRODUCT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "P005", "현재 구매할 수 없는 상품입니다"),
+    POINT_EXPIRATION_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "포인트 유효기간 정보를 찾을 수 없습니다"),
+    INVALID_POINT_AMOUNT(HttpStatus.BAD_REQUEST, "P007", "유효하지 않은 포인트 금액입니다"),
+    POINT_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "P008", "포인트 내역을 찾을 수 없습니다"),
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "P009", "잘못된 입력값입니다"),
+    POINT_AMOUNT_TOO_SMALL(HttpStatus.BAD_REQUEST, "P010", "포인트는 최소 1P 이상이어야 합니다"),
+    POINT_AMOUNT_TOO_LARGE(HttpStatus.BAD_REQUEST, "P011", "한 번에 최대 500P까지만 적립 가능합니다"),
+    REASON_REQUIRED(HttpStatus.BAD_REQUEST, "P012", "사유는 필수입니다"),
 
     /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
+
             HttpStatus.INTERNAL_SERVER_ERROR,
             "F001",
             "파일 업로드에 실패했습니다."
     ),
+
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
             HttpStatus.BAD_REQUEST,
@@ -113,6 +147,7 @@ public enum ErrorCode {
     ),
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F005", "파일 삭제에 실패했습니다."),
 
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F006", "이미지 파일만 업로드 가능합니다."),
     /*===== 피드 관련=====*/
     FEED_NOT_FOUND(
             HttpStatus.NOT_FOUND,
@@ -319,6 +354,9 @@ public enum ErrorCode {
     BATTLE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀 결과를 찾을 수 없습니다."),
     DISTANCE_REQUIRED(HttpStatus.BAD_REQUEST, "M002", "코스 선택 안할 시 거리 선택은 필수 입니다."),
     INVALID_DISTANCE_TYPE(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 거리 타입입니다."),
+    /*===== 알림 =====*/
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "해당 알림을 찾을 수 없습니다."),
+    READ_DENIED(HttpStatus.FORBIDDEN, "N001", "본인의 알림만 읽음 처리할 수 있습니다."),
     /*===== 세션/채팅 =====*/
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
     SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
@@ -342,6 +380,18 @@ public enum ErrorCode {
     COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_001", "쿠폰을 찾을 수 없습니다"),
     COUPON_CODE_DUPLICATE(HttpStatus.CONFLICT, "CPN_002", "쿠폰 코드가 중복입니다"),
     COUPON_NOT_DRAFT(HttpStatus.FORBIDDEN, "CPN_003", "DRAFT 상태만 변경할 수 있습니다"),
+    /*=====쿠폰 정책=====*/
+    COUPON_ROLE_DUPLICATE(HttpStatus.CONFLICT, "CPN_004", "쿠폰 정책이 중복입니다"),
+    COUPON_NOT_ACTIVE(HttpStatus.FORBIDDEN, "CPN_005", "쿠폰이 활성호 상태가 아닙니다"),
+    COUPON_NOT_STARTED(HttpStatus.BAD_REQUEST, "CPN_006", "쿠폰이 시작일이 되지 않았습니다"),
+    COUPON_EXPIRED(HttpStatus.BAD_REQUEST, "CPN_007", "쿠폰이 만료되었습니다"),
+    COUPON_ALREADY_ISSUED(HttpStatus.BAD_REQUEST, "CPN_008", "쿠폰이 이미 발행되었습니다"),
+    COUPON_SOLD_OUT(HttpStatus.BAD_REQUEST, "CPN_009", "쿠폰이 소진되었습니다"),
+    COUPON_ISSUE_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_010", "발행된 쿠폰을 찾을 수 없습니다"),
+    COUPON_ISSUE_FORBIDDEN(HttpStatus.FORBIDDEN, "CPN_011", "본인의 발행된 쿠폰이 아닙니다"),
+    COUPON_ISSUE_NOT_AVAILABLE(HttpStatus.FORBIDDEN, "CPN_012", "사용할 수 있는 쿠폰 상태가 아닙니다"),
+    COUPON_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_013", "쿠폰 정책을 찾을 수 없습니다"),
+    COUPON_ROLE_ACTIVE(HttpStatus.BAD_REQUEST, "CPN_014", "쿠폰 정책이 활성화 상태입니다"),
     /* ===== 이용약관 ===== */
     TERMS_ACCESS_DENIED(HttpStatus.FORBIDDEN, "T001", "약관 관리 권한이 없습니다."),
     DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "T002", "이미 존재하는 약관 버전입니다.");

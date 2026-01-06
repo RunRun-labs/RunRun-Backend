@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.user.dto.res;
 
+import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
 import com.multi.runrunbackend.domain.user.entity.UserSetting;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,11 +20,13 @@ public class UserSettingResDto {
 
     private boolean notificationEnabled;
     private boolean nightNotificationEnabled;
+    private ProfileVisibility profileVisibility;
 
     public static UserSettingResDto from(UserSetting setting) {
         return UserSettingResDto.builder()
                 .notificationEnabled(setting.isNotificationEnabled())
                 .nightNotificationEnabled(setting.isNightNotificationEnabled())
+                .profileVisibility(setting.getProfileVisibility())
                 .build();
     }
 }

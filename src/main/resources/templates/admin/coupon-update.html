@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RunRun Admin | 쿠폰 수정</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/admin-layout.css"
+      th:href="@{/css/admin-layout.css}"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/coupon-create.css"
+      th:href="@{/css/coupon-create.css}"
+    />
+  </head>
+  <body>
+    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+    <!-- 레이아웃 적용 -->
+    <div th:replace="~{admin/layout :: adminLayout(~{::.coupon-content})}">
+      <!-- 컨텐츠 영역 -->
+      <div class="coupon-content coupon-create-container">
+        <div class="coupon-create-card">
+          <h1 class="page-title">쿠폰 수정</h1>
+
+          <form class="coupon-form" id="couponForm" novalidate>
+            <!-- 쿠폰명 -->
+            <div class="form-field">
+              <label for="name" class="form-label"
+                >쿠폰명 <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="form-input"
+                placeholder="쿠폰명을 입력하세요 (5~50자)"
+                maxlength="50"
+              />
+              <span class="error-message" id="name-error"></span>
+            </div>
+
+            <!-- 쿠폰 설명 -->
+            <div class="form-field">
+              <label for="description" class="form-label"
+                >쿠폰 설명 <span class="required">*</span></label
+              >
+              <textarea
+                id="description"
+                name="description"
+                class="form-textarea"
+                placeholder="쿠폰 설명을 입력하세요 (10~500자)"
+                rows="4"
+                maxlength="500"
+              ></textarea>
+              <span class="error-message" id="description-error"></span>
+            </div>
+
+            <!-- 한 줄에 3개: 발행 수량, 코드 타입, 채널 -->
+            <div class="form-row">
+              <div class="form-field">
+                <label for="quantity" class="form-label"
+                  >발행 수량 <span class="required">*</span></label
+                >
+                <input
+                  type="number"
+                  id="quantity"
+                  name="quantity"
+                  class="form-input"
+                  placeholder="0 이상"
+                  min="0"
+                />
+                <span class="error-message" id="quantity-error"></span>
+              </div>
+
+              <div class="form-field">
+                <label for="codeType" class="form-label"
+                  >코드 타입 <span class="required">*</span></label
+                >
+                <select id="codeType" name="codeType" class="form-select">
+                  <option value="">선택하세요</option>
+                  <option value="SINGLE">SINGLE</option>
+                  <option value="MULTI">MULTI</option>
+                </select>
+                <span class="error-message" id="codeType-error"></span>
+              </div>
+
+              <div class="form-field">
+                <label for="channel" class="form-label"
+                  >채널 <span class="required">*</span></label
+                >
+                <select id="channel" name="channel" class="form-select">
+                  <option value="">선택하세요</option>
+                  <option value="EVENT">EVENT</option>
+                  <option value="SYSTEM">SYSTEM</option>
+                  <option value="PARTNER">PARTNER</option>
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="PROMOTION">PROMOTION</option>
+                </select>
+                <span class="error-message" id="channel-error"></span>
+              </div>
+            </div>
+
+            <!-- 한 줄에 3개: 혜택 타입, 혜택 값, 쿠폰 코드 (읽기 전용) -->
+            <div class="form-row">
+              <div class="form-field">
+                <label for="benefitType" class="form-label"
+                  >혜택 타입 <span class="required">*</span></label
+                >
+                <select id="benefitType" name="benefitType" class="form-select">
+                  <option value="">선택하세요</option>
+                  <option value="DISCOUNT">DISCOUNT</option>
+                  <option value="EXPERIENCE">EXPERIENCE</option>
+                  <option value="VOUCHER">VOUCHER</option>
+                </select>
+                <span class="error-message" id="benefitType-error"></span>
+              </div>
+
+              <div class="form-field">
+                <label for="benefitValue" class="form-label"
+                  >혜택 값 <span class="required">*</span></label
+                >
+                <input
+                  type="number"
+                  id="benefitValue"
+                  name="benefitValue"
+                  class="form-input"
+                  placeholder="양수 입력"
+                  min="1"
+                />
+                <span class="error-message" id="benefitValue-error"></span>
+              </div>
+
+              <div class="form-field">
+                <label for="code" class="form-label">쿠폰 코드</label>
+                <input
+                  type="text"
+                  id="code"
+                  name="code"
+                  class="form-input"
+                  placeholder="쿠폰 코드 (읽기 전용)"
+                  readonly
+                  disabled
+                />
+                <span class="help-text">쿠폰 코드는 수정할 수 없습니다</span>
+              </div>
+            </div>
+
+            <!-- 집행 기간 (한 줄에 2개) -->
+            <div class="form-row form-row-2">
+              <div class="form-field">
+                <label for="startAt" class="form-label"
+                  >시작일 <span class="required">*</span></label
+                >
+                <input
+                  type="date"
+                  id="startAt"
+                  name="startAt"
+                  class="form-input"
+                />
+                <span class="error-message" id="startAt-error"></span>
+                <span class="help-text"
+                  >시간은 자동으로 00:00:00으로 설정됩니다</span
+                >
+              </div>
+
+              <div class="form-field">
+                <label for="endAt" class="form-label"
+                  >종료일 <span class="required">*</span></label
+                >
+                <input type="date" id="endAt" name="endAt" class="form-input" />
+                <span class="error-message" id="endAt-error"></span>
+                <span class="help-text">시작일 이후만 선택 가능합니다</span>
+              </div>
+            </div>
+
+            <!-- 상태 표시 (읽기 전용) -->
+            <div class="form-field">
+              <label for="status" class="form-label">상태</label>
+              <input
+                type="text"
+                id="status"
+                name="status"
+                class="form-input"
+                readonly
+                disabled
+              />
+              <span class="help-text" id="status-help-text"
+                >DRAFT 상태인 쿠폰만 수정할 수 있습니다</span
+              >
+            </div>
+          </form>
+
+          <!-- 수정하기 버튼 -->
+          <button type="button" class="create-button" id="updateBtn">
+            수정하기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="/js/coupon-update.js"
+      th:src="@{/js/coupon-update.js}"
+    ></script>
+  </body>
+</html>
+

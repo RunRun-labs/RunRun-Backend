@@ -1,188 +1,188 @@
 <!doctype html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8"/>
-  <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1"
-  />
-  <title>RUNRUN | Login</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
-      rel="stylesheet"
-  />
-  <link rel="stylesheet" href="/css/login.css" th:href="@{/css/login.css}">
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/login.css" th:href="@{/css/login.css}">
 </head>
 <body>
 <main class="page">
-  <button class="back-button" type="button" aria-label="뒤로가기">
-    <img
-        th:src="@{/img/icons/back.png}"
-        alt="뒤로가기 아이콘"
-    />
-  </button>
-
-  <div class="brand">
-    <span class="brand-text">RUNRUN</span>
-  </div>
-
-  <div class="shield">
-    <img
-        src="http://localhost:3845/assets/c4a28e563a263f14fac32caa4b60b1fc6d53b234.svg"
-        alt="보안 아이콘"
-    />
-  </div>
-
-  <section class="headline">
-    <h1>Login</h1>
-    <p>Enter your email and password to log in</p>
-  </section>
-
-  <form
-      class="login-form"
-      th:action="@{/auth/login}"
-      action="/auth/login"
-      method="post"
-      novalidate
-      data-form="login"
-  >
-    <div class="field">
-      <input
-          type="text"
-          name="loginId"
-          placeholder="아이디를 입력하세요"
-          required
-      />
-    </div>
-    <div class="field password-field">
-      <input
-          type="password"
-          name="loginPw"
-          placeholder="비밀번호를 입력하세요"
-          required
-      />
-      <button
-          class="toggle-password"
-          type="button"
-          aria-label="비밀번호 표시 전환"
-      >
+    <button class="back-button" type="button" aria-label="뒤로가기">
         <img
-            src="http://localhost:3845/assets/41b103cd16c208f81ff6d6027463cab8a828e725.svg"
-            alt="비밀번호 감춤 아이콘"
+                th:src="@{/img/icons/back.png}"
+                alt="뒤로가기 아이콘"
         />
-      </button>
+    </button>
+
+    <div class="brand">
+        <span class="brand-text">RUNRUN</span>
     </div>
 
-    <button class="primary-button" type="submit">Log In</button>
-    <p class="form-message" data-role="login-message" aria-live="polite"></p>
-  </form>
+    <div class="shield">
+        <img
+                src="http://localhost:3845/assets/c4a28e563a263f14fac32caa4b60b1fc6d53b234.svg"
+                alt="보안 아이콘"
+        />
+    </div>
 
-  <div class="divider">
-    <img
-        class="line"
-        src="http://localhost:3845/assets/48ca9d060e15bcb51efda2f7076cd8d9189de6a6.svg"
-        alt=""
-        aria-hidden="true"
-    />
-    <img
-        class="line"
-        src="http://localhost:3845/assets/48ca9d060e15bcb51efda2f7076cd8d9189de6a6.svg"
-        alt=""
-        aria-hidden="true"
-    />
-  </div>
+    <section class="headline">
+        <h1>Login</h1>
+        <p>Enter your email and password to log in</p>
+    </section>
 
-  <div class="social-buttons">
-    <button class="social-btn" type="button" aria-label="Google 로그인">
+    <form
+            class="login-form"
+            th:action="@{/auth/login}"
+            action="/auth/login"
+            method="post"
+            novalidate
+            data-form="login"
+    >
+        <div class="field">
+            <input
+                    type="text"
+                    name="loginId"
+                    placeholder="아이디를 입력하세요"
+                    required
+            />
+        </div>
+        <div class="field password-field">
+            <input
+                    type="password"
+                    name="loginPw"
+                    placeholder="비밀번호를 입력하세요"
+                    required
+            />
+            <button
+                    class="toggle-password"
+                    type="button"
+                    aria-label="비밀번호 표시 전환"
+            >
+                <img
+                        src="http://localhost:3845/assets/41b103cd16c208f81ff6d6027463cab8a828e725.svg"
+                        alt="비밀번호 감춤 아이콘"
+                />
+            </button>
+        </div>
+
+        <button class="primary-button" type="submit">Log In</button>
+        <p class="form-message" data-role="login-message" aria-live="polite"></p>
+    </form>
+
+    <div class="divider">
+        <img
+                class="line"
+                src="http://localhost:3845/assets/48ca9d060e15bcb51efda2f7076cd8d9189de6a6.svg"
+                alt=""
+                aria-hidden="true"
+        />
+        <img
+                class="line"
+                src="http://localhost:3845/assets/48ca9d060e15bcb51efda2f7076cd8d9189de6a6.svg"
+                alt=""
+                aria-hidden="true"
+        />
+    </div>
+
+    <div class="social-buttons">
+        <button class="social-btn" type="button" aria-label="Google 로그인">
           <span class="google-mark" aria-hidden="true">
             <img
-                src="http://localhost:3845/assets/a17f3355b848407aef634ea36c0061b162d33478.svg"
-                alt=""
+                    src="http://localhost:3845/assets/a17f3355b848407aef634ea36c0061b162d33478.svg"
+                    alt=""
             />
             <img
-                src="http://localhost:3845/assets/a8b0e680b986230705da7a487335bdf85a851235.svg"
-                alt=""
+                    src="http://localhost:3845/assets/a8b0e680b986230705da7a487335bdf85a851235.svg"
+                    alt=""
             />
             <img
-                src="http://localhost:3845/assets/a2c3a62d206de1a4000ad4d550fb4d9d7cda2b25.svg"
-                alt=""
+                    src="http://localhost:3845/assets/a2c3a62d206de1a4000ad4d550fb4d9d7cda2b25.svg"
+                    alt=""
             />
             <img
-                src="http://localhost:3845/assets/abcb4c0ce2d02ff4a8355cccf1dabb4f8254b694.svg"
-                alt=""
+                    src="http://localhost:3845/assets/abcb4c0ce2d02ff4a8355cccf1dabb4f8254b694.svg"
+                    alt=""
             />
           </span>
-    </button>
-    <button class="social-btn" type="button" aria-label="Kakao 로그인">
-      <img
-          src="http://localhost:3845/assets/e73c5e7b1ea6e3803946b8a5ed9be3e7d44ce3bd.png"
-          alt="Kakao 심볼"
-      />
-    </button>
-    <button class="social-btn" type="button" aria-label="GitHub 로그인">
-      <img
-          src="http://localhost:3845/assets/845b47f2dcc7d03b69d667dd14a85421237a1d2b.png"
-          alt="GitHub 로고"
-      />
-    </button>
-  </div>
+        </button>
+        <button class="social-btn" type="button" aria-label="Kakao 로그인">
+            <img
+                    src="http://localhost:3845/assets/e73c5e7b1ea6e3803946b8a5ed9be3e7d44ce3bd.png"
+                    alt="Kakao 심볼"
+            />
+        </button>
+        <button class="social-btn" type="button" aria-label="GitHub 로그인">
+            <img
+                    src="http://localhost:3845/assets/845b47f2dcc7d03b69d667dd14a85421237a1d2b.png"
+                    alt="GitHub 로고"
+            />
+        </button>
+    </div>
 
-  <div class="signup">
-    <span>Don’t have an account?</span>
-    <a th:href="@{/signup}" href="/signup">Sign Up</a>
-  </div>
+    <div class="signup">
+        <span>Don’t have an account?</span>
+        <a th:href="@{/signup}" href="/signup">Sign Up</a>
+    </div>
 </main>
 
 <template id="bottomNavTemplate">
-  <nav class="bottom-nav" aria-label="하단 메뉴">
-    <a class="nav-item" th:href="@{/chat}" href="/chat">
-      <img
-          src="http://localhost:3845/assets/3ca81eaa50aaf4304e5454034789cf398897e16f.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>chat</span>
-    </a>
-    <a class="nav-item" th:href="@{/feed}" href="/feed">
-      <img
-          src="http://localhost:3845/assets/a25ca98a797a195cf0014d33755d97160983a834.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>feed</span>
-    </a>
-    <a class="nav-item" th:href="@{/}" href="/">
-      <img
-          src="http://localhost:3845/assets/6d060744ca344e07264a3340d1ce76267f035268.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>home</span>
-    </a>
-    <a class="nav-item" th:href="@{/match}" href="/match">
-      <img
-          src="http://localhost:3845/assets/a1c3341d0388b5ec41a25350c4e525c869160bdd.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>match</span>
-    </a>
-    <a class="nav-item" th:href="@{/my}" href="/my">
-      <img
-          src="http://localhost:3845/assets/1894082a888c5c07d733295ec6a54ed9b0711586.svg"
-          alt=""
-          aria-hidden="true"
-      />
-      <span>my</span>
-    </a>
-  </nav>
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+            <img
+                    src="http://localhost:3845/assets/3ca81eaa50aaf4304e5454034789cf398897e16f.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+            <img
+                    src="http://localhost:3845/assets/a25ca98a797a195cf0014d33755d97160983a834.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>feed</span>
+        </a>
+        <a class="nav-item" th:href="@{/}" href="/">
+            <img
+                    src="http://localhost:3845/assets/6d060744ca344e07264a3340d1ce76267f035268.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+            <img
+                    src="http://localhost:3845/assets/a1c3341d0388b5ec41a25350c4e525c869160bdd.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>match</span>
+        </a>
+        <a class="nav-item" th:href="@{/my}" href="/my">
+            <img
+                    src="http://localhost:3845/assets/1894082a888c5c07d733295ec6a54ed9b0711586.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>my</span>
+        </a>
+    </nav>
 </template>
 
 <div
-    id="bottomNavMount"
-    th:replace="~{common/bottom-nav :: bottomNav}"
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
 <script src="/js/login.js" th:src="@{/js/login.js}"></script>

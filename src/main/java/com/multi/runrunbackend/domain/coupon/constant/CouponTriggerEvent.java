@@ -8,7 +8,6 @@ package com.multi.runrunbackend.domain.coupon.constant;
  */
 public enum CouponTriggerEvent {
     SIGNUP,
-    LOGIN,
     FIRST_RUNNING,
     RUN_COUNT_REACHED,
     BIRTHDAY

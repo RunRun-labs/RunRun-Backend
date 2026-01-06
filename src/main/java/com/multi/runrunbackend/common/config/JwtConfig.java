@@ -71,7 +71,26 @@ public class JwtConfig {
                                 "/setting/**",
                                 "/terms/**",
                                 "/tts-test",
-                                "/membership/**"
+                                "/membership/**",
+                                "/payment/pay",
+                                "/payment/history",
+                                "/payment/success",
+                                "/payment/fail",
+                                "/admin/coupon/create",
+                                "/admin/coupon/inquiry",
+                                "/admin/coupon/update/**",
+                                "/admin/coupon/select",
+                                "/admin/coupon-role/inquiry",
+                                "/admin/coupon-role/create",
+                                "/admin/coupon-role/update/**",
+                                "/coupon/my",
+                                "/coupon/event",
+                                "/api/admin/coupons/public/**",
+                                "/points/**",
+                                "/admin/**",
+                                "/api/admin/coupons/public/**",
+                                "/notification",
+                                "/home"
                         ).permitAll()
                         .requestMatchers(
                                 PathRequest.toStaticResources().atCommonLocations()
