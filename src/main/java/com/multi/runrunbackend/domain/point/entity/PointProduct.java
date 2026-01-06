@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.point.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.domain.point.dto.req.PointProductUpdateReqDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -54,6 +55,18 @@ public class PointProduct extends BaseEntity {
                 .productDescription(productDescription)
                 .isAvailable(true)
                 .build();
+    }
+
+    public void update(PointProductUpdateReqDto req) {
+        this.productName = req.getProductName();
+        this.productDescription = req.getProductDescription();
+        this.requiredPoint = req.getRequiredPoint();
+        this.productImageUrl = req.getProductImageUrl();
+        this.isAvailable = req.getIsAvailable();
+    }
+
+    public void delete() {
+        this.isDeleted = true;
     }
 
 }
