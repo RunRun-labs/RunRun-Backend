@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class ProfileRunningHistoryService {
 
     private final RunningResultRepository runningResultRepository;
@@ -42,6 +41,7 @@ public class ProfileRunningHistoryService {
     /**
      * 내 러닝 기록 조회
      */
+    @Transactional(readOnly = true)
     public Slice<ProfileRunningHistoryResDto> getMyRunningRecords(
             CustomUser principal,
             Pageable pageable
@@ -56,6 +56,7 @@ public class ProfileRunningHistoryService {
     /**
      * 타 사용자 러닝 기록 조회
      */
+    @Transactional(readOnly = true)
     public Slice<ProfileRunningHistoryResDto> getUserRunningRecords(
             Long userId,
             CustomUser principal,
@@ -91,11 +92,7 @@ public class ProfileRunningHistoryService {
 
         UserSetting setting =
                 userSettingRepository.findByUserId(target.getId())
-                        .orElseGet(() ->
-                                userSettingRepository.save(
-                                        UserSetting.createDefault(target)
-                                )
-                        );
+                        .orElse(UserSetting.createDefault(target));
 
         ProfileVisibility visibility = setting.getProfileVisibility();
 
