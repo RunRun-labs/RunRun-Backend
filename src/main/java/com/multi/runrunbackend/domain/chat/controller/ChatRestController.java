@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.chat.document.OfflineChatMessage;
+import com.multi.runrunbackend.domain.chat.dto.req.StartRunningReqDto;
 import com.multi.runrunbackend.domain.chat.dto.res.ChatRoomListResDto;
 import com.multi.runrunbackend.domain.chat.service.ChatService;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -164,10 +166,11 @@ public class ChatRestController {
   @PostMapping("/sessions/{sessionId}/start")
   public ResponseEntity<ApiResponse<Void>> startRunning(
       @PathVariable Long sessionId,
+      @RequestBody(required = false) StartRunningReqDto req,
       @AuthenticationPrincipal CustomUser principal) {
 
     try {
-      chatService.startRunning(sessionId, principal);
+      chatService.startRunning(sessionId, principal, req);
       return ResponseEntity.ok(ApiResponse.success("런닝이 시작되었습니다!", null));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest()
