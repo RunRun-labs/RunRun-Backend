@@ -49,6 +49,31 @@ body {
   height: 100vh;
 }
 
+/* 스크롤바 커스터마이징 - 얇고 다크 테마 */
+.container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+/* Firefox 스크롤바 */
+.container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+
 .page {
   position: relative;
   width: 100%;
@@ -200,6 +225,9 @@ body {
   border-bottom: 1px solid rgba(42, 42, 58, 0.5); /* 리스트와 경계 구분을 위한 옅은 보더 */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 약한 그림자 추가 */
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .filter-chips {
@@ -240,6 +268,144 @@ body {
   border-color: var(--accent-purple);
   color: var(--text-primary);
   font-weight: 600;
+}
+
+/* 날짜 필터 섹션 */
+.date-filter-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.date-filter-quick-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.date-quick-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.date-quick-btn:hover {
+  border-color: var(--accent-purple);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.date-quick-btn.active {
+  background: var(--accent-purple);
+  border-color: var(--accent-purple);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.date-filter-inputs {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.date-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+.date-input {
+  padding: 10px 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.date-input:hover {
+  border-color: var(--accent-purple);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--accent-purple);
+  background: rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+/* 날짜 입력 필드의 달력 아이콘 스타일링 */
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.5);
+  cursor: pointer;
+}
+
+.date-input::-webkit-inner-spin-button,
+.date-input::-webkit-clear-button {
+  filter: invert(1) opacity(0.5);
+}
+
+.date-separator {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  padding-bottom: 10px;
+  align-self: flex-end;
+  flex-shrink: 0;
+}
+
+.reset-date-button {
+  padding: 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  height: 42px;
+  width: 42px;
+  box-sizing: border-box;
+}
+
+.reset-date-button:hover {
+  border-color: var(--accent-purple);
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--text-primary);
+}
+
+.reset-date-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* 기록 목록 섹션 */
@@ -365,8 +531,9 @@ body {
 .record-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-wrap: wrap;
+  margin-bottom: 6px;
 }
 
 .record-title {
@@ -378,15 +545,60 @@ body {
 }
 
 .best-badge {
-  padding: 4px 8px;
-  background: var(--accent-gold);
+  padding: 2px 6px;
+  background: #D4A574;
   border-radius: 6px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  color: #000000;
+  color: #5C3A1F;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  line-height: 1;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  display: inline-block;
+}
+
+.record-badge {
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  display: inline-block;
+}
+
+.record-badge.type-onlinebattle {
+  background: #F5F5F5;
+  color: #3F51B5;
+}
+
+.record-badge.type-ghost {
+  background: #F5F5F5;
+  color: #3F51B5;
+}
+
+.record-badge.type-solo {
+  background: #F5F5F5;
+  color: #5F6368;
+}
+
+.record-badge.status-completed {
+  background: #E8EDE8;
+  color: #455A64;
+}
+
+.record-badge.status-give-up {
+  background: #F5E8E5;
+  color: #C47C5C;
+}
+
+.record-card.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.record-card.disabled:hover {
+  border-color: var(--stroke);
+  transform: none;
 }
 
 .record-date {

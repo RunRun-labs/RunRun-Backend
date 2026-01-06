@@ -122,25 +122,26 @@ public enum ErrorCode {
     /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
 
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "F001",
-            "파일 업로드에 실패했습니다."
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "F001",
+        "파일 업로드에 실패했습니다."
     ),
+
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
-            HttpStatus.BAD_REQUEST,
-            "F002",
-            "업로드할 파일이 비어 있습니다."
+        HttpStatus.BAD_REQUEST,
+        "F002",
+        "업로드할 파일이 비어 있습니다."
     ),
     FILE_NOT_IMAGE(
-            HttpStatus.BAD_REQUEST,
-            "F003",
-            "이미지 파일만 업로드할 수 있습니다."
+        HttpStatus.BAD_REQUEST,
+        "F003",
+        "이미지 파일만 업로드할 수 있습니다."
     ),
     FILE_SIZE_EXCEEDED(
-            HttpStatus.BAD_REQUEST,
-            "F004",
-            "파일 크기가 제한을 초과했습니다."
+        HttpStatus.BAD_REQUEST,
+        "F004",
+        "파일 크기가 제한을 초과했습니다."
     ),
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F005", "파일 삭제에 실패했습니다."),
 
@@ -304,6 +305,9 @@ public enum ErrorCode {
     BATTLE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀 결과를 찾을 수 없습니다."),
     DISTANCE_REQUIRED(HttpStatus.BAD_REQUEST, "M002", "코스 선택 안할 시 거리 선택은 필수 입니다."),
     INVALID_DISTANCE_TYPE(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 거리 타입입니다."),
+    /*===== 알림 =====*/
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "해당 알림을 찾을 수 없습니다."),
+    READ_DENIED(HttpStatus.FORBIDDEN, "N001", "본인의 알림만 읽음 처리할 수 있습니다."),
     /*===== 세션/채팅 =====*/
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
     SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),

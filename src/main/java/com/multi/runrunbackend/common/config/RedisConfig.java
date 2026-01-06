@@ -3,6 +3,7 @@ package com.multi.runrunbackend.common.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.multi.runrunbackend.domain.chat.service.RedisSubscriber;
+import com.multi.runrunbackend.domain.notification.redis.NotificationRedisSubscriber;
 import com.multi.runrunbackend.domain.running.battle.service.BattleRedisSubscriber;
 import com.multi.runrunbackend.domain.running.service.RunningStatsSubscriber;
 import org.redisson.Redisson;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
@@ -107,12 +109,15 @@ public class RedisConfig {
       MessageListenerAdapter chatListenerAdapter,
       MessageListenerAdapter runningListenerAdapter,
       MessageListenerAdapter battleListenerAdapter,
+      NotificationRedisSubscriber subscriber,
+      ChannelTopic notificationTopic,
       PatternTopic chatTopic,
       PatternTopic runningTopic,
       PatternTopic battleTopic
   ) {
     RedisMessageListenerContainer container = new RedisMessageListenerContainer();
     container.setConnectionFactory(connectionFactory);
+    container.addMessageListener(subscriber, notificationTopic);
 
     // 채팅 메시지 리스너
     container.addMessageListener(chatListenerAdapter, chatTopic);
@@ -168,6 +173,11 @@ public class RedisConfig {
         .setRetryAttempts(3)
         .setRetryInterval(1500);
     return Redisson.create(config);
+  }
+
+  @Bean
+  public ChannelTopic notificationTopic() {
+    return new ChannelTopic("notifications");
   }
 
 }

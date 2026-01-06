@@ -7,5 +7,17 @@ package com.multi.runrunbackend.domain.notification.constant;
  * @since : 2025-12-17 수요일
  */
 public enum NotificationType {
-    MATCH, CREW, NOTICE
+  MATCH,
+  RECRUIT,
+  RUNNING,
+  CHALLENGE,
+
+  CREW,
+  CHAT,
+  FRIEND,
+  FEED,
+
+  POINT,
+  PAYMENT,
+  SYSTEM;
 }
