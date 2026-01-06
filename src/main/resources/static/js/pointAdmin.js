@@ -263,7 +263,7 @@ function renderProductTable(products) {
         const imageUrl = product.productImageUrl && product.productImageUrl.startsWith('http')
             ? product.productImageUrl
             : product.productImageUrl
-                ? `https://runrun-uploads-bucket.s3.ap-northeast-2.amazonaws.com/${product.productImageUrl}`
+                ? `https://runrun-uploads-bucket.s3.mx-central-1.amazonaws.com/${product.productImageUrl}`
                 : '/images/no-image.png';  // 이미지 없을 때 기본 이미지
 
         return `
@@ -505,7 +505,7 @@ async function handleImageUpload(e) {
         if (!response.ok) throw new Error('이미지 업로드 실패');
 
         const result = await response.json();
-        const imageKey = result.data.key; // S3 key
+        const imageKey = result.data.key;
 
         // hidden input에 저장
         document.getElementById('productImageUrl').value = imageKey;
