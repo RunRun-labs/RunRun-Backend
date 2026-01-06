@@ -131,4 +131,12 @@ public class Coupon extends BaseTimeEntity {
         }
         this.status = CouponStatus.DELETED;
     }
+
+    public void soldOut() {
+        if (this.status != CouponStatus.ACTIVE) {
+            return;
+        }
+        this.status = CouponStatus.SOLD_OUT;
+
+    }
 }
