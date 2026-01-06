@@ -94,17 +94,17 @@ public enum ErrorCode {
     MEMBERSHIP_PERIOD_TOO_LONG(HttpStatus.BAD_REQUEST, "MM008", "멤버십 기간은 최대 365일까지 설정할 수 있습니다."),
 
     /* ===== 결제 ===== */
-    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "결제 내역을 찾을 수 없습니다."),
-    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "P002", "결제 금액이 일치하지 않습니다."),
-    PAYMENT_ALREADY_COMPLETED(HttpStatus.CONFLICT, "P003", "이미 완료된 결제입니다."),
-    PAYMENT_APPROVAL_FAILED(HttpStatus.BAD_GATEWAY, "P004", "결제 승인에 실패했습니다."),
-    PAYMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "P005", "해당 결제에 대한 권한이 없습니다."),
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PM001", "결제 내역을 찾을 수 없습니다."),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PM002", "결제 금액이 일치하지 않습니다."),
+    PAYMENT_ALREADY_COMPLETED(HttpStatus.CONFLICT, "PM003", "이미 완료된 결제입니다."),
+    PAYMENT_APPROVAL_FAILED(HttpStatus.BAD_GATEWAY, "PM004", "결제 승인에 실패했습니다."),
+    PAYMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "PM005", "해당 결제에 대한 권한이 없습니다."),
     /* ===== 토스 API ===== */
-    TOSS_API_FAILED(HttpStatus.BAD_GATEWAY, "P006", "토스페이먼츠 API 호출에 실패했습니다."),
+    TOSS_API_FAILED(HttpStatus.BAD_GATEWAY, "PM006", "토스페이먼츠 API 호출에 실패했습니다."),
     /* ===== 빌링키 ===== */
-    BILLING_KEY_ISSUE_FAILED(HttpStatus.BAD_GATEWAY, "P007", "빌링키 발급에 실패했습니다."),
-    BILLING_PAYMENT_FAILED(HttpStatus.BAD_GATEWAY, "P008", "빌링키 결제에 실패했습니다."),
-    BILLING_KEY_NOT_FOUND(HttpStatus.NOT_FOUND, "P009", "빌링키를 찾을 수 없습니다."),
+    BILLING_KEY_ISSUE_FAILED(HttpStatus.BAD_GATEWAY, "PM007", "빌링키 발급에 실패했습니다."),
+    BILLING_PAYMENT_FAILED(HttpStatus.BAD_GATEWAY, "PM008", "빌링키 결제에 실패했습니다."),
+    BILLING_KEY_NOT_FOUND(HttpStatus.NOT_FOUND, "PM009", "빌링키를 찾을 수 없습니다."),
     // ========== Point (포인트) ==========
     POINT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "포인트 정보를 찾을 수 없습니다"),
     INSUFFICIENT_POINT(HttpStatus.BAD_REQUEST, "P002", "포인트가 부족합니다"),
