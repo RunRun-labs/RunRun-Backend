@@ -108,7 +108,11 @@ public class User extends BaseEntity {
         this.name = name;
     }
 
-    public static User toEntity(UserSignUpDto dto) {
+    public void updateTTS(TtsVoicePack ttsVoicePack) {
+        this.ttsVoicePack = ttsVoicePack;
+    }
+
+    public static User toEntity(UserSignUpDto dto, TtsVoicePack ttsVoicePack) {
         return User.builder()
             .loginId(dto.getLoginId())
             .password(dto.getUserPassword())
@@ -119,6 +123,7 @@ public class User extends BaseEntity {
             .heightCm(dto.getHeightCm())
             .weightKg(dto.getWeightKg())
             .role("ROLE_USER")
+            .ttsVoicePack(ttsVoicePack)
             .build();
     }
 }
