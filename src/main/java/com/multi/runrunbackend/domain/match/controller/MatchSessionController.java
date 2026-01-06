@@ -4,11 +4,15 @@ import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.dto.req.MatchConfirmReqDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchConfirmResDto;
+import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,18 +29,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/match")
 public class MatchSessionController {
 
-  private final MatchSessionService matchSessionService;
-  private final UserRepository userRepository;
+    private final MatchSessionService matchSessionService;
+    private final UserRepository userRepository;
 
-  @PostMapping("/confirm")
-  public ResponseEntity<ApiResponse<MatchConfirmResDto>> confirmMatch(
-      @RequestBody MatchConfirmReqDto reqDto,
-      @AuthenticationPrincipal CustomUser principal
-  ) {
-    Long sessionId = matchSessionService.createOfflineSession(
-        reqDto.getRecruitId(),
-        principal
-    );
-    return ResponseEntity.ok(ApiResponse.success(new MatchConfirmResDto(sessionId)));
-  }
+    @GetMapping("/sessions/{sessionId}")
+    public ResponseEntity<ApiResponse<MatchSessionDetailResDto>> getSessionDetail(
+        @PathVariable Long sessionId,
+        @AuthenticationPrincipal CustomUser principal
+    ) {
+
+        MatchSessionDetailResDto res = matchSessionService.getSessionDetail(sessionId,
+            principal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("세션 상세 조회 성공", res));
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<ApiResponse<MatchConfirmResDto>> confirmMatch(
+        @RequestBody MatchConfirmReqDto reqDto,
+        @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        Long sessionId = matchSessionService.createOfflineSession(
+            reqDto.getRecruitId(),
+            userDetails
+        );
+        return ResponseEntity.ok(ApiResponse.success(new MatchConfirmResDto(sessionId)));
+    }
 }

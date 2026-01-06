@@ -4,7 +4,7 @@ import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
-import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
@@ -23,6 +23,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,10 +44,22 @@ public class MatchSessionService {
   private final RecruitUserRepository recruitUserRepository;
   private final SessionUserRepository sessionUserRepository;
 
-  @Transactional
-  public Long createOfflineSession(Long recruitId, CustomUser principal) {
+  public MatchSessionDetailResDto getSessionDetail(Long sessionId, Long userId) {
+    MatchSession session = matchSessionRepository.findById(sessionId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
-    User user = userRepository.findByLoginId(principal.getLoginId())
+    // 세션 참여자만 조회 가능
+    sessionUserRepository.findBySessionIdAndUserId(sessionId, userId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_USER_NOT_FOUND));
+
+    List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
+    return MatchSessionDetailResDto.from(session, sessionUsers);
+  }
+
+  @Transactional
+  public Long createOfflineSession(Long recruitId, UserDetails userDetails) {
+
+    User user = userRepository.findByLoginId(userDetails.getUsername())
         .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
     Recruit recruit = recruitRepository.findById(recruitId)
