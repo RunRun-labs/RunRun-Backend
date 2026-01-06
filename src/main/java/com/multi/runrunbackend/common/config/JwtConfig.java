@@ -37,48 +37,62 @@ public class JwtConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .sessionManagement(
-                        sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                ).authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/auth/**",
-                                "/login",
-                                "/signup",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/public/**",
-                                "/error",
-                                "/img/**",
-                                "/chat/**",
-                                "/ws/**",
-                                "/myPage/**",
-                                "/friends/**",
-                                "/profile/**",
-                                "/course_auto/**",
-                                "/files/**",
-                                "/challenge/**",
-                                "/course",
-                                "/courseCreate",
-                                "/courseDetail/**",
-                                "/courseUpdate/**",
-                                "/course_manual/**",
-                                "/crews/new",
-                                "/crews/**",
-                                "/match/**",
-                                "/recruit/**",
-                                "/setting/**",
-                                "/terms/**",
-                                "/tts-test",
-                                "/membership/**",
-                                "/points/**",
-                                "/admin/**"
-                        ).permitAll()
-                        .requestMatchers(
-                                PathRequest.toStaticResources().atCommonLocations()
-                        ).permitAll()
-                        .anyRequest().authenticated()
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .sessionManagement(
+                sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            ).authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/auth/**",
+                    "/login",
+                    "/signup",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/public/**",
+                    "/error",
+                    "/img/**",
+                    "/chat/**",
+                    "/ws/**",
+                    "/myPage/**",
+                    "/friends/**",
+                    "/profile/**",
+                    "/course_auto/**",
+                    "/files/**",
+                    "/challenge/**",
+                    "/course",
+                    "/courseCreate",
+                    "/courseDetail/**",
+                    "/courseUpdate/**",
+                    "/course_manual/**",
+                    "/crews/new",
+                    "/crews/**",
+                    "/match/**",
+                    "/recruit/**",
+                    "/setting/**",
+                    "/terms/**",
+                    "/tts-test",
+                    "/membership/**",
+                    "/payment/pay",
+                    "/payment/history",
+                    "/payment/success",
+                    "/payment/fail",
+                    "/admin/coupon/create",
+                    "/admin/coupon/inquiry",
+                    "/admin/coupon/update/**",
+                    "/admin/coupon/select",
+                    "/admin/coupon-role/inquiry",
+                    "/admin/coupon-role/create",
+                    "/admin/coupon-role/update/**",
+                    "/coupon/my",
+                    "/coupon/event",
+                    "/api/admin/coupons/public/**",
+                    "/points/**",
+                    "/admin/**"
+                ).permitAll()
+                .requestMatchers(
+                    PathRequest.toStaticResources().atCommonLocations()
+                ).permitAll()
+                .anyRequest().authenticated()
 
                 ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
                         UsernamePasswordAuthenticationFilter.class).exceptionHandling(

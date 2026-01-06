@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>결제 처리중...</title>
+</head>
+<body>
+<h3>결제 처리중입니다...</h3>
+
+<script>
+    const params = new URLSearchParams(location.search);
+
+    const orderId = params.get("orderId");
+    const amount = params.get("amount");
+    const customerKey = params.get("customerKey");
+    const authKey = params.get("authKey");
+
+    const accessToken = localStorage.getItem("accessToken");
+
+    // 토큰 확인
+    if (!accessToken) {
+        alert("로그인이 만료되었습니다. 다시 로그인 해주세요.");
+        location.href = "/login";
+        throw new Error("No accessToken");
+    }
+
+    const amountParam = params.get("amount");
+    // 필수 값 확인
+    if (!orderId || amountParam === null || !customerKey || !authKey) {
+        alert("결제 인증 값이 누락되었습니다. 다시 시도해주세요.");
+        console.log({orderId, amount, customerKey, authKey});
+    } else {
+        fetch("/api/payments/billing/confirm", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                orderId,
+                amount: Number(amountParam),
+                customerKey,
+                authKey
+            })
+        })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) throw new Error(res.message);
+                alert("🏃‍♂️ 프리미엄 멤버십 구독 완료!\n더 스마트한 러닝, 지금 시작해보세요.");
+                location.href = "/membership";
+            })
+            .catch(err => {
+                console.error(err);
+                alert("구독 처리 실패: " + err.message);
+                location.href = "/payment/fail";
+            });
+    }
+</script>
+</body>
+</html>

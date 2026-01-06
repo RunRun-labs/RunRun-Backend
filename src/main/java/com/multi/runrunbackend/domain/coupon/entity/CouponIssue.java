@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 /**
  * @author : kyungsoo
@@ -35,9 +36,11 @@ import lombok.NoArgsConstructor;
 @Table(
     name = "coupon_issue",
     uniqueConstraints = {
-        @UniqueConstraint(columnNames = "code")
+        @UniqueConstraint(name = "uk_coupon_issue_coupon_user", columnNames = {"coupon_id",
+            "user_id"})
     }
 )
+@SQLRestriction("status = 'AVAILABLE'")
 public class CouponIssue extends BaseCreatedEntity {
 
     @Id
@@ -52,10 +55,7 @@ public class CouponIssue extends BaseCreatedEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 100)
-    private String code;
-
-    @Column(name = "expiry_at", nullable = false)
+    @Column(name = "expiry_at")
     private LocalDateTime expiryAt;
 
     @Enumerated(EnumType.STRING)
@@ -63,16 +63,40 @@ public class CouponIssue extends BaseCreatedEntity {
     private CouponIssueType issueType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false)
     private CouponIssueStatus status;
 
     @Column(name = "used_at")
     private LocalDateTime usedAt;
 
+    public static CouponIssue createAuto(Coupon coupon, User user) {
+        CouponIssue couponIssue = new CouponIssue();
+        couponIssue.coupon = coupon;
+        couponIssue.user = user;
+        couponIssue.issueType = CouponIssueType.AUTO;
+
+        return couponIssue;
+    }
+
+    public static CouponIssue create(Coupon coupon, User user) {
+        CouponIssue couponIssue = new CouponIssue();
+        couponIssue.coupon = coupon;
+        couponIssue.user = user;
+        couponIssue.issueType = CouponIssueType.MANUAL;
+
+        return couponIssue;
+    }
+
     @PrePersist
     public void prePersist() {
         if (this.status == null) {
             this.status = CouponIssueStatus.AVAILABLE;
+        }
+    }
+
+    public void delete() {
+        if (this.status == CouponIssueStatus.AVAILABLE) {
+            this.status = CouponIssueStatus.DELETED;
         }
     }
 }
