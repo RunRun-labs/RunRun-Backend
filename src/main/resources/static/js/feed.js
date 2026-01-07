@@ -1,0 +1,840 @@
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("feed.js loaded");
+    initFeedPage();
+});
+
+// 전역 변수
+let currentPage = 0;
+let hasNext = true;
+let isLoading = false;
+let currentSort = "latest"; // latest, popular, my
+let feedLikes = new Map(); // feedId -> isLiked 상태 추적
+let openCommentSections = new Set(); // 댓글 영역이 열린 feedId들
+
+/**
+ * 피드 페이지 초기화
+ */
+function initFeedPage() {
+    attachShareButtonHandler();
+    attachSortHandlers();
+    initInfiniteScroll();
+    hideEmptyState(); // 초기 로드 시 빈 상태 숨김
+    loadFeeds(0, true);
+}
+
+/**
+ * 나의 런 공유하기 버튼 핸들러
+ */
+function attachShareButtonHandler() {
+    const shareButton = document.getElementById("shareRunButton");
+    if (shareButton) {
+        shareButton.addEventListener("click", () => {
+            window.location.href = "/feed/records";
+        });
+    }
+}
+
+/**
+ * 정렬 옵션 핸들러
+ */
+function attachSortHandlers() {
+    const sortItems = document.querySelectorAll(".sort-item");
+    sortItems.forEach(item => {
+        item.addEventListener("click", () => {
+            const sort = item.getAttribute("data-sort");
+            if (sort === currentSort) return;
+
+            // 활성 상태 변경
+            sortItems.forEach(i => i.classList.remove("active"));
+            item.classList.add("active");
+
+            // 정렬 변경 및 피드 다시 로드
+            currentSort = sort;
+            currentPage = 0;
+            hasNext = true;
+            loadFeeds(0, true);
+        });
+    });
+}
+
+/**
+ * 무한 스크롤 초기화
+ */
+function initInfiniteScroll() {
+    const sentinel = document.createElement("div");
+    sentinel.id = "scroll-sentinel";
+    sentinel.style.height = "1px";
+    document.querySelector(".feed-list").appendChild(sentinel);
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && hasNext && !isLoading) {
+                loadFeeds(currentPage + 1, false);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    observer.observe(sentinel);
+}
+
+/**
+ * 피드 목록 로드
+ */
+async function loadFeeds(page = 0, reset = false) {
+    if (isLoading || (!hasNext && !reset)) return;
+
+    isLoading = true;
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
+
+        // 정렬에 따라 API 엔드포인트 선택
+        let url = "/api/feed";
+        if (currentSort === "my") {
+            url = "/api/feed/me";
+        }
+        url += `?page=${page}&size=5&sort=createdAt,desc`;
+
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            throw new Error("피드 조회 실패");
+        }
+
+        const payload = await response.json();
+        const pageData = payload?.data;
+
+        if (!pageData) {
+            isLoading = false;
+            return;
+        }
+
+        const feeds = pageData.content || [];
+        hasNext = !pageData.last;
+        currentPage = page;
+
+        // 디버깅: 피드 데이터 확인
+        if (feeds.length > 0) {
+            console.log("피드 데이터 샘플:", feeds[0]);
+            console.log("첫 번째 피드 isLiked:", feeds[0]?.isLiked);
+        }
+
+        if (reset) {
+            const feedList = document.querySelector('[data-role="feed-list"]');
+            if (feedList) feedList.innerHTML = "";
+            openCommentSections.clear();
+            feedLikes.clear(); // 리셋 시 좋아요 상태 초기화
+            hideEmptyState(); // 리셋 시 빈 상태 숨김
+        }
+
+        if (feeds.length > 0) {
+            renderFeeds(feeds);
+            hideEmptyState();
+        } else if (reset && currentPage === 0) {
+            // 초기 로드이고 피드가 없을 때만 빈 상태 표시
+            showEmptyState();
+        }
+
+    } catch (error) {
+        console.error("피드 로드 실패:", error);
+        if (reset && currentPage === 0) {
+            showEmptyState();
+        }
+    } finally {
+        isLoading = false;
+    }
+}
+
+/**
+ * 피드 카드 렌더링
+ */
+function renderFeeds(feeds) {
+    const feedList = document.querySelector('[data-role="feed-list"]');
+    if (!feedList) return;
+
+    // 피드가 있으면 빈 상태 먼저 숨김
+    hideEmptyState();
+
+    feeds.forEach(feed => {
+        const feedCard = createFeedCard(feed);
+        feedList.appendChild(feedCard);
+    });
+}
+
+/**
+ * 피드 카드 생성
+ */
+function createFeedCard(feed) {
+    const article = document.createElement("article");
+    article.className = "feed-card";
+    article.setAttribute("data-feed-id", feed.feedId);
+
+    // 헤더 (프로필 이미지, 사용자 정보)
+    const header = document.createElement("div");
+    header.className = "feed-card-header";
+
+    const profileImg = document.createElement("img");
+    profileImg.className = "feed-profile-image";
+    profileImg.src = feed.profileImageUrl || "/images/default-profile.png";
+    profileImg.alt = feed.userLoginId;
+    profileImg.onerror = function() {
+        this.src = "/images/default-profile.png";
+    };
+
+    const userInfo = document.createElement("div");
+    userInfo.className = "feed-user-info";
+
+    const loginId = document.createElement("div");
+    loginId.className = "feed-user-login-id";
+    loginId.textContent = feed.userLoginId || "-";
+
+    const location = document.createElement("div");
+    location.className = "feed-course-location";
+    // 코스 위치 정보는 feed 데이터에 없을 수 있으므로 임시로 빈 값
+    location.textContent = "";
+
+    userInfo.appendChild(loginId);
+    userInfo.appendChild(location);
+    header.appendChild(profileImg);
+    header.appendChild(userInfo);
+
+    // 이미지
+    const imageContainer = document.createElement("div");
+    imageContainer.className = "feed-image-container";
+
+    const image = document.createElement("img");
+    image.className = "feed-image";
+    image.src = feed.imageUrl || "/images/default-course.png";
+    image.alt = "러닝 코스 이미지";
+    image.onerror = function() {
+        this.src = "/images/default-course.png";
+    };
+
+    imageContainer.appendChild(image);
+
+    // 코스 제목 (이미지 하단)
+    const courseTitle = document.createElement("div");
+    courseTitle.className = "feed-course-title";
+    courseTitle.textContent = feed.courseTitle || "";
+
+    // 통계 (거리, 시간)
+    const stats = document.createElement("div");
+    stats.className = "feed-stats";
+
+    const distanceItem = document.createElement("div");
+    distanceItem.className = "feed-stat-item";
+    const distanceIcon = document.createElement("span");
+    distanceIcon.className = "feed-stat-icon";
+    distanceIcon.textContent = "🏃‍♂️";
+    const distanceValue = document.createElement("span");
+    distanceValue.className = "feed-stat-value";
+    distanceValue.textContent = `${feed.totalDistance?.toFixed(1) || 0}km`;
+    distanceItem.appendChild(distanceIcon);
+    distanceItem.appendChild(distanceValue);
+
+    const timeItem = document.createElement("div");
+    timeItem.className = "feed-stat-item";
+    const timeIcon = document.createElement("span");
+    timeIcon.className = "feed-stat-icon";
+    timeIcon.textContent = "⏱";
+    const timeValue = document.createElement("span");
+    timeValue.className = "feed-stat-value";
+    timeValue.textContent = formatDuration(feed.totalTime || 0);
+    timeItem.appendChild(timeIcon);
+    timeItem.appendChild(timeValue);
+
+    stats.appendChild(distanceItem);
+    stats.appendChild(timeItem);
+
+    // 평균 페이스
+    const paceText = document.createElement("div");
+    paceText.className = "feed-pace-text";
+    paceText.textContent = `평균 페이스: ${formatPace(feed.avgPace)}`;
+
+    // 내용
+    const content = document.createElement("div");
+    content.className = "feed-content";
+    content.textContent = feed.content || "";
+
+    // 액션 버튼 (좋아요, 댓글)
+    const actions = document.createElement("div");
+    actions.className = "feed-actions";
+
+    // 좋아요 버튼
+    const likeAction = document.createElement("div");
+    likeAction.className = "feed-action-item";
+    likeAction.setAttribute("data-action", "like");
+    likeAction.setAttribute("data-feed-id", feed.feedId);
+
+    // 좋아요 상태 초기화 (백엔드에서 받은 isLiked 값 사용)
+    // Jackson 직렬화로 인해 isLiked 또는 liked로 올 수 있음
+    const isLiked = feed.isLiked === true || feed.liked === true;
+    feedLikes.set(feed.feedId, isLiked);
+    
+    // 디버깅: 좋아요 상태 확인
+    if (feed.feedId) {
+        console.log(`피드 ${feed.feedId} - 원본 데이터:`, {
+            isLiked: feed.isLiked,
+            liked: feed.liked,
+            최종값: isLiked
+        });
+    }
+
+    const likeIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    likeIcon.className = "feed-action-icon";
+    likeIcon.setAttribute("width", "16");
+    likeIcon.setAttribute("height", "16");
+    likeIcon.setAttribute("viewBox", "0 0 16 16");
+    
+    const likePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    
+    if (isLiked) {
+        // 이미 좋아요를 눌렀으면 채워진 하트
+        likeIcon.setAttribute("fill", "currentColor");
+        likePath.setAttribute("fill-rule", "evenodd");
+        likePath.setAttribute("d", "M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314");
+        likePath.setAttribute("fill", "currentColor");
+    } else {
+        // 빈 하트
+        likeIcon.setAttribute("fill", "currentColor");
+        likePath.setAttribute("d", "m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15");
+        likePath.setAttribute("fill", "currentColor");
+    }
+    
+    likeIcon.appendChild(likePath);
+
+    const likeCount = document.createElement("span");
+    likeCount.className = "feed-action-count";
+    likeCount.textContent = feed.likeCount || 0;
+
+    likeAction.appendChild(likeIcon);
+    likeAction.appendChild(likeCount);
+
+    // 좋아요 클릭 핸들러
+    likeAction.addEventListener("click", () => handleLikeClick(feed.feedId, likeAction, likeCount));
+
+    // 댓글 버튼
+    const commentAction = document.createElement("div");
+    commentAction.className = "feed-action-item";
+    commentAction.setAttribute("data-action", "comment");
+    commentAction.setAttribute("data-feed-id", feed.feedId);
+
+    const commentIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    commentIcon.className = "feed-action-icon";
+    commentIcon.setAttribute("width", "16");
+    commentIcon.setAttribute("height", "16");
+    commentIcon.setAttribute("fill", "currentColor");
+    commentIcon.setAttribute("viewBox", "0 0 16 16");
+    const commentPath1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    commentPath1.setAttribute("d", "M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2");
+    const commentPath2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    commentPath2.setAttribute("d", "m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105A9 9 0 0 0 8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.4 10.4 0 0 1-.524 2.318l-.003.011a11 11 0 0 1-.244.637c-.079.186.074.394.273.362a22 22 0 0 0 .693-.125m.8-3.108a1 1 0 0 0-.287-.801C1.618 10.83 1 9.468 1 8c0-3.192 3.004-6 7-6s7 2.808 7 6-3.004 6-7 6a8 8 0 0 1-2.088-.272 1 1 0 0 0-.711.074c-.387.196-1.24.57-2.634.893a11 11 0 0 0 .398-2");
+    commentIcon.appendChild(commentPath1);
+    commentIcon.appendChild(commentPath2);
+
+    const commentCount = document.createElement("span");
+    commentCount.className = "feed-action-count";
+    commentCount.textContent = feed.commentCount || 0;
+
+    commentAction.appendChild(commentIcon);
+    commentAction.appendChild(commentCount);
+
+    // 댓글 클릭 핸들러
+    commentAction.addEventListener("click", () => handleCommentClick(feed.feedId, article));
+
+    actions.appendChild(likeAction);
+    actions.appendChild(commentAction);
+
+    // 자신의 게시물일 경우 수정/삭제 버튼 추가 (actions 영역 오른쪽 끝)
+    const currentUserId = localStorage.getItem("userId");
+    if (currentUserId && Number(currentUserId) === feed.userId) {
+        const editDeleteActions = document.createElement("div");
+        editDeleteActions.className = "feed-edit-delete-actions";
+
+        const editButton = document.createElement("button");
+        editButton.className = "feed-edit-button";
+        editButton.textContent = "수정";
+        editButton.addEventListener("click", (e) => {
+            e.stopPropagation();
+            window.location.href = `/feed/update?feedId=${feed.feedId}`;
+        });
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "feed-delete-button";
+        deleteButton.textContent = "삭제";
+        deleteButton.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openDeleteModal(feed.feedId, article);
+        });
+
+        editDeleteActions.appendChild(editButton);
+        editDeleteActions.appendChild(deleteButton);
+        actions.appendChild(editDeleteActions);
+    }
+
+    // 조립
+    article.appendChild(header);
+    article.appendChild(imageContainer);
+    article.appendChild(courseTitle);
+    article.appendChild(stats);
+    article.appendChild(paceText);
+    article.appendChild(content);
+    article.appendChild(actions);
+
+    // 댓글 영역 (초기에는 숨김) - actions 다음에 추가
+    const commentsSection = createCommentsSection(feed.feedId);
+    article.appendChild(commentsSection);
+
+    return article;
+}
+
+/**
+ * 댓글 영역 생성
+ */
+function createCommentsSection(feedId) {
+    const section = document.createElement("div");
+    section.className = "feed-comments-section";
+    section.setAttribute("data-feed-id", feedId);
+
+    const title = document.createElement("h3");
+    title.className = "feed-comments-title";
+    title.textContent = "댓글";
+
+    const commentsList = document.createElement("div");
+    commentsList.className = "feed-comments-list";
+    commentsList.setAttribute("data-feed-id", feedId);
+
+    const form = document.createElement("form");
+    form.className = "feed-comment-form";
+    form.setAttribute("data-feed-id", feedId);
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "feed-comment-input";
+    input.placeholder = "내용을 입력하세요";
+    input.maxLength = 100;
+
+    const submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "feed-comment-submit";
+    submit.textContent = "등록";
+
+    form.appendChild(input);
+    form.appendChild(submit);
+
+    // 댓글 등록 핸들러
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const content = input.value.trim();
+        if (!content) return;
+
+        await submitComment(feedId, content, commentsList);
+        input.value = "";
+    });
+
+    section.appendChild(title);
+    section.appendChild(commentsList);
+    section.appendChild(form);
+
+    return section;
+}
+
+/**
+ * 좋아요 클릭 핸들러
+ */
+async function handleLikeClick(feedId, likeAction, likeCountElement) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const isLiked = feedLikes.get(feedId) || false;
+    const url = `/api/feed/${feedId}/like`;
+
+    try {
+        let response;
+        if (isLiked) {
+            // 좋아요 취소
+            response = await fetch(url, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } else {
+            // 좋아요 추가
+            response = await fetch(url, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        }
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            throw new Error("좋아요 처리 실패");
+        }
+
+        // 상태 업데이트
+        feedLikes.set(feedId, !isLiked);
+        const newCount = parseInt(likeCountElement.textContent) + (isLiked ? -1 : 1);
+        likeCountElement.textContent = Math.max(0, newCount);
+
+        // 아이콘 스타일 업데이트
+        const icon = likeAction.querySelector("svg");
+        const path = likeAction.querySelector("path");
+        if (icon && path) {
+            if (!isLiked) {
+                // 좋아요 활성화: 채워진 하트
+                icon.setAttribute("fill", "currentColor");
+                icon.removeAttribute("stroke");
+                path.setAttribute("fill", "currentColor");
+                path.removeAttribute("stroke");
+                path.setAttribute("fill-rule", "evenodd");
+                path.setAttribute("d", "M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314");
+            } else {
+                // 좋아요 비활성화: 빈 하트
+                icon.setAttribute("fill", "none");
+                icon.setAttribute("stroke", "currentColor");
+                path.setAttribute("fill", "none");
+                path.setAttribute("stroke", "currentColor");
+                path.removeAttribute("fill-rule");
+                path.setAttribute("d", "m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15");
+            }
+        }
+
+    } catch (error) {
+        console.error("좋아요 처리 실패:", error);
+        alert("좋아요 처리 중 오류가 발생했습니다.");
+    }
+}
+
+/**
+ * 댓글 클릭 핸들러
+ */
+async function handleCommentClick(feedId, feedCard) {
+    const commentsSection = feedCard.querySelector(`.feed-comments-section[data-feed-id="${feedId}"]`);
+    if (!commentsSection) return;
+
+    const isOpen = openCommentSections.has(feedId);
+
+    if (isOpen) {
+        // 댓글 영역 닫기
+        commentsSection.classList.remove("active");
+        openCommentSections.delete(feedId);
+    } else {
+        // 댓글 영역 열기
+        commentsSection.classList.add("active");
+        openCommentSections.add(feedId);
+
+        // 댓글 목록 로드
+        await loadComments(feedId, commentsSection.querySelector(".feed-comments-list"));
+    }
+}
+
+/**
+ * 댓글 목록 로드
+ */
+async function loadComments(feedId, commentsList) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    try {
+        const response = await fetch(`/api/feed/${feedId}/comments?page=0&size=100&sort=createdAt,asc`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            throw new Error("댓글 조회 실패");
+        }
+
+        const payload = await response.json();
+        const pageData = payload?.data;
+        const comments = pageData?.content || [];
+
+        // 댓글 렌더링
+        commentsList.innerHTML = "";
+        comments.forEach(comment => {
+            const commentItem = createCommentItem(comment);
+            commentsList.appendChild(commentItem);
+        });
+
+    } catch (error) {
+        console.error("댓글 로드 실패:", error);
+    }
+}
+
+/**
+ * 댓글 아이템 생성
+ */
+function createCommentItem(comment) {
+    const item = document.createElement("div");
+    item.className = "feed-comment-item";
+
+    const profileImg = document.createElement("img");
+    profileImg.className = "feed-comment-profile";
+    profileImg.src = comment.profileImageUrl || "/images/default-profile.png";
+    profileImg.alt = comment.userLoginId;
+    profileImg.onerror = function() {
+        this.src = "/images/default-profile.png";
+    };
+
+    const contentWrapper = document.createElement("div");
+    contentWrapper.className = "feed-comment-content-wrapper";
+
+    const userId = document.createElement("div");
+    userId.className = "feed-comment-user-id";
+    userId.textContent = comment.userLoginId || "-";
+
+    const date = document.createElement("div");
+    date.className = "feed-comment-date";
+    date.textContent = formatDate(comment.createdAt);
+
+    const text = document.createElement("div");
+    text.className = "feed-comment-text";
+    text.textContent = comment.content || "";
+
+    contentWrapper.appendChild(userId);
+    contentWrapper.appendChild(date);
+    contentWrapper.appendChild(text);
+
+    item.appendChild(profileImg);
+    item.appendChild(contentWrapper);
+
+    return item;
+}
+
+/**
+ * 댓글 등록
+ */
+async function submitComment(feedId, content, commentsList) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/feed/${feedId}/comments`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ content })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            throw new Error("댓글 등록 실패");
+        }
+
+        // 댓글 목록 다시 로드
+        await loadComments(feedId, commentsList);
+
+        // 댓글 개수 업데이트
+        const feedCard = document.querySelector(`[data-feed-id="${feedId}"]`);
+        if (feedCard) {
+            const commentCountElement = feedCard.querySelector('[data-action="comment"] .feed-action-count');
+            if (commentCountElement) {
+                const currentCount = parseInt(commentCountElement.textContent) || 0;
+                commentCountElement.textContent = currentCount + 1;
+            }
+        }
+
+    } catch (error) {
+        console.error("댓글 등록 실패:", error);
+        alert("댓글 등록 중 오류가 발생했습니다.");
+    }
+}
+
+/**
+ * 시간 포맷팅 (초 -> MM:SS 또는 HH:MM:SS)
+ */
+function formatDuration(seconds) {
+    if (!seconds || seconds === 0) return "00:00";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) {
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+    return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+/**
+ * 페이스 포맷팅 (분/km)
+ */
+function formatPace(pace) {
+    if (!pace || pace === 0) return "-";
+    const paceValue = typeof pace === 'number' ? pace : parseFloat(pace);
+    if (isNaN(paceValue)) return "-";
+    const minutes = Math.floor(paceValue);
+    const seconds = Math.floor((paceValue - minutes) * 60);
+    return `${minutes}'${String(seconds).padStart(2, "0")}"`;
+}
+
+/**
+ * 날짜 포맷팅
+ */
+function formatDate(dateString) {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}.${month}.${day}`;
+}
+
+/**
+ * 빈 상태 표시
+ */
+function showEmptyState() {
+    const emptyState = document.getElementById("feedEmpty");
+    const feedList = document.querySelector('[data-role="feed-list"]');
+    
+    if (emptyState) {
+        emptyState.removeAttribute("hidden");
+        emptyState.style.display = "flex";
+    }
+    if (feedList) {
+        feedList.style.display = "none";
+    }
+}
+
+/**
+ * 빈 상태 숨김
+ */
+function hideEmptyState() {
+    const emptyState = document.getElementById("feedEmpty");
+    const feedList = document.querySelector('[data-role="feed-list"]');
+    
+    if (emptyState) {
+        emptyState.setAttribute("hidden", "hidden");
+        emptyState.style.display = "none";
+    }
+    if (feedList) {
+        feedList.style.display = "flex";
+    }
+}
+
+/**
+ * 삭제 모달 열기
+ */
+function openDeleteModal(feedId, feedCard) {
+    const modal = document.getElementById("deleteFeedModal");
+    const cancelButton = document.getElementById("deleteCancelButton");
+    const confirmButton = document.getElementById("deleteConfirmButton");
+
+    if (!modal) return;
+
+    modal.removeAttribute("hidden");
+    modal.style.display = "flex";
+
+    // 기존 이벤트 리스너 제거
+    const newCancelButton = cancelButton.cloneNode(true);
+    const newConfirmButton = confirmButton.cloneNode(true);
+    cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+    confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+
+    // 취소 버튼
+    newCancelButton.addEventListener("click", () => {
+        closeDeleteModal();
+    });
+
+    // 확인 버튼
+    newConfirmButton.addEventListener("click", async () => {
+        await deleteFeed(feedId, feedCard);
+    });
+
+    // 모달 배경 클릭 시 닫기
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+            closeDeleteModal();
+        }
+    });
+}
+
+/**
+ * 삭제 모달 닫기
+ */
+function closeDeleteModal() {
+    const modal = document.getElementById("deleteFeedModal");
+    if (modal) {
+        modal.setAttribute("hidden", "hidden");
+        modal.style.display = "none";
+    }
+}
+
+/**
+ * 피드 삭제
+ */
+async function deleteFeed(feedId, feedCard) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const confirmButton = document.getElementById("deleteConfirmButton");
+    if (confirmButton) {
+        confirmButton.disabled = true;
+        confirmButton.textContent = "삭제 중...";
+    }
+
+    try {
+        const response = await fetch(`/api/feed/${feedId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            throw new Error("피드 삭제 실패");
+        }
+
+        // 피드 카드 제거
+        if (feedCard) {
+            feedCard.remove();
+        }
+
+        // 빈 상태 확인
+        const feedList = document.querySelector('[data-role="feed-list"]');
+        if (feedList && feedList.children.length === 0) {
+            showEmptyState();
+        }
+
+        closeDeleteModal();
+        alert("피드가 삭제되었습니다.");
+
+    } catch (error) {
+        console.error("피드 삭제 실패:", error);
+        alert("피드 삭제 중 오류가 발생했습니다.");
+    } finally {
+        if (confirmButton) {
+            confirmButton.disabled = false;
+            confirmButton.textContent = "삭제";
+        }
+    }
+}
+
