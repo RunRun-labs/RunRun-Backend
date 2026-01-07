@@ -154,7 +154,7 @@ public class MatchSessionController {
   @PostMapping("/solorun/start")
   public ResponseEntity<ApiResponse<Long>> startSoloRun(
       @AuthenticationPrincipal CustomUser principal,
-      @RequestBody SoloRunStartReqDto reqDto
+      @RequestBody @Valid SoloRunStartReqDto reqDto
   ) {
 
     Long sessionId = matchSessionService.createSoloSession(principal, reqDto);
