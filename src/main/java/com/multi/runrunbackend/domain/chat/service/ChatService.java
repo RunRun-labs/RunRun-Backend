@@ -11,6 +11,7 @@ import com.multi.runrunbackend.domain.chat.dto.req.StartRunningReqDto;
 import com.multi.runrunbackend.domain.chat.dto.res.ChatRoomListResDto;
 import com.multi.runrunbackend.domain.chat.repository.OfflineChatMessageRepository;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
+import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
@@ -225,10 +226,11 @@ public class ChatService {
         if (!user.getId().equals(hostId)) {
             throw new ForbiddenException(ErrorCode.NOT_SESSION_HOST);
         }
-
-        Map<String, Object> readyStatus = checkAllReady(sessionId);
-        if (!(Boolean) readyStatus.get("allReady")) {
-            throw new BadRequestException(ErrorCode.ALL_USERS_NOT_READY);
+        if (session.getType() == SessionType.OFFLINE) {
+            Map<String, Object> readyStatus = checkAllReady(sessionId);
+            if (!(Boolean) readyStatus.get("allReady")) {
+                throw new BadRequestException(ErrorCode.ALL_USERS_NOT_READY);
+            }
         }
 
         if (session.getCourse() != null
