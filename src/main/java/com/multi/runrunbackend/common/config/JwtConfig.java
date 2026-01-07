@@ -90,7 +90,8 @@ public class JwtConfig {
                                 "/admin/**",
                                 "/api/admin/coupons/public/**",
                                 "/notification",
-                                "/home"
+                                "/home",
+                                "/feed/**"
                         ).permitAll()
                         .requestMatchers(
                                 PathRequest.toStaticResources().atCommonLocations()
