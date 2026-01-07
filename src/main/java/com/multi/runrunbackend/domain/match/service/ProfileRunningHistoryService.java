@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.match.service;
 
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
+import com.multi.runrunbackend.common.exception.custom.InvalidRequestException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
@@ -8,7 +9,9 @@ import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.friend.entity.Friend;
 import com.multi.runrunbackend.domain.friend.repository.FriendRepository;
+import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.dto.res.ProfileRunningHistoryResDto;
+import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -51,7 +54,11 @@ public class ProfileRunningHistoryService {
         User me = getUserByPrincipal(principal);
 
         return runningResultRepository
-                .findCompletedByUser(me, pageable)
+                .findByUserAndRunStatusAndIsDeletedFalse(
+                        me,
+                        RunStatus.COMPLETED,
+                        pageable
+                )
                 .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
     }
 
@@ -73,8 +80,49 @@ public class ProfileRunningHistoryService {
         validateProfileAccess(me, target);
 
         return runningResultRepository
-                .findCompletedByUser(target, pageable)
+                .findByUserAndRunStatusAndIsDeletedFalse(
+                        target,
+                        RunStatus.COMPLETED,
+                        pageable)
                 .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+    }
+
+    /**
+     * 공유되지 않은 러닝 기록 조회 (피드 공유용)
+     */
+    @Transactional(readOnly = true)
+    public Slice<ProfileRunningHistoryResDto> getUnsharedRunningRecords(
+            CustomUser principal,
+            Pageable pageable
+    ) {
+        User me = getUserByPrincipal(principal);
+
+        return runningResultRepository
+                .findUnsharedCompletedRecords(me, RunStatus.COMPLETED, pageable)
+                .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+    }
+
+    /**
+     * 러닝 기록 삭제
+     */
+    @Transactional
+    public void deleteRunningRecord(Long recordId, CustomUser principal) {
+        User user = getUserByPrincipal(principal);
+
+        RunningResult result = runningResultRepository.findById(recordId)
+                .orElseThrow(() ->
+                        new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND)
+                );
+
+        if (Boolean.TRUE.equals(result.getIsDeleted())) {
+            throw new InvalidRequestException(ErrorCode.RUNNING_RESULT_ALREADY_DELETED);
+        }
+
+        if (!result.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException(ErrorCode.RUNNING_RESULT_FORBIDDEN);
+        }
+
+        result.delete(); // soft delete
     }
 
     /**
