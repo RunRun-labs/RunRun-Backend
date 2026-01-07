@@ -12,9 +12,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  *
@@ -33,13 +35,14 @@ public class FeedPostController {
     /**
      * 러닝 결과를 피드에 공유
      */
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<FeedPostResDto>> createFeedPost(
             @AuthenticationPrincipal CustomUser principal,
-            @RequestBody @Valid FeedPostCreateReqDto reqDto
+            @RequestPart("feedPost") @Valid FeedPostCreateReqDto reqDto,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile
     ) {
         FeedPostResDto resDto =
-                feedPostService.createFeedPost(principal, reqDto);
+                feedPostService.createFeedPost(principal, reqDto, imageFile);
 
         return ResponseEntity.ok(
                 ApiResponse.success("러닝 결과가 피드에 공유되었습니다.", resDto)
@@ -76,6 +79,21 @@ public class FeedPostController {
 
         return ResponseEntity.ok(
                 ApiResponse.successNoData("피드 삭제 성공")
+        );
+    }
+
+    /**
+     * 피드 상세 조회
+     */
+    @GetMapping("/{feedId}")
+    public ResponseEntity<ApiResponse<FeedPostResDto>> getFeedPost(
+            @PathVariable Long feedId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        FeedPostResDto feed = feedPostService.getFeedPost(feedId, principal);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("피드 상세 조회 성공", feed)
         );
     }
 
