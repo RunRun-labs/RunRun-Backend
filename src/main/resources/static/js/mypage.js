@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     attachSettingsHandler();
     attachMyCoursesHandler();
     attachMyPostsHandler();
+    attachImageModalHandlers();
     loadMyBodyInfo();
 
     // 초기 로드 시 빈 상태 숨김
@@ -396,7 +397,7 @@ function createRunCard(record) {
 
     // 이미지가 있을 때만 img 태그 추가
     const thumbContent = imageUrl
-        ? `<img src="${imageUrl}" alt="${courseTitle}" onerror="this.style.display='none'" />`
+        ? `<img src="${imageUrl}" alt="${courseTitle}" style="display: block; cursor: pointer;" onerror="this.style.display='none'" data-image-url="${imageUrl}" />`
         : '';
 
     article.innerHTML = `
@@ -426,6 +427,16 @@ function createRunCard(record) {
             <button class="run-share" type="button">피드에 공유</button>
         </div>
     `;
+
+    // 썸네일 클릭 이벤트 추가
+    if (imageUrl) {
+        const thumbContainer = article.querySelector('.run-thumb');
+        if (thumbContainer) {
+            thumbContainer.addEventListener('click', () => {
+                openImageModal(imageUrl);
+            });
+        }
+    }
 
     return article;
 }
@@ -583,5 +594,81 @@ function attachUserScrollGate() {
         page.addEventListener('scroll', markInteracted, {passive: true});
         page.addEventListener('wheel', markInteracted, {passive: true});
         page.addEventListener('touchmove', markInteracted, {passive: true});
+    }
+}
+
+/**
+ * 이미지 모달 핸들러
+ */
+function attachImageModalHandlers() {
+    const modal = document.getElementById("imageModal");
+    const closeBtn = document.querySelector('[data-role="close-image-modal"]');
+    const modalOverlay = document.querySelector('.image-modal-overlay');
+
+    if (!modal) return;
+
+    // 닫기 버튼
+    if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeImageModal();
+        });
+    }
+
+    // 배경 클릭 시 닫기
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", (e) => {
+            if (e.target === modalOverlay) {
+                closeImageModal();
+            }
+        });
+
+        // 모달 콘텐츠 클릭 시 닫히지 않도록
+        const modalContent = modalOverlay.querySelector(".image-modal-content");
+        if (modalContent) {
+            modalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+        }
+    }
+
+    // ESC 키로 닫기
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !modal.hasAttribute("hidden")) {
+            closeImageModal();
+        }
+    });
+}
+
+/**
+ * 이미지 모달 열기
+ */
+function openImageModal(imageUrl) {
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("imageModalImg");
+    
+    if (!modal || !modalImg) return;
+
+    modalImg.src = imageUrl;
+    modal.removeAttribute("hidden");
+    document.body.style.overflow = "hidden";
+}
+
+/**
+ * 이미지 모달 닫기
+ */
+function closeImageModal() {
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("imageModalImg");
+    
+    if (!modal) return;
+
+    modal.setAttribute("hidden", "hidden");
+    document.body.style.overflow = "";
+    
+    // 이미지 소스 제거 (메모리 절약)
+    if (modalImg) {
+        modalImg.src = "";
     }
 }
