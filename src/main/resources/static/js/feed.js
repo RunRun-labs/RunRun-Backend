@@ -12,6 +12,59 @@ let feedLikes = new Map(); // feedId -> isLiked 상태 추적
 let openCommentSections = new Set(); // 댓글 영역이 열린 feedId들
 
 /**
+ * JWT 토큰에서 사용자 역할 추출
+ */
+function getUserRoleFromToken() {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+        return null;
+    }
+
+    try {
+        const parts = accessToken.split(".");
+        if (parts.length !== 3) {
+            return null;
+        }
+
+        const payload = parts[1];
+        let base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+        while (base64.length % 4) {
+            base64 += "=";
+        }
+        const decodedPayload = JSON.parse(atob(base64));
+
+        const auth = decodedPayload.auth || decodedPayload.role || decodedPayload.roles || decodedPayload.authorities;
+
+        if (!auth) {
+            return null;
+        }
+
+        let roles = [];
+        if (Array.isArray(auth)) {
+            roles = auth;
+        } else if (typeof auth === 'string') {
+            roles = auth.split(",").map(role => role.trim());
+        }
+
+        return roles;
+    } catch (error) {
+        console.error("JWT 토큰 디코딩 실패:", error);
+        return null;
+    }
+}
+
+/**
+ * 사용자가 관리자인지 확인
+ */
+function isAdmin() {
+    const roles = getUserRoleFromToken();
+    if (!roles) {
+        return false;
+    }
+    return roles.includes("ROLE_ADMIN") || roles.includes("ADMIN");
+}
+
+/**
  * 피드 페이지 초기화
  */
 function initFeedPage() {
@@ -96,7 +149,13 @@ async function loadFeeds(page = 0, reset = false) {
         if (currentSort === "my") {
             url = "/api/feed/me";
         }
-        url += `?page=${page}&size=5&sort=createdAt,desc`;
+        
+        // 인기순의 경우 전체 데이터를 가져와서 정렬 (페이지네이션 없이)
+        if (currentSort === "popular") {
+            url += `?page=0&size=1000&sort=createdAt,desc`; // 충분히 큰 사이즈로 전체 데이터 가져오기
+        } else {
+            url += `?page=${page}&size=5&sort=createdAt,desc`;
+        }
 
         const response = await fetch(url, {
             headers: { Authorization: `Bearer ${token}` }
@@ -118,8 +177,26 @@ async function loadFeeds(page = 0, reset = false) {
             return;
         }
 
-        const feeds = pageData.content || [];
-        hasNext = !pageData.last;
+        let feeds = pageData.content || [];
+        
+        // 인기순 정렬: 좋아요 개수 + 댓글 개수 합계로 정렬
+        if (currentSort === "popular") {
+            feeds = feeds.sort((a, b) => {
+                const popularityA = (a.likeCount || 0) + (a.commentCount || 0);
+                const popularityB = (b.likeCount || 0) + (b.commentCount || 0);
+                return popularityB - popularityA; // 내림차순 정렬
+            });
+            
+            // 페이지네이션 처리 (인기순은 전체 데이터를 가져온 후 프론트에서 페이지네이션)
+            const pageSize = 5;
+            const startIndex = page * pageSize;
+            const endIndex = startIndex + pageSize;
+            feeds = feeds.slice(startIndex, endIndex);
+            hasNext = endIndex < pageData.content.length;
+        } else {
+            hasNext = !pageData.last;
+        }
+        
         currentPage = page;
 
         // 디버깅: 피드 데이터 확인
@@ -186,9 +263,14 @@ function createFeedCard(feed) {
     profileImg.className = "feed-profile-image";
     profileImg.src = feed.profileImageUrl || "/images/default-profile.png";
     profileImg.alt = feed.userLoginId;
+    profileImg.style.cursor = "pointer";
     profileImg.onerror = function() {
         this.src = "/images/default-profile.png";
     };
+    // 프로필 이미지 클릭 시 프로필 페이지로 이동
+    profileImg.addEventListener("click", () => {
+        window.location.href = `/profile/${feed.userId}`;
+    });
 
     const userInfo = document.createElement("div");
     userInfo.className = "feed-user-info";
@@ -351,23 +433,35 @@ function createFeedCard(feed) {
     // 댓글 클릭 핸들러
     commentAction.addEventListener("click", () => handleCommentClick(feed.feedId, article));
 
-    actions.appendChild(likeAction);
-    actions.appendChild(commentAction);
+    // 좋아요/댓글 아이콘을 그룹화
+    const actionItemsGroup = document.createElement("div");
+    actionItemsGroup.className = "feed-action-items-group";
+    actionItemsGroup.appendChild(likeAction);
+    actionItemsGroup.appendChild(commentAction);
+    actions.appendChild(actionItemsGroup);
 
-    // 자신의 게시물일 경우 수정/삭제 버튼 추가 (actions 영역 오른쪽 끝)
+    // 자신의 게시물일 경우 수정/삭제 버튼 추가, 관리자는 삭제만 가능
     const currentUserId = localStorage.getItem("userId");
-    if (currentUserId && Number(currentUserId) === feed.userId) {
+    const isMyPost = currentUserId && Number(currentUserId) === feed.userId;
+    const isAdminUser = isAdmin();
+    
+    if (isMyPost || isAdminUser) {
         const editDeleteActions = document.createElement("div");
         editDeleteActions.className = "feed-edit-delete-actions";
 
-        const editButton = document.createElement("button");
-        editButton.className = "feed-edit-button";
-        editButton.textContent = "수정";
-        editButton.addEventListener("click", (e) => {
-            e.stopPropagation();
-            window.location.href = `/feed/update?feedId=${feed.feedId}`;
-        });
+        // 자신의 게시물일 경우에만 수정 버튼 표시
+        if (isMyPost) {
+            const editButton = document.createElement("button");
+            editButton.className = "feed-edit-button";
+            editButton.textContent = "수정";
+            editButton.addEventListener("click", (e) => {
+                e.stopPropagation();
+                window.location.href = `/feed/update?feedId=${feed.feedId}`;
+            });
+            editDeleteActions.appendChild(editButton);
+        }
 
+        // 자신의 게시물이거나 관리자인 경우 삭제 버튼 표시
         const deleteButton = document.createElement("button");
         deleteButton.className = "feed-delete-button";
         deleteButton.textContent = "삭제";
@@ -375,8 +469,6 @@ function createFeedCard(feed) {
             e.stopPropagation();
             openDeleteModal(feed.feedId, article);
         });
-
-        editDeleteActions.appendChild(editButton);
         editDeleteActions.appendChild(deleteButton);
         actions.appendChild(editDeleteActions);
     }
@@ -569,7 +661,7 @@ async function loadComments(feedId, commentsList) {
         // 댓글 렌더링
         commentsList.innerHTML = "";
         comments.forEach(comment => {
-            const commentItem = createCommentItem(comment);
+            const commentItem = createCommentItem(comment, feedId);
             commentsList.appendChild(commentItem);
         });
 
@@ -581,17 +673,23 @@ async function loadComments(feedId, commentsList) {
 /**
  * 댓글 아이템 생성
  */
-function createCommentItem(comment) {
+function createCommentItem(comment, feedId) {
     const item = document.createElement("div");
     item.className = "feed-comment-item";
+    item.setAttribute("data-comment-id", comment.commentId);
 
     const profileImg = document.createElement("img");
     profileImg.className = "feed-comment-profile";
     profileImg.src = comment.profileImageUrl || "/images/default-profile.png";
     profileImg.alt = comment.userLoginId;
+    profileImg.style.cursor = "pointer";
     profileImg.onerror = function() {
         this.src = "/images/default-profile.png";
     };
+    // 프로필 이미지 클릭 시 프로필 페이지로 이동
+    profileImg.addEventListener("click", () => {
+        window.location.href = `/profile/${comment.userId}`;
+    });
 
     const contentWrapper = document.createElement("div");
     contentWrapper.className = "feed-comment-content-wrapper";
@@ -614,6 +712,22 @@ function createCommentItem(comment) {
 
     item.appendChild(profileImg);
     item.appendChild(contentWrapper);
+
+    // 자신의 댓글이거나 관리자인 경우 삭제 버튼 추가
+    const currentUserId = localStorage.getItem("userId");
+    const isMyComment = currentUserId && Number(currentUserId) === comment.userId;
+    const isAdminUser = isAdmin();
+    
+    if (isMyComment || isAdminUser) {
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "feed-comment-delete-button";
+        deleteButton.textContent = "삭제";
+        deleteButton.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            await deleteComment(feedId, comment.commentId, item);
+        });
+        item.appendChild(deleteButton);
+    }
 
     return item;
 }
@@ -658,10 +772,54 @@ async function submitComment(feedId, content, commentsList) {
                 commentCountElement.textContent = currentCount + 1;
             }
         }
-
     } catch (error) {
         console.error("댓글 등록 실패:", error);
         alert("댓글 등록 중 오류가 발생했습니다.");
+    }
+}
+
+/**
+ * 댓글 삭제
+ */
+async function deleteComment(feedId, commentId, commentItem) {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/feed/${feedId}/comments/${commentId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            throw new Error("댓글 삭제 실패");
+        }
+
+        // 댓글 아이템 제거
+        if (commentItem) {
+            commentItem.remove();
+        }
+
+        // 댓글 개수 업데이트
+        const feedCard = document.querySelector(`[data-feed-id="${feedId}"]`);
+        if (feedCard) {
+            const commentCountElement = feedCard.querySelector('[data-action="comment"] .feed-action-count');
+            if (commentCountElement) {
+                const currentCount = parseInt(commentCountElement.textContent) || 0;
+                commentCountElement.textContent = Math.max(0, currentCount - 1);
+            }
+        }
+
+    } catch (error) {
+        console.error("댓글 삭제 실패:", error);
+        alert("댓글 삭제 중 오류가 발생했습니다.");
     }
 }
 
