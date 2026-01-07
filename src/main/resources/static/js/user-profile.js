@@ -33,7 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     attachBackButtonHandler();
     attachFriendButtonHandler(userId);
+    attachBlockButtonHandler(userId);
     attachFriendDeleteModalHandlers(userId);
+    attachBlockModalHandlers(userId);
     loadUserProfile(userId);
 
     // 초기 로드 시 빈 상태 숨김
@@ -474,6 +476,7 @@ async function checkFriendStatus(targetUserId) {
  */
 function updateFriendButtonStatus(status, friendId = null) {
     const friendBtn = document.getElementById("friendButton");
+    const blockBtn = document.getElementById("blockButton");
     if (!friendBtn) return;
 
     // 기존 클래스 제거
@@ -484,21 +487,37 @@ function updateFriendButtonStatus(status, friendId = null) {
             friendBtn.classList.add("is-friend");
             friendBtn.textContent = "친구삭제";
             friendBtn.dataset.friendId = friendId || "";
+            // 친구인 경우 차단 버튼 숨김
+            if (blockBtn) {
+                blockBtn.setAttribute("hidden", "hidden");
+            }
             break;
         case "sent":
             friendBtn.classList.add("is-sent");
             friendBtn.textContent = "요청 보냄";
             friendBtn.dataset.friendId = friendId || "";
+            // 친구 요청 보낸 경우 차단 버튼 표시
+            if (blockBtn) {
+                blockBtn.removeAttribute("hidden");
+            }
             break;
         case "received":
             friendBtn.classList.add("is-received");
             friendBtn.textContent = "요청 수락";
             friendBtn.dataset.friendId = friendId || "";
+            // 친구 요청 받은 경우 차단 버튼 표시
+            if (blockBtn) {
+                blockBtn.removeAttribute("hidden");
+            }
             break;
         case "none":
         default:
             friendBtn.textContent = "친구신청";
             friendBtn.dataset.friendId = "";
+            // 친구가 아닌 경우 차단 버튼 표시
+            if (blockBtn) {
+                blockBtn.removeAttribute("hidden");
+            }
             break;
     }
 }
@@ -602,6 +621,107 @@ async function deleteFriendAndBlock(userId) {
     } catch (e) {
         console.error("Error deleting friend and blocking user:", e);
         alert(e.message || "친구 삭제 및 차단에 실패했습니다.");
+    }
+}
+
+/**
+ * 차단 버튼 핸들러
+ */
+function attachBlockButtonHandler(userId) {
+    const blockBtn = document.getElementById("blockButton");
+    if (!blockBtn) return;
+
+    blockBtn.addEventListener("click", () => {
+        openBlockModal();
+    });
+}
+
+function openBlockModal() {
+    const modal = document.getElementById("blockModal");
+    if (!modal) return;
+    modal.removeAttribute("hidden");
+}
+
+function closeBlockModal() {
+    const modal = document.getElementById("blockModal");
+    if (!modal) return;
+    modal.setAttribute("hidden", "hidden");
+}
+
+function attachBlockModalHandlers(userId) {
+    const modal = document.getElementById("blockModal");
+    if (!modal) return;
+
+    // 모달 닫기 버튼
+    const closeBtn = modal.querySelector('[data-role="close-block-modal"]');
+    if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeBlockModal();
+        });
+    }
+
+    // 모달 배경 클릭 시 닫기
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+            closeBlockModal();
+        }
+    });
+
+    // 모달 내용 클릭 시 이벤트 전파 방지
+    const modalContent = modal.querySelector(".modal-content");
+    if (modalContent) {
+        modalContent.addEventListener("click", (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    // 차단 버튼
+    const blockBtn = modal.querySelector('[data-role="block-only"]');
+    if (blockBtn) {
+        blockBtn.addEventListener("click", async () => {
+            await blockUser(userId, false);
+        });
+    }
+}
+
+/**
+ * 사용자 차단
+ */
+async function blockUser(userId, shouldReport) {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
+        const targetUserId = Number(userId);
+        if (isNaN(targetUserId)) {
+            throw new Error("잘못된 사용자 ID입니다.");
+        }
+
+        const res = await fetch(`/users/blocks/${targetUserId}`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || "차단 실패");
+        }
+
+        closeBlockModal();
+        alert("사용자가 차단되었습니다.");
+
+        // 차단 후 이전 페이지로 이동
+        window.history.back();
+    } catch (e) {
+        console.error("Error blocking user:", e);
+        alert(e.message || "사용자 차단에 실패했습니다.");
     }
 }
 
