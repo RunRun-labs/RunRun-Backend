@@ -76,7 +76,7 @@ public class Membership extends BaseEntity {
         if (days > 365) {
             throw new BusinessException(ErrorCode.MEMBERSHIP_PERIOD_TOO_LONG);
         }
-        
+
         this.membershipStatus = MembershipStatus.ACTIVE;
         this.startDate = LocalDateTime.now();
         this.nextBillingDate = LocalDateTime.now().plusDays(days);
@@ -136,5 +136,14 @@ public class Membership extends BaseEntity {
      */
     public void setEndDate(LocalDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    /**
+     * @description : nextBillingDate 설정 (체험권용)
+     * @author : BoKyung
+     * @since : 25. 12. 30. 월요일
+     */
+    public void setNextBillingDate(LocalDateTime nextBillingDate) {
+        this.nextBillingDate = nextBillingDate;
     }
 }
