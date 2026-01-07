@@ -47,6 +47,7 @@
             .then(r => r.json())
             .then(res => {
                 if (!res.success) throw new Error(res.message);
+                localStorage.removeItem('selectedCoupon');
                 alert("🏃‍♂️ 프리미엄 멤버십 구독 완료!\n더 스마트한 러닝, 지금 시작해보세요.");
                 location.href = "/membership";
             })
