@@ -144,8 +144,8 @@ function renderResult(data) {
   // 최종 순위
   renderRankings(data.rankings);
   
-  // 1위와 비교 (내가 1위가 아닐 때만)
-  if (data.myRank > 1) {
+  // 1위와 비교 (내가 1위가 아니고 완주한 경우만)
+  if (data.myRank > 1 && data.myRank !== 0) {
     renderComparison(data);
   } else {
     document.querySelector('.comparison-section').style.display = 'none';
@@ -160,29 +160,54 @@ function renderBanner(data) {
   
   // 완료 배지
   document.querySelector('.completion-badge span').textContent = 
-    `🏁 ${targetKm}km 스피드 배틀 완료`;
+    `🏁 ${targetKm}km 스피드 배틀 종료`;
   
-  // 순위 표시
-  document.querySelector('.rank-number').textContent = data.myRank;
+  // ✅ 순위 표시 (rank === 0 은 완주 실패)
+  if (data.myRank === 0) {
+    document.querySelector('.rank-number').textContent = '❌';
+    document.querySelector('.rank-text').textContent = '완주 실패';
+  } else {
+    document.querySelector('.rank-number').textContent = data.myRank;
+    document.querySelector('.rank-text').textContent = '등';
+  }
   
   // 결과 메시지
   const messageText = document.querySelector('.message-text');
-  if (data.myRank === 1) {
+  
+  if (data.myRank === 0) {
+    // ✅ 미완주자 - 짧고 명확하게
+    messageText.innerHTML = '<span class="message-muted">목표 거리 미달성</span>';
+  } else if (data.myRank === 1) {
     messageText.innerHTML = '<span class="message-muted">축하합니다! </span>1등<span class="message-muted">으로 완주했어요 </span>🏆';
   } else {
     const firstPlace = data.rankings.find(r => r.rank === 1);
     const timeDiff = data.finishTime - firstPlace.finishTime;  // 밀리초
     const diffSeconds = Math.floor(timeDiff / 1000);  // 초
     
-    // 분과 초로 변환
-    if (diffSeconds >= 60) {
-      const minutes = Math.floor(diffSeconds / 60);
-      const seconds = diffSeconds % 60;
-      messageText.innerHTML = 
-        `${firstPlace.username}<span class="message-muted">님보다 </span>${minutes}분 ${seconds}초<span class="message-muted"> 늦게 도착했어요</span>`;
+    // ✅ 음수 처리: 음수면 오히려 먼저 도착!
+    if (diffSeconds < 0) {
+      // 음수 = 내가 더 빠름 (순위 버그!)
+      const absDiff = Math.abs(diffSeconds);
+      if (absDiff >= 60) {
+        const minutes = Math.floor(absDiff / 60);
+        const seconds = absDiff % 60;
+        messageText.innerHTML = 
+          `⚠️ ${firstPlace.username}<span class="message-muted">님보다 </span>${minutes}분 ${seconds}초<span class="message-muted"> 빠르게 도착했는데 순위가 잘못되었어요</span>`;
+      } else {
+        messageText.innerHTML = 
+          `⚠️ ${firstPlace.username}<span class="message-muted">님보다 </span>${absDiff}초<span class="message-muted"> 빠르게 도착했는데 순위가 잘못되었어요</span>`;
+      }
     } else {
-      messageText.innerHTML = 
-        `${firstPlace.username}<span class="message-muted">님보다 </span>${diffSeconds}초<span class="message-muted"> 늦게 도착했어요</span>`;
+      // 양수 = 정상 (늘게 도착)
+      if (diffSeconds >= 60) {
+        const minutes = Math.floor(diffSeconds / 60);
+        const seconds = diffSeconds % 60;
+        messageText.innerHTML = 
+          `${firstPlace.username}<span class="message-muted">님보다 </span>${minutes}분 ${seconds}초<span class="message-muted"> 늦게 도착했어요</span>`;
+      } else {
+        messageText.innerHTML = 
+          `${firstPlace.username}<span class="message-muted">님보다 </span>${diffSeconds}초<span class="message-muted"> 늦게 도착했어요</span>`;
+      }
     }
   }
 }
@@ -191,20 +216,37 @@ function renderBanner(data) {
  * 나의 기록 렌더링
  */
 function renderMyRecord(data) {
-  // 완주 시간
-  const finishTimeStr = formatTime(data.finishTime);
-  document.querySelector('.stat-box:nth-child(1) .stat-value').textContent = finishTimeStr;
+  // ✅ 완주 실패 vs 완주 성공
+  if (data.myRank === 0) {
+    // 완주 시간 (실패)
+    document.querySelector('.stat-box:nth-child(1) .stat-value').textContent = '-';
+    document.querySelector('.stat-box:nth-child(1) .stat-label').textContent = '미완주';
+    
+    // 평균 페이스 (실패)
+    document.querySelector('.stat-box:nth-child(2) .stat-value').textContent = data.avgPace || '-';
+    
+    // 최대 도달 거리
+    const totalKm = (data.totalDistance / 1000).toFixed(2);
+    document.querySelector('.stat-box:nth-child(3) .stat-value').textContent = totalKm;
+    document.querySelector('.stat-box:nth-child(3) .stat-label').textContent = '최대 도달 거리';
+  } else {
+    // 완주 시간
+    const finishTimeStr = formatTime(data.finishTime);
+    document.querySelector('.stat-box:nth-child(1) .stat-value').textContent = finishTimeStr;
+    document.querySelector('.stat-box:nth-child(1) .stat-label').textContent = '완주 시간';
+    
+    // 평균 페이스
+    document.querySelector('.stat-box:nth-child(2) .stat-value').textContent = data.avgPace;
+    
+    // 총 거리
+    const totalKm = (data.totalDistance / 1000).toFixed(2);
+    document.querySelector('.stat-box:nth-child(3) .stat-value').textContent = totalKm;
+    document.querySelector('.stat-box:nth-child(3) .stat-label').textContent = '총 거리';
+  }
   
-  // 평균 페이스
-  document.querySelector('.stat-box:nth-child(2) .stat-value').textContent = data.avgPace;
-  
-  // 총 거리
-  const totalKm = (data.totalDistance / 1000).toFixed(2);
-  document.querySelector('.stat-box:nth-child(3) .stat-value').textContent = totalKm;
-  
-  // 완주 날짜
+  // 종료 날짜
   const now = new Date();
-  const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} (${getDayOfWeek(now)}) ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 완주`;
+  const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} (${getDayOfWeek(now)}) ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 종료`;
   document.querySelector('.record-date').textContent = dateStr;
 }
 
@@ -229,10 +271,16 @@ function createRankingItem(participant, isMe) {
   const item = document.createElement('div');
   item.className = `ranking-item rank-${participant.rank}`;
   
-  // 순위 배지
+  // ✅ 순위 배지 (rank === 0 은 완주 실패)
   const badge = document.createElement('div');
-  badge.className = `rank-badge rank-${participant.rank}-badge`;
-  badge.textContent = participant.rank;
+  if (participant.rank === 0) {
+    badge.className = 'rank-badge rank-failed-badge';
+    badge.textContent = '❌';
+    badge.style.cssText = 'background: rgba(255, 68, 68, 0.2); color: #ff4444;';
+  } else {
+    badge.className = `rank-badge rank-${participant.rank}-badge`;
+    badge.textContent = participant.rank;
+  }
   
   // 아바타
   const avatar = document.createElement('div');
@@ -253,8 +301,14 @@ function createRankingItem(participant, isMe) {
   
   const status = document.createElement('div');
   status.className = 'participant-status';
-  const finishTimeStr = formatTime(participant.finishTime);
-  status.textContent = `${finishTimeStr} 완주${participant.rank === 1 ? ' 🏆' : ''}`;
+  
+  // ✅ 완주 실패 vs 완주 성공
+  if (participant.rank === 0) {
+    status.textContent = `완주 실패 (최대 ${(participant.totalDistance / 1000).toFixed(2)}km)`;
+  } else {
+    const finishTimeStr = formatTime(participant.finishTime);
+    status.textContent = `${finishTimeStr} 완주${participant.rank === 1 ? ' 🏆' : ''}`;
+  }
   
   info.appendChild(name);
   info.appendChild(status);
