@@ -3,9 +3,6 @@ package com.multi.runrunbackend.domain.match.repository;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.user.entity.User;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,13 +23,13 @@ import java.util.Optional;
  */
 public interface RunningResultRepository extends JpaRepository<RunningResult, Long> {
 
-  /**
-   * 사용자의 최신 런닝 결과 조회 - 런닝 종료 후 결과 모달 표시용
-   *
-   * @param user 사용자 엔티티
-   * @return 최신 런닝 결과
-   */
-  Optional<RunningResult> findTopByUserOrderByCreatedAtDesc(User user);
+    /**
+     * 사용자의 최신 런닝 결과 조회 - 런닝 종료 후 결과 모달 표시용
+     *
+     * @param user 사용자 엔티티
+     * @return 최신 런닝 결과
+     */
+    Optional<RunningResult> findTopByUserOrderByCreatedAtDesc(User user);
 
 
     @Query("SELECT r FROM RunningResult r WHERE r.course.id = :courseId AND r.runStatus = :runStatus AND r.isDeleted = false ORDER BY r.createdAt DESC")
@@ -75,18 +72,12 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
     );
 
 
-
-
-
-
-
-
-
     /**
      * 사용자의 완료된 러닝 기록 조회
      */
-    Slice<RunningResult> findCompletedByUser(
+    Slice<RunningResult> findByUserAndRunStatusAndIsDeletedFalse(
             User user,
+            RunStatus runStatus,
             Pageable pageable
     );
 
@@ -133,5 +124,24 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             LocalDateTime end
     );
 
-
+    /**
+     * 공유되지 않은 완료된 러닝 기록 조회 (피드 공유용)
+     */
+    @Query("""
+            SELECT r FROM RunningResult r
+            WHERE r.user = :user
+              AND r.runStatus = :runStatus
+              AND r.isDeleted = false
+              AND NOT EXISTS (
+                  SELECT 1 FROM FeedPost fp
+                  WHERE fp.runningResult.id = r.id
+                    AND fp.isDeleted = false
+              )
+            ORDER BY r.startedAt DESC
+            """)
+    Slice<RunningResult> findUnsharedCompletedRecords(
+            @Param("user") User user,
+            @Param("runStatus") RunStatus runStatus,
+            Pageable pageable
+    );
 }
