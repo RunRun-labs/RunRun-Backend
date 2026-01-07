@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.feed.dto.res;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.multi.runrunbackend.domain.feed.entity.FeedPost;
 import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
@@ -39,16 +40,25 @@ public class FeedPostResDto {
     private RunningType runningType;
     private String runningTypeDescription;
 
+    // 코스 정보
+    private String courseTitle;
+
     // 좋아요
     private long likeCount;
+    @JsonProperty("isLiked")
+    private boolean isLiked; // 현재 사용자가 좋아요를 눌렀는지 여부
 
     //댓글
     private long commentCount;
 
+    // 피드 이미지
+    private String imageUrl;
+
     public static FeedPostResDto from(
             FeedPost feedPost,
             long likeCount,
-            long commentCount
+            long commentCount,
+            boolean isLiked
 
     ) {
         RunningResult r = feedPost.getRunningResult();
@@ -68,8 +78,11 @@ public class FeedPostResDto {
                 .avgPace(r.getAvgPace())
                 .runningType(r.getRunningType())
                 .runningTypeDescription(r.getRunningType().getDescription())
+                .courseTitle(r.getCourse() != null ? r.getCourse().getAddress() : null)
                 .likeCount(likeCount)
+                .isLiked(isLiked)
                 .commentCount(commentCount)
+                .imageUrl(feedPost.getImageUrl())
                 .build();
     }
 }
