@@ -58,7 +58,7 @@ public class ProfileRunningHistoryResDto {
                 .runningType(r.getRunningType())
                 .runningTypeDescription(r.getRunningType().getDescription())
                 .courseId(c != null ? c.getId() : null)
-                .courseTitle(c != null ? c.getTitle() : null)
+                .courseTitle(c != null ? c.getAddress() : null)
                 .courseThumbnailUrl(thumbnailUrl) // S3 URL로 변환된 값 사용
                 .build();
     }
