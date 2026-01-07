@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 포인트</title>
+    <link rel="stylesheet" th:href="@{/css/point-history.css}">
+</head>
+<body>
+<!-- 헤더 -->
+<div class="header">
+    <button class="btn-back" onclick="history.back()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+    </button>
+    <h1 class="header-title">내 포인트</h1>
+</div>
+
+<!-- 필터 버튼 -->
+<div class="filter-container">
+    <button class="filter-btn active" onclick="changeFilter('ALL', event)">전체</button>
+    <button class="filter-btn" onclick="changeFilter('EARN', event)">적립</button>
+    <button class="filter-btn" onclick="changeFilter('USE', event)">사용</button>
+</div>
+
+<!-- 내역 리스트 -->
+<div class="history-container">
+    <div id="historyList" class="history-list">
+        <!-- 내역이 동적으로 추가됩니다 -->
+    </div>
+    <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        내역을 불러오는 중...
+    </div>
+</div>
+
+<!-- 하단 네비게이션 -->
+<div class="bottom-nav">
+    <a href="/chat" class="nav-item">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">chat</span>
+    </a>
+    <a href="/crews" class="nav-item">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">crew</span>
+    </a>
+    <a href="/" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">home</span>
+    </a>
+    <a href="/match" class="nav-item">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">match</span>
+    </a>
+    <a href="/mypage" class="nav-item active">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">my</span>
+    </a>
+</div>
+
+<script th:src="@{/js/point-history.js}"></script>
+</body>
+</html>

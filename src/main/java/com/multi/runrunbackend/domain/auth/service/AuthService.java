@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.auth.service;
 
 import static java.time.LocalDateTime.now;
 
+import com.multi.runrunbackend.common.event.UserSignedUpEvent;
 import com.multi.runrunbackend.common.exception.custom.DuplicateException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
@@ -37,6 +39,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, String> redisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
     private final TtsVoicePackRepository ttsVoicePackRepository;
 
     private final CustomUserDetailService customUserDetailService;
@@ -57,9 +60,11 @@ public class AuthService {
         User user = User.toEntity(userSignUpDto, ttsVoicePack);
         user.setRole(role);
         User savedMember = userRepository.save(user);
+
         if (savedMember == null) {
             throw new RuntimeException("회원가입에 실패했습니다.");
         }
+        eventPublisher.publishEvent(new UserSignedUpEvent(savedMember.getId()));
         String key = "ROLE:" + userSignUpDto.getLoginId();
         redisTemplate.opsForValue()
             .set(key, savedMember.getRole(), Duration.ofHours(1));

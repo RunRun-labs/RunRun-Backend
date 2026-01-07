@@ -175,71 +175,169 @@ body {
     box-shadow: 0 2px 4px rgba(239, 68, 68, 0.6);
 }
 
-.weekly-section {
+/* 요일별 러닝 통계 */
+.weekly-stats-section {
+    width: 100%;
     margin-top: 16px;
-    padding: 8px 4px 12px;
-    border-radius: 12px;
-    border: 1px solid var(--stroke);
-    background: #ffffff;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.weekly-chips {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    margin-bottom: 10px;
+/* 주별 통계 헤더 */
+.weekly-stats-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
 }
 
-.chip {
-    height: 28px;
-    border-radius: 999px;
-    font-size: 10px;
-    display: inline-flex;
+/* 주별 통계 칩 (거리, 시간) */
+.weekly-stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: #ecfccb;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.weekly-distance-chip {
+    flex: 0 0 auto;
+}
+
+.weekly-duration-chip {
+    flex: 0 0 auto;
+}
+
+.weekly-stat-icon {
+    width: 18px;
+    height: 18px;
+    color: #1f2937;
+    flex-shrink: 0;
+}
+
+.weekly-duration-chip .weekly-stat-icon {
+    width: 13px;
+    height: 13px;
+}
+
+.weekly-stat-value {
+    font-family: "Roboto", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    line-height: 20px;
+}
+
+/* 주 선택 영역 */
+.weekly-week-selector {
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    cursor: pointer;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.week-nav-button {
+    background: none;
     border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1f2937;
+    transition: opacity 0.2s;
 }
 
-.chip-filled {
-    background: var(--primary);
+.week-nav-button:hover {
+    opacity: 0.7;
 }
 
-.chip-outline {
-    background: #fff;
-    border: 1px solid var(--primary);
+.week-nav-button:active {
+    opacity: 0.5;
 }
 
-.chip-icon {
-    font-size: 11px;
+.week-nav-button svg {
+    width: 9px;
+    height: 14px;
 }
 
-.weekly-chart {
-    margin-top: 4px;
+.week-label {
+    font-family: "Roboto", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
+.weekly-chart-container {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--stroke);
+    background: var(--bg);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .chart-bars {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
     align-items: flex-end;
-    justify-content: space-between;
-    height: 80px;
-    padding: 0 8px;
+    height: 98.539px;
+    gap: 4.49px;
+    padding: 0 46px;
 }
 
-.bar {
-    width: 10px;
-    border-radius: 8px 8px 0 0;
-    background: var(--primary);
-    height: calc(20px + 60px * var(--h));
+.chart-bar {
+    width: 12.73px;
+    max-width: 12.73px;
+    min-width: 12.73px;
+    border-radius: 5228.361px;
+    border: 0 solid #E5E7EB;
+    background: #BAFF29;
+    transition: height 0.3s ease;
+    position: relative;
+    margin: 0 auto;
+    justify-self: center;
+}
+
+.chart-circle {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #BAFF29;
+    position: relative;
+    margin: 0 auto;
+    justify-self: center;
+    align-self: flex-end;
 }
 
 .chart-days {
-    margin-top: 4px;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 8px;
-    font-size: 9px;
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    align-items: center;
+    padding: 0 46px;
+    gap: 4.49px;
+    font-size: 9.654px;
+    font-weight: 400;
+    color: #6b7280;
+    position: relative;
+    font-family: "Roboto", sans-serif;
+    line-height: 12.872px;
+    height: 18.213px;
+}
+
+.chart-days span {
+    text-align: center;
+    position: relative;
+    justify-self: center;
 }
 
 .run-list {
@@ -291,9 +389,10 @@ body {
     font-weight: 600;
 }
 
-.run-note {
+.run-type {
     color: var(--text-muted);
     text-align: right;
+    font-weight: 600;
 }
 
 .run-title {
@@ -318,14 +417,48 @@ body {
     font-size: 11px;
 }
 
-.run-share {
+.run-pace {
     margin-top: 4px;
-    align-self: flex-end;
-    border: none;
-    background: none;
-    font-size: 9px;
-    text-decoration: underline;
-    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+}
+
+.run-pace-label {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.run-pace-value {
+    color: var(--text-strong);
+    font-weight: 600;
+}
+
+/* 러닝 기록 빈 상태 */
+.run-list-empty {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px 20px;
+}
+
+.empty-text-large {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text-muted);
+    line-height: 1.2;
+}
+
+.empty-text-small {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-muted);
+    line-height: 1.5;
+    text-align: center;
 }
 
 /* 모달 스타일 */

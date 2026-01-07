@@ -417,5 +417,7 @@ public class MatchSessionService {
             default -> throw new ValidationException(ErrorCode.INVALID_DISTANCE_TYPE);
         };
     }
+
+
 }
 

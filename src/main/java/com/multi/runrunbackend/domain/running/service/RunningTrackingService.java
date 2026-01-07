@@ -6,6 +6,7 @@ import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.challenge.service.ChallengeProgressService;
 import com.multi.runrunbackend.domain.chat.dto.ChatMessageDto;
 import com.multi.runrunbackend.domain.chat.service.ChatService;
 import com.multi.runrunbackend.domain.course.entity.Course;
@@ -58,18 +59,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class RunningTrackingService {
 
-    private static final Duration LATEST_STATS_TTL = Duration.ofHours(2);
-
     private final RedisTemplate<String, String> gpsRedisTemplate;
     private final ObjectMapper objectMapper;
     private final MatchSessionRepository sessionRepository;
     private final SessionUserRepository sessionUserRepository;
     private final RunningResultRepository runningResultRepository;
     private final UserRepository userRepository;
+    private final ChallengeProgressService challengeProgressService;
     private final CourseRepository courseRepository;
     private final CoursePathProcessor coursePathProcessor;
     private final ChatService chatService;
 
+    private static final Duration LATEST_STATS_TTL = Duration.ofHours(2);
 
     /**
      * GPS 데이터 처리 및 통계 계산 - 1초마다 호출됨 - Redis List에 GPS 데이터 추가 - 실시간 통계 계산 후 반환
@@ -544,6 +545,7 @@ public class RunningTrackingService {
         FinishRunningReqDto req) {
 
         log.info("🏁 오프라인 런닝 종료: sessionId={}, loginId={}", sessionId, loginId);
+
         Long courseId = (req != null) ? req.getCourseId() : null;
         // 0. loginId로 User 조회
         User hostUser = userRepository.findByLoginId(loginId)
@@ -642,6 +644,8 @@ public class RunningTrackingService {
                         .build();
 
                     runningResultRepository.save(result);
+                    // 추가 : 챌린지 진행도 반영
+                    challengeProgressService.applyRunningResult(result);
 
                     if (participant.getUser().getId().equals(hostUserId)) {
                         hostResult = result;
@@ -847,7 +851,7 @@ public class RunningTrackingService {
         if (finalGPS != null && finalGPS.getTotalDistance() != null) {
             // km를 m로 변환 (실제 뛴 거리)
             finalDistanceM = (int) Math.max(0, Math.round(finalGPS.getTotalDistance() * 1000));
-            log.info("✅ 실제 뛴 거리 사용: {}m (GPS 트랙 계산 거리: {}m)", 
+            log.info("✅ 실제 뛴 거리 사용: {}m (GPS 트랙 계산 거리: {}m)",
                 finalDistanceM, (int) Math.round(distM));
         } else {
             // fallback: 계산된 거리 사용 (드물게 발생)
@@ -866,7 +870,7 @@ public class RunningTrackingService {
     // ===== Redis 헬퍼 메서드 =====
 
     /**
-     * Redis List에 GPS 데이터 추가 (계속 누적)
+     * /** Redis List에 GPS 데이터 추가 (계속 누적)
      */
     private void saveUserGPSData(GPSDataDTO gpsData) {
         try {

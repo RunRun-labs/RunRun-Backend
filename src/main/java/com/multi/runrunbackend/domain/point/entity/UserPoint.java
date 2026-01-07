@@ -1,5 +1,7 @@
 package com.multi.runrunbackend.domain.point.entity;
 
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -58,6 +60,10 @@ public class UserPoint {
      * @since : 25. 12. 17. 수요일
      */
     public void subtractPoint(Integer amount) {
+
+        if (this.totalPoint < amount) {
+            throw new BusinessException(ErrorCode.INSUFFICIENT_POINT);
+        }
         this.totalPoint -= amount;
     }
 }
