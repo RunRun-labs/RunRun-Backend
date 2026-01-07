@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("myrun-list.js loaded");
+    console.log("myrecord-list.js loaded");
     attachBackButtonHandler();
     initInfiniteScroll();
     attachUserScrollGate();
@@ -212,9 +212,7 @@ function createRunCard(record) {
     if (selectBtn) {
         selectBtn.addEventListener('click', () => {
             const recordId = selectBtn.getAttribute('data-record-id');
-            // 추후 구현: 입력 폼으로 이동
-            // window.location.href = `/feed/create?runningResultId=${recordId}`;
-            alert(`선택된 러닝 기록 ID: ${recordId}\n(입력 폼 페이지는 추후 구현 예정)`);
+            window.location.href = `/feed/post?runningResultId=${recordId}`;
         });
     }
 
@@ -314,7 +312,8 @@ function attachUserScrollGate() {
         window.removeEventListener('wheel', markInteracted);
         window.removeEventListener('touchmove', markInteracted);
 
-        const page = document.querySelector('.myrun-list-page');
+        const page = document.querySelector('.' +
+            'myrecord-list-page');
         if (page) {
             page.removeEventListener('scroll', markInteracted);
             page.removeEventListener('wheel', markInteracted);
@@ -345,7 +344,7 @@ function attachUserScrollGate() {
     window.addEventListener('wheel', markInteracted, {passive: true});
     window.addEventListener('touchmove', markInteracted, {passive: true});
 
-    const page = document.querySelector('.myrun-list-page');
+    const page = document.querySelector('.myrecord-list-page');
     if (page) {
         page.addEventListener('scroll', markInteracted, {passive: true});
         page.addEventListener('wheel', markInteracted, {passive: true});
