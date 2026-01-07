@@ -350,6 +350,8 @@ public enum ErrorCode {
     BIRTHDATE_REQUIRED(HttpStatus.BAD_REQUEST, "R017", "권한이 없는 나이대 입니다."),
     /*=====매칭=====*/
     RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "러닝 결과를 찾을 수 없습니다."),
+    RUNNING_RESULT_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "M002", "이미 삭제된 러닝 결과입니다."),
+    RUNNING_RESULT_FORBIDDEN(HttpStatus.FORBIDDEN, "M003", "해당 러닝 기록에 대한 권한이 없습니다."),
     /*===== 배틀 결과 =====*/
     BATTLE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀 결과를 찾을 수 없습니다."),
     DISTANCE_REQUIRED(HttpStatus.BAD_REQUEST, "M002", "코스 선택 안할 시 거리 선택은 필수 입니다."),
