@@ -377,11 +377,30 @@
 
     /**
      * 거리 관련 상태 초기화 (재진입 시 중복 방지)
+     * @param {number} remainingDistanceKm - 남은 거리 (km), 재진입 시 이미 지나간 거리 TTS 스킵용
      */
-    resetDistanceState() {
+    resetDistanceState(remainingDistanceKm) {
       // ✅ 재연결/재진입 시 과거 구간/남은거리 안내가 다시 재생되면 UX가 깨지므로
       // 이미 말한 구간/남은거리 상태는 유지하고, 페이스(LOW)만 리셋한다.
       this._lastSpokenPaceCue = null;
+
+      // ✅ 재진입 시 현재 남은 거리를 기준으로 이미 지나간 거리 TTS는 스킵
+      if (remainingDistanceKm != null) {
+        const remainingDistM = remainingDistanceKm * 1000;
+
+        // 이미 지나간 남은 거리 알림은 스킵
+        // 현재 남은 거리가 100m라면, 500m, 300m는 이미 지나갔으므로 스킵
+        if (remainingDistM <= 100) {
+          // 100m 이하 남았으면 500m, 300m는 이미 지나감
+          this._remainingSpoken.add("remain:500");
+          this._remainingSpoken.add("remain:300");
+        } else if (remainingDistM <= 300) {
+          // 300m 이하 남았으면 500m는 이미 지나감
+          this._remainingSpoken.add("remain:500");
+        }
+        // 500m보다 많이 남았으면 아직 아무것도 지나가지 않음
+      }
+
       this._saveRunState();
     }
 
