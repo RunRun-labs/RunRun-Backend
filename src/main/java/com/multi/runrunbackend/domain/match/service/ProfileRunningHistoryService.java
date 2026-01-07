@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.friend.entity.Friend;
 import com.multi.runrunbackend.domain.friend.repository.FriendRepository;
@@ -37,6 +38,7 @@ public class ProfileRunningHistoryService {
     private final UserBlockRepository userBlockRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
+    private final FileStorage fileStorage;
 
     /**
      * 내 러닝 기록 조회
@@ -50,7 +52,7 @@ public class ProfileRunningHistoryService {
 
         return runningResultRepository
                 .findCompletedByUser(me, pageable)
-                .map(ProfileRunningHistoryResDto::from);
+                .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
     }
 
     /**
@@ -72,7 +74,7 @@ public class ProfileRunningHistoryService {
 
         return runningResultRepository
                 .findCompletedByUser(target, pageable)
-                .map(ProfileRunningHistoryResDto::from);
+                .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
     }
 
     /**
