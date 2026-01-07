@@ -478,33 +478,86 @@ body {
 }
 
 .progress-bar-container {
-  height: 6px;
-  background: var(--overlay-white-10);
-  border-radius: 3px;
-  overflow: hidden;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  overflow: visible;
   width: 100%;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .progress-bar {
   height: 100%;
-  border-radius: 3px;
-  transition: width 0.3s ease;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+  position: relative;
+  overflow: hidden;
 }
 
+/* ✅ 모든 순위 노란색 계열로 통일 (더 밝게!) */
 .ranking-item.rank-1 .progress-bar {
-  background: linear-gradient(90deg, var(--accent-orange-light) 0%, var(--accent-orange) 100%);
+  background: linear-gradient(90deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+  box-shadow: 
+    0 0 20px rgba(255, 215, 0, 0.8),
+    0 0 40px rgba(255, 215, 0, 0.5),
+    inset 0 -2px 8px rgba(255, 255, 255, 0.5);
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 .ranking-item.rank-2 .progress-bar {
-  background: linear-gradient(90deg, var(--accent-green) 0%, var(--accent-green-light) 100%);
+  background: linear-gradient(90deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+  box-shadow: 
+    0 0 18px rgba(255, 215, 0, 0.7),
+    0 0 35px rgba(255, 215, 0, 0.4),
+    inset 0 -2px 8px rgba(255, 255, 255, 0.5);
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 .ranking-item.rank-3 .progress-bar {
-  background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-blue-light) 100%);
+  background: linear-gradient(90deg, #ffa500 0%, #ffcc00 50%, #ffa500 100%);
+  box-shadow: 
+    0 0 16px rgba(255, 165, 0, 0.7),
+    0 0 30px rgba(255, 165, 0, 0.4),
+    inset 0 -2px 8px rgba(255, 255, 255, 0.5);
+  animation: shimmer 2.5s ease-in-out infinite;
 }
 
 .ranking-item.rank-4 .progress-bar {
-  background: linear-gradient(90deg, #8b5cf6 0%, var(--accent-purple) 100%);
+  background: linear-gradient(90deg, #ffa500 0%, #ffcc00 50%, #ffa500 100%);
+  box-shadow: 
+    0 0 14px rgba(255, 165, 0, 0.6),
+    0 0 28px rgba(255, 165, 0, 0.3),
+    inset 0 -2px 8px rgba(255, 255, 255, 0.5);
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+
+/* ✅ 반짝이는 애니메이션 */
+@keyframes shimmer {
+  0%, 100% {
+    background-position: 0% 50%;
+    filter: brightness(1);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: brightness(1.2);
+  }
+}
+
+.progress-percent-text {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: "Inter", sans-serif;
+  font-weight: 900;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.9);
+  text-shadow: 
+    0 1px 3px rgba(255, 255, 255, 0.8),
+    0 0 8px rgba(255, 255, 255, 0.6);
+  z-index: 2;
+  letter-spacing: 0.5px;
 }
 
 /* Pace Comparison Section */
@@ -671,9 +724,8 @@ body {
   margin-top: auto;
 }
 
-.chat-button,
 .giveup-button {
-  flex: 1;
+  width: 100%;
   border: none;
   border-radius: 14px;
   padding: 14.5px 14px;
@@ -684,17 +736,6 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 0;
-}
-
-.chat-button {
-  background: var(--overlay-white-10);
-}
-
-.chat-button:hover {
-  background: var(--overlay-white-20);
-}
-
-.giveup-button {
   background: var(--accent-red);
 }
 
@@ -702,19 +743,16 @@ body {
   background: #dc2626;
 }
 
-.chat-button:active,
 .giveup-button:active {
   transform: scale(0.98);
 }
 
-.chat-button svg,
 .giveup-button svg {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
 }
 
-.chat-button span,
 .giveup-button span {
   font-family: "Arial", sans-serif;
   font-weight: 700;
