@@ -1,8 +1,13 @@
 package com.multi.runrunbackend.domain.match.scheduler;
 
 import com.multi.runrunbackend.common.constant.DistanceType;
+import com.multi.runrunbackend.domain.match.entity.SessionUser;
+import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
 import com.multi.runrunbackend.domain.match.service.MatchingQueueService;
+import com.multi.runrunbackend.domain.notification.constant.NotificationType;
+import com.multi.runrunbackend.domain.notification.constant.RelatedType;
+import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -32,6 +37,8 @@ public class MatchingScheduler {
   private final RedissonClient redissonClient;
   private final MatchSessionService matchSessionService;
   private final MatchingQueueService matchingQueueService;
+  private final NotificationService notificationService;
+  private final SessionUserRepository sessionUserRepository;
 
   private static final int[] TARGET_COUNTS = {2, 3, 4};
   private static final int MAX_GAP = 200;
@@ -137,27 +144,32 @@ public class MatchingScheduler {
       }
 
       List<Long> userIds = picked.stream().map(UserWithScore::userId).toList();
-
       Set<String> userIdSet = userIds.stream().map(String::valueOf).collect(Collectors.toSet());
-
       int avgDuration = computeAvgWaitMinutes(userIds);
 
-      try {
-        Long sessionId = matchSessionService.createOnlineSession(
-            userIdSet,
-            distance,
-            avgDuration
-        );
-        matchingQueueService.issueMatchTickets(sessionId, userIds);
+      Long sessionId;
 
+      try {
+        sessionId = matchSessionService.createOnlineSession(userIdSet, distance, avgDuration);
+
+        matchingQueueService.issueMatchTickets(sessionId, userIds);
         matchingQueueService.cleanupAfterMatched(userIds);
 
-        log.info("매칭 성공 - Queue: {}, distance: {}, targetCount: {}, sessionId: {}, users: {}",
+        log.info("매칭 확정 성공 - Queue: {}, distance: {}, targetCount: {}, sessionId: {}, users: {}",
             queueKey, distance, targetCount, sessionId, userIds);
 
       } catch (Exception e) {
         rollbackToQueueSafe(queueKey, picked);
-        log.error("매칭 처리 실패(복구 수행) - Queue: {}, users: {}", queueKey, userIds, e);
+        log.error("매칭 확정 실패(복구 수행) - Queue: {}, users: {}", queueKey, userIds, e);
+        return;
+      }
+
+      try {
+        sendMatchFoundNotifications(sessionId);
+      } catch (Exception notifyEx) {
+        // 여기서 rollback 절대 X
+        log.error("매칭 알림 발송 실패(매칭은 유지) - sessionId: {}, users: {}",
+            sessionId, userIds, notifyEx);
       }
 
     } catch (InterruptedException e) {
@@ -169,6 +181,30 @@ public class MatchingScheduler {
       }
     }
   }
+
+  private void sendMatchFoundNotifications(Long sessionId) {
+    List<SessionUser> sus = sessionUserRepository.findActiveUsersBySessionId(sessionId);
+
+    for (SessionUser su : sus) {
+      try {
+        notificationService.create(
+            su.getUser(),
+            "매칭 완료",
+            "매칭이 성사되었습니다.",
+            NotificationType.MATCH_FOUND,
+            RelatedType.ONLINE,
+            sessionId
+        );
+        log.debug("매칭 알림 발송 완료 - sessionId: {}, receiverId: {}",
+            sessionId, su.getUser().getId());
+      } catch (Exception e) {
+        // 유저 1명 실패 때문에 전체 알림 중단되지 않게 "개별 보호"
+        log.error("매칭 알림 생성 실패 - sessionId: {}, receiverId: {}",
+            sessionId, su.getUser().getId(), e);
+      }
+    }
+  }
+
 
   @SuppressWarnings("unchecked")
   private List<UserWithScore> popCandidatesAtomically(String queueKey, int targetCount,
