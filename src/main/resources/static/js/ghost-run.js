@@ -44,7 +44,6 @@ const ghostPaceEl = document.getElementById('ghostPace');
 const startButton = document.getElementById('startButton');
 const pauseButton = document.getElementById('pauseButton');
 const resumeButton = document.getElementById('resumeButton');
-const finishButton = document.getElementById('finishButton');
 const quitButton = document.getElementById('quitButton');
 
 // localStorage에서 userId 가져오기 (배틀과 동일)
@@ -82,6 +81,33 @@ function init() {
   setupEventListeners();
   loadGhostData();
   connectWebSocket();
+  
+  // 초기 대기 상태 설정
+  setWaitingState();
+}
+
+/**
+ * 대기 상태 설정
+ */
+function setWaitingState() {
+  comparisonStatus.textContent = '👻 고스트 대기중...';
+  comparisonDistance.textContent = '';
+  comparisonDistance.className = 'comparison-distance';
+}
+
+/**
+ * 시작 상태 설정
+ */
+function setStartingState() {
+  comparisonStatus.textContent = '👻 고스트 출발! 🏁';
+  comparisonDistance.textContent = '0m';
+  comparisonDistance.className = 'comparison-distance';
+  
+  // 애니메이션 효과
+  comparisonStatus.classList.add('starting');
+  setTimeout(() => {
+    comparisonStatus.classList.remove('starting');
+  }, 500);
 }
 
 /**
@@ -91,7 +117,6 @@ function setupEventListeners() {
   startButton.addEventListener('click', handleStart);
   pauseButton.addEventListener('click', handlePause);
   resumeButton.addEventListener('click', handleResume);
-  finishButton.addEventListener('click', handleFinish);
   quitButton.addEventListener('click', handleQuit);
 }
 
@@ -205,6 +230,12 @@ function onGhostComparison(message) {
  * 비교 UI 업데이트
  */
 function updateComparisonUI(comparison) {
+  // 시작 전이면 대기 메시지 유지
+  if (!isRunning) {
+    setWaitingState();
+    return;
+  }
+  
   const { status, distanceDiffMeters, timeDiffSeconds, compareMethod } = comparison;
   
   console.log('📊 비교 결과:', {
@@ -214,17 +245,28 @@ function updateComparisonUI(comparison) {
     method: compareMethod === 'KM_BASED' ? '정밀비교' : '평균페이스'
   });
   
-  if (status === 'AHEAD') {
+  // 시작 직후 (0초, 0m)
+  if (status === 'EVEN' && distanceDiffMeters === 0) {
+    comparisonStatus.textContent = '👻 고스트 출발! 🏁';
+    comparisonDistance.textContent = '0m';
+    comparisonDistance.className = 'comparison-distance';
+  }
+  // 앞섬
+  else if (status === 'AHEAD') {
     comparisonStatus.textContent = '고스트보다 앞서고 있어요! 🔥';
     comparisonDistance.textContent = `+${distanceDiffMeters}m`;
     comparisonDistance.className = 'comparison-distance ahead';
-  } else if (status === 'BEHIND') {
+  }
+  // 뒤처짐
+  else if (status === 'BEHIND') {
     comparisonStatus.textContent = '고스트를 따라잡아요! 💪';
     comparisonDistance.textContent = `-${distanceDiffMeters}m`;
     comparisonDistance.className = 'comparison-distance behind';
-  } else {
-    comparisonStatus.textContent = '고스트와 동률입니다! ⚡';
-    comparisonDistance.textContent = '0m';
+  }
+  // 동률 (1초 이후)
+  else {
+    comparisonStatus.textContent = '고스트 기록과 동률! ⚡';
+    comparisonDistance.textContent = '';
     comparisonDistance.className = 'comparison-distance';
   }
 }
@@ -255,11 +297,13 @@ function handleStart() {
   // 버튼 변경
   startButton.style.display = 'none';
   pauseButton.style.display = 'flex';
-  finishButton.style.display = 'flex';
   
   // 상태 변경
   statusBadge.classList.add('running');
   statusText.textContent = '러닝 중';
+  
+  // 시작 메시지 표시
+  setStartingState();
 }
 
 /**
@@ -310,26 +354,12 @@ function handleResume() {
 }
 
 /**
- * 완료 버튼
- */
-async function handleFinish() {
-  if (!confirm('고스트런을 완료하시겠습니까?')) return;
-  
-  finishRun();
-}
-
-/**
  * 자동 종료 (목표 거리 도달 시)
  */
 function autoFinish() {
   console.log('🏁 목표 거리 도달 - 자동 종료');
-  finishRun();
-}
-
-/**
- * 러닝 종료 처리 (공통 로직)
- */
-function finishRun() {
+  
+  // 러닝 종료 처리
   isFinished = true;
   
   console.log('✅ 완료 요청');
@@ -400,6 +430,7 @@ async function handleQuit() {
   
   console.log('❌ 포기');
   
+  isRunning = false;
   stopRunning();
   
   // 세션 종료 API 호출

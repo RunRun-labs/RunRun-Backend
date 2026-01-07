@@ -139,6 +139,27 @@ body {
   font-weight: 600;
   color: white;
   margin-bottom: 4px;
+  transition: all 0.3s ease;
+}
+
+/* 시작 애니메이션 */
+.comparison-status.starting {
+  animation: startPulse 0.5s ease-in-out;
+}
+
+@keyframes startPulse {
+  0% { 
+    transform: scale(1); 
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.1); 
+    opacity: 0.8;
+  }
+  100% { 
+    transform: scale(1); 
+    opacity: 1;
+  }
 }
 
 .comparison-distance {
