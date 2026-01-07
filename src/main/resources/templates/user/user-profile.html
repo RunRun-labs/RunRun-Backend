@@ -56,13 +56,10 @@
                 </p>
             </div>
 
-            <!-- 우측: 친구신청/차단 버튼 -->
+            <!-- 우측: 친구신청/삭제 버튼 -->
             <div class="profile-actions-right">
                 <button class="action-button friend-button" type="button" id="friendButton" data-role="friend">
                     친구신청
-                </button>
-                <button class="action-button block-button" type="button" id="blockButton" data-role="block">
-                    사용자 차단
                 </button>
             </div>
         </div>
@@ -127,25 +124,25 @@
     </div>
 </main>
 
-<!-- 차단 모달 -->
-<div class="modal-overlay" id="blockModal" hidden>
+<!-- 친구 삭제 모달 -->
+<div class="modal-overlay" id="friendDeleteModal" hidden>
     <div class="modal-content">
         <div class="modal-header">
-            <h2 class="modal-title">사용자 차단</h2>
-            <button class="modal-close" type="button" aria-label="닫기" data-role="close-block-modal">
+            <h2 class="modal-title">친구 삭제</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-friend-delete-modal">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18 6L6 18M6 6L18 18" stroke="#1E1E1E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
         </div>
         <div class="modal-body">
-            <p class="modal-text">이 사용자를 차단하시겠습니까?</p>
+            <p class="modal-text">친구를 삭제하시겠습니까?</p>
             <div class="block-options">
-                <button class="block-option-button" type="button" data-role="block-only">
-                    차단
+                <button class="block-option-button" type="button" data-role="delete-only">
+                    삭제
                 </button>
-                <button class="block-option-button" type="button" data-role="block-and-report">
-                    차단 및 신고
+                <button class="block-option-button" type="button" data-role="delete-and-block">
+                    삭제 및 차단
                 </button>
             </div>
         </div>

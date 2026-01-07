@@ -33,8 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     attachBackButtonHandler();
     attachFriendButtonHandler(userId);
-    attachBlockButtonHandler(userId);
-    attachBlockModalHandlers(userId);
+    attachFriendDeleteModalHandlers(userId);
     loadUserProfile(userId);
 
     // 초기 로드 시 빈 상태 숨김
@@ -173,10 +172,8 @@ function attachFriendButtonHandler(userId) {
         const isSent = friendBtn.classList.contains("is-sent");
 
         if (isFriend) {
-            // 친구 삭제
-            if (confirm("친구를 삭제하시겠습니까?")) {
-                await deleteFriend(userId);
-            }
+            // 친구인 경우 모달 표시
+            openFriendDeleteModal();
         } else if (isReceived) {
             // 받은 친구 요청 수락
             await acceptReceivedFriendRequest(userId);
@@ -257,11 +254,13 @@ async function requestFriend(userId) {
     }
 }
 
-async function deleteFriend(userId) {
+async function deleteFriend(userId, showAlert = true) {
     try {
         const token = localStorage.getItem("accessToken");
         if (!token) {
-            alert("로그인이 필요합니다.");
+            if (showAlert) {
+                alert("로그인이 필요합니다.");
+            }
             return;
         }
 
@@ -284,12 +283,17 @@ async function deleteFriend(userId) {
             throw new Error(errorData.message || "친구 삭제 실패");
         }
 
-        alert("친구가 삭제되었습니다.");
+        if (showAlert) {
+            alert("친구가 삭제되었습니다.");
+        }
         // 친구 상태 업데이트 (친구 아님)
         await checkFriendStatus(targetUserId);
     } catch (e) {
         console.error("Error deleting friend:", e);
-        alert(e.message || "친구 삭제에 실패했습니다.");
+        if (showAlert) {
+            alert(e.message || "친구 삭제에 실패했습니다.");
+        }
+        throw e; // 에러를 다시 throw하여 상위 함수에서 처리 가능하도록
     }
 }
 
@@ -499,45 +503,36 @@ function updateFriendButtonStatus(status, friendId = null) {
     }
 }
 
-function attachBlockButtonHandler(userId) {
-    const blockBtn = document.getElementById("blockButton");
-    if (!blockBtn) return;
-
-    blockBtn.addEventListener("click", () => {
-        openBlockModal();
-    });
-}
-
-function openBlockModal() {
-    const modal = document.getElementById("blockModal");
+function openFriendDeleteModal() {
+    const modal = document.getElementById("friendDeleteModal");
     if (!modal) return;
     modal.removeAttribute("hidden");
 }
 
-function closeBlockModal() {
-    const modal = document.getElementById("blockModal");
+function closeFriendDeleteModal() {
+    const modal = document.getElementById("friendDeleteModal");
     if (!modal) return;
     modal.setAttribute("hidden", "hidden");
 }
 
-function attachBlockModalHandlers(userId) {
-    const modal = document.getElementById("blockModal");
+function attachFriendDeleteModalHandlers(userId) {
+    const modal = document.getElementById("friendDeleteModal");
     if (!modal) return;
 
     // 모달 닫기 버튼
-    const closeBtn = modal.querySelector('[data-role="close-block-modal"]');
+    const closeBtn = modal.querySelector('[data-role="close-friend-delete-modal"]');
     if (closeBtn) {
         closeBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            closeBlockModal();
+            closeFriendDeleteModal();
         });
     }
 
     // 모달 배경 클릭 시 닫기
     modal.addEventListener("click", (e) => {
         if (e.target === modal) {
-            closeBlockModal();
+            closeFriendDeleteModal();
         }
     });
 
@@ -549,24 +544,29 @@ function attachBlockModalHandlers(userId) {
         });
     }
 
-    // 차단 버튼
-    const blockOnlyBtn = modal.querySelector('[data-role="block-only"]');
-    if (blockOnlyBtn) {
-        blockOnlyBtn.addEventListener("click", async () => {
-            await blockUser(userId, false);
+    // 삭제만 버튼
+    const deleteOnlyBtn = modal.querySelector('[data-role="delete-only"]');
+    if (deleteOnlyBtn) {
+        deleteOnlyBtn.addEventListener("click", async () => {
+            await deleteFriend(userId);
+            closeFriendDeleteModal();
         });
     }
 
-    // 차단 및 신고 버튼
-    const blockAndReportBtn = modal.querySelector('[data-role="block-and-report"]');
-    if (blockAndReportBtn) {
-        blockAndReportBtn.addEventListener("click", async () => {
-            await blockUser(userId, true);
+    // 삭제 및 차단 버튼
+    const deleteAndBlockBtn = modal.querySelector('[data-role="delete-and-block"]');
+    if (deleteAndBlockBtn) {
+        deleteAndBlockBtn.addEventListener("click", async () => {
+            await deleteFriendAndBlock(userId);
+            closeFriendDeleteModal();
         });
     }
 }
 
-async function blockUser(userId, shouldReport) {
+/**
+ * 친구 삭제 및 차단
+ */
+async function deleteFriendAndBlock(userId) {
     try {
         const token = localStorage.getItem("accessToken");
         if (!token) {
@@ -574,38 +574,34 @@ async function blockUser(userId, shouldReport) {
             return;
         }
 
-        // userId가 Number인지 확인
         const targetUserId = Number(userId);
         if (isNaN(targetUserId)) {
             throw new Error("잘못된 사용자 ID입니다.");
         }
 
-        const res = await fetch(`/users/blocks/${targetUserId}`, {
+        // 1. 친구 삭제 (알림 없이)
+        await deleteFriend(targetUserId, false);
+
+        // 2. 차단
+        const blockRes = await fetch(`/users/blocks/${targetUserId}`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`
             }
         });
 
-        if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}));
+        if (!blockRes.ok) {
+            const errorData = await blockRes.json().catch(() => ({}));
             throw new Error(errorData.message || "차단 실패");
         }
 
-        closeBlockModal();
-
-        if (shouldReport) {
-            // TODO: 신고 API 연동 (나중에 구현 예정)
-            alert("사용자가 차단되었습니다. 신고 기능은 곧 구현될 예정입니다.");
-        } else {
-            alert("사용자가 차단되었습니다.");
-        }
-
+        alert("친구가 삭제되고 차단되었습니다.");
+        
         // 차단 후 이전 페이지로 이동
         window.history.back();
     } catch (e) {
-        console.error("Error blocking user:", e);
-        alert(e.message || "사용자 차단에 실패했습니다.");
+        console.error("Error deleting friend and blocking user:", e);
+        alert(e.message || "친구 삭제 및 차단에 실패했습니다.");
     }
 }
 
