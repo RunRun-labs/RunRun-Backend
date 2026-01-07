@@ -320,11 +320,49 @@ body {
   transition: background-color 0.2s;
 }
 
+/* 솔로런일 때 채팅방 버튼 숨김 */
+.chat-button.solo-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .chat-button:hover {
   background-color: #a8e826;
 }
 
 .chat-button:active {
+  background-color: #96d123;
+}
+
+/* 시작 버튼 (솔로런용) */
+.start-running-button {
+  position: absolute;
+  bottom: 120px;
+  left: 30px;
+  right: 30px;
+  height: 52px;
+  background-color: #baff29;
+  border: 1px solid #baff29;
+  border-radius: 12px;
+  font-family: 'Nunito Sans', 'Noto Sans KR', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #252525;
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.start-running-button:hover {
+  background-color: #a8e826;
+}
+
+.start-running-button:active {
   background-color: #96d123;
 }
 
@@ -502,6 +540,19 @@ body {
   font-weight: 800;
   color: #374151;
   margin-bottom: 6px;
+}
+
+.free-run-input.error,
+.free-run-textarea.error {
+  border-color: #ff3d00;
+  background: rgba(255, 61, 0, 0.05);
+}
+
+.free-run-error {
+  min-height: 18px;
+  font-size: 12px;
+  color: #ff3d00;
+  margin: 4px 0 0;
 }
 
 .free-run-input,
