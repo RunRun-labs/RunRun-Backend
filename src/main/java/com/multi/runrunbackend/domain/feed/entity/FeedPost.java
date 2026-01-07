@@ -36,15 +36,19 @@ public class FeedPost extends BaseEntity {
     @Column(length = 500)
     private String content;
 
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
     public void delete() {
         super.delete();
     }
 
-    public static FeedPost create(User user, RunningResult runningResult, String content) {
+    public static FeedPost create(User user, RunningResult runningResult, String content, String imageUrl) {
         FeedPost post = new FeedPost();
         post.user = user;
         post.runningResult = runningResult;
         post.content = content;
+        post.imageUrl = imageUrl;
         return post;
     }
 
