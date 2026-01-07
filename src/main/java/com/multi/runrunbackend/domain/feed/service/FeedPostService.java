@@ -111,7 +111,9 @@ public class FeedPostService {
             throw new InvalidRequestException(ErrorCode.FEED_ALREADY_DELETED);
         }
 
-        if (!feedPost.getUser().getId().equals(user.getId())) {
+        // 관리자가 아니고 작성자가 아닌 경우 삭제 불가
+        boolean isAdmin = principal != null && principal.isAdmin();
+        if (!isAdmin && !feedPost.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException(ErrorCode.FEED_FORBIDDEN);
         }
 
