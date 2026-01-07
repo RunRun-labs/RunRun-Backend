@@ -68,7 +68,7 @@ public class ChallengeService {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.INVALID_REQUEST));
 
-     
+
         long participantCount = userChallengeRepository.countByChallengeId(challengeId);
         boolean isStarted = !challenge.getStartDate().isAfter(LocalDate.now()); // 시작일 <= 오늘
 
@@ -100,7 +100,14 @@ public class ChallengeService {
 
         if (imageFile != null && !imageFile.isEmpty()) {
             validateFile(imageFile);
-            String imageUrl = fileStorage.upload(imageFile, FileDomainType.CHALLENGE_IMAGE, challenge.getId());
+            String key = fileStorage.uploadIfChanged(
+                    imageFile,
+                    FileDomainType.CHALLENGE_IMAGE,
+                    challenge.getId(),
+                    challenge.getImageUrl()
+            );
+
+            String imageUrl = fileStorage.toHttpsUrl(key);
             challenge.updateImageUrl(imageUrl);
         }
     }
@@ -247,7 +254,8 @@ public class ChallengeService {
     private void uploadImageIfPresent(MultipartFile file, Challenge challenge) {
         if (file != null && !file.isEmpty()) {
             validateFile(file);
-            String imageUrl = fileStorage.upload(file, FileDomainType.CHALLENGE_IMAGE, challenge.getId());
+            String key = fileStorage.upload(file, FileDomainType.CHALLENGE_IMAGE, challenge.getId());
+            String imageUrl = fileStorage.toHttpsUrl(key);
             challenge.updateImageUrl(imageUrl);
         }
     }
