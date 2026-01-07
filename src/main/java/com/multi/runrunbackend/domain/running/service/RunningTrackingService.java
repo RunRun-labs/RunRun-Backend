@@ -15,6 +15,7 @@ import com.multi.runrunbackend.domain.course.util.route.CoursePathProcessor;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
+import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
@@ -115,7 +116,8 @@ public class RunningTrackingService {
             double td = gpsData.getTotalDistance() != null ? gpsData.getTotalDistance() : 0.0;
             double target = targetDistance != null ? targetDistance : 0.0;
             distanceDone = td + 1e-9 >= target;
-        } catch (Exception ignore) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         boolean courseDone = true;
@@ -127,7 +129,8 @@ public class RunningTrackingService {
                 // 5m 여유 (좌표/근사 오차)
                 courseDone = matchedM >= Math.max(0.0, totalM - 5.0);
             }
-        } catch (Exception ignore) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         if (distanceDone && courseDone) {
@@ -553,6 +556,7 @@ public class RunningTrackingService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         // ✅ 자유러닝(코스 없음)인데 courseId도 없으면 에러
+        // OFFLINE과 SOLO 모두 코스 없으면 코스 저장 강제
         if (session.getCourse() == null && courseId == null) {
             throw new BadRequestException(ErrorCode.FREE_RUN_COURSE_REQUIRED);
         }
@@ -605,43 +609,71 @@ public class RunningTrackingService {
             finalGPS.getTotalDistance(),
             finalGPS.getRunningTime()
         );
-
+        List<SessionUser> participants = null;
         // 5. split_pace JSON 생성
         List<Map<String, Object>> splitPace = createSplitPace(sessionId, hostUserId);
+        if (session.getType() == SessionType.OFFLINE) {
+            // 6. 모든 참여자 조회
+            participants = sessionUserRepository.findActiveUsersBySessionId(
+                sessionId);
 
-        // 6. 모든 참여자 조회
-        List<SessionUser> participants = sessionUserRepository.findActiveUsersBySessionId(
-            sessionId);
-
-        log.info("👥 참여자 수: {}", participants.size());
+            log.info("👥 참여자 수: {}", participants.size());
+        }
 
         // 7. 시작 시간 계산
         LocalDateTime startedAt = LocalDateTime.now().minusSeconds(finalGPS.getRunningTime());
 
         RunningResult hostResult = null;
+        if (session.getType() == SessionType.OFFLINE) {
+            // 8. 모든 참여자에게 동일한 RunningResult 저장
+            if (participants != null) {
+                for (SessionUser participant : participants) {
+                    RunningResult result = RunningResult.builder()
+                        .user(participant.getUser())
+                        .course(session.getCourse())
+                        .totalDistance(BigDecimal.valueOf(finalGPS.getTotalDistance())
+                            .setScale(2, java.math.RoundingMode.HALF_UP))
+                        .totalTime(finalGPS.getRunningTime())
+                        .avgPace(avgPace)
+                        .splitPace(splitPace)
+                        .startedAt(startedAt)
+                        .runStatus(RunStatus.COMPLETED)
+                        .runningType(RunningType.OFFLINE)
+                        .build();
 
-        // 8. 모든 참여자에게 동일한 RunningResult 저장
-        for (SessionUser participant : participants) {
+                    runningResultRepository.save(result);
+
+                    if (participant.getUser().getId().equals(hostUserId)) {
+                        hostResult = result;
+                    }
+
+                    log.info("✅ 기록 저장: userId={}, distance={}km, time={}초, pace={}분/km",
+                        participant.getUser().getId(),
+                        finalGPS.getTotalDistance(),
+                        finalGPS.getRunningTime(),
+                        avgPace);
+                }
+            }
+        } else if (session.getType() == SessionType.SOLO) {
+            // ✅ 솔로런: 방장(본인)에게만 RunningResult 저장
             RunningResult result = RunningResult.builder()
-                .user(participant.getUser())
+                .user(hostUser)
                 .course(session.getCourse())
-                .totalDistance(BigDecimal.valueOf(finalGPS.getTotalDistance()))
+                .totalDistance(BigDecimal.valueOf(finalGPS.getTotalDistance())
+                    .setScale(2, java.math.RoundingMode.HALF_UP))
                 .totalTime(finalGPS.getRunningTime())
                 .avgPace(avgPace)
                 .splitPace(splitPace)
                 .startedAt(startedAt)
                 .runStatus(RunStatus.COMPLETED)
-                .runningType(RunningType.OFFLINE)
+                .runningType(RunningType.SOLO)
                 .build();
 
             runningResultRepository.save(result);
+            hostResult = result;
 
-            if (participant.getUser().getId().equals(hostUserId)) {
-                hostResult = result;
-            }
-
-            log.info("✅ 기록 저장: userId={}, distance={}km, time={}초, pace={}분/km",
-                participant.getUser().getId(),
+            log.info("✅ 솔로런 기록 저장: userId={}, distance={}km, time={}초, pace={}분/km",
+                hostUserId,
                 finalGPS.getTotalDistance(),
                 finalGPS.getRunningTime(),
                 avgPace);
@@ -653,16 +685,17 @@ public class RunningTrackingService {
         // 9. Redis 데이터 삭제
         cleanupRedisData(sessionId, hostUserId);
 
-        // 10. 러닝 결과 저장 완료 후 시스템 메시지 전송
-        ChatMessageDto systemMessage = ChatMessageDto.builder()
-            .sessionId(sessionId)
-            .senderId(null)
-            .senderName("SYSTEM")
-            .content("🏁 런닝이 종료되었습니다! 수고하셨습니다!")
-            .messageType("SYSTEM")
-            .build();
-        chatService.sendMessage(systemMessage);
-
+        if (session.getType() == SessionType.OFFLINE) {
+            // 10. 러닝 결과 저장 완료 후 시스템 메시지 전송
+            ChatMessageDto systemMessage = ChatMessageDto.builder()
+                .sessionId(sessionId)
+                .senderId(null)
+                .senderName("SYSTEM")
+                .content("🏁 런닝이 종료되었습니다! 수고하셨습니다!")
+                .messageType("SYSTEM")
+                .build();
+            chatService.sendMessage(systemMessage);
+        }
         log.info("🏁 오프라인 런닝 종료 완료: sessionId={}", sessionId);
     }
 
@@ -683,9 +716,15 @@ public class RunningTrackingService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         // ✅ 방장인지 검증
-        Long hostUserId = session.getRecruit() != null
-            ? session.getRecruit().getUser().getId()
-            : null;
+        // SOLO는 recruit가 없으니, 요청자를 host로 취급(솔로는 본인만 있음)
+        Long hostUserId = null;
+        if (session.getType() == SessionType.SOLO) {
+            hostUserId = user.getId();
+        } else {
+            hostUserId = session.getRecruit() != null
+                ? session.getRecruit().getUser().getId()
+                : null;
+        }
 
         if (hostUserId == null || !hostUserId.equals(user.getId())) {
             throw new ForbiddenException(ErrorCode.NOT_SESSION_HOST);
@@ -701,6 +740,15 @@ public class RunningTrackingService {
         List<String> rawTrack = gpsRedisTemplate.opsForList().range(trackKey, 0, -1);
         if (rawTrack == null || rawTrack.isEmpty()) {
             throw new NotFoundException(ErrorCode.SESSION_NOT_FOUND);
+        }
+
+        // ✅ 마지막 GPS 데이터에서 실제 뛴 거리 가져오기
+        GPSDataDTO finalGPS = null;
+        try {
+            String lastJson = rawTrack.get(rawTrack.size() - 1);
+            finalGPS = objectMapper.readValue(lastJson, GPSDataDTO.class);
+        } catch (Exception e) {
+            log.warn("마지막 GPS 파싱 실패: {}", e.getMessage());
         }
 
         List<Coordinate> coords = new ArrayList<>();
@@ -790,11 +838,26 @@ public class RunningTrackingService {
         }
 
         Coordinate start = cleaned.getCoordinateN(0);
-        double distM = computeLineStringMeters(cleaned);
+        double distM = computeLineStringMeters(cleaned); // 코스 경로 거리 (참고용)
+
+        // ✅ 실제 뛴 거리 사용 (마지막 GPS의 totalDistance)
+        // - 코스 없이 뛸 때: 목표 거리만큼 뛰면 종료 → 실제 거리 = 목표 거리
+        // - 코스 있이 뛸 때: 코스 이탈 시 더 뛸 수 있음 → 실제 거리 >= 코스 거리
+        int finalDistanceM;
+        if (finalGPS != null && finalGPS.getTotalDistance() != null) {
+            // km를 m로 변환 (실제 뛴 거리)
+            finalDistanceM = (int) Math.max(0, Math.round(finalGPS.getTotalDistance() * 1000));
+            log.info("✅ 실제 뛴 거리 사용: {}m (GPS 트랙 계산 거리: {}m)", 
+                finalDistanceM, (int) Math.round(distM));
+        } else {
+            // fallback: 계산된 거리 사용 (드물게 발생)
+            finalDistanceM = (int) Math.max(0, Math.round(distM));
+            log.warn("⚠️ 마지막 GPS totalDistance 없음, 계산 거리 사용: {}m", finalDistanceM);
+        }
 
         return FreeRunCoursePreviewResDto.builder()
             .path(pathJson)
-            .distanceM((int) Math.max(0, Math.round(distM)))
+            .distanceM(finalDistanceM)  // 실제 뛴 거리 사용
             .startLat(start != null ? start.getY() : null)
             .startLng(start != null ? start.getX() : null)
             .build();
