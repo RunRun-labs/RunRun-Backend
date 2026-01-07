@@ -69,7 +69,9 @@ public class FeedCommentService {
                         new NotFoundException(ErrorCode.FEED_COMMENT_NOT_FOUND)
                 );
 
-        if (!comment.getUser().getId().equals(user.getId())) {
+        // 관리자가 아니고 작성자가 아닌 경우 삭제 불가
+        boolean isAdmin = principal != null && principal.isAdmin();
+        if (!isAdmin && !comment.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException(ErrorCode.FEED_COMMENT_FORBIDDEN);
         }
 
