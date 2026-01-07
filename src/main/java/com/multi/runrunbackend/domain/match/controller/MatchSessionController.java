@@ -89,6 +89,23 @@ public class MatchSessionController {
   }
 
   /**
+   * 대기방에서 나가기 / 세션 취소
+   */
+  @DeleteMapping("/session/{sessionId}/leave")
+  public ResponseEntity<ApiResponse<Void>> leaveWaitingRoom(
+      @PathVariable Long sessionId,
+      @AuthenticationPrincipal CustomUser principal
+  ) {
+    // ✅ 1. 매칭 큐에서 제거
+    matchingQueueService.removeQueue(principal);
+    
+    // ✅ 2. 세션에서 나가기
+    matchSessionService.leaveSession(sessionId, principal.getUserId());
+    
+    return ResponseEntity.ok(ApiResponse.successNoData("대기방에서 나갔습니다."));
+  }
+
+  /**
    * 대기방 정보 조회
    */
   @GetMapping("/session/{sessionId}")
