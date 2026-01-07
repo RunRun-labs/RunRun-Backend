@@ -2,6 +2,8 @@ package com.multi.runrunbackend.domain.feed.service;
 
 import com.multi.runrunbackend.common.exception.custom.*;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.file.FileDomainType;
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.feed.dto.req.FeedPostCreateReqDto;
 import com.multi.runrunbackend.domain.feed.dto.req.FeedPostUpdateReqDto;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,13 +47,15 @@ public class FeedPostService {
     private final FeedLikeRepository feedLikeRepository;
     private final UserBlockRepository userBlockRepository;
     private final FeedCommentRepository feedCommentRepository;
+    private final FileStorage fileStorage;
 
     /**
      * 러닝 결과 피드 공유
      */
     public FeedPostResDto createFeedPost(
             CustomUser principal,
-            FeedPostCreateReqDto req
+            FeedPostCreateReqDto req,
+            MultipartFile imageFile
     ) {
         User user = getUserByPrincipal(principal);
 
@@ -69,15 +74,28 @@ public class FeedPostService {
             throw new DuplicateException(ErrorCode.FEED_POST_ALREADY_EXISTS);
         }
 
+        // 이미지 처리: 업로드된 이미지가 있으면 업로드, 없으면 코스 썸네일 사용
+        String imageUrl = null;
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageKey = fileStorage.upload(imageFile, FileDomainType.FEED_IMAGE, user.getId());
+            imageUrl = fileStorage.toHttpsUrl(imageKey);
+        } else {
+            // 코스 썸네일 URL 사용
+            if (runningResult.getCourse() != null && runningResult.getCourse().getThumbnailUrl() != null) {
+                imageUrl = fileStorage.toHttpsUrl(runningResult.getCourse().getThumbnailUrl());
+            }
+        }
+
         FeedPost feedPost = FeedPost.create(
                 user,
                 runningResult,
-                req.getContent()
+                req.getContent(),
+                imageUrl
         );
 
         FeedPost saved = feedPostRepository.save(feedPost);
 
-        return FeedPostResDto.from(saved, 0L, 0L);
+        return FeedPostResDto.from(saved, 0L, 0L, false);
     }
 
     /**
@@ -123,10 +141,27 @@ public class FeedPostService {
                 feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
         long commentCount =
                 feedCommentRepository.countByFeedPostAndIsDeletedFalse(feedPost);
+        boolean isLiked = feedLikeRepository.existsByFeedPostAndUserAndIsDeletedFalse(feedPost, user);
 
-        return FeedPostResDto.from(feedPost, likeCount, commentCount);
+        return FeedPostResDto.from(feedPost, likeCount, commentCount, isLiked);
     }
 
+    /**
+     * 피드 상세 조회
+     */
+    @Transactional(readOnly = true)
+    public FeedPostResDto getFeedPost(Long feedId, CustomUser principal) {
+        User me = getUserByPrincipal(principal);
+
+        FeedPost feedPost = feedPostRepository.findByIdAndIsDeletedFalse(feedId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.FEED_NOT_FOUND));
+
+        long likeCount = feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
+        long commentCount = feedCommentRepository.countByFeedPostAndIsDeletedFalse(feedPost);
+        boolean isLiked = feedLikeRepository.existsByFeedPostAndUserAndIsDeletedFalse(feedPost, me);
+
+        return FeedPostResDto.from(feedPost, likeCount, commentCount, isLiked);
+    }
 
     /**
      * 피드 전체 조회
@@ -166,7 +201,9 @@ public class FeedPostService {
                     feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
             long commentCount =
                     feedCommentRepository.countByFeedPostAndIsDeletedFalse(feedPost);
-            return FeedPostResDto.from(feedPost, likeCount, commentCount);
+            boolean isLiked = feedLikeRepository.existsByFeedPostAndUserAndIsDeletedFalse(feedPost, me);
+
+            return FeedPostResDto.from(feedPost, likeCount, commentCount, isLiked);
         });
     }
 
@@ -187,8 +224,8 @@ public class FeedPostService {
                             feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
                     long commentCount =
                             feedCommentRepository.countByFeedPostAndIsDeletedFalse(feedPost);
-
-                    return FeedPostResDto.from(feedPost, likeCount, commentCount);
+                    boolean isLiked = feedLikeRepository.existsByFeedPostAndUserAndIsDeletedFalse(feedPost, user);
+                    return FeedPostResDto.from(feedPost, likeCount, commentCount, isLiked);
                 });
     }
 
