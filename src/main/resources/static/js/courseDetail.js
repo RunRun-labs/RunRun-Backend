@@ -56,19 +56,22 @@ let loadedCourse = null;
 // ==========================
 function getSelectModeParams() {
   const u = new URL(window.location.href);
+  const selectMode = u.searchParams.get("selectMode");
   return {
-    isRecruitSelect: u.searchParams.get("selectMode") === "recruit",
+    isRecruitSelect: selectMode === "recruit",
+    isSoloSelect: selectMode === "solo",
+    isSelectMode: selectMode === "recruit" || selectMode === "solo",
     returnTo: u.searchParams.get("returnTo"),
   };
 }
 
 function setupSelectConfirm() {
-  const { isRecruitSelect, returnTo } = getSelectModeParams();
+  const { isSelectMode, returnTo } = getSelectModeParams();
   const bar = document.getElementById("selectConfirmBar");
   const btn = document.getElementById("selectConfirmBtn");
   if (!bar || !btn) return;
 
-  if (!isRecruitSelect || !returnTo) {
+  if (!isSelectMode || !returnTo) {
     bar.style.display = "none";
     const content = document.querySelector(".course-content");
     if (content) content.classList.remove("has-select-confirm");

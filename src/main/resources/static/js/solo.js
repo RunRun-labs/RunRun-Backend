@@ -506,12 +506,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 솔로런 시작 API 호출
   async function startSoloRun() {
-    // 코스 모드가 아닐 때만 유효성 검사
+    // ✅ 3개 필드 중 하나는 필수 검증
+    const hasCourseId = courseId != null && courseId !== "";
+    const hasDistance = selectedDistance != null && selectedDistance !== "";
+    const hasManualDistance =
+      manualDistanceValue != null &&
+      manualDistanceValue > 0 &&
+      manualDistanceValue >= 0.1;
+
+    if (!hasCourseId && !hasDistance && !hasManualDistance) {
+      alert("코스 선택, 거리 선택, 직접 입력 중 하나는 필수입니다.");
+      return;
+    }
+
+    // 코스 모드가 아닐 때 거리 검증
     if (!isCourseMode) {
-      if (
-        !selectedDistance &&
-        (!manualDistanceValue || manualDistanceValue <= 0)
-      ) {
+      if (!hasDistance && !hasManualDistance) {
         alert("목표 거리를 입력해주세요");
         return;
       }
@@ -535,6 +545,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // 코스 모드일 때 courseId 검증
+    if (isCourseMode && !hasCourseId) {
+      alert("코스를 선택해주세요.");
+      return;
+    }
+
     const token = getToken();
     const headers = {
       "Content-Type": "application/json",
@@ -544,14 +560,17 @@ document.addEventListener("DOMContentLoaded", () => {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // 요청 데이터: courseId가 있으면 courseId 포함, 없으면 manualDistance만 전송
-    const requestData = {
-      distance: selectedDistance || null,
-      manualDistance: isCourseMode
-        ? manualDistanceValue || null
-        : manualDistanceValue || null,
-      courseId: courseId ? parseInt(courseId) : null,
-    };
+    // 요청 데이터: null이 아닌 값만 전송
+    const requestData = {};
+    if (hasDistance) {
+      requestData.distance = selectedDistance;
+    }
+    if (hasManualDistance) {
+      requestData.manualDistance = manualDistanceValue;
+    }
+    if (hasCourseId) {
+      requestData.courseId = parseInt(courseId);
+    }
 
     try {
       startButton.disabled = true;
@@ -565,9 +584,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
+        // ✅ 벨리데이션 에러 메시지 처리
+        let errorMessage =
+          errorData.message || `HTTP error! status: ${response.status}`;
+
+        // 벨리데이션 에러인 경우 상세 메시지 추출
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const validationMessages = errorData.errors
+            .map((err) => err.defaultMessage || err.message)
+            .filter((msg) => msg)
+            .join("\n");
+          if (validationMessages) {
+            errorMessage = validationMessages;
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
