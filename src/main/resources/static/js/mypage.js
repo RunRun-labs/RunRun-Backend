@@ -454,6 +454,18 @@ function createRunCard(record) {
         });
     }
 
+    // 공유 버튼 클릭 이벤트 추가
+    const shareBtn = article.querySelector('.run-share');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const recordId = record.runningResultId;
+            if (recordId) {
+                window.location.href = `/feed/post?runningResultId=${recordId}`;
+            }
+        });
+    }
+
     return article;
 }
 
