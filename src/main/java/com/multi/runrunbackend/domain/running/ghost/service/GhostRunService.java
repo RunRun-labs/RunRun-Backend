@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,7 @@ public class GhostRunService {
   private final MatchSessionRepository matchSessionRepository;
   private final UserRepository userRepository;
   private final GhostCompareService ghostCompareService;
+  private final SimpMessagingTemplate messagingTemplate;
 
   // 세션별 고스트 데이터 (메모리 캐싱)
   private final Map<Long, GhostSessionData> ghostSessions = new ConcurrentHashMap<>();
@@ -89,14 +91,40 @@ public class GhostRunService {
   }
 
   /**
-   * 실시간 GPS로 고스트 비교
+   * WebSocket GPS 업데이트 처리 (Controller에서 호출)
+   *
+   * @param sessionId     MatchSession ID
+   * @param myDistance    내가 뛴 거리 (km)
+   * @param myElapsedTime 내가 달린 시간 (초)
+   */
+  //실시간 GPS 데이터를 받아서 고스트와 비교하고, 결과를 WebSocket으로 클라이언트에게 전송하는 메서드
+  public void handleGpsUpdate(Long sessionId, double myDistance, long myElapsedTime) {
+    try {
+      // 고스트와 비교 계산
+      Map<String, Object> comparison = compareWithGhost(sessionId, myDistance, myElapsedTime);
+
+      // WebSocket으로 결과 전송
+      sendComparisonMessage(sessionId, comparison);
+
+      log.info("📊 고스트 비교 완료: sessionId={}, status={}, diff={}m",
+          sessionId, comparison.get("status"), comparison.get("distanceDiffMeters"));
+
+    } catch (Exception e) {
+      log.error("❌ GPS 처리 실패: sessionId={}", sessionId, e);
+      sendErrorMessage(sessionId, e.getMessage());
+    }
+  }
+
+  /**
+   * 실시간 GPS로 고스트 비교 (내부 로직)
    *
    * @param sessionId     MatchSession ID
    * @param myDistance    내가 뛴 거리 (km)
    * @param myElapsedTime 내가 달린 시간 (초)
    * @return 비교 결과
    */
-  public Map<String, Object> compareWithGhost(
+  //메모리에서 고스트 데이터를 가져와서 GhostCompareService에게 비교 계산을 시키는 메서드
+  private Map<String, Object> compareWithGhost(
       Long sessionId,
       double myDistance,
       long myElapsedTime
@@ -132,15 +160,49 @@ public class GhostRunService {
   }
 
   /**
-   * 고스트런 완료 및 결과 저장
+   * WebSocket 완료 처리 (Controller에서 호출)
+   *
+   * @param sessionId 세션 ID
+   * @param userId    사용자 ID
+   * @param request   완료 데이터
+   */
+  //고스트런 완료 시  메모리를 정리하고, 완료 메시지를 전송
+  @Transactional
+  public void handleFinish(Long sessionId, Long userId, GhostRunFinishReqDto request) {
+    try {
+      // userId 검증
+      if (userId == null) {
+        log.error("❌ userId 없음: sessionId={}", sessionId);
+        sendErrorMessage(sessionId, "userId가 필요합니다");
+        return;
+      }
+
+      log.info("🏁 고스트런 종료: sessionId={}, userId={}", sessionId, userId);
+
+      // 러닝 결과 저장
+      RunningResult result = finishGhostRun(sessionId, userId, request);
+
+      // 성공 메시지 전송
+      sendCompleteMessage(sessionId);
+
+      log.info("✅ 고스트런 완료: sessionId={}, resultId={}", sessionId, result.getId());
+
+    } catch (Exception e) {
+      log.error("❌ 종료 처리 실패: sessionId={}", sessionId, e);
+      sendErrorMessage(sessionId, e.getMessage());
+    }
+  }
+
+  /**
+   * 고스트런 완료 및 결과 저장 (내부 로직)
    *
    * @param sessionId 세션 ID
    * @param userId    사용자 ID
    * @param request   완료 데이터
    * @return 저장된 RunningResult
    */
-  @Transactional
-  public RunningResult finishGhostRun(
+  //런닝결과 저장
+  private RunningResult finishGhostRun(
       Long sessionId,
       Long userId,
       GhostRunFinishReqDto request
@@ -173,5 +235,38 @@ public class GhostRunService {
     endGhostSession(sessionId);
 
     return savedResult;
+  }
+
+  /**
+   * WebSocket 비교 결과 메시지 전송
+   */
+  private void sendComparisonMessage(Long sessionId, Map<String, Object> comparison) {
+    messagingTemplate.convertAndSend(
+        "/sub/ghost-run/" + sessionId,
+        (Object) comparison
+    );
+  }
+
+  /**
+   * WebSocket 완료 메시지 전송
+   */
+  private void sendCompleteMessage(Long sessionId) {
+    messagingTemplate.convertAndSend(
+        "/sub/ghost-run/" + sessionId + "/complete",
+        (Object) Map.of(
+            "status", "COMPLETED",
+            "message", "고스트런 완료!"
+        )
+    );
+  }
+
+  /**
+   * WebSocket 에러 메시지 전송
+   */
+  private void sendErrorMessage(Long sessionId, String errorMessage) {
+    messagingTemplate.convertAndSend(
+        "/sub/ghost-run/" + sessionId + "/error",
+        (Object) Map.of("error", errorMessage)
+    );
   }
 }
