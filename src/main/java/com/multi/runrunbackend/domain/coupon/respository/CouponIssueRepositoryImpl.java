@@ -8,6 +8,11 @@ import com.multi.runrunbackend.domain.coupon.dto.res.CouponIssueListReqDto;
 import com.multi.runrunbackend.domain.coupon.util.CouponIssueCursorCodec;
 import com.multi.runrunbackend.domain.coupon.util.CouponIssueCursorCodec.CursorPayload;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -15,10 +20,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Repository;
 
 /**
  * @author : kyungsoo
@@ -41,6 +42,7 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepositoryCustom {
         LocalDateTime sortEndAt;
         Integer sortBenefitValue;
 
+        String code;
         String name;
         Integer benefitValue;
         LocalDateTime startAt;
@@ -50,26 +52,27 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepositoryCustom {
 
         CouponIssueListItemResDto toDto() {
             return CouponIssueListItemResDto.builder()
-                .id(issueId)
-                .name(name)
-                .benefitValue(benefitValue)
-                .startAt(startAt)
-                .endAt(endAt)
-                .benefitType(benefitType)
-                .couponChannel(couponChannel)
-                .build();
+                    .id(issueId)
+                    .code(code)
+                    .name(name)
+                    .benefitValue(benefitValue)
+                    .startAt(startAt)
+                    .endAt(endAt)
+                    .benefitType(benefitType)
+                    .couponChannel(couponChannel)
+                    .build();
         }
     }
 
     @Override
     public CursorPage<CouponIssueListItemResDto> searchIssuedCoupons(Long userId,
-        CouponIssueListReqDto req) {
+                                                                     CouponIssueListReqDto req) {
 
         int size = (req.getSize() == null || req.getSize() <= 0) ? 10 : Math.min(req.getSize(), 50);
 
         CouponIssueSortType sortType = (req.getSortType() == null)
-            ? CouponIssueSortType.START_AT_ASC
-            : req.getSortType();
+                ? CouponIssueSortType.START_AT_ASC
+                : req.getSortType();
 
         CursorPayload cursor = cursorCodec.decodeOrNull(req.getCursor());
         if (cursor != null && cursor.getSortType() != sortType) {
@@ -81,6 +84,8 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepositoryCustom {
         params.put("limit", size + 1);
 
         StringBuilder where = new StringBuilder(" WHERE ci.user_id = :userId ");
+
+        where.append(" AND ci.status = 'AVAILABLE' ");
 
         // ✅ 다중 필터: 같은 필드 여러개면 IN절 (OR 의미)
         if (req.getBenefitTypes() != null && !req.getBenefitTypes().isEmpty()) {
@@ -113,26 +118,27 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepositoryCustom {
 
         StringBuilder sql = new StringBuilder();
         sql.append("""
-                SELECT
-                    ci.id              AS issue_id,
-                    c.name             AS coupon_name,
-                    c.benefit_value    AS benefit_value,
-                    c.benefit_type     AS benefit_type,
-                    c.start_at         AS start_at,
-                    c.end_at           AS end_at,
-                    c.channel          AS coupon_channel
-                FROM coupon_issue ci
-                JOIN coupon c ON c.id = ci.coupon_id
-            """);
+                    SELECT
+                        ci.id              AS issue_id,
+                        c.code             AS coupon_code,
+                        c.name             AS coupon_name,
+                        c.benefit_value    AS benefit_value,
+                        c.benefit_type     AS benefit_type,
+                        c.start_at         AS start_at,
+                        c.end_at           AS end_at,
+                        c.channel          AS coupon_channel
+                    FROM coupon_issue ci
+                    JOIN coupon c ON c.id = ci.coupon_id
+                """);
         sql.append(where);
 
         switch (sortType) {
             case START_AT_ASC -> {
                 if (cursor != null && cursor.getStartAt() != null && cursor.getIssueId() != null) {
                     sql.append("""
-                            AND (c.start_at > :cursorStartAt
-                                 OR (c.start_at = :cursorStartAt AND ci.id > :cursorIssueId))
-                        """);
+                                AND (c.start_at > :cursorStartAt
+                                     OR (c.start_at = :cursorStartAt AND ci.id > :cursorIssueId))
+                            """);
                     params.put("cursorStartAt", instantToDbTimestamp(cursor.getStartAt()));
                     params.put("cursorIssueId", cursor.getIssueId());
                 }
@@ -141,9 +147,9 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepositoryCustom {
             case END_AT_ASC -> {
                 if (cursor != null && cursor.getEndAt() != null && cursor.getIssueId() != null) {
                     sql.append("""
-                            AND (c.end_at > :cursorEndAt
-                                 OR (c.end_at = :cursorEndAt AND ci.id > :cursorIssueId))
-                        """);
+                                AND (c.end_at > :cursorEndAt
+                                     OR (c.end_at = :cursorEndAt AND ci.id > :cursorIssueId))
+                            """);
                     params.put("cursorEndAt", instantToDbTimestamp(cursor.getEndAt()));
                     params.put("cursorIssueId", cursor.getIssueId());
                 }
@@ -151,11 +157,11 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepositoryCustom {
             }
             case BENEFIT_VALUE_ASC -> {
                 if (cursor != null && cursor.getBenefitValue() != null
-                    && cursor.getIssueId() != null) {
+                        && cursor.getIssueId() != null) {
                     sql.append("""
-                            AND (c.benefit_value > :cursorBenefitValue
-                                 OR (c.benefit_value = :cursorBenefitValue AND ci.id > :cursorIssueId))
-                        """);
+                                AND (c.benefit_value > :cursorBenefitValue
+                                     OR (c.benefit_value = :cursorBenefitValue AND ci.id > :cursorIssueId))
+                            """);
                     params.put("cursorBenefitValue", cursor.getBenefitValue());
                     params.put("cursorIssueId", cursor.getIssueId());
                 }
@@ -198,10 +204,10 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepositoryCustom {
         }
 
         return CursorPage.<CouponIssueListItemResDto>builder()
-            .items(items)
-            .hasNext(hasNext)
-            .nextCursor(nextCursor)
-            .build();
+                .items(items)
+                .hasNext(hasNext)
+                .nextCursor(nextCursor)
+                .build();
     }
 
     private Row mapRow(ResultSet rs) throws Exception {
@@ -219,16 +225,17 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepositoryCustom {
         CouponChannel couponChannel = (ch == null) ? null : CouponChannel.valueOf(ch);
 
         return new Row(
-            issueId,
-            startAt,
-            endAt,
-            benefitValue,
-            rs.getString("coupon_name"),
-            benefitValue,
-            startAt,
-            endAt,
-            benefitType,
-            couponChannel
+                issueId,
+                startAt,
+                endAt,
+                benefitValue,
+                rs.getString("coupon_code"),
+                rs.getString("coupon_name"),
+                benefitValue,
+                startAt,
+                endAt,
+                benefitType,
+                couponChannel
         );
     }
 
