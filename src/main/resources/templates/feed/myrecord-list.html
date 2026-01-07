@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | 나의 런 공유</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/myrun-list.css"
+            th:href="@{/css/myrun-list.css}"
+    />
+</head>
+<body class="myrun-list-body">
+<main class="page myrun-list-page">
+    <header class="myrun-list-header">
+        <button class="back-button" type="button" aria-label="뒤로가기" data-role="back-button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h1 class="myrun-list-title">나의 런 공유</h1>
+    </header>
+
+    <section class="run-list" data-role="run-list">
+        <!-- 러닝 기록 카드는 JavaScript로 동적 생성 -->
+    </section>
+
+    <!-- 빈 상태 UI -->
+    <div class="run-list-empty" id="runListEmpty" hidden>
+        <div class="empty-text-large">텅~</div>
+        <div class="empty-text-small">공유 가능한 러닝 기록이 없습니다.</div>
+    </div>
+</main>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/myrun-list.js" th:src="@{/js/myrun-list.js}"></script>
+</body>
+</html>
+
