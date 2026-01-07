@@ -124,26 +124,26 @@ public enum ErrorCode {
     /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
 
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "F001",
-        "파일 업로드에 실패했습니다."
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "F001",
+            "파일 업로드에 실패했습니다."
     ),
 
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
-        HttpStatus.BAD_REQUEST,
-        "F002",
-        "업로드할 파일이 비어 있습니다."
+            HttpStatus.BAD_REQUEST,
+            "F002",
+            "업로드할 파일이 비어 있습니다."
     ),
     FILE_NOT_IMAGE(
-        HttpStatus.BAD_REQUEST,
-        "F003",
-        "이미지 파일만 업로드할 수 있습니다."
+            HttpStatus.BAD_REQUEST,
+            "F003",
+            "이미지 파일만 업로드할 수 있습니다."
     ),
     FILE_SIZE_EXCEEDED(
-        HttpStatus.BAD_REQUEST,
-        "F004",
-        "파일 크기가 제한을 초과했습니다."
+            HttpStatus.BAD_REQUEST,
+            "F004",
+            "파일 크기가 제한을 초과했습니다."
     ),
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F005", "파일 삭제에 실패했습니다."),
 
@@ -345,6 +345,7 @@ public enum ErrorCode {
     COUPON_ISSUE_NOT_AVAILABLE(HttpStatus.FORBIDDEN, "CPN_012", "사용할 수 있는 쿠폰 상태가 아닙니다"),
     COUPON_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_013", "쿠폰 정책을 찾을 수 없습니다"),
     COUPON_ROLE_ACTIVE(HttpStatus.BAD_REQUEST, "CPN_014", "쿠폰 정책이 활성화 상태입니다"),
+    COUPON_NOT_APPLICABLE_FOR_PAYMENT(HttpStatus.BAD_REQUEST, "CPN_015", "이 쿠폰은 멤버십 결제에 사용할 수 없습니다."),
     /* ===== 이용약관 ===== */
     TERMS_ACCESS_DENIED(HttpStatus.FORBIDDEN, "T001", "약관 관리 권한이 없습니다."),
     DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "T002", "이미 존재하는 약관 버전입니다.");
