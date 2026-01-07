@@ -76,6 +76,7 @@ public class JwtConfig {
                                 "/payment/history",
                                 "/payment/success",
                                 "/payment/fail",
+                                "/payment/free-success",
                                 "/admin/coupon/create",
                                 "/admin/coupon/inquiry",
                                 "/admin/coupon/update/**",
