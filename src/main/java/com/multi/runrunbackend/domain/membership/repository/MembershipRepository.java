@@ -43,4 +43,11 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
             LocalDateTime end
     );
 
+    // 체험권 만료 예정 조회
+    List<Membership> findByMembershipStatusAndNextBillingDateIsNullAndEndDateBetween(
+            MembershipStatus status,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
+
 }
