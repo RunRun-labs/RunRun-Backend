@@ -206,9 +206,24 @@ public class PathController {
         return "mypage/mypage-edit";
     }
 
-    @GetMapping("/feed/post/records")
+    @GetMapping("/feed/records")
     public String myRecordView() {
         return "feed/myrecord-list";
+    }
+
+    @GetMapping("/feed/post")
+    public String feedPostCreateView() {
+        return "feed/feed-create";
+    }
+
+    @GetMapping("/feed/update")
+    public String feedUpdateView() {
+        return "feed/feed-update";
+    }
+
+    @GetMapping("/feed")
+    public String feedView() {
+        return "feed/feed";
     }
 
     @GetMapping("/challenge")
