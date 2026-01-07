@@ -103,6 +103,30 @@ public class ProfileRunningHistoryService {
     }
 
     /**
+     * 러닝 기록 상세 조회 (단일)
+     */
+    @Transactional(readOnly = true)
+    public ProfileRunningHistoryResDto getRunningRecordDetail(
+            Long recordId,
+            CustomUser principal
+    ) {
+        User me = getUserByPrincipal(principal);
+
+        RunningResult result = runningResultRepository.findById(recordId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(result.getIsDeleted())) {
+            throw new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND);
+        }
+
+        if (!result.getUser().getId().equals(me.getId())) {
+            throw new ForbiddenException(ErrorCode.RUNNING_RESULT_FORBIDDEN);
+        }
+
+        return ProfileRunningHistoryResDto.from(result, fileStorage);
+    }
+
+    /**
      * 러닝 기록 삭제
      */
     @Transactional

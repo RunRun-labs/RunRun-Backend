@@ -92,6 +92,22 @@ public class ProfileRunningHistoryController {
         );
     }
 
+    /**
+     * 러닝 기록 상세 조회 (단일)
+     */
+    @GetMapping("/{recordId}/detail")
+    public ResponseEntity<ApiResponse<ProfileRunningHistoryResDto>> getRunningRecordDetail(
+            @PathVariable Long recordId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        ProfileRunningHistoryResDto result =
+                profileRunningHistoryService.getRunningRecordDetail(recordId, principal);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("러닝 기록 상세 조회 성공", result)
+        );
+    }
+
     /*
      * 내 러닝 기록 삭제
      */
