@@ -3,7 +3,7 @@ package com.multi.runrunbackend.domain.running.battle.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.multi.runrunbackend.domain.running.battle.dto.BattleUserDto;
-import com.multi.runrunbackend.domain.running.battle.dto.TimeoutData;
+import com.multi.runrunbackend.domain.running.battle.dto.TimeoutDto;
 import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto.GpsData;
 import com.multi.runrunbackend.domain.running.battle.dto.res.BattleRankingResDto;
 import java.time.Duration;
@@ -209,9 +209,15 @@ public class BattleRedisService {
         .filter(BattleRankingResDto::getIsFinished)
         .sorted((a, b) -> {
           // ✅ 실제 완주 시각으로 비교 (빠른 시각이 1등)
-          if (a.getFinishTimeActual() == null && b.getFinishTimeActual() == null) return 0;
-          if (a.getFinishTimeActual() == null) return 1;  // null은 뒤로
-          if (b.getFinishTimeActual() == null) return -1;
+          if (a.getFinishTimeActual() == null && b.getFinishTimeActual() == null) {
+            return 0;
+          }
+          if (a.getFinishTimeActual() == null) {
+            return 1;  // null은 뒤로
+          }
+          if (b.getFinishTimeActual() == null) {
+            return -1;
+          }
           return a.getFinishTimeActual().compareTo(b.getFinishTimeActual());  // 오름차순
         })
         .collect(java.util.stream.Collectors.toList());
@@ -226,7 +232,7 @@ public class BattleRedisService {
     for (int i = 0; i < finishedRankings.size(); i++) {
       BattleRankingResDto ranking = finishedRankings.get(i);
       ranking.setRank(i + 1);
-      
+
       // ✅ 순위 부여 로그 (실제 완주 시각 포함)
       log.info("🏆 {}\ub4f1: userId={}, username={}, 실제완주시각={}, 경과시간={}ms",
           ranking.getRank(), ranking.getUserId(), ranking.getUsername(),
@@ -243,7 +249,7 @@ public class BattleRedisService {
     finalRankings.addAll(finishedRankings);
     finalRankings.addAll(unfinishedRankings);
 
-    log.info("📊 순위 조회 완료: sessionId={}, 완주자={}명, 미완주자={}명", 
+    log.info("📊 순위 조회 완료: sessionId={}, 완주자={}명, 미완주자={}명",
         sessionId, finishedRankings.size(), unfinishedRankings.size());
     return finalRankings;
   }
@@ -262,41 +268,44 @@ public class BattleRedisService {
 
     try {
       BattleUserDto userData = objectMapper.readValue(json, BattleUserDto.class);
-      
+
       // ✅ 이미 완주한 경우 더 이상 처리하지 않음 (멱등성 보장)
       if (userData.getIsFinished()) {
         log.warn("⚠️⚠️⚠️ 이미 완주 처리된 참가자: sessionId={}, userId={}, 기존완주시각={}",
             sessionId, userId, userData.getFinishTime());
         return;  // ✅ 중복 완주 방지!
       }
-      
+
       LocalDateTime finishTime = LocalDateTime.now();
-      
+
       userData.setIsFinished(true);
       userData.setFinishTime(finishTime);
 
       // ✅ 완주 시점의 최종 페이스 계산 (이후 고정됨)
       if (userData.getTotalDistance() > 0 && userData.getStartTime() != null) {
         long elapsedSeconds = Duration.between(userData.getStartTime(), finishTime).getSeconds();
-        
+
         if (elapsedSeconds > 0) {
           double avgSpeed = userData.getTotalDistance() / elapsedSeconds;
           double paceMinutesDecimal = 1000.0 / avgSpeed / 60.0;
           int minutes = (int) paceMinutesDecimal;
           int seconds = (int) ((paceMinutesDecimal - minutes) * 60);
-          
+
           userData.setCurrentPace(String.format("%d:%02d", minutes, seconds));
-          
+
           log.info("🏁 완주 페이스 계산: sessionId={}, userId={}, distance={}m, elapsed={}s, pace={}",
-              sessionId, userId, userData.getTotalDistance(), elapsedSeconds, userData.getCurrentPace());
+              sessionId, userId, userData.getTotalDistance(), elapsedSeconds,
+              userData.getCurrentPace());
         }
       }
 
       String updatedJson = objectMapper.writeValueAsString(userData);
       redisTemplate.opsForValue().set(key, updatedJson, BATTLE_TTL);
 
-      log.info("🏁🏁🏁 참가자 완주: sessionId={}, userId={}, username={}, 실제완주시각={}, distance={}m, pace={}",
-          sessionId, userId, userData.getUsername(), finishTime, userData.getTotalDistance(), userData.getCurrentPace());
+      log.info(
+          "🏁🏁🏁 참가자 완주: sessionId={}, userId={}, username={}, 실제완주시각={}, distance={}m, pace={}",
+          sessionId, userId, userData.getUsername(), finishTime, userData.getTotalDistance(),
+          userData.getCurrentPace());
     } catch (JsonProcessingException e) {
       log.error("❌ JSON 처리 실패: sessionId={}, userId={}", sessionId, userId, e);
     }
@@ -323,7 +332,7 @@ public class BattleRedisService {
   public void setFirstFinishTime(Long sessionId, Integer timeoutSeconds) {
     String key = String.format(BATTLE_TIMEOUT_KEY, sessionId);
 
-    TimeoutData timeoutData = TimeoutData.builder()
+    TimeoutDto timeoutData = TimeoutDto.builder()
         .firstFinishTime(LocalDateTime.now())
         .timeoutSeconds(timeoutSeconds)
         .isTimerStarted(true)
@@ -344,7 +353,7 @@ public class BattleRedisService {
   /**
    * 타임아웃 정보 조회
    */
-  public TimeoutData getTimeoutData(Long sessionId) {
+  public TimeoutDto getTimeoutData(Long sessionId) {
     String key = String.format(BATTLE_TIMEOUT_KEY, sessionId);
     String json = (String) redisTemplate.opsForValue().get(key);
 
@@ -353,7 +362,7 @@ public class BattleRedisService {
     }
 
     try {
-      return objectMapper.readValue(json, TimeoutData.class);
+      return objectMapper.readValue(json, TimeoutDto.class);
     } catch (JsonProcessingException e) {
       log.error("❌ JSON 역직렬화 실패: sessionId={}", sessionId, e);
       return null;

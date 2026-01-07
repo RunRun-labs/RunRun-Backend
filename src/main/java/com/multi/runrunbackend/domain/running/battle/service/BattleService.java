@@ -17,7 +17,7 @@ import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
 import com.multi.runrunbackend.domain.rating.service.DistanceRatingService;
-import com.multi.runrunbackend.domain.running.battle.dto.TimeoutData;
+import com.multi.runrunbackend.domain.running.battle.dto.TimeoutDto;
 import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto.GpsData;
 import com.multi.runrunbackend.domain.running.battle.dto.res.BattleRankingResDto;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -393,7 +393,7 @@ public class BattleService {
 
     // ✅ 첫 번째 완주자 발생 시 타임아웃 시작
     if (finishedCount == 1) {
-      TimeoutData existingTimeout = battleRedisService.getTimeoutData(sessionId);
+      TimeoutDto existingTimeout = battleRedisService.getTimeoutData(sessionId);
       if (existingTimeout == null) {
         // 거리에 따른 타임아웃 설정 (고정 30초)
         MatchSession session = matchSessionRepository.findById(sessionId)
@@ -647,13 +647,13 @@ public class BattleService {
   @Transactional
   public Map<String, Object> quitBattle(Long sessionId, Long userId) {
     Map<String, Object> result = new HashMap<>();
-    
+
     MatchSession session = matchSessionRepository.findById(sessionId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
     // ✅ 이미 종료된 배틀이면 결과 메시지만 재전송
     if (session.getStatus() == SessionStatus.COMPLETED) {
-      log.info("ℹ️ 이미 종료된 배틀 - 결과 메시지 재전송: sessionId={}, userId={}", 
+      log.info("ℹ️ 이미 종료된 배틀 - 결과 메시지 재전송: sessionId={}, userId={}",
           sessionId, userId);
       sendBattleCompleteMessage(sessionId);
       result.put("shouldShowResult", true);
@@ -725,7 +725,7 @@ public class BattleService {
       session.updateStatus(SessionStatus.COMPLETED);
       matchSessionRepository.save(session);
       sendBattleCompleteMessage(sessionId);
-      
+
       result.put("shouldShowResult", true);
       result.put("message", "모든 참가자가 포기하여 배틀이 종료되었습니다.");
 
@@ -736,11 +736,11 @@ public class BattleService {
 
       // 포기 알림 메시지 전송
       sendQuitMessage(sessionId, user.getName(), remainingUsers.size());
-      
+
       result.put("shouldShowResult", false);
       result.put("message", "포기 처리가 완료되었습니다.");
     }
-    
+
     return result;
   }
 
