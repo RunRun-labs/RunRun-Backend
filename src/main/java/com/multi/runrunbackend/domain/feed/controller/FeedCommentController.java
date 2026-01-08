@@ -53,7 +53,7 @@ public class FeedCommentController {
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUser principal
     ) {
-        feedCommentService.deleteComment(commentId, principal);
+        feedCommentService.deleteComment(feedId, commentId, principal);
         return ResponseEntity.ok(
                 ApiResponse.successNoData("댓글 삭제 성공")
         );

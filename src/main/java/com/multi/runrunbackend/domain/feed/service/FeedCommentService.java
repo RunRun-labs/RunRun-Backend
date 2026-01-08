@@ -58,6 +58,7 @@ public class FeedCommentService {
      * 댓글 삭제 (soft delete)
      */
     public void deleteComment(
+            Long feedId,
             Long commentId,
             CustomUser principal
     ) {
@@ -69,8 +70,13 @@ public class FeedCommentService {
                         new NotFoundException(ErrorCode.FEED_COMMENT_NOT_FOUND)
                 );
 
+        // 댓글이 해당 피드에 속하는지 검증
+        if (!comment.getFeedPost().getId().equals(feedId)) {
+            throw new NotFoundException(ErrorCode.FEED_COMMENT_NOT_FOUND);
+        }
+
         // 관리자가 아니고 작성자가 아닌 경우 삭제 불가
-        boolean isAdmin = principal != null && principal.isAdmin();
+        boolean isAdmin = principal.isAdmin();
         if (!isAdmin && !comment.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException(ErrorCode.FEED_COMMENT_FORBIDDEN);
         }
