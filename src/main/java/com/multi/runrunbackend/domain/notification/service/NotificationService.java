@@ -87,6 +87,11 @@ public class NotificationService {
           .name("connected")
           .data("ok"));
     } catch (IOException e) {
+      log.debug("[SSE Init FAILED] receiverId={}, error={}", receiverId, e.getClass().getSimpleName());
+      sseEmitterRepository.remove(receiverId, emitter);
+    } catch (RuntimeException e) {
+      // IllegalStateException, AsyncRequestNotUsableException 등 모든 RuntimeException 처리
+      log.debug("[SSE Init FAILED] receiverId={}, error={}", receiverId, e.getClass().getSimpleName());
       sseEmitterRepository.remove(receiverId, emitter);
     }
 
@@ -121,8 +126,14 @@ public class NotificationService {
             .data("ping"));
 
         log.debug("[SSE Heartbeat] receiverId={}", receiverId);
-      } catch (IOException | IllegalStateException e) {
-        log.warn("[SSE Heartbeat FAILED] receiverId={}, removing emitter, error={}",
+      } catch (IOException e) {
+        log.debug("[SSE Heartbeat FAILED] receiverId={}, removing emitter, error={}",
+            receiverId, e.getClass().getSimpleName());
+        sseEmitterRepository.remove(receiverId, emitter);
+        scheduler.shutdown();
+      } catch (RuntimeException e) {
+        // IllegalStateException, AsyncRequestNotUsableException 등 모든 RuntimeException 처리
+        log.debug("[SSE Heartbeat FAILED] receiverId={}, removing emitter, error={}",
             receiverId, e.getClass().getSimpleName());
         sseEmitterRepository.remove(receiverId, emitter);
         scheduler.shutdown();

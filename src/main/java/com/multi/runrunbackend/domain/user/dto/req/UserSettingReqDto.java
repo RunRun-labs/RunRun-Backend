@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.user.dto.req;
 
+import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,4 +19,5 @@ public class UserSettingReqDto {
 
     private Boolean notificationEnabled;
     private Boolean nightNotificationEnabled;
+    private ProfileVisibility profileVisibility;
 }

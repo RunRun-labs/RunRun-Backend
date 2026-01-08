@@ -47,6 +47,7 @@ public class CrewJoinService {
     private final CrewUserRepository crewUserRepository;
     private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
+    private final CrewChatService crewChatService;
     private final PointService pointService;
     private final FileStorage fileStorage;
 
@@ -157,7 +158,7 @@ public class CrewJoinService {
      * @param crewId        크루 ID
      * @param principal     가입 신청하는 회원
      * @param joinRequestId 처리할 가입 신청 ID
-     * @description : 크루장이 가입 신청을 승인 (승인 시 크루원으로 추가) -> 100P 차감
+     * @description : 크루장이 가입 신청을 승인 (승인 시 크루원으로 추가)
      */
     @Transactional
     public void approveJoinRequest(Long crewId, CustomUser principal, Long joinRequestId) {
@@ -198,6 +199,9 @@ public class CrewJoinService {
         // 크루원으로 추가
         CrewUser crewUser = CrewUser.create(crew, joinRequest.getUser(), CrewRole.MEMBER);
         crewUserRepository.save(crewUser);
+
+        // 채팅방 참여자 추가
+        crewChatService.addUserToChatRoom(crewId, joinRequest.getUser());
 
         log.info("크루 가입 승인 완료 - crewId: {}, newMemberId: {}",
                 crewId, joinRequest.getUser().getId());
@@ -265,6 +269,9 @@ public class CrewJoinService {
         // 승인된 가입 신청도 함께 처리 (APPROVED 상태의 가입 신청을 찾아서 soft delete)
         crewJoinRequestRepository.findByCrewAndUserAndJoinStatus(crew, user, JoinStatus.APPROVED)
                 .ifPresent(joinRequest -> joinRequest.delete());
+
+        // 채팅방 참여자 제거
+        crewChatService.removeUserFromChatRoom(crewId, user);
 
         log.info("크루 탈퇴 완료 - crewId: {}, userId: {}, role: {}",
                 crewId, user.getId(), crewUser.getRole());

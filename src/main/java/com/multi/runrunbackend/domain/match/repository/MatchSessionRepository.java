@@ -24,4 +24,7 @@ public interface MatchSessionRepository extends JpaRepository<MatchSession, Long
   @Modifying
   @Query("UPDATE MatchSession ms SET ms.status = :status WHERE ms.id = :sessionId")
   int updateStatus(@Param("sessionId") Long sessionId, @Param("status") SessionStatus status);
+
+  @Query("SELECT ms FROM MatchSession ms LEFT JOIN FETCH ms.runningResult WHERE ms.id = :sessionId")
+  Optional<MatchSession> findByIdWithRunningResult(@Param("sessionId") Long sessionId);
 }

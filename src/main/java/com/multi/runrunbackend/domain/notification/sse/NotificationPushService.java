@@ -36,8 +36,13 @@ public class NotificationPushService {
           .name("notification")
           .data(payload));
       log.info("[Notification Push SUCCESS] receiverId={}, eventId={}", receiverId, eventId);
-    } catch (IOException | IllegalStateException e) {
-      log.warn("[Notification Push FAILED] receiverId={}, error={}, removing emitter",
+    } catch (IOException e) {
+      log.debug("[Notification Push FAILED] receiverId={}, error={}, removing emitter",
+          receiverId, e.getClass().getSimpleName() + ": " + e.getMessage());
+      repo.remove(receiverId, emitter);
+    } catch (RuntimeException e) {
+      // IllegalStateException, AsyncRequestNotUsableException 등 모든 RuntimeException 처리
+      log.debug("[Notification Push FAILED] receiverId={}, error={}, removing emitter",
           receiverId, e.getClass().getSimpleName() + ": " + e.getMessage());
       repo.remove(receiverId, emitter);
     }

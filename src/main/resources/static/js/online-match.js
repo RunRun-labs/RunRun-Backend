@@ -7,6 +7,8 @@ let matchFoundTimeout = null;
 let countdownInterval = null;
 let currentSessionId = null; // 현재 매칭된 세션 ID 저장
 let fallbackCheckDone = false; // 폴백 체크 완료 플래그 (중복 처리 방지)
+let fallbackCheckInterval = null; // 주기적 폴백 체크 interval
+let matchStartTime = null; // 매칭 시작 시간 (오래된 알림 필터링용)
 
 // DOM 요소 참조 (나중에 초기화)
 let statusTitle = null;
@@ -45,8 +47,29 @@ window.addEventListener('notification-received', async (event) => {
     // ✅ 폴백 체크 플래그 설정 (중복 처리 방지)
     fallbackCheckDone = true;
     isMatching = false;
+    matchStartTime = null; // ✅ 매칭 시작 시간 리셋
     
     try {
+      // ✅ Redis 키 정리를 위해 status API 호출
+      const token = localStorage.getItem("accessToken");
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
+      try {
+        await fetch("/api/match/online/status", {
+          method: "GET",
+          headers: headers,
+        });
+        console.log('[online-match] Redis 키 정리 완료 (status API 호출)');
+      } catch (statusError) {
+        console.warn('[online-match] status API 호출 실패 (무시하고 계속):', statusError);
+        // 키 정리 실패해도 매칭 완료 처리는 계속 진행
+      }
+      
       await showMatchFound(sessionId);
     } catch (error) {
       console.error('[online-match] 매칭 완료 처리 오류:', error);
@@ -73,6 +96,13 @@ window.addEventListener('pageshow', async (e) => {
   isMatching = false;
   currentSessionId = null;
   fallbackCheckDone = false; // ✅ 폴백 체크 플래그도 리셋
+  matchStartTime = null; // ✅ 매칭 시작 시간 리셋
+  
+  // 폴백 체크 interval 정리
+  if (fallbackCheckInterval) {
+    clearInterval(fallbackCheckInterval);
+    fallbackCheckInterval = null;
+  }
 
   try {
     // UI 초기화
@@ -132,6 +162,14 @@ async function handleCancel() {
 
     // 성공 여부와 관계없이 오버레이 닫기
     isMatching = false;
+    matchStartTime = null; // ✅ 매칭 시작 시간 리셋
+    
+    // 폴백 체크 중단
+    if (fallbackCheckInterval) {
+      clearInterval(fallbackCheckInterval);
+      fallbackCheckInterval = null;
+    }
+    
     hideMatchingOverlay();
 
     if (!response.ok || !result?.success) {
@@ -144,6 +182,14 @@ async function handleCancel() {
     console.error("매칭 취소 오류:", error);
     // 에러가 발생해도 오버레이 닫기
     isMatching = false;
+    matchStartTime = null; // ✅ 매칭 시작 시간 리셋
+    
+    // 폴백 체크 중단
+    if (fallbackCheckInterval) {
+      clearInterval(fallbackCheckInterval);
+      fallbackCheckInterval = null;
+    }
+    
     hideMatchingOverlay();
     window.location.href = "/match/online";
   }
@@ -410,6 +456,7 @@ async function handleMatchStart() {
   // ✅ 상태 초기화
   fallbackCheckDone = false;
   isMatching = true;
+  matchStartTime = Date.now(); // ✅ 매칭 시작 시간 저장 (오래된 알림 필터링용)
   if (startButton) {
     startButton.disabled = true;
   }
@@ -516,17 +563,31 @@ async function handleMatchStart() {
     }
     resetMatchUI();
 
-    // 5. 폴백 체크: POST 성공 후 약간의 딜레이를 두고 매칭 상태를 한 번 확인
-    // (SSE 이벤트를 놓쳤을 수 있으므로 REST API로 정합성 확인)
-    setTimeout(async () => {
-      // 매칭 중인 상태가 아니면 폴백 체크 건너뜀
+    // 5. 폴백 체크: 주기적으로 매칭 상태 확인 (SSE 이벤트를 놓쳤을 수 있으므로 REST API로 정합성 확인)
+    // 기존 interval이 있으면 정리
+    if (fallbackCheckInterval) {
+      clearInterval(fallbackCheckInterval);
+      fallbackCheckInterval = null;
+    }
+
+    // 폴백 체크 함수
+    const performFallbackCheck = async () => {
+      // 매칭 중인 상태가 아니면 폴백 체크 중단
       if (!isMatching) {
+        if (fallbackCheckInterval) {
+          clearInterval(fallbackCheckInterval);
+          fallbackCheckInterval = null;
+        }
         return;
       }
       
-      // ✅ 이미 SSE 이벤트로 매칭 완료되었으면 건너뜀
+      // ✅ 이미 SSE 이벤트로 매칭 완료되었으면 폴백 체크 중단
       if (fallbackCheckDone) {
-        console.log('[online-match] 이미 매칭 완료 처리됨, 폴백 체크 건너뜀');
+        console.log('[online-match] 이미 매칭 완료 처리됨, 폴백 체크 중단');
+        if (fallbackCheckInterval) {
+          clearInterval(fallbackCheckInterval);
+          fallbackCheckInterval = null;
+        }
         return;
       }
 
@@ -549,6 +610,14 @@ async function handleMatchStart() {
               console.log('[online-match] 폴백 체크: 이미 매칭 완료됨', sessionId);
               fallbackCheckDone = true; // ✅ 플래그 설정
               isMatching = false;
+              matchStartTime = null; // ✅ 매칭 시작 시간 리셋
+              
+              // 폴백 체크 중단
+              if (fallbackCheckInterval) {
+                clearInterval(fallbackCheckInterval);
+                fallbackCheckInterval = null;
+              }
+              
               await showMatchFound(sessionId);
               return;
             }
@@ -556,7 +625,7 @@ async function handleMatchStart() {
         }
 
         // 방법 2: 알림 목록에서 MATCH_FOUND 확인 (방법 1 실패 시)
-        const notificationResponse = await fetch("/api/notifications/remaining?page=0&size=5", {
+        const notificationResponse = await fetch("/api/notifications/remaining?page=0&size=10", {
           method: "GET",
           headers: headers,
         });
@@ -568,12 +637,20 @@ async function handleMatchStart() {
               n => n.notificationType === 'MATCH_FOUND' 
                 && n.relatedId 
                 && !n.isRead
-                && (Date.now() - new Date(n.createdAt).getTime()) < 10000 // 10초 이내
+                && matchStartTime !== null // ✅ 매칭 시작 시간이 설정되어 있어야 함
+                && new Date(n.createdAt).getTime() >= matchStartTime // ✅ 현재 매칭 시작 이후의 알림만 처리
+                && (Date.now() - new Date(n.createdAt).getTime()) < 30000 // 30초 이내로 확장
             );
 
             if (matchFound) {
               console.log('[online-match] 폴백 체크: MATCH_FOUND 알림 발견', matchFound);
               fallbackCheckDone = true; // ✅ 플래그 설정
+              
+              // 폴백 체크 중단
+              if (fallbackCheckInterval) {
+                clearInterval(fallbackCheckInterval);
+                fallbackCheckInterval = null;
+              }
               
               // 읽음 처리
               await fetch(`/api/notifications/${matchFound.id}/read`, {
@@ -581,8 +658,21 @@ async function handleMatchStart() {
                 headers: headers,
               }).catch(() => {});
 
+              // ✅ Redis 키 정리를 위해 status API 호출
+              try {
+                await fetch("/api/match/online/status", {
+                  method: "GET",
+                  headers: headers,
+                });
+                console.log('[online-match] Redis 키 정리 완료 (폴백 체크 - 알림 목록)');
+              } catch (statusError) {
+                console.warn('[online-match] status API 호출 실패 (무시하고 계속):', statusError);
+                // 키 정리 실패해도 매칭 완료 처리는 계속 진행
+              }
+
               // 매칭 완료 처리
               isMatching = false;
+              matchStartTime = null; // ✅ 매칭 시작 시간 리셋
               await showMatchFound(matchFound.relatedId);
               return;
             }
@@ -594,7 +684,14 @@ async function handleMatchStart() {
         console.warn('[online-match] 폴백 체크 실패 (무시하고 SSE 이벤트 대기):', fallbackError);
         // 폴백 체크 실패해도 SSE 이벤트를 기다림
       }
-    }, 2000); // 2초 후 폴백 체크
+    };
+
+    // 첫 폴백 체크는 2초 후 실행, 이후 5초마다 주기적으로 실행
+    setTimeout(() => {
+      performFallbackCheck();
+      // 주기적 폴백 체크 시작 (5초마다 - DB 부하 감소)
+      fallbackCheckInterval = setInterval(performFallbackCheck, 5000);
+    }, 2000);
 
     // SSE 이벤트를 기다림 (notification-received 이벤트 리스너가 처리)
     console.log('[online-match] SSE 이벤트 대기 중...');
@@ -639,9 +736,14 @@ function resetMatchUI() {
     clearInterval(countdownInterval);
     countdownInterval = null;
   }
+  if (fallbackCheckInterval) {
+    clearInterval(fallbackCheckInterval);
+    fallbackCheckInterval = null;
+  }
   
   // ✅ 폴백 체크 플래그 리셋
   fallbackCheckDone = false;
+  matchStartTime = null; // ✅ 매칭 시작 시간 리셋
 }
 
 // 매칭 정보 조회 (SSE 알림 수신 후 세션 정보를 가져오기 위해 사용)
@@ -984,6 +1086,7 @@ function hideMatchingOverlay() {
     startButton.style.display = "block";
   }
   isMatching = false;
+  matchStartTime = null; // ✅ 매칭 시작 시간 리셋
   currentSessionId = null; // 세션 ID 초기화
   updateStartButton();
   resetMatchUI();
@@ -996,6 +1099,10 @@ function hideMatchingOverlay() {
   if (countdownInterval) {
     clearInterval(countdownInterval);
     countdownInterval = null;
+  }
+  if (fallbackCheckInterval) {
+    clearInterval(fallbackCheckInterval);
+    fallbackCheckInterval = null;
   }
 }
 
@@ -1037,6 +1144,14 @@ async function handleCancel() {
 
     // 성공 여부와 관계없이 오버레이 닫기
     isMatching = false;
+    matchStartTime = null; // ✅ 매칭 시작 시간 리셋
+    
+    // 폴백 체크 중단
+    if (fallbackCheckInterval) {
+      clearInterval(fallbackCheckInterval);
+      fallbackCheckInterval = null;
+    }
+    
     hideMatchingOverlay();
 
     if (!response.ok || !result?.success) {
@@ -1049,6 +1164,14 @@ async function handleCancel() {
     console.error("매칭 취소 오류:", error);
     // 에러가 발생해도 오버레이 닫기
     isMatching = false;
+    matchStartTime = null; // ✅ 매칭 시작 시간 리셋
+    
+    // 폴백 체크 중단
+    if (fallbackCheckInterval) {
+      clearInterval(fallbackCheckInterval);
+      fallbackCheckInterval = null;
+    }
+    
     hideMatchingOverlay();
     window.location.href = "/match/online";
   }

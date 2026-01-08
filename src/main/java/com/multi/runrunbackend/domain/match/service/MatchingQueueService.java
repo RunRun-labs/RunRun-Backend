@@ -44,7 +44,6 @@ public class MatchingQueueService {
 
   private static final String QUEUE_KEY_PREFIX = "matching_queue:";
   private static final String USER_STATUS_KEY_PREFIX = "user_queue_status:";
-  private static final String TICKET_KEY_PREFIX = "match_ticket:";
   private static final String WAIT_START_PREFIX = "user_wait_start:";
 
   private static final String LOCK_PREFIX = "lock:";
@@ -105,6 +104,9 @@ public class MatchingQueueService {
       log.info("이미 매칭된 세션 존재 - User: {}, SessionID: {}", userId, existingSessionId);
       return existingSessionId;
     }
+
+    // ✅ 이전 큐에 남아있을 수 있는 사용자 정리 (안전장치)
+    cleanupUserFromAllQueues(userId);
 
     int rating = distanceRatingRepository.findByUserIdAndDistanceType(userId, distance)
         .map(DistanceRating::getCurrentRating)
@@ -227,25 +229,98 @@ public class MatchingQueueService {
       String statusKey = USER_STATUS_KEY_PREFIX + userId;
       String waitStartKey = WAIT_START_PREFIX + userId;
 
+      // ✅ 큐에서 제거는 이미 popCandidatesAtomically의 Lua Script에서 처리됨
+      // 따라서 statusKey와 waitStartKey만 삭제하면 됨
       redisTemplate.delete(statusKey);
       redisTemplate.delete(waitStartKey);
+      
+      log.debug("매칭 완료 후 키 정리 - User: {}, statusKey: {}, waitStartKey: {}", 
+          userId, statusKey, waitStartKey);
     }
   }
-
+  
+  /**
+   * userId로 큐에서 제거 (세션 취소 시 남은 참가자 정리용)
+   */
   @Transactional
-  public void issueMatchTickets(Long sessionId, List<Long> userIds) {
-    for (Long userId : userIds) {
-      String ticketKey = TICKET_KEY_PREFIX + userId; // "match_ticket:"
-      redisTemplate.opsForValue().set(
-          ticketKey,
-          sessionId.toString(),
-          Duration.ofMinutes(1)
+  public void removeQueueByUserId(Long userId) {
+    String statusKey = USER_STATUS_KEY_PREFIX + userId;
+    String waitStartKey = WAIT_START_PREFIX + userId;
+    String queueKey = redisTemplate.opsForValue().get(statusKey);
+    
+    if (queueKey == null) {
+      log.debug("매칭 취소 시도했으나 대기 중 아님 - User: {}", userId);
+      return;
+    }
+
+    String lockKey = LOCK_PREFIX + queueKey;
+    RLock lock = redissonClient.getLock(lockKey);
+
+    boolean locked = false;
+    try {
+      locked = lock.tryLock(200, 3, TimeUnit.SECONDS);
+      if (!locked) {
+        log.debug("취소 락 획득 실패(그래도 취소 진행) - User: {}, Queue: {}", userId, queueKey);
+      }
+
+      String removedQueueKey = redisTemplate.execute(
+          new DefaultRedisScript<>(REMOVE_QUEUE_SCRIPT, String.class),
+          List.of(statusKey, waitStartKey),
+          userId.toString()
       );
+
+      if (removedQueueKey != null) {
+        log.info("매칭 대기열 취소 (userId로) - User: {}, Queue: {}", userId, removedQueueKey);
+      } else {
+        log.debug("취소 처리 중 이미 대기열에서 제거됨 - User: {}", userId);
+      }
+
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      log.error("취소 락 획득 중 인터럽트 발생 - User: {}, Queue: {}", userId, queueKey, e);
+    } finally {
+      if (locked && lock.isHeldByCurrentThread()) {
+        lock.unlock();
+      }
     }
   }
 
   private String makeQueueKey(DistanceType distance, int targetCount) {
     return QUEUE_KEY_PREFIX + distance.name() + ":" + targetCount;
+  }
+
+  /**
+   * 모든 큐에서 사용자 제거 (안전장치 - 좀비 사용자 정리용)
+   * statusKey가 있으면 ADD_QUEUE_ATOMIC_SCRIPT가 처리하므로 스킵
+   */
+  private void cleanupUserFromAllQueues(Long userId) {
+    // statusKey 먼저 확인
+    String statusKey = USER_STATUS_KEY_PREFIX + userId;
+    String existingQueueKey = redisTemplate.opsForValue().get(statusKey);
+    
+    // statusKey가 있으면 ADD_QUEUE_ATOMIC_SCRIPT가 이전 큐를 정리하므로 스킵
+    // (statusKey를 삭제하면 ADD_QUEUE_ATOMIC_SCRIPT의 이전 큐 정리 로직이 작동 안 함)
+    if (existingQueueKey != null) {
+      log.debug("statusKey 존재 - ADD_QUEUE_ATOMIC_SCRIPT가 처리할 예정 - User: {}, Queue: {}", 
+          userId, existingQueueKey);
+      return;
+    }
+    
+    // statusKey가 없을 때만 모든 큐에서 제거 (좀비 사용자 정리)
+    // 이 경우는 이전 매칭에서 큐에 남아있지만 statusKey는 만료된 경우
+    for (DistanceType distance : DistanceType.values()) {
+      for (int targetCount : new int[]{2, 3, 4}) {
+        String queueKey = makeQueueKey(distance, targetCount);
+        Long removed = redisTemplate.opsForZSet().remove(queueKey, userId.toString());
+        if (removed != null && removed > 0) {
+          log.debug("좀비 사용자 제거 - User: {}, Queue: {}", userId, queueKey);
+        }
+      }
+    }
+    
+    // waitStartKey만 삭제 (statusKey는 ADD_QUEUE_ATOMIC_SCRIPT가 설정할 예정)
+    String waitStartKey = WAIT_START_PREFIX + userId;
+    redisTemplate.delete(waitStartKey);
   }
 
 }

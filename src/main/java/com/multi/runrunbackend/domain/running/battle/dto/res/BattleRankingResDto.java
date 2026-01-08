@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.running.battle.dto.res;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,5 +27,7 @@ public class BattleRankingResDto {
   private Double progressPercent;      // 진행률 (%)
   private String currentPace;          // 현재 페이스 (분:초/km)
   private Boolean isFinished;          // 완주 여부
-  private Long finishTime;             // 완주 시간 (밀리초)
+  private Long finishTime;             // 완주 시간 (밀리초) - 경과 시간
+  private LocalDateTime finishTimeActual; // ✅ 실제 완주 시각 (순위 비교용)
+  private String status;               // 상태: RUNNING, FINISHED, TIMEOUT, GIVE_UP
 }

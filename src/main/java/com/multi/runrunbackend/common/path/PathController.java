@@ -8,20 +8,25 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Controller
 public class PathController {
 
-  @GetMapping("/login")
-  public String loginView() {
-    return "auth/login";
-  }
+    @GetMapping("/login")
+    public String loginView() {
+        return "auth/login";
+    }
 
-  @GetMapping("/signup")
-  public String signupView() {
-    return "auth/signup";
-  }
+    @GetMapping("/signup")
+    public String signupView() {
+        return "auth/signup";
+    }
 
-  @GetMapping("/match/select")
-  public String matchSelectView() {
-    return "match/match-select";
-  }
+    @GetMapping("/home")
+    public String homeView() {
+        return "home/home";
+    }
+
+    @GetMapping("/match/select")
+    public String matchSelectView() {
+        return "match/match-select";
+    }
 
   @GetMapping("/match/online")
   public String onlineMatchView() {
@@ -48,6 +53,16 @@ public class PathController {
   public String ghostView() {
     return "match/ghost";
   }
+
+  @GetMapping("/match/ghost-run")
+  public String ghostRunView() {
+  return "match/ghost-run";
+  }
+
+    @GetMapping("/match/ghost-result")
+    public String ghostResultView() {
+        return "match/ghost-result";
+    }
 
   @GetMapping("/match/solo")
   public String soloView() {
@@ -87,20 +102,20 @@ public class PathController {
     return "recruit/recruit-update";
   }
 
-  @GetMapping("/crews")
-  public String crewListPage() {
-    return "crew/crewList";
-  }
+    @GetMapping("/crews")
+    public String crewListPage() {
+        return "crew/crewList";
+    }
 
-  @GetMapping("/crews/new")
-  public String crewCreatePage() {
-    return "crew/createCrew";
-  }
+    @GetMapping("/crews/new")
+    public String crewCreatePage() {
+        return "crew/createCrew";
+    }
 
-  @GetMapping("/crews/{crewId}")
-  public String crewDetailPage() {
-    return "crew/crewDetailList";
-  }
+    @GetMapping("/crews/{crewId}")
+    public String crewDetailPage() {
+        return "crew/crewDetailList";
+    }
 
     @GetMapping("/crews/{crewId}/edit")
     public String crewEditPage(@PathVariable Long crewId, Model model) {
@@ -183,23 +198,27 @@ public class PathController {
 
     @GetMapping("/chat")
     public String chatList() {
-        return "chat/chat-list";
+    return "chat/chat-list";
     }
 
-  @GetMapping("/chat/chat1")
-  public String chat1() {
+    @GetMapping("/chat/chat1")
+    public String chat1() {
     return "chat/chat1";
-  }
+    }
 
-  @GetMapping("/myPage")
-  public String myPageView() {
-    return "mypage/mypage";
+  @GetMapping("/chat/crew")  // ⭐ 크루 채팅방 경로 추가
+  public String crewChat() {
+    return "chat/crew-chat";
   }
+    @GetMapping("/myPage")
+    public String myPageView() {
+        return "mypage/mypage";
+    }
 
-  @GetMapping("/myPage/edit")
-  public String myPageEdit() {
-    return "mypage/mypage-edit";
-  }
+    @GetMapping("/myPage/edit")
+    public String myPageEdit() {
+        return "mypage/mypage-edit";
+    }
 
   @GetMapping("/challenge")
   public String challengeView() {
@@ -233,20 +252,20 @@ public class PathController {
     return "courseAuto";
   }
 
-  @GetMapping("/course_manual")
-  public String test2View() {
-    return "courseManual";
-  }
+    @GetMapping("/course_manual")
+    public String test2View() {
+        return "courseManual";
+    }
 
-  @GetMapping("/course")
-  public String courseView() {
-    return "course/courseList";
-  }
+    @GetMapping("/course")
+    public String courseView() {
+        return "course/courseList";
+    }
 
-  @GetMapping("/courseCreate")
-  public String courseCreateView() {
-    return "course/courseCreate";
-  }
+    @GetMapping("/courseCreate")
+    public String courseCreateView() {
+        return "course/courseCreate";
+    }
 
   @GetMapping("/courseDetail/{course_id}")
   public String courseDetailView(
@@ -254,9 +273,9 @@ public class PathController {
       Model model
   ) {
 
-    model.addAttribute("courseId", courseId);
-    return "course/courseDetail";
-  }
+        model.addAttribute("courseId", courseId);
+        return "course/courseDetail";
+    }
 
   @GetMapping("/courseUpdate/{course_id}")
   public String courseUpdateView(
@@ -264,9 +283,9 @@ public class PathController {
       Model model
   ) {
 
-    model.addAttribute("courseId", courseId);
-    return "course/courseUpdate";
-  }
+        model.addAttribute("courseId", courseId);
+        return "course/courseUpdate";
+    }
 
     @GetMapping("/test/gps")
     public String gpsTestView() {

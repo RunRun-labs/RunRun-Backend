@@ -55,11 +55,13 @@ public class RecruitController {
 
   @GetMapping
   public ResponseEntity<ApiResponse> getRecruitList(
-      @ModelAttribute RecruitListReqDto request,
+      @AuthenticationPrincipal CustomUser principal,
+      @Valid @ModelAttribute RecruitListReqDto request,
       @PageableDefault(size = 10) Pageable pageable
   ) {
     return ResponseEntity.ok(
-        ApiResponse.success("모집글 목록 조회 성공", recruitService.getRecruitList(request, pageable)));
+        ApiResponse.success("모집글 목록 조회 성공",
+            recruitService.getRecruitList(request, principal, pageable)));
   }
 
 

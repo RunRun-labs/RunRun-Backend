@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <title>RUNRUN | 고스트런 결과</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fugaz+One&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/css/ghost-result.css" th:href="@{/css/ghost-result.css}">
+</head>
+<body>
+<main class="page">
+  <div class="result-container">
+    <!-- Header -->
+    <header class="header-section">
+      <button class="header-button" type="button" aria-label="뒤로가기" id="backButton">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M11.25 13.5L6.75 9L11.25 4.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <div class="header-content">
+        <h1 class="header-title">고스트런 결과</h1>
+      </div>
+      
+      <div style="width: 40px;"></div>
+    </header>
+
+    <!-- Result Banner -->
+    <section class="result-banner">
+      <div class="ghost-icon">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <path d="M32 8L16 16V48L32 40L48 48V16L32 8Z" stroke="white" stroke-width="3" fill="none"/>
+          <circle cx="24" cy="28" r="3" fill="white"/>
+          <circle cx="40" cy="28" r="3" fill="white"/>
+          <path d="M24 38C24 38 28 42 32 42C36 42 40 38 40 38" stroke="white" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="result-status" id="resultStatus">
+        <span>계산 중...</span>
+      </div>
+      <div class="result-message" id="resultMessage">
+        <span>결과를 불러오는 중...</span>
+      </div>
+    </section>
+
+    <!-- My Record vs Ghost Record -->
+    <section class="comparison-section">
+      <div class="comparison-header">
+        <h2>📊 기록 비교</h2>
+      </div>
+      
+      <div class="comparison-grid">
+        <!-- 내 기록 -->
+        <div class="record-card me">
+          <div class="card-header">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="6" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M4 18C4 14 6 12 10 12C14 12 16 14 16 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>나</span>
+          </div>
+          <div class="card-stats">
+            <div class="stat-item">
+              <div class="stat-label">완주 시간</div>
+              <div class="stat-value" id="myTime">-</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">평균 페이스</div>
+              <div class="stat-value" id="myPace">-</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">총 거리</div>
+              <div class="stat-value" id="myDistance">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VS -->
+        <div class="vs-divider">
+          <span>VS</span>
+        </div>
+
+        <!-- 고스트 기록 -->
+        <div class="record-card ghost">
+          <div class="card-header">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2L4 6V16L10 12L16 16V6L10 2Z" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            <span>고스트</span>
+          </div>
+          <div class="card-stats">
+            <div class="stat-item">
+              <div class="stat-label">완주 시간</div>
+              <div class="stat-value" id="ghostTime">-</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">평균 페이스</div>
+              <div class="stat-value" id="ghostPace">-</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">총 거리</div>
+              <div class="stat-value" id="ghostDistance">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final Difference -->
+      <div class="final-difference" id="finalDifference">
+        <div class="difference-label">최종 차이</div>
+        <div class="difference-value">-</div>
+      </div>
+    </section>
+
+    <!-- 고스트 정보 -->
+    <section class="ghost-info-section">
+      <div class="info-card">
+        <div class="info-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 2L3 6V16L9 12L15 16V6L9 2Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+          </svg>
+          <span>고스트 기록</span>
+        </div>
+        <div class="info-content">
+          <div class="info-item">
+            <span class="label">날짜</span>
+            <span class="value" id="ghostDate">-</span>
+          </div>
+          <div class="info-item">
+            <span class="label">비교 방식</span>
+            <span class="value" id="compareMethod">-</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="action-section">
+      <button class="action-button secondary" type="button" id="homeButton">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M2.25 6.75L9 1.5L15.75 6.75V15C15.75 15.4142 15.4142 15.75 15 15.75H10.5V11.25H7.5V15.75H3C2.58579 15.75 2.25 15.4142 2.25 15V6.75Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>홈으로</span>
+      </button>
+      <button class="action-button primary" type="button" id="retryButton">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M1.5 9C1.5 5.27208 4.52208 2.25 8.25 2.25C10.0622 2.25 11.7015 2.9505 12.9375 4.0625L10.5 6.5H16.5V0.5L14.0625 2.9375C12.4505 1.3495 10.4378 0.5 8.25 0.5C3.69365 0.5 0 4.19365 0 8.75C0 13.3063 3.69365 17 8.25 17C11.5221 17 14.3063 15.1937 15.75 12.5L13.875 11.625C12.7063 13.8125 10.6875 15.5 8.25 15.5C4.52208 15.5 1.5 12.4779 1.5 8.75V9Z" fill="currentColor"/>
+        </svg>
+        <span>다시 도전</span>
+      </button>
+    </section>
+  </div>
+</main>
+
+<script src="/js/ghost-result.js" th:src="@{/js/ghost-result.js}"></script>
+</body>
+</html>

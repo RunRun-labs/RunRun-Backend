@@ -48,6 +48,9 @@ public class UserChallenge extends BaseTimeEntity {
     @Column(name = "progress_value", nullable = false)
     private Double progressValue;
 
+    @Column(name = "last_progress_date")
+    private LocalDate lastProgressDate;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
@@ -86,6 +89,10 @@ public class UserChallenge extends BaseTimeEntity {
         }
     }
 
+    public void setLastProgressDate(LocalDate runDate) {
+        this.lastProgressDate = runDate;
+    }
+
     public void complete() {
         // 이미 완료/실패 상태가 아닐 때만 완료 처리
         if (this.status != UserChallengeStatus.COMPLETED && this.status != UserChallengeStatus.FAILED) {
@@ -101,5 +108,4 @@ public class UserChallenge extends BaseTimeEntity {
             this.completedAt = LocalDateTime.now();
         }
     }
-
 }
