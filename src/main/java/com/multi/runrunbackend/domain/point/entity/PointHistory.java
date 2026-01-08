@@ -2,19 +2,8 @@ package com.multi.runrunbackend.domain.point.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseCreatedEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 /**
  * @author : BoKyung
@@ -38,7 +27,7 @@ public class PointHistory extends BaseCreatedEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_product_id", nullable = false)
+    @JoinColumn(name = "point_product_id", nullable = true)
     private PointProduct pointProduct;
 
     @Column(name = "point_type", nullable = false, length = 20)
@@ -60,11 +49,11 @@ public class PointHistory extends BaseCreatedEntity {
     public static PointHistory toEntity(User user, PointProduct pointProduct, String pointType,
                                         Integer changeAmount, String reason) {
         return PointHistory.builder()
-            .user(user)
-            .pointProduct(pointProduct)
-            .pointType(pointType)
-            .changeAmount(changeAmount)
-            .reason(reason)
-            .build();
+                .user(user)
+                .pointProduct(pointProduct)
+                .pointType(pointType)
+                .changeAmount(changeAmount)
+                .reason(reason)
+                .build();
     }
 }

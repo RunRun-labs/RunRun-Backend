@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.crew.constant.CrewRecruitStatus;
 import com.multi.runrunbackend.domain.crew.constant.CrewRole;
@@ -17,6 +18,7 @@ import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import com.multi.runrunbackend.domain.crew.repository.CrewJoinRequestRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
+import com.multi.runrunbackend.domain.point.service.PointService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,10 @@ public class CrewJoinService {
     private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
     private final CrewChatService crewChatService;
+    private final PointService pointService;
+    private final FileStorage fileStorage;
+
+    private static final int CREW_JOIN_POINT = 100;
 
     /**
      * @param crewId    가입 신청할 크루 ID
@@ -177,6 +183,13 @@ public class CrewJoinService {
         // 승인 시점에 다시 1인 1크루 정책 확인 (동시성 이슈 방지)
         validateNotInAnotherCrew(joinRequest.getUser().getId());
 
+        // 포인트 차감(100p)
+        pointService.deductPointsForCrewJoin(
+                joinRequest.getUser().getId(),
+                CREW_JOIN_POINT,
+                "CREW_JOIN"
+        );
+
         // 승인 처리
         joinRequest.approve();
 
@@ -199,7 +212,7 @@ public class CrewJoinService {
      * @param crewId        크루 ID
      * @param principal     가입 신청하는 회원
      * @param joinRequestId 거절할 가입 신청 ID
-     * @description : 크루장이 가입 신청을 거절 TODO (포인트 구현 시, 포인트가 환불 예정)
+     * @description : 크루장이 가입 신청을 거절
      */
     @Transactional
     public void rejectJoinRequest(Long crewId, CustomUser principal, Long joinRequestId) {
@@ -283,14 +296,39 @@ public class CrewJoinService {
         List<Object[]> results = crewUserRepository
                 .findAllWithParticipationCountAndLastActivity(crewId);
 
-        // DTO 변환
+        // DTO 변환 + S3 URL 변환
         return results.stream()
                 .map(result -> {
                     CrewUser crewUser = (CrewUser) result[0];
                     Long participationCount = (Long) result[1];
                     LocalDateTime lastActivityDate = (LocalDateTime) result[2];
 
-                    return CrewUserResDto.fromEntity(crewUser, participationCount.intValue(), lastActivityDate);
+                    // DTO 생성
+                    CrewUserResDto dto = CrewUserResDto.fromEntity(
+                            crewUser,
+                            participationCount.intValue(),
+                            lastActivityDate
+                    );
+
+                    // S3 URL 변환
+                    String profileImageUrl = dto.getProfileImageUrl();
+                    if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                        // S3 key면 HTTPS URL로 변환
+                        if (!profileImageUrl.startsWith("http")) {
+                            profileImageUrl = fileStorage.toHttpsUrl(profileImageUrl);
+                        }
+                    }
+
+                    // 변환된 URL로 새 DTO 생성
+                    return CrewUserResDto.builder()
+                            .userId(dto.getUserId())
+                            .userName(dto.getUserName())
+                            .profileImageUrl(profileImageUrl)
+                            .role(dto.getRole())
+                            .createdAt(dto.getCreatedAt())
+                            .participationCount(dto.getParticipationCount())
+                            .lastActivityDate(dto.getLastActivityDate())
+                            .build();
                 })
                 .toList();
 

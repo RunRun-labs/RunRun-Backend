@@ -10,12 +10,14 @@ import com.multi.runrunbackend.domain.coupon.constant.CouponStatus;
 import com.multi.runrunbackend.domain.coupon.dto.req.CouponCreateReqDto;
 import com.multi.runrunbackend.domain.coupon.dto.req.CouponUpdateReqDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponCreateResDto;
+import com.multi.runrunbackend.domain.coupon.dto.res.CouponDetailResDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponPageResDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponUpdateResDto;
 import com.multi.runrunbackend.domain.coupon.entity.Coupon;
 import com.multi.runrunbackend.domain.coupon.respository.CouponRepository;
 import com.multi.runrunbackend.domain.coupon.util.CouponCodeGenerator;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,9 +84,9 @@ public class CouponService {
 
     @Transactional(readOnly = true)
     public CouponPageResDto getCouponList(
-        CouponStatus status,
-        CouponCodeType codeType,
-        CouponChannel channel,
+        List<CouponStatus> statuses,
+        List<CouponCodeType> codeTypes,
+        List<CouponChannel> channels,
         String keyword,
         LocalDateTime startFrom,
         LocalDateTime endTo,
@@ -95,29 +97,44 @@ public class CouponService {
 
         Specification<Coupon> spec = (root, query, cb) -> cb.conjunction();
 
-        if (status != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        if (statuses != null && !statuses.isEmpty()) {
+            spec = spec.and((root, query, cb) -> root.get("status").in(statuses));
         }
-        if (codeType != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("codeType"), codeType));
+
+        if (codeTypes != null && !codeTypes.isEmpty()) {
+            spec = spec.and((root, query, cb) -> root.get("codeType").in(codeTypes));
         }
-        if (channel != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("channel"), channel));
+
+        if (channels != null && !channels.isEmpty()) {
+            spec = spec.and((root, query, cb) -> root.get("channel").in(channels));
         }
+
         if (safeKeyword != null) {
+            String like = "%" + safeKeyword + "%";
             spec = spec.and((root, query, cb) -> cb.or(
-                cb.like(cb.lower(root.get("name")), "%" + safeKeyword + "%"),
-                cb.like(cb.lower(root.get("code")), "%" + safeKeyword + "%")
+                cb.like(cb.lower(root.get("name")), like),
+                cb.like(cb.lower(root.get("code")), like)
             ));
         }
+
         if (startFrom != null) {
-            spec = spec.and(
-                (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("startAt"), startFrom));
+            spec = spec.and((root, query, cb) ->
+                cb.greaterThanOrEqualTo(root.get("startAt"), startFrom)
+            );
         }
         if (endTo != null) {
-            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("endAt"), endTo));
+            spec = spec.and((root, query, cb) ->
+                cb.lessThanOrEqualTo(root.get("endAt"), endTo)
+            );
         }
 
         return CouponPageResDto.of(couponRepository.findAll(spec, pageable));
+    }
+
+    @Transactional(readOnly = true)
+    public CouponDetailResDto getCoupon(Long couponId) {
+        Coupon coupon = couponRepository.findById(couponId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_NOT_FOUND));
+        return CouponDetailResDto.from(coupon);
     }
 }

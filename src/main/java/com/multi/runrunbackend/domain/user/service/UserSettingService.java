@@ -48,10 +48,9 @@ public class UserSettingService {
         User user = getUserByPrincipal(principal);
 
         UserSetting setting = userSettingRepository.findByUserId(user.getId())
-                .orElseGet(() -> {
-                    UserSetting newSetting = UserSetting.createDefault(user);
-                    return userSettingRepository.save(newSetting);
-                });
+                .orElseGet(() -> userSettingRepository.save(
+                        UserSetting.createDefault(user)
+                ));
 
         boolean notiEnabled = req.getNotificationEnabled() != null
                 ? req.getNotificationEnabled()
@@ -62,6 +61,10 @@ public class UserSettingService {
                 : setting.isNightNotificationEnabled();
 
         setting.updateNotification(notiEnabled, nightEnabled);
+
+        if (req.getProfileVisibility() != null) {
+            setting.updateProfileVisibility(req.getProfileVisibility());
+        }
     }
 
     private User getUserByPrincipal(CustomUser principal) {

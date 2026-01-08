@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RunRun Admin | 쿠폰 정책 생성</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/admin-layout.css"
+      th:href="@{/css/admin-layout.css}"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/coupon-create.css"
+      th:href="@{/css/coupon-create.css}"
+    />
+  </head>
+  <body>
+    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+    <!-- 레이아웃 적용 -->
+    <div th:replace="~{admin/layout :: adminLayout(~{::.coupon-content})}">
+      <!-- 컨텐츠 영역 -->
+      <div class="coupon-content coupon-create-container">
+        <div class="coupon-create-card">
+          <h1 class="page-title">쿠폰 정책 생성</h1>
+
+          <form class="coupon-form" id="couponRoleForm" novalidate>
+            <!-- 정책명 -->
+            <div class="form-field">
+              <label for="name" class="form-label"
+                >정책명 <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="form-input"
+                placeholder="정책명을 입력하세요 (최대 50자)"
+                maxlength="50"
+              />
+              <span class="error-message" id="name-error"></span>
+            </div>
+
+            <!-- 쿠폰 선택 -->
+            <div class="form-field">
+              <label for="couponId" class="form-label"
+                >쿠폰 <span class="required">*</span></label
+              >
+              <div style="display: flex; gap: 8px; align-items: center">
+                <input
+                  type="text"
+                  id="couponName"
+                  name="couponName"
+                  class="form-input"
+                  placeholder="쿠폰을 선택하세요"
+                  readonly
+                  style="flex: 1"
+                />
+                <input type="hidden" id="couponId" name="couponId" />
+                <button
+                  type="button"
+                  class="create-button"
+                  id="selectCouponBtn"
+                  style="width: auto; padding: 10px 20px; position: static"
+                >
+                  쿠폰 조회
+                </button>
+              </div>
+              <span class="error-message" id="couponId-error"></span>
+            </div>
+
+            <!-- 트리거 이벤트 -->
+            <div class="form-field">
+              <label for="triggerEvent" class="form-label"
+                >트리거 이벤트 <span class="required">*</span></label
+              >
+              <select id="triggerEvent" name="triggerEvent" class="form-select">
+                <option value="">선택하세요</option>
+                <option value="SIGNUP">SIGNUP</option>
+                <option value="FIRST_RUNNING">FIRST_RUNNING</option>
+                <option value="RUN_COUNT_REACHED">RUN_COUNT_REACHED</option>
+                <option value="BIRTHDAY">BIRTHDAY</option>
+              </select>
+              <span class="error-message" id="triggerEvent-error"></span>
+            </div>
+
+            <!-- 조건값 -->
+            <div class="form-field">
+              <label for="conditionValue" class="form-label">조건값</label>
+              <input
+                type="number"
+                id="conditionValue"
+                name="conditionValue"
+                class="form-input"
+                placeholder="RUN_COUNT_REACHED일 경우 필수 (1 이상)"
+                min="1"
+              />
+              <span class="error-message" id="conditionValue-error"></span>
+              <span class="help-text"
+                >RUN_COUNT_REACHED 이벤트일 경우 필수입니다</span
+              >
+            </div>
+          </form>
+
+          <!-- 생성하기 버튼 -->
+          <button type="button" class="create-button" id="createBtn">
+            생성하기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="/js/coupon-role-create.js"
+      th:src="@{/js/coupon-role-create.js}"
+    ></script>
+  </body>
+</html>

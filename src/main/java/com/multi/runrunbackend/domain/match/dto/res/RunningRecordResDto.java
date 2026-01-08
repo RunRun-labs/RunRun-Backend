@@ -25,6 +25,9 @@ public class RunningRecordResDto {
   private LocalDateTime startedAt;
   private List<Map<String, Object>> splitPace;
 
+  private String runningType;
+  private String runStatus;
+
   public static RunningRecordResDto from(RunningResult result) {
     return RunningRecordResDto.builder()
         .runningResultId(result.getId())
@@ -33,6 +36,8 @@ public class RunningRecordResDto {
         .avgPace(result.getAvgPace().doubleValue())
         .startedAt(result.getStartedAt())
         .splitPace(result.getSplitPace())
+        .runningType(result.getRunningType().name())
+        .runStatus(result.getRunStatus().name())
         .build();
   }
 

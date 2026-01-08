@@ -37,34 +37,36 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("is_deleted = false")
 public class Notification extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User receiver;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User receiver;
 
-    @Column(length = 100, nullable = false)
-    private String title;
+  @Column(length = 100, nullable = false)
+  private String title;
 
-    @Column(length = 255, nullable = false)
-    private String message;
+  @Column(length = 255, nullable = false)
+  private String message;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "notification_type", length = 20, nullable = false)
-    private NotificationType notificationType;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "notification_type", length = 20, nullable = false)
+  private NotificationType notificationType;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "related_type", length = 50)
-    private RelatedType relatedType;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "related_type", length = 50)
+  private RelatedType relatedType;
 
-    @Column(name = "related_id")
-    private Long relatedId;
+  @Column(name = "related_id")
+  private Long relatedId;
 
-    @Column(name = "is_read", nullable = false)
-    @Builder.Default
-    private boolean isRead = false;
+  @Column(name = "is_read", nullable = false)
+  @Builder.Default
+  private boolean isRead = false;
 
-
+  public void markAsRead() {
+    this.isRead = true;
+  }
 }

@@ -318,6 +318,94 @@ body {
     transform: scale(0.98);
 }
 
+/* 공개 범위 안내 문구 */
+.visibility-info-text {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+}
+
+/* 라디오 옵션 스타일 */
+.radio-option-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border: none;
+    border-bottom: 1px solid var(--stroke);
+    background: var(--bg);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    text-align: left;
+    position: relative;
+}
+
+.radio-option-item:last-child {
+    border-bottom: none;
+}
+
+.radio-option-item:hover {
+    background: #fafafa;
+}
+
+.radio-option-item:active {
+    background: #f5f5f5;
+}
+
+.radio-option-item input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    width: 0;
+    height: 0;
+}
+
+.radio-option-label {
+    font-family: "Outfit", "Noto Sans KR", sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-strong);
+    flex: 1;
+    margin-left: 40px;
+}
+
+.radio-checkmark {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 24px;
+    width: 24px;
+    background-color: var(--bg);
+    border: 2px solid var(--stroke);
+    border-radius: 50%;
+    transition: all 0.15s ease;
+}
+
+.radio-option-item input[type="radio"]:checked ~ .radio-checkmark {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.radio-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-strong);
+}
+
+.radio-option-item input[type="radio"]:checked ~ .radio-checkmark:after {
+    display: block;
+}
+
 /* 약관 옵션 스타일 */
 .terms-option-item {
     width: 100%;
