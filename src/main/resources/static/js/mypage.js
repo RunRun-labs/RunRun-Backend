@@ -46,24 +46,12 @@ async function loadMyBodyInfo() {
 function renderBodyInfo(user) {
     const heightEl = document.getElementById("heightCm");
     const weightEl = document.getElementById("weightKg");
-    const bmiEl = document.getElementById("bmiValue");
 
     const height = user?.heightCm;
     const weight = user?.weightKg;
 
     heightEl.textContent = height ?? "-";
     weightEl.textContent = weight ?? "-";
-
-    if (height && weight) {
-        bmiEl.textContent = calculateBMI(height, weight).toFixed(1);
-    } else {
-        bmiEl.textContent = "-";
-    }
-}
-
-function calculateBMI(heightCm, weightKg) {
-    const h = heightCm / 100;
-    return weightKg / (h * h);
 }
 
 
