@@ -1,7 +1,6 @@
 package com.multi.runrunbackend.domain.match.service;
 
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
-import com.multi.runrunbackend.common.exception.custom.InvalidRequestException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
@@ -112,12 +111,9 @@ public class ProfileRunningHistoryService {
     ) {
         User me = getUserByPrincipal(principal);
 
-        RunningResult result = runningResultRepository.findById(recordId)
+        RunningResult result = runningResultRepository.findByIdAndIsDeletedFalse(recordId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND));
 
-        if (Boolean.TRUE.equals(result.getIsDeleted())) {
-            throw new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND);
-        }
 
         if (!result.getUser().getId().equals(me.getId())) {
             throw new ForbiddenException(ErrorCode.RUNNING_RESULT_FORBIDDEN);
@@ -133,14 +129,11 @@ public class ProfileRunningHistoryService {
     public void deleteRunningRecord(Long recordId, CustomUser principal) {
         User user = getUserByPrincipal(principal);
 
-        RunningResult result = runningResultRepository.findById(recordId)
+        RunningResult result = runningResultRepository.findByIdAndIsDeletedFalse(recordId)
                 .orElseThrow(() ->
                         new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND)
                 );
 
-        if (Boolean.TRUE.equals(result.getIsDeleted())) {
-            throw new InvalidRequestException(ErrorCode.RUNNING_RESULT_ALREADY_DELETED);
-        }
 
         if (!result.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException(ErrorCode.RUNNING_RESULT_FORBIDDEN);
