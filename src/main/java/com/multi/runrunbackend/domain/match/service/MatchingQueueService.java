@@ -177,49 +177,41 @@ public class MatchingQueueService {
 
   @Transactional
   public OnlineMatchStatusResDto checkMatchStatus(CustomUser principal) {
-
     String loginId = principal.getLoginId();
-    User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new NotFoundException(
-        ErrorCode.USER_NOT_FOUND));
+    User user = userRepository.findByLoginId(loginId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     Long userId = user.getId();
 
-    String ticketKey = TICKET_KEY_PREFIX + userId;
-    String sessionId = redisTemplate.opsForValue().get(ticketKey);
+    Optional<SessionUser> activeSession = sessionUserRepository.findActiveOnlineSession(userId);
 
-    if (sessionId != null) {
+    if (activeSession.isPresent()) {
+      Long sessionId = activeSession.get().getMatchSession().getId();
+
+      log.info("DB에서 활성 세션 발견 - User: {}, SessionID: {}", userId, sessionId);
+
+      String statusKey = USER_STATUS_KEY_PREFIX + userId;
+      String waitStartKey = WAIT_START_PREFIX + userId;
+      redisTemplate.delete(statusKey);
+      redisTemplate.delete(waitStartKey);
+
+      log.debug("🗑불필요한 Redis 대기열 키 삭제 - User: {}", userId);
 
       return OnlineMatchStatusResDto.builder()
           .status("MATCHED")
-          .sessionId(Long.parseLong(sessionId))
+          .sessionId(sessionId)
           .build();
     }
 
     String statusKey = USER_STATUS_KEY_PREFIX + userId;
-    String queueKey = redisTemplate.opsForValue().get(USER_STATUS_KEY_PREFIX + userId);
+    String queueKey = redisTemplate.opsForValue().get(statusKey);
 
     if (queueKey != null) {
-
       redisTemplate.expire(statusKey, Duration.ofMinutes(3));
       redisTemplate.expire(WAIT_START_PREFIX + userId, Duration.ofMinutes(3));
 
       return OnlineMatchStatusResDto.builder()
           .status("WAITING")
           .sessionId(null)
-          .build();
-    }
-
-    Optional<SessionUser> activeSession = sessionUserRepository.findActiveOnlineSession(userId);
-
-    if (activeSession.isPresent()) {
-      Long dbSessionId = activeSession.get().getMatchSession().getId();
-
-      redisTemplate.opsForValue().set(ticketKey, dbSessionId.toString(), Duration.ofMinutes(1));
-
-      log.info("Redis 티켓 소실 감지 -> DB 폴백으로 매칭 확인 - User: {}, SessionID: {}", userId, dbSessionId);
-
-      return OnlineMatchStatusResDto.builder()
-          .status("MATCHED")
-          .sessionId(dbSessionId)
           .build();
     }
 
