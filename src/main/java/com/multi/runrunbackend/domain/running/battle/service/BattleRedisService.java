@@ -56,6 +56,7 @@ public class BattleRedisService {
         .startTime(now)  // ✅ 시작 시간 설정
         .isFinished(false)
         .finishTime(null)
+        .status("RUNNING")  // ✅ 초기 상태
         .build();
 
     try {
@@ -150,20 +151,31 @@ public class BattleRedisService {
     Set<ZSetOperations.TypedTuple<Object>> rankingSet =
         redisTemplate.opsForZSet().reverseRangeWithScores(rankingKey, 0, -1);
 
+    log.info("🔥🔥🔥 getRankings 호출: sessionId={}, ranking ZSet 크기={}", 
+        sessionId, rankingSet == null ? 0 : rankingSet.size());
+
     if (rankingSet == null || rankingSet.isEmpty()) {
       log.warn("⚠️ 순위 데이터 없음: sessionId={}", sessionId);
       return new ArrayList<>();
     }
 
+    log.info("🔥 Ranking ZSet 내용:");
+    for (ZSetOperations.TypedTuple<Object> tuple : rankingSet) {
+      log.info("  - userId={}, distance={}", tuple.getValue(), tuple.getScore());
+    }
+
     List<BattleRankingResDto> rankings = new ArrayList<>();
 
     // ✅ 1단계: 모든 참가자 데이터 수집
+    int nullJsonCount = 0;
     for (ZSetOperations.TypedTuple<Object> tuple : rankingSet) {
       Long userId = Long.parseLong(tuple.getValue().toString());
       Double distance = tuple.getScore();
 
       String userKey = String.format(BATTLE_USER_KEY, sessionId, userId);
       String json = (String) redisTemplate.opsForValue().get(userKey);
+
+      log.info("🔥 userId={} 데이터 조회: json {}", userId, json == null ? "NULL" : "EXISTS");
 
       if (json != null) {
         try {
@@ -185,6 +197,15 @@ public class BattleRedisService {
             finishTimeMillis = 0L;
           }
 
+          // ✅ status 결정 로직 (null 처리)
+          String status;
+          if (userData.getStatus() != null) {
+            status = userData.getStatus();
+          } else {
+            // 기존 데이터는 status가 없으므로 isFinished로 판단
+            status = userData.getIsFinished() ? "FINISHED" : "RUNNING";
+          }
+
           rankings.add(BattleRankingResDto.builder()
               .rank(0)  // 임시 순위 (정렬 후 부여)
               .userId(userId)
@@ -197,16 +218,24 @@ public class BattleRedisService {
               .isFinished(userData.getIsFinished())
               .finishTime(finishTimeMillis)  // 경과 시간 (표시용)
               .finishTimeActual(userData.getFinishTime())  // ✅ 실제 완주 시각 (순위 비교용)
+              .status(status)
               .build());
         } catch (JsonProcessingException e) {
           log.error("❌ JSON 역직렬화 실패: sessionId={}, userId={}", sessionId, userId, e);
         }
+      } else {
+        nullJsonCount++;
+        log.error("❌❌❌ userId={} 데이터가 Redis에 없음! (ranking에는 있지만 user 데이터 없음)", userId);
       }
     }
 
-    // ✅ 2단계: 정렬 (완주자만) - ✅ 실제 완주 시각으로 비교!
+    log.info("🔥🔥🔥 데이터 수집 완료: 전체={}명, 조회성공={}명, NULL={}명", 
+        rankingSet.size(), rankings.size(), nullJsonCount);
+
+    // ✅ 2단계: 상태별로 분류 및 정렬
+    // 완주자: FINISHED 상태, 완주 시각순 정렬
     List<BattleRankingResDto> finishedRankings = rankings.stream()
-        .filter(BattleRankingResDto::getIsFinished)
+        .filter(r -> "FINISHED".equals(r.getStatus()))
         .sorted((a, b) -> {
           // ✅ 실제 완주 시각으로 비교 (빠른 시각이 1등)
           if (a.getFinishTimeActual() == null && b.getFinishTimeActual() == null) {
@@ -222,35 +251,54 @@ public class BattleRedisService {
         })
         .collect(java.util.stream.Collectors.toList());
 
-    // 미완주자 리스트 (순위 없음)
-    List<BattleRankingResDto> unfinishedRankings = rankings.stream()
-        .filter(r -> !r.getIsFinished())
-        .sorted((a, b) -> Double.compare(b.getTotalDistance(), a.getTotalDistance()))  // 거리 내림차순
+    // ✅ 타임아웃자: TIMEOUT 또는 RUNNING 상태, 거리 내림차순 정렬
+    List<BattleRankingResDto> timeoutRankings = rankings.stream()
+        .filter(r -> "TIMEOUT".equals(r.getStatus()) || "RUNNING".equals(r.getStatus()))
+        .sorted((a, b) -> Double.compare(b.getTotalDistance(), a.getTotalDistance()))
         .collect(java.util.stream.Collectors.toList());
 
-    // ✅ 3단계: 완주자만 순위 부여 (1, 2, 3...)
+    // ✅ 포기자: GIVE_UP 상태만 (순위 없음)
+    List<BattleRankingResDto> giveUpRankings = rankings.stream()
+        .filter(r -> "GIVE_UP".equals(r.getStatus()))
+        .collect(java.util.stream.Collectors.toList());
+
+    // ✅ 3단계: 순위 부여
+    // 완주자: 1, 2, 3...
     for (int i = 0; i < finishedRankings.size(); i++) {
       BattleRankingResDto ranking = finishedRankings.get(i);
       ranking.setRank(i + 1);
 
-      // ✅ 순위 부여 로그 (실제 완주 시각 포함)
-      log.info("🏆 {}\ub4f1: userId={}, username={}, 실제완주시각={}, 경과시간={}ms",
+      log.info("🏆 {}등 (완주): userId={}, username={}, 실제완주시각={}",
           ranking.getRank(), ranking.getUserId(), ranking.getUsername(),
-          ranking.getFinishTimeActual(), ranking.getFinishTime());
+          ranking.getFinishTimeActual());
     }
 
-    // ✅ 미완주자는 순위 0 (완주 실패)
-    for (BattleRankingResDto unfinished : unfinishedRankings) {
-      unfinished.setRank(0);  // 0 = 완주 실패
+    // 타임아웃자: (완주자 수 + 1)부터
+    int nextRank = finishedRankings.size() + 1;
+    for (int i = 0; i < timeoutRankings.size(); i++) {
+      BattleRankingResDto ranking = timeoutRankings.get(i);
+      ranking.setRank(nextRank++);
+
+      log.info("⏰ {}등 (타임아웃): userId={}, username={}, distance={}m",
+          ranking.getRank(), ranking.getUserId(), ranking.getUsername(),
+          ranking.getTotalDistance());
     }
 
-    // ✅ 4단계: 완주자 + 미완주자 합치기
+    // 포기자: 순위 0
+    for (BattleRankingResDto giveUp : giveUpRankings) {
+      giveUp.setRank(0);
+      log.info("🚪 순위없음 (포기): userId={}, username={}",
+          giveUp.getUserId(), giveUp.getUsername());
+    }
+
+    // ✅ 4단계: 합치기 (완주자 + 타임아웃자 + 포기자)
     List<BattleRankingResDto> finalRankings = new ArrayList<>();
     finalRankings.addAll(finishedRankings);
-    finalRankings.addAll(unfinishedRankings);
+    finalRankings.addAll(timeoutRankings);
+    finalRankings.addAll(giveUpRankings);
 
-    log.info("📊 순위 조회 완료: sessionId={}, 완주자={}명, 미완주자={}명",
-        sessionId, finishedRankings.size(), unfinishedRankings.size());
+    log.info("📊 순위 조회 완료: sessionId={}, 완주={}명, 타임아웃={}명, 포기={}명",
+        sessionId, finishedRankings.size(), timeoutRankings.size(), giveUpRankings.size());
     return finalRankings;
   }
 
@@ -280,6 +328,7 @@ public class BattleRedisService {
 
       userData.setIsFinished(true);
       userData.setFinishTime(finishTime);
+      userData.setStatus("FINISHED");  // ✅ 상태 업데이트
 
       // ✅ 완주 시점의 최종 페이스 계산 (이후 고정됨)
       if (userData.getTotalDistance() > 0 && userData.getStartTime() != null) {
@@ -312,8 +361,113 @@ public class BattleRedisService {
   }
 
   /**
-   * 참가자 제거 (포기 시 사용)
+   * 참가자 타임아웃 처리
    */
+  public void setUserTimeout(Long sessionId, Long userId) {
+    String key = String.format(BATTLE_USER_KEY, sessionId, userId);
+
+    String json = (String) redisTemplate.opsForValue().get(key);
+    if (json == null) {
+      log.warn("⚠️ 배틀 참가자 데이터 없음: sessionId={}, userId={}", sessionId, userId);
+      return;
+    }
+
+    try {
+      BattleUserDto userData = objectMapper.readValue(json, BattleUserDto.class);
+      userData.setStatus("TIMEOUT");  // ✅ 타임아웃 상태
+
+      String updatedJson = objectMapper.writeValueAsString(userData);
+      redisTemplate.opsForValue().set(key, updatedJson, BATTLE_TTL);
+
+      log.info("⏰ 참가자 타임아웃: sessionId={}, userId={}", sessionId, userId);
+    } catch (JsonProcessingException e) {
+      log.error("❌ JSON 처리 실패: sessionId={}, userId={}", sessionId, userId, e);
+    }
+  }
+
+  /**
+   * 모든 미완주자를 타임아웃으로 표시
+   */
+  public void setAllUnfinishedToTimeout(Long sessionId) {
+    String rankingKey = String.format(BATTLE_RANKING_KEY, sessionId);
+    Set<ZSetOperations.TypedTuple<Object>> rankingSet =
+        redisTemplate.opsForZSet().reverseRangeWithScores(rankingKey, 0, -1);
+
+    if (rankingSet == null || rankingSet.isEmpty()) {
+      log.warn("⚠️ 랭킹 데이터 없음: sessionId={}", sessionId);
+      return;
+    }
+
+    log.info("🔍 타임아웃 처리 시작: sessionId={}, 전체={}명", sessionId, rankingSet.size());
+
+    int timeoutCount = 0;
+    for (ZSetOperations.TypedTuple<Object> tuple : rankingSet) {
+      Long userId = Long.parseLong(tuple.getValue().toString());
+      String userKey = String.format(BATTLE_USER_KEY, sessionId, userId);
+      String json = (String) redisTemplate.opsForValue().get(userKey);
+
+      if (json != null) {
+        try {
+          BattleUserDto userData = objectMapper.readValue(json, BattleUserDto.class);
+
+          log.info("🔍 처리 전: userId={}, isFinished={}, status={}, distance={}m", 
+              userId, userData.getIsFinished(), userData.getStatus(), userData.getTotalDistance());
+
+          // ✅ 미완주자만 타임아웃으로 변경 (상태가 null이거나 RUNNING인 경우)
+          if (!userData.getIsFinished() && (userData.getStatus() == null || "RUNNING".equals(userData.getStatus()))) {
+            userData.setStatus("TIMEOUT");
+            String updatedJson = objectMapper.writeValueAsString(userData);
+            redisTemplate.opsForValue().set(userKey, updatedJson, BATTLE_TTL);
+
+            timeoutCount++;
+            log.info("⏰ 자동 타임아웃 설정: sessionId={}, userId={}, distance={}m", 
+                sessionId, userId, userData.getTotalDistance());
+          } else {
+            log.info("ℹ️ 타임아웃 대상 아님: userId={}, isFinished={}, status={}", 
+                userId, userData.getIsFinished(), userData.getStatus());
+          }
+        } catch (JsonProcessingException e) {
+          log.error("❌ JSON 처리 실패: sessionId={}, userId={}", sessionId, userId, e);
+        }
+      } else {
+        log.warn("⚠️ 사용자 데이터 없음: sessionId={}, userId={}", sessionId, userId);
+      }
+    }
+
+    log.info("✅ 모든 미완주자 타임아웃 처리 완료: sessionId={}, 타임아웃={}명", sessionId, timeoutCount);
+  }
+
+  /**
+   * ✅ 참가자 포기 처리 (상태만 변경, 데이터는 유지)
+   */
+  public void setUserGiveUp(Long sessionId, Long userId) {
+    String key = String.format(BATTLE_USER_KEY, sessionId, userId);
+
+    String json = (String) redisTemplate.opsForValue().get(key);
+    if (json == null) {
+      log.warn("⚠️ 배틀 참가자 데이터 없음: sessionId={}, userId={}", sessionId, userId);
+      return;
+    }
+
+    try {
+      BattleUserDto userData = objectMapper.readValue(json, BattleUserDto.class);
+      userData.setStatus("GIVE_UP");  // ✅ 포기 상태로 변경
+
+      String updatedJson = objectMapper.writeValueAsString(userData);
+      redisTemplate.opsForValue().set(key, updatedJson, BATTLE_TTL);
+
+      log.info("🚺 참가자 포기 처리: sessionId={}, userId={}, distance={}m", 
+          sessionId, userId, userData.getTotalDistance());
+    } catch (JsonProcessingException e) {
+      log.error("❌ JSON 처리 실패: sessionId={}, userId={}", sessionId, userId, e);
+    }
+  }
+
+  /**
+   * ❌ 참가자 제거 (사용하지 않음 - 포기자도 결과 저장 필요)
+   * @deprecated setUserGiveUp 사용 권장
+   */
+  @Deprecated
   public void removeUser(Long sessionId, Long userId) {
     // 1. 사용자 데이터 삭제
     String userKey = String.format(BATTLE_USER_KEY, sessionId, userId);
