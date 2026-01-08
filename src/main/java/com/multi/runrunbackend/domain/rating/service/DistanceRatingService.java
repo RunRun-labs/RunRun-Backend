@@ -3,14 +3,17 @@ package com.multi.runrunbackend.domain.rating.service;
 import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.entity.BattleResult;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.repository.BattleResultRepository;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
+import com.multi.runrunbackend.domain.rating.dto.res.DistanceRatingResDto;
 import com.multi.runrunbackend.domain.rating.entity.DistanceRating;
 import com.multi.runrunbackend.domain.rating.repository.DistanceRatingRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
+import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,6 +37,7 @@ public class DistanceRatingService {
   private final DistanceRatingRepository distanceRatingRepository;
   private final BattleResultRepository battleResultRepository;
   private final MatchSessionRepository matchSessionRepository;
+  private final UserRepository userRepository;
 
   /**
    * 대결 종료 후 점수 정산 (2~4인 가변 대응) - 기대승률(Elo 확장) 기반
@@ -195,5 +199,22 @@ public class DistanceRatingService {
             .distanceType(type)
             .build()
     );
+  }
+
+
+  @Transactional(readOnly = true)
+  public DistanceRatingResDto getUserDistanceRating(CustomUser principal,
+      DistanceType distanceType) {
+    User user = userRepository.findByLoginId(principal.getLoginId())
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+    DistanceRating rating = distanceRatingRepository
+        .findByUserIdAndDistanceType(user.getId(), distanceType)
+        .orElseGet(() -> createNewRating(user, distanceType));
+
+    return DistanceRatingResDto.builder()
+        .currentRating(rating.getCurrentRating())
+        .currentTier(rating.getCurrentTier())
+        .build();
   }
 }
