@@ -68,6 +68,32 @@ function isAdmin() {
  * 피드 페이지 초기화
  */
 function initFeedPage() {
+    // URL 파라미터에서 정렬 옵션 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    let sortParam = urlParams.get("sort");
+    
+    // URL 파라미터가 없으면 localStorage 확인 (마이페이지에서 "내 게시물" 클릭 시)
+    if (!sortParam) {
+        const feedSortToMy = localStorage.getItem("feedSortToMy");
+        if (feedSortToMy === "true") {
+            sortParam = "my";
+            // 플래그 제거 (한 번만 적용)
+            localStorage.removeItem("feedSortToMy");
+        }
+    }
+    
+    if (sortParam && ["latest", "popular", "my"].includes(sortParam)) {
+        currentSort = sortParam;
+        // 해당 정렬 탭 활성화
+        const sortItems = document.querySelectorAll(".sort-item");
+        sortItems.forEach(item => {
+            item.classList.remove("active");
+            if (item.getAttribute("data-sort") === sortParam) {
+                item.classList.add("active");
+            }
+        });
+    }
+    
     attachShareButtonHandler();
     attachSortHandlers();
     initInfiniteScroll();
