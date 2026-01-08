@@ -26,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -62,7 +63,22 @@ public class PaymentService {
             if (membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
                 throw new BusinessException(ErrorCode.MEMBERSHIP_ALREADY_PREMIUM);
             }
+
+            // CANCELED 상태지만 아직 사용 가능한 경우
+            if (membership.getMembershipStatus() == MembershipStatus.CANCELED
+                    && membership.getEndDate() != null
+                    && membership.getEndDate().isAfter(LocalDateTime.now())) {
+                throw new BusinessException(ErrorCode.MEMBERSHIP_STILL_ACTIVE);
+            }
         });
+
+        // 동시 결제 방지 - READY 상태 결제 확인
+        boolean hasPendingPayment = paymentRepository.existsByUserAndPaymentStatus(
+                user, PaymentStatus.READY
+        );
+        if (hasPendingPayment) {
+            throw new BusinessException(ErrorCode.PAYMENT_IN_PROGRESS);
+        }
 
         // 주문 ID 생성
         String orderId = "ORDER_" + UUID.randomUUID().toString();
