@@ -1,9 +1,13 @@
 package com.multi.runrunbackend.domain.feed.repository;
 
+import com.multi.runrunbackend.domain.feed.dto.FeedPostWithCountsDto;
 import com.multi.runrunbackend.domain.feed.entity.FeedPost;
+import com.multi.runrunbackend.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.Set;
@@ -17,7 +21,6 @@ import java.util.Set;
  */
 public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
 
-    Page<FeedPost> findAllByIsDeletedFalse(Pageable pageable);
 
     Page<FeedPost> findByUserIdAndIsDeletedFalse(
             Long userId,
@@ -28,5 +31,35 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
 
     boolean existsByRunningResultIdAndIsDeletedFalse(Long runningResultId);
 
-    Page<FeedPost> findByIsDeletedFalseAndUserIdNotIn(Pageable pageable, Set<Long> excludedUserIds);
+
+    @Query("""
+                SELECT new com.multi.runrunbackend.domain.feed.dto.FeedPostWithCountsDto(
+                    fp,
+                    (SELECT COUNT(fl) FROM FeedLike fl WHERE fl.feedPost = fp AND fl.isDeleted = false),
+                    (SELECT COUNT(fc) FROM FeedComment fc WHERE fc.feedPost = fp AND fc.isDeleted = false),
+                    (SELECT COUNT(fl) > 0 FROM FeedLike fl WHERE fl.feedPost = fp AND fl.user = :user AND fl.isDeleted = false)
+                )
+                FROM FeedPost fp
+                WHERE fp.isDeleted = false AND fp.user.id NOT IN :excludedUserIds
+            """)
+    Page<FeedPostWithCountsDto> findAllWithCounts(
+            @Param("user") User user,
+            @Param("excludedUserIds") Set<Long> excludedUserIds,
+            Pageable pageable
+    );
+
+    @Query("""
+                SELECT new com.multi.runrunbackend.domain.feed.dto.FeedPostWithCountsDto(
+                    fp,
+                    (SELECT COUNT(fl) FROM FeedLike fl WHERE fl.feedPost = fp AND fl.isDeleted = false),
+                    (SELECT COUNT(fc) FROM FeedComment fc WHERE fc.feedPost = fp AND fc.isDeleted = false),
+                    (SELECT COUNT(fl) > 0 FROM FeedLike fl WHERE fl.feedPost = fp AND fl.user = :user AND fl.isDeleted = false)
+                )
+                FROM FeedPost fp
+                WHERE fp.isDeleted = false
+            """)
+    Page<FeedPostWithCountsDto> findAllWithCounts(
+            @Param("user") User user,
+            Pageable pageable
+    );
 }
