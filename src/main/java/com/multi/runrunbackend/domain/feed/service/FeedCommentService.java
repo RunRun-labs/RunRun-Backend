@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class FeedCommentService {
 
     private final FeedPostRepository feedPostRepository;
@@ -38,6 +37,7 @@ public class FeedCommentService {
     /**
      * 댓글 등록
      */
+    @Transactional
     public void createComment(
             Long feedId,
             FeedCommentCreateReqDto req,
@@ -57,6 +57,7 @@ public class FeedCommentService {
     /**
      * 댓글 삭제 (soft delete)
      */
+    @Transactional
     public void deleteComment(
             Long feedId,
             Long commentId,
@@ -87,6 +88,7 @@ public class FeedCommentService {
     /**
      * 댓글 목록 조회
      */
+    @Transactional(readOnly = true)
     public Page<FeedCommentResDto> getComments(
             Long feedId,
             Pageable pageable
