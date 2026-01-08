@@ -54,71 +54,95 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 데이터 초기화 함수
   async function initEditForm(data) {
-    // 텍스트 필드
-    document.getElementById("title").value = data.title || "";
-    document.getElementById("content").value = data.content || "";
-    document.getElementById("maxParticipants").value = data.maxParticipants || 2;
+    try {
+      // data가 없거나 null인 경우 처리
+      if (!data) {
+        throw new Error("모집글 데이터가 없습니다.");
+      }
 
-    // 글자수 카운터 업데이트
-    const titleInput = document.getElementById("title");
-    const titleCounter = document.getElementById("titleCounter");
-    const contentInput = document.getElementById("content");
-    const contentCounter = document.getElementById("contentCounter");
-    if (titleInput && titleCounter) {
-      updateCharCounter(titleInput, titleCounter, 100);
-    }
-    if (contentInput && contentCounter) {
-      updateCharCounter(contentInput, contentCounter, 500);
-    }
+      // 텍스트 필드
+      const titleInput = document.getElementById("title");
+      const contentInput = document.getElementById("content");
+      const maxParticipantsInput = document.getElementById("maxParticipants");
+      
+      if (titleInput) titleInput.value = data.title || "";
+      if (contentInput) contentInput.value = data.content || "";
+      if (maxParticipantsInput) maxParticipantsInput.value = data.maxParticipants || 2;
 
-    // 출발지
-    if (data.latitude && data.longitude && data.meetingPlace) {
-      selectedLat = data.latitude;
-      selectedLng = data.longitude;
-      selectedAddress = data.meetingPlace;
-      updateLocationSummary();
-    }
+      // 글자수 카운터 업데이트
+      const titleCounter = document.getElementById("titleCounter");
+      const contentCounter = document.getElementById("contentCounter");
+      if (titleInput && titleCounter) {
+        updateCharCounter(titleInput, titleCounter, 100);
+      }
+      if (contentInput && contentCounter) {
+        updateCharCounter(contentInput, contentCounter, 500);
+      }
 
-    // 날짜/시간
-    if (data.meetingAt) {
-      const meetingDate = new Date(data.meetingAt);
-      const year = meetingDate.getFullYear();
-      const month = String(meetingDate.getMonth() + 1).padStart(2, "0");
-      const day = String(meetingDate.getDate()).padStart(2, "0");
-      const hours = String(meetingDate.getHours()).padStart(2, "0");
-      const minutes = String(meetingDate.getMinutes()).padStart(2, "0");
+      // 출발지
+      if (data.latitude && data.longitude && data.meetingPlace) {
+        selectedLat = data.latitude;
+        selectedLng = data.longitude;
+        selectedAddress = data.meetingPlace;
+        updateLocationSummary();
+      }
 
-      document.getElementById("meetingDate").value = `${year}-${month}-${day}`;
-      document.getElementById("meetingTime").value = `${hours}:${minutes}`;
-    }
+      // 날짜/시간
+      if (data.meetingAt) {
+        const meetingDate = new Date(data.meetingAt);
+        // Invalid Date 체크
+        if (isNaN(meetingDate.getTime())) {
+          console.error("Invalid meeting date:", data.meetingAt);
+        } else {
+          const year = meetingDate.getFullYear();
+          const month = String(meetingDate.getMonth() + 1).padStart(2, "0");
+          const day = String(meetingDate.getDate()).padStart(2, "0");
+          const hours = String(meetingDate.getHours()).padStart(2, "0");
+          const minutes = String(meetingDate.getMinutes()).padStart(2, "0");
 
-    // 코스
-    if (data.courseId) {
-      selectedCourseId = data.courseId;
-      // 코스 이름은 API에서 가져와야 할 수도 있음
-      document.getElementById("course").value = data.courseImageUrl ? "코스 선택됨" : "";
-    }
+          const meetingDateInput = document.getElementById("meetingDate");
+          const meetingTimeInput = document.getElementById("meetingTime");
+          if (meetingDateInput) meetingDateInput.value = `${year}-${month}-${day}`;
+          if (meetingTimeInput) meetingTimeInput.value = `${hours}:${minutes}`;
+        }
+      }
 
-    // 러닝 조건
-    if (data.targetDistance) {
-      selectedTags.distance = data.targetDistance;
-    }
-    if (data.targetPace) {
-      selectedTags.pace = data.targetPace;
-    }
-    if (data.ageMin !== null && data.ageMax !== null) {
-      selectedTags.ages = convertAgeRangeToAges(data.ageMin, data.ageMax);
-    }
-    if (data.genderLimit) {
-      selectedTags.gender = data.genderLimit;
-    }
+      // 코스
+      if (data.courseId) {
+        selectedCourseId = data.courseId;
+        const courseInput = document.getElementById("course");
+        if (courseInput) {
+          courseInput.value = data.courseImageUrl ? "코스 선택됨" : "";
+        }
+      }
 
-    // 칩 선택 상태 업데이트
-    updateChipSelection();
-    updateConditionSummary();
+      // 러닝 조건
+      if (data.targetDistance) {
+        selectedTags.distance = data.targetDistance;
+      }
+      if (data.targetPace) {
+        selectedTags.pace = data.targetPace;
+      }
+      if (data.ageMin !== null && data.ageMax !== null) {
+        selectedTags.ages = convertAgeRangeToAges(data.ageMin, data.ageMax);
+      }
+      if (data.genderLimit) {
+        selectedTags.gender = data.genderLimit;
+      }
 
-    // 시간 옵션 생성 (날짜가 설정된 후)
-    generateTimeOptions();
+      // 칩 선택 상태 업데이트 (에러 발생 가능성 있음)
+      try {
+        updateChipSelection();
+        updateConditionSummary();
+        generateTimeOptions();
+      } catch (updateError) {
+        console.error("조건 업데이트 중 오류:", updateError);
+        // 치명적이지 않은 에러이므로 계속 진행
+      }
+    } catch (error) {
+      console.error("폼 초기화 중 오류:", error);
+      throw error; // 상위로 에러 전달
+    }
   }
 
   // 페이지 로드 시 데이터 가져오기
@@ -148,12 +172,40 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: headers,
       });
 
+      // 응답이 JSON이 아닌 경우 처리
+      if (!response.ok) {
+        let errorMessage = "모집글을 불러올 수 없습니다.";
+        try {
+          const errorText = await response.text();
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || errorMessage;
+        } catch (e) {
+          // JSON 파싱 실패 시 기본 메시지 사용
+        }
+        showToast(errorMessage, "error");
+        setTimeout(() => {
+          window.location.href = "/recruit";
+        }, 2000);
+        return;
+      }
+
       const result = await response.json();
 
-      if (response.ok && result.success) {
+      // result.data 검증 추가
+      if (!result.success || !result.data) {
+        showToast(result.message || "모집글 데이터를 불러올 수 없습니다.", "error");
+        setTimeout(() => {
+          window.location.href = "/recruit";
+        }, 2000);
+        return;
+      }
+
+      // initEditForm에서 발생하는 에러도 catch
+      try {
         await initEditForm(result.data);
-      } else {
-        showToast(result.message || "모집글을 불러올 수 없습니다.", "error");
+      } catch (initError) {
+        console.error("폼 초기화 중 오류 발생:", initError);
+        showToast("모집글을 불러오는 중 오류가 발생했습니다.", "error");
         setTimeout(() => {
           window.location.href = "/recruit";
         }, 2000);
@@ -167,116 +219,58 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 나머지 코드는 recruit-create.js와 동일 (generateTimeOptions, setupDateChangeListener 등)
-  function generateTimeOptions() {
-    const timeOptionContainer = document.getElementById("timeOptionContainer");
+  // 로컬 시간 기준으로 날짜 문자열 생성 (타임존 문제 방지)
+  function getLocalDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // 로컬 시간 기준으로 시간 문자열 생성
+  function getLocalTimeString(date) {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // 시간 입력 검증 함수
+  function validateTimeInput() {
+    const dateInput = document.getElementById("meetingDate");
     const timeInput = document.getElementById("meetingTime");
-
-    if (!timeOptionContainer || !timeInput) {
-      return;
+    
+    if (!dateInput || !timeInput || !dateInput.value || !timeInput.value) {
+      return true; // 날짜나 시간이 없으면 검증 통과 (나중에 제출 시 검증)
     }
 
-    // 기존 칩 모두 제거
-    timeOptionContainer.innerHTML = "";
-
-    // 현재 선택된 시간 값 가져오기
-    const currentSelectedTime = timeInput.value;
-
-    // 선택된 날짜 확인
-    const selectedDate = document.getElementById("meetingDate").value;
-
-    // 로컬 시간으로 오늘 날짜 문자열 생성 (toISOString 버그 방지)
+    const selectedDate = dateInput.value;
+    const selectedTime = timeInput.value;
+    
+    // 날짜와 시간을 결합하여 LocalDateTime 생성
+    const selectedDateTime = new Date(`${selectedDate}T${selectedTime}:00`);
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const today = `${year}-${month}-${day}`;
-
-    // 오늘 날짜인 경우, 현재 시간 + 1시간 이후만 표시
-    let minHour = 0;
-    let minMinute = 0;
-
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000); // 1시간 후
+    
+    // 오늘 날짜인 경우, 현재 시간 + 1시간 이후만 허용
+    const today = getLocalDateString(now);
     if (selectedDate === today) {
-      // 현재 시간 + 1시간 계산
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-
-      // 1시간 후 계산
-      let oneHourLaterHour = currentHour;
-      let oneHourLaterMinute = currentMinute;
-
-      // 1시간 추가
-      oneHourLaterMinute += 60;
-      if (oneHourLaterMinute >= 60) {
-        oneHourLaterHour += Math.floor(oneHourLaterMinute / 60);
-        oneHourLaterMinute = oneHourLaterMinute % 60;
-      }
-      if (oneHourLaterHour >= 24) {
-        oneHourLaterHour = 23; // 최대 23시까지만
-        oneHourLaterMinute = 59;
-      }
-
-      minHour = oneHourLaterHour;
-      minMinute = oneHourLaterMinute;
-
-      // 30분 단위로 올림 처리 (예: 14:15 -> 14:30, 14:45 -> 15:00)
-      if (minMinute > 0 && minMinute <= 30) {
-        minMinute = 30;
-      } else if (minMinute > 30) {
-        minHour += 1;
-        minMinute = 0;
-      }
-
-      // 24시를 넘으면 다음 날로 넘어가므로 시간 옵션 생성 중단
-      if (minHour >= 24) {
-        return;
+      if (selectedDateTime < oneHourLater) {
+        timeInput.setCustomValidity("모임 시간은 최소 1시간 후여야 합니다.");
+        timeInput.reportValidity();
+        return false;
       }
     }
-
-    for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        // 오늘 날짜인 경우, 현재 시간 + 1시간 이후만 활성화
-        if (selectedDate === today) {
-          if (hour < minHour || (hour === minHour && minute < minMinute)) {
-            continue; // 이 시간은 건너뛰기
-          }
-        }
-
-        const timeString = `${String(hour).padStart(2, "0")}:${String(
-            minute).padStart(2, "0")}`;
-        const timeChip = document.createElement("button");
-        timeChip.type = "button";
-        timeChip.className = "time-chip";
-        timeChip.textContent = timeString;
-        timeChip.dataset.time = timeString;
-
-        // 이미 선택된 시간이면 selected 클래스 추가
-        if (currentSelectedTime === timeString) {
-          timeChip.classList.add("selected");
-        }
-
-        // 클릭 이벤트: 시간 선택
-        timeChip.addEventListener("click", () => {
-          // 모든 칩에서 selected 클래스 제거
-          document.querySelectorAll(".time-chip").forEach(chip => {
-            chip.classList.remove("selected");
-          });
-
-          // 선택된 칩에 selected 클래스 추가
-          timeChip.classList.add("selected");
-
-          // 메인 화면의 시간 입력창에 값 표시
-          timeInput.value = timeString;
-
-          // 0.2초 후 모달 닫기
-          setTimeout(() => {
-            closeTimeModal();
-          }, 200);
-        });
-
-        timeOptionContainer.appendChild(timeChip);
-      }
+    
+    // 최대 2주 후까지 허용
+    const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    if (selectedDateTime > twoWeeksLater) {
+      timeInput.setCustomValidity("모임 시간은 최대 2주 후까지 설정할 수 있습니다.");
+      timeInput.reportValidity();
+      return false;
     }
+    
+    timeInput.setCustomValidity("");
+    return true;
   }
 
   function setupDateChangeListener() {
@@ -288,46 +282,104 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // 날짜 입력의 min/max 설정
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const twoWeeksLater = new Date(today);
+    twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+
+    dateInput.min = getLocalDateString(today);
+    dateInput.max = getLocalDateString(twoWeeksLater);
+
+    // 날짜 변경 시 시간 입력 제약 조건 업데이트
+    function updateTimeInputConstraints() {
+      const selectedDate = dateInput.value;
+      const todayStr = getLocalDateString(today);
+
+      if (selectedDate === todayStr) {
+        // 오늘 날짜인 경우: 현재 시간 + 1시간 이후만 허용
+        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+        timeInput.min = getLocalTimeString(oneHourLater);
+        
+        // 현재 선택된 시간이 최소 시간보다 이전이면 초기화
+        if (timeInput.value && timeInput.value < timeInput.min) {
+          timeInput.value = '';
+        }
+      } else {
+        // 미래 날짜인 경우: 제한 없음
+        timeInput.min = '';
+      }
+      
+      // 최대 시간: 23:59
+      timeInput.max = '23:59';
+    }
+
+    // 초기 설정
+    updateTimeInputConstraints();
+
+    // 날짜 입력 필드 전체 클릭 가능하게
+    dateInput.addEventListener("click", (e) => {
+      // 브라우저 기본 동작 유지하되, 전체 영역 클릭 가능하게
+      if (e.target === dateInput) {
+        // showPicker() API 사용 (최신 브라우저)
+        if (dateInput.showPicker) {
+          try {
+            dateInput.showPicker();
+          } catch (err) {
+            // showPicker()가 실패하면 focus()로 폴백
+            dateInput.focus();
+          }
+        } else {
+          // 구형 브라우저 폴백
+          dateInput.focus();
+        }
+      }
+    });
+
+    // 시간 입력 필드 전체 클릭 가능하게
+    timeInput.addEventListener("click", (e) => {
+      if (e.target === timeInput) {
+        // showPicker() API 사용 (최신 브라우저)
+        if (timeInput.showPicker) {
+          try {
+            timeInput.showPicker();
+          } catch (err) {
+            timeInput.focus();
+          }
+        } else {
+          timeInput.focus();
+        }
+      }
+    });
+
+    // 날짜 변경 시 시간 제약 조건 업데이트 및 자동 시간 설정
     dateInput.addEventListener("change", () => {
-      // 시간 선택 초기화
-      timeInput.value = "";
-      generateTimeOptions();
+      const selectedDate = dateInput.value;
+      const todayStr = getLocalDateString(today);
+      
+      if (selectedDate === todayStr && !timeInput.value) {
+        // 오늘 날짜 선택 시 자동으로 1시간 후 시간 설정
+        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+        timeInput.value = getLocalTimeString(oneHourLater);
+      } else {
+        timeInput.value = "";
+      }
+      
+      updateTimeInputConstraints();
+      validateTimeInput();
+    });
+
+    // 시간 입력 시 검증
+    timeInput.addEventListener("change", () => {
+      validateTimeInput();
+    });
+
+    // 시간 입력 시 실시간 검증 (blur 이벤트)
+    timeInput.addEventListener("blur", () => {
+      validateTimeInput();
     });
   }
 
-  // [추가] 시간 모달 열기/닫기 로직
-  const timeModal = document.getElementById("timeBottomSheet");
-  const timeInput = document.getElementById("meetingTime");
-  const closeTimeModalBtn = document.getElementById("closeTimeModal");
-
-  // 모달 닫기 함수 (generateTimeOptions에서 호출됨)
-  function closeTimeModal() {
-    if (timeModal) {
-      timeModal.classList.remove("show");
-      document.body.style.overflow = "";
-    }
-  }
-
-  // 모달 요소가 존재할 때만 이벤트 연결
-  if (timeModal && timeInput) {
-    // 1. 입력창 클릭 시 모달 열기
-    timeInput.addEventListener("click", () => {
-      timeModal.classList.add("show");
-      document.body.style.overflow = "hidden";
-      generateTimeOptions();
-    });
-
-    // 2. 닫기 버튼 클릭 시 닫기
-    if (closeTimeModalBtn) {
-      closeTimeModalBtn.addEventListener("click", closeTimeModal);
-    }
-
-    // 3. 오버레이 클릭 시 닫기
-    const timeOverlay = timeModal.querySelector(".bottom-sheet-overlay");
-    if (timeOverlay) {
-      timeOverlay.addEventListener("click", closeTimeModal);
-    }
-  }
 
   function initMap() {
     const mapContainer = document.getElementById("map");
@@ -581,6 +633,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const index = selectedTags.ages.indexOf(age);
 
         if (index > -1) {
+          // 이미 선택된 나이대를 클릭한 경우 - 해제
           if (selectedTags.ages.length > 1) {
             const sorted = [...selectedTags.ages].sort((a, b) => a - b);
             if (age !== sorted[0] && age !== sorted[sorted.length - 1]) {
@@ -592,27 +645,60 @@ document.addEventListener("DOMContentLoaded", () => {
           chip.classList.remove("selected");
           selectedTags.ages.splice(index, 1);
         } else {
+          // 새로운 나이대를 선택하는 경우
           if (selectedTags.ages.length > 0) {
+            // 기존 선택된 나이대들과의 범위 계산
             const sorted = [...selectedTags.ages].sort((a, b) => a - b);
             const min = sorted[0];
             const max = sorted[sorted.length - 1];
-
-            const isConsecutive =
-                age === min - 10 ||
-                age === max + 10 ||
-                (age === 0 && min === 20) ||
-                (age === 20 && max === 0) ||
-                (age === 70 && max === 60) ||
-                (age === 60 && min === 70);
-
-            if (!isConsecutive) {
-              showToast("연속된 나이대만 선택할 수 있습니다.", "error");
-              return;
+            
+            // 나이대 순서 배열
+            const allAges = [0, 20, 30, 40, 50, 60, 70];
+            
+            // 선택하려는 나이대가 범위 밖에 있는 경우, 사이의 모든 나이대 선택
+            if (age < min) {
+              // 선택하려는 나이대가 기존 최소값보다 작은 경우
+              // age부터 min까지의 모든 나이대 선택
+              const startIndex = allAges.indexOf(age);
+              const endIndex = allAges.indexOf(min);
+              
+              for (let i = startIndex; i <= endIndex; i++) {
+                const ageToAdd = allAges[i];
+                if (!selectedTags.ages.includes(ageToAdd)) {
+                  selectedTags.ages.push(ageToAdd);
+                  const chipToSelect = document.querySelector(`.chip[data-age="${ageToAdd}"]`);
+                  if (chipToSelect) {
+                    chipToSelect.classList.add("selected");
+                  }
+                }
+              }
+            } else if (age > max) {
+              // 선택하려는 나이대가 기존 최대값보다 큰 경우
+              // max부터 age까지의 모든 나이대 선택
+              const startIndex = allAges.indexOf(max);
+              const endIndex = allAges.indexOf(age);
+              
+              for (let i = startIndex; i <= endIndex; i++) {
+                const ageToAdd = allAges[i];
+                if (!selectedTags.ages.includes(ageToAdd)) {
+                  selectedTags.ages.push(ageToAdd);
+                  const chipToSelect = document.querySelector(`.chip[data-age="${ageToAdd}"]`);
+                  if (chipToSelect) {
+                    chipToSelect.classList.add("selected");
+                  }
+                }
+              }
+            } else {
+              // 선택하려는 나이대가 범위 안에 있는 경우 (이미 선택된 나이대 사이)
+              // 이 경우는 발생하지 않아야 하지만 안전을 위해 처리
+              chip.classList.add("selected");
+              selectedTags.ages.push(age);
             }
+          } else {
+            // 첫 번째 선택인 경우
+            chip.classList.add("selected");
+            selectedTags.ages.push(age);
           }
-
-          chip.classList.add("selected");
-          selectedTags.ages.push(age);
         }
 
         selectedTags.ages.sort((a, b) => a - b);
