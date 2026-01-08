@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentSortBy = "distance";
   let currentKeyword = "";
   let currentIsParticipated = null;
-  let currentRegion = null;
   let currentPage = 0;
   let hasNext = true;
   let isLoading = false;
@@ -101,10 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
         size: "10",
       });
 
-      // 거리 필터: 지역 필터가 없을 때만 추가
-      if (!currentRegion) {
-        params.append("radiusKm", currentRadius.toString());
-      }
+      // 거리 필터 추가
+      params.append("radiusKm", currentRadius.toString());
 
       if (currentSortBy && currentSortBy !== "latest") {
         params.append("sortBy", currentSortBy);
@@ -114,9 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (currentIsParticipated !== null) {
         params.append("isParticipated", currentIsParticipated.toString());
-      }
-      if (currentRegion) {
-        params.append("region", currentRegion);
       }
 
       // 1. 토큰 가져오기 (localStorage 또는 쿠키)
@@ -235,6 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <!-- 1행: 뱃지 -->
           <div class="card-badge-wrapper">
             <span class="card-badge recruiting">모집중</span>
+            ${recruit.isAuthor ? '<span class="card-badge host">방장</span>' : ''}
           </div>
           
           <!-- 2행: 제목 -->
@@ -426,56 +421,118 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  const radiusSelect = document.getElementById("radiusSelect");
-  if (radiusSelect) {
-    radiusSelect.addEventListener("change", (e) => {
-      currentRadius = parseInt(e.target.value);
-      loadRecruitList(true); // 필터 변경 시 리셋
+  // 필터/정렬 패널 토글
+  const filterToggleBtn = document.getElementById("filterToggleBtn");
+  const sortToggleBtn = document.getElementById("sortToggleBtn");
+  const filterPanel = document.getElementById("filterPanel");
+  const sortPanel = document.getElementById("sortPanel");
+
+  // 필터 패널 토글
+  if (filterToggleBtn && filterPanel) {
+    filterToggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isVisible = filterPanel.style.display !== "none";
+      filterPanel.style.display = isVisible ? "none" : "block";
+      if (sortPanel) sortPanel.style.display = "none";
     });
   }
 
-  const sortSelect = document.getElementById("sortSelect");
-  if (sortSelect) {
-    sortSelect.addEventListener("change", (e) => {
-      currentSortBy = e.target.value;
-      loadRecruitList(true); // 필터 변경 시 리셋
+  // 정렬 패널 토글
+  if (sortToggleBtn && sortPanel) {
+    sortToggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isVisible = sortPanel.style.display !== "none";
+      sortPanel.style.display = isVisible ? "none" : "block";
+      if (filterPanel) filterPanel.style.display = "none";
     });
   }
 
-  // 지역 필터 드롭다운 이벤트
-  const regionSelect = document.getElementById("regionSelect");
-  if (regionSelect) {
-    regionSelect.addEventListener("change", (e) => {
-      currentRegion = e.target.value || null;
-      
-      // 지역 필터 선택 시 거리 필터 비활성화
-      const radiusSelect = document.getElementById("radiusSelect");
-      if (radiusSelect) {
-        if (currentRegion) {
-          radiusSelect.disabled = true;
-          radiusSelect.style.opacity = "0.5";
-          radiusSelect.style.cursor = "not-allowed";
-        } else {
-          radiusSelect.disabled = false;
-          radiusSelect.style.opacity = "1";
-          radiusSelect.style.cursor = "pointer";
-        }
-      }
-      
-      loadRecruitList(true); // 필터 변경 시 리셋
-    });
+  // 필터 옵션 클릭 처리
+  const filterOptions = document.querySelectorAll(".filter-option[data-filter]");
+  filterOptions.forEach((option) => {
+    option.addEventListener("click", () => {
+      const filterType = option.dataset.filter;
+      const value = option.dataset.value;
 
-    // 초기 로드 시 지역 필터 상태 확인
-    if (regionSelect.value) {
-      currentRegion = regionSelect.value;
-      const radiusSelectInit = document.getElementById("radiusSelect");
-      if (radiusSelectInit) {
-        radiusSelectInit.disabled = true;
-        radiusSelectInit.style.opacity = "0.5";
-        radiusSelectInit.style.cursor = "not-allowed";
+      // 같은 타입의 다른 옵션들 비활성화
+      document.querySelectorAll(`.filter-option[data-filter="${filterType}"]`).forEach((opt) => {
+        opt.classList.remove("active");
+      });
+
+      // 현재 옵션 활성화
+      option.classList.add("active");
+    });
+  });
+
+  // 정렬 옵션 클릭 처리
+  const sortOptions = document.querySelectorAll(".sort-option");
+  sortOptions.forEach((option) => {
+    option.addEventListener("click", () => {
+      sortOptions.forEach((opt) => opt.classList.remove("active"));
+      option.classList.add("active");
+
+      // 즉시 적용
+      currentSortBy = option.dataset.sort;
+      loadRecruitList(true);
+
+      // 패널 닫기
+      if (sortPanel) sortPanel.style.display = "none";
+    });
+  });
+
+  // 적용 버튼
+  const filterApplyBtn = document.querySelector(".filter-apply");
+  if (filterApplyBtn) {
+    filterApplyBtn.addEventListener("click", () => {
+      // 현재 선택된 필터 값들 읽어서 적용
+      const activeRadius = document.querySelector(".filter-option[data-filter='radius'].active");
+
+      if (activeRadius) {
+        currentRadius = parseFloat(activeRadius.dataset.value);
       }
+
+      // 필터 적용
+      loadRecruitList(true);
+
+      // 패널 닫기
+      if (filterPanel) filterPanel.style.display = "none";
+    });
+  }
+
+  // 초기화 버튼
+  const filterResetBtn = document.querySelector(".filter-reset");
+  if (filterResetBtn) {
+    filterResetBtn.addEventListener("click", () => {
+      // 모든 필터 옵션 비활성화
+      document.querySelectorAll(".filter-option").forEach((opt) => {
+        opt.classList.remove("active");
+      });
+
+      // 기본값으로 설정
+      document.querySelector(".filter-option[data-filter='radius'][data-value='3']")?.classList.add("active");
+
+      // 필터 초기화
+      currentRadius = 3;
+      currentIsParticipated = null;
+      const checkbox = document.getElementById("isParticipatedCheckbox");
+      if (checkbox) checkbox.checked = false;
+
+      loadRecruitList(true);
+
+      // 패널 닫기
+      if (filterPanel) filterPanel.style.display = "none";
+    });
+  }
+
+  // 외부 클릭 시 패널 닫기
+  document.addEventListener("click", (e) => {
+    if (filterPanel && !filterPanel.contains(e.target) && filterToggleBtn && !filterToggleBtn.contains(e.target)) {
+      filterPanel.style.display = "none";
     }
-  }
+    if (sortPanel && !sortPanel.contains(e.target) && sortToggleBtn && !sortToggleBtn.contains(e.target)) {
+      sortPanel.style.display = "none";
+    }
+  });
 
   // 검색 입력창 이벤트 (Enter 키 및 실시간 검색)
   const keywordInput = document.getElementById("keywordInput");
