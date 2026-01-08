@@ -179,28 +179,35 @@ public class CrewJoinService {
             throw new BusinessException(ErrorCode.JOIN_REQUEST_NOT_FOUND);
         }
 
+        Long userId = joinRequest.getUser().getId();
+
+        // 승인 시점에 다시 1인 1크루 정책 확인 (동시성 이슈 방지)
+        validateNotInAnotherCrew(userId);
+
         // 승인 처리
         joinRequest.approve();
 
-        // 승인 시점에 다시 1인 1크루 정책 확인 (동시성 이슈 방지)
-        validateNotInAnotherCrew(joinRequest.getUser().getId());
-
         // 포인트 차감(100p)
         pointService.deductPointsForCrewJoin(
-                joinRequest.getUser().getId(),
+                userId,
                 CREW_JOIN_POINT,
                 "CREW_JOIN"
         );
 
+        // 재검증 - 포인트 차감 중 다른 크루 승인된 경우 감지
+        if (crewUserRepository.existsByUserIdAndIsDeletedFalse(userId)) {
+            throw new BusinessException(ErrorCode.ALREADY_JOINED_CREW);
+        }
+
         // 해당 사용자의 다른 크루 대기 중인 신청 모두 취소
-        cancelOtherPendingRequestsForUser(joinRequest.getUser().getId(), crewId);
+        cancelOtherPendingRequestsForUser(userId, crewId);
 
         // 크루원으로 추가
         CrewUser crewUser = CrewUser.create(crew, joinRequest.getUser(), CrewRole.MEMBER);
         crewUserRepository.save(crewUser);
 
         log.info("크루 가입 승인 완료 - crewId: {}, newMemberId: {}",
-                crewId, joinRequest.getUser().getId());
+                crewId, userId);
 
     }
 
