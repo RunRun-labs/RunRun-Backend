@@ -7,6 +7,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentRadius = 3;
   let currentSortBy = "distance";
   let currentKeyword = "";
+  let currentIsParticipated = null;
+  let currentRegion = null;
+  let currentPage = 0;
+  let hasNext = true;
+  let isLoading = false;
+  let allRecruits = []; // 누적된 모집글 목록
+  let observer = null; // Intersection Observer
 
   // 사용자 위치 가져오기
   function getUserLocation() {
@@ -16,14 +23,14 @@ document.addEventListener("DOMContentLoaded", () => {
             userLat = position.coords.latitude;
             userLng = position.coords.longitude;
             initMap();
-            loadRecruitList();
+            loadRecruitList(true); // 초기 로드
           },
           (error) => {
             console.error("위치 정보를 가져올 수 없습니다:", error);
             userLat = 37.5665; // 기본 위치 (서울시청)
             userLng = 126.9780;
             initMap();
-            loadRecruitList();
+            loadRecruitList(true); // 초기 로드
           }
       );
     } else {
@@ -31,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
       userLat = 37.5665;
       userLng = 126.9780;
       initMap();
-      loadRecruitList();
+      loadRecruitList(true); // 초기 로드
     }
   }
 
@@ -66,26 +73,50 @@ document.addEventListener("DOMContentLoaded", () => {
     customOverlays = [];
   }
 
-  // [수정] 모집글 목록 로드 (토큰 로직 추가)
-  async function loadRecruitList() {
+  // [수정] 모집글 목록 로드 (무한 스크롤 지원)
+  async function loadRecruitList(reset = false) {
+    // 중복 호출 방지
+    if (isLoading) return;
+    if (!hasNext && !reset) return;
+
+    isLoading = true;
     const loadingSpinner = document.getElementById("loadingSpinner");
     const recruitList = document.getElementById("recruitList");
 
+    if (reset) {
+      currentPage = 0;
+      hasNext = true;
+      allRecruits = [];
+      recruitList.innerHTML = "";
+      clearMarkers();
+    }
+
     loadingSpinner.style.display = "flex";
-    recruitList.innerHTML = "";
 
     try {
       const params = new URLSearchParams({
         latitude: userLat.toString(),
         longitude: userLng.toString(),
-        radiusKm: currentRadius.toString(),
+        page: currentPage.toString(),
+        size: "10",
       });
+
+      // 거리 필터: 지역 필터가 없을 때만 추가
+      if (!currentRegion) {
+        params.append("radiusKm", currentRadius.toString());
+      }
 
       if (currentSortBy && currentSortBy !== "latest") {
         params.append("sortBy", currentSortBy);
       }
       if (currentKeyword) {
         params.append("keyword", currentKeyword);
+      }
+      if (currentIsParticipated !== null) {
+        params.append("isParticipated", currentIsParticipated.toString());
+      }
+      if (currentRegion) {
+        params.append("region", currentRegion);
       }
 
       // 1. 토큰 가져오기 (localStorage 또는 쿠키)
@@ -112,28 +143,39 @@ document.addEventListener("DOMContentLoaded", () => {
       if (result.success && result.data) {
         // Slice 구조: result.data는 Slice 객체이므로 content 배열을 가져옴
         const recruits = result.data.content || [];
-        if (recruits.length > 0) {
-          displayRecruits(recruits);
-          displayMarkers(recruits);
-        } else {
+        hasNext = result.data.hasNext !== undefined ? result.data.hasNext : (recruits.length >= 10);
+
+        if (recruits.length === 0 && reset) {
           recruitList.innerHTML = "<p>모집글이 없습니다.</p>";
+        } else if (recruits.length > 0) {
+          allRecruits = [...allRecruits, ...recruits];
+          displayRecruits(recruits, reset);
+          displayMarkers(allRecruits); // 전체 모집글 기준으로 마커 표시
+          currentPage++;
         }
       } else {
-        recruitList.innerHTML = "<p>모집글이 없습니다.</p>";
+        if (reset) {
+          recruitList.innerHTML = "<p>모집글이 없습니다.</p>";
+        }
       }
     } catch (error) {
       console.error("모집글 목록 로드 중 오류:", error);
-      recruitList.innerHTML = "<p>오류가 발생했습니다.</p>";
+      if (reset) {
+        recruitList.innerHTML = "<p>오류가 발생했습니다.</p>";
+      }
     } finally {
       loadingSpinner.style.display = "none";
+      isLoading = false;
+      // 무한 스크롤 Observer 재설정
+      setupInfiniteScroll();
     }
   }
 
-  // 모집글 카드 표시
-  function displayRecruits(recruits) {
+  // 모집글 카드 표시 (append 모드 지원)
+  function displayRecruits(recruits, reset = false) {
     const recruitList = document.getElementById("recruitList");
+    
     if (recruits.length === 0) {
-      recruitList.innerHTML = "<p>모집글이 없습니다.</p>";
       return;
     }
 
@@ -176,70 +218,76 @@ document.addEventListener("DOMContentLoaded", () => {
       return `${month}/${day} ${hours}:${minutes}`;
     }
 
-    recruitList.innerHTML = recruits.map((recruit) => {
+    // DocumentFragment를 사용하여 성능 최적화
+    const fragment = document.createDocumentFragment();
+
+    recruits.forEach((recruit) => {
       const distanceText = recruit.distanceKm
           ? `${recruit.distanceKm.toFixed(1)}km`
           : "";
       const paceText = formatPace(recruit.targetPace);
       const meetingDateTime = formatMeetingDateTime(recruit.meetingAt);
 
-      return `
-          <div class="recruit-card" data-recruit-id="${recruit.recruitId}">
-            <!-- 1행: 뱃지 -->
-            <div class="card-badge-wrapper">
-              <span class="card-badge recruiting">모집중</span>
-            </div>
-            
-            <!-- 2행: 제목 -->
-            <h3 class="card-title">${escapeHtml(recruit.title)}</h3>
-            
-            <!-- 3행: 거리 정보 -->
-            ${distanceText ? `
-            <div class="card-distance">
-              <svg class="card-distance-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      const card = document.createElement("div");
+      card.className = "recruit-card";
+      card.setAttribute("data-recruit-id", recruit.recruitId);
+      card.innerHTML = `
+          <!-- 1행: 뱃지 -->
+          <div class="card-badge-wrapper">
+            <span class="card-badge recruiting">모집중</span>
+          </div>
+          
+          <!-- 2행: 제목 -->
+          <h3 class="card-title">${escapeHtml(recruit.title)}</h3>
+          
+          <!-- 3행: 거리 정보 -->
+          ${distanceText ? `
+          <div class="card-distance">
+            <svg class="card-distance-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>내 위치에서 ${distanceText}</span>
+          </div>
+          ` : ""}
+          
+          <!-- 4행: 상세 스펙 (날짜/시간 | 페이스 | 인원) -->
+          <div class="card-specs">
+            <div class="card-spec-item">
+              <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-              <span>내 위치에서 ${distanceText}</span>
+              <span>${meetingDateTime}</span>
             </div>
-            ` : ""}
-            
-            <!-- 4행: 상세 스펙 (날짜/시간 | 페이스 | 인원) -->
-            <div class="card-specs">
-              <div class="card-spec-item">
-                <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>${meetingDateTime}</span>
-              </div>
-              <span class="card-spec-divider">·</span>
-              <div class="card-spec-item">
-                <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>${paceText}</span>
-              </div>
-              <span class="card-spec-divider">·</span>
-              <div class="card-spec-item">
-                <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>${recruit.currentParticipants || 1}/${recruit.maxParticipants}명</span>
-              </div>
+            <span class="card-spec-divider">·</span>
+            <div class="card-spec-item">
+              <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>${paceText}</span>
+            </div>
+            <span class="card-spec-divider">·</span>
+            <div class="card-spec-item">
+              <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>${recruit.currentParticipants || 1}/${recruit.maxParticipants}명</span>
             </div>
           </div>
         `;
-    }).join("");
 
-    document.querySelectorAll(".recruit-card").forEach((card) => {
       card.addEventListener("click", () => {
         const recruitId = card.getAttribute("data-recruit-id");
         window.location.href = `/recruit/${recruitId}`;
       });
+
+      fragment.appendChild(card);
     });
+
+    recruitList.appendChild(fragment);
   }
 
-  // 마커 및 지도 범위 설정
+  // 마커 및 지도 범위 설정 (전체 모집글 기준)
   function displayMarkers(recruits) {
     clearMarkers();
     const bounds = new kakao.maps.LatLngBounds();
@@ -296,6 +344,53 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // 무한 스크롤 설정 (Intersection Observer)
+  function setupInfiniteScroll() {
+    // 기존 observer가 있으면 해제
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+
+    // hasNext가 false면 observer 생성하지 않음
+    if (!hasNext) {
+      return;
+    }
+
+    const recruitList = document.getElementById("recruitList");
+    if (!recruitList) return;
+
+    // 기존 센티넬 제거
+    const existingSentinel = document.getElementById("scrollSentinel");
+    if (existingSentinel) {
+      existingSentinel.remove();
+    }
+
+    // 센티넬 요소 생성
+    const sentinel = document.createElement("div");
+    sentinel.id = "scrollSentinel";
+    sentinel.style.height = "1px";
+    sentinel.style.width = "100%";
+    recruitList.appendChild(sentinel);
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !isLoading && hasNext) {
+            loadRecruitList(false);
+          }
+        });
+      },
+      {
+        root: null, // viewport 기준
+        rootMargin: "200px", // 200px 전에 미리 로드
+        threshold: 0.1
+      }
+    );
+
+    observer.observe(sentinel);
+  }
+
   // 유틸리티 함수
   function formatDateTime(dateTimeString) {
     if (!dateTimeString) {
@@ -335,7 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (radiusSelect) {
     radiusSelect.addEventListener("change", (e) => {
       currentRadius = parseInt(e.target.value);
-      loadRecruitList();
+      loadRecruitList(true); // 필터 변경 시 리셋
     });
   }
 
@@ -343,8 +438,43 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sortSelect) {
     sortSelect.addEventListener("change", (e) => {
       currentSortBy = e.target.value;
-      loadRecruitList();
+      loadRecruitList(true); // 필터 변경 시 리셋
     });
+  }
+
+  // 지역 필터 드롭다운 이벤트
+  const regionSelect = document.getElementById("regionSelect");
+  if (regionSelect) {
+    regionSelect.addEventListener("change", (e) => {
+      currentRegion = e.target.value || null;
+      
+      // 지역 필터 선택 시 거리 필터 비활성화
+      const radiusSelect = document.getElementById("radiusSelect");
+      if (radiusSelect) {
+        if (currentRegion) {
+          radiusSelect.disabled = true;
+          radiusSelect.style.opacity = "0.5";
+          radiusSelect.style.cursor = "not-allowed";
+        } else {
+          radiusSelect.disabled = false;
+          radiusSelect.style.opacity = "1";
+          radiusSelect.style.cursor = "pointer";
+        }
+      }
+      
+      loadRecruitList(true); // 필터 변경 시 리셋
+    });
+
+    // 초기 로드 시 지역 필터 상태 확인
+    if (regionSelect.value) {
+      currentRegion = regionSelect.value;
+      const radiusSelectInit = document.getElementById("radiusSelect");
+      if (radiusSelectInit) {
+        radiusSelectInit.disabled = true;
+        radiusSelectInit.style.opacity = "0.5";
+        radiusSelectInit.style.cursor = "not-allowed";
+      }
+    }
   }
 
   // 검색 입력창 이벤트 (Enter 키 및 실시간 검색)
@@ -354,14 +484,23 @@ document.addEventListener("DOMContentLoaded", () => {
     keywordInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
         currentKeyword = keywordInput.value.trim();
-        loadRecruitList();
+        loadRecruitList(true); // 필터 변경 시 리셋
       }
     });
     // 입력 시 실시간 검색 (선택사항 - 필요시 주석 해제)
     // keywordInput.addEventListener("input", (e) => {
     //   currentKeyword = e.target.value.trim();
-    //   loadRecruitList();
+    //   loadRecruitList(true);
     // });
+  }
+
+  // 참여 여부 필터 체크박스 이벤트
+  const isParticipatedCheckbox = document.getElementById("isParticipatedCheckbox");
+  if (isParticipatedCheckbox) {
+    isParticipatedCheckbox.addEventListener("change", (e) => {
+      currentIsParticipated = e.target.checked ? true : null;
+      loadRecruitList(true); // 필터 변경 시 리셋
+    });
   }
 
   const createBtn = document.getElementById("createBtn");

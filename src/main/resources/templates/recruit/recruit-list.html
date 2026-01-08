@@ -50,19 +50,54 @@
   </section>
 
   <section class="filter-section">
-    <select id="radiusSelect" class="filter-select">
-      <option value="1">반경(km) - 1km</option>
-      <option value="2">반경(km) - 2km</option>
-      <option value="3" selected>반경(km) - 3km</option>
-      <option value="5">반경(km) - 5km</option>
-      <option value="10">반경(km) - 10km</option>
-      <option value="20">반경(km) - 20km</option>
-    </select>
-    <select id="sortSelect" class="filter-select">
-      <option value="distance" selected>나로부터 떨어진 거리(가까운 순)</option>
-      <option value="latest">최신순</option>
-      <option value="meetingSoon">모임 날짜 빠른 순</option>
-    </select>
+    <div class="filter-group">
+      <label for="radiusSelect" class="filter-label">반경</label>
+      <select id="radiusSelect" class="filter-select">
+        <option value="1">1km</option>
+        <option value="2">2km</option>
+        <option value="3" selected>3km</option>
+        <option value="5">5km</option>
+        <option value="10">10km</option>
+        <option value="20">20km</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="regionSelect" class="filter-label">지역</label>
+      <select id="regionSelect" class="filter-select">
+        <option value="">전체</option>
+        <option value="서울">서울특별시</option>
+        <option value="부산">부산광역시</option>
+        <option value="대구">대구광역시</option>
+        <option value="인천">인천광역시</option>
+        <option value="광주">광주광역시</option>
+        <option value="대전">대전광역시</option>
+        <option value="울산">울산광역시</option>
+        <option value="경기">경기도</option>
+        <option value="강원">강원도</option>
+        <option value="충북">충청북도</option>
+        <option value="충남">충청남도</option>
+        <option value="전북">전라북도</option>
+        <option value="전남">전라남도</option>
+        <option value="경북">경상북도</option>
+        <option value="경남">경상남도</option>
+        <option value="제주">제주특별자치도</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="sortSelect" class="filter-label">정렬</label>
+      <select id="sortSelect" class="filter-select">
+        <option value="distance" selected>거리순</option>
+        <option value="latest">최신순</option>
+        <option value="meetingSoon">모임일순</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="filter-checkbox-section">
+    <label class="filter-checkbox-label">
+      <input type="checkbox" id="isParticipatedCheckbox" class="filter-checkbox">
+      <span class="filter-checkbox-text">참여한 모집글만 보기</span>
+    </label>
   </section>
 
   <section class="recruit-list-section">
@@ -75,12 +110,12 @@
     </div>
   </section>
 
-  <!-- FAB (Floating Action Button) -->
-  <button type="button" id="createBtn" class="fab-button" aria-label="모집글 생성">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
+  <!-- 모집글 생성 버튼 -->
+  <section class="create-button-section">
+    <button type="button" id="createBtn" class="create-recruit-button">
+      모집글 생성
+    </button>
+  </section>
 </main>
 
 <div
