@@ -37,6 +37,7 @@ public class ChatService {
   private final SessionUserRepository sessionUserRepository;
   private final MatchSessionRepository matchSessionRepository;
   private final UserRepository userRepository;
+  private final com.multi.runrunbackend.domain.crew.service.CrewChatService crewChatService;
 
 
   private User getUserFromPrincipal(CustomUser principal) {
@@ -244,6 +245,15 @@ public class ChatService {
     log.info("마지막 읽은 시간 업데이트: sessionId={}, userId={}", sessionId, user.getId());
   }
 
+  /**
+   * 특정 세션의 모든 메시지 삭제 (디버깅용)
+   */
+  @Transactional
+  public void deleteAllMessages(Long sessionId) {
+    int deletedCount = chatMessageRepository.deleteBySessionId(sessionId);
+    log.info("⭐ 메시지 삭제 완료: sessionId={}, 삭제된 메시지 수={}", sessionId, deletedCount);
+  }
+
 
   /**
    * 로그인한 유저가 참여 중인 오프라인 채팅방 목록 조회
@@ -286,6 +296,10 @@ public class ChatService {
     MatchSession session = sessionUser.getMatchSession();
     Recruit recruit = session.getRecruit();
 
+    log.info("⭐ DTO 변환 시작: sessionId={}, title={}", 
+        session.getId(), 
+        recruit != null ? recruit.getTitle() : "제목 없음");
+
     // 참가자 정보 조회
     List<SessionUser> participants = sessionUserRepository.findActiveUsersBySessionId(
         session.getId());
@@ -297,6 +311,11 @@ public class ChatService {
     // 최근 메시지 조회
     OfflineChatMessage lastMessage = chatMessageRepository.findTopBySessionIdOrderByCreatedAtDesc(
         session.getId());
+
+    log.info("⭐ 최근 메시지 조회: sessionId={}, 메시지 존재={}, createdAt={}",
+        session.getId(),
+        lastMessage != null,
+        lastMessage != null ? lastMessage.getCreatedAt() : "null");
 
     // 읽지 않은 메시지 개수 계산
     int unreadCount = 0;
@@ -313,7 +332,7 @@ public class ChatService {
     // 소요시간 포맷팅
     String formattedDuration = formatDuration(session.getDuration());
 
-    return ChatRoomListResDto.builder()
+    ChatRoomListResDto dto = ChatRoomListResDto.builder()
         .sessionId(session.getId())
         .title(recruit != null ? recruit.getTitle() : "제목 없음")
         .meetingPlace(recruit != null ? recruit.getMeetingPlace() : "장소 미정")
@@ -327,9 +346,15 @@ public class ChatService {
         .sessionStatus(session.getStatus().name())
         .lastMessageContent(lastMessage != null ? lastMessage.getContent() : null)
         .lastMessageSender(lastMessage != null ? lastMessage.getSenderName() : null)
-        .lastMessageTime(lastMessage != null ? lastMessage.getCreatedAt() : null)
+        // ⭐ 메시지가 없으면 세션 생성 시간 사용 (또는 null)
+        .lastMessageTime(lastMessage != null ? lastMessage.getCreatedAt() : session.getCreatedAt())
         .unreadCount(unreadCount)
         .build();
+
+    log.info("⭐ DTO 변환 완료: sessionId={}, lastMessageTime={}",
+        session.getId(), dto.getLastMessageTime());
+
+    return dto;
   }
 
   /**
@@ -418,5 +443,49 @@ public class ChatService {
 
     log.info("사용자 강퇴: sessionId={}, hostId={}, kickedUserId={}",
         sessionId, currentUser.getId(), targetUserId);
+  }
+
+  /**
+   * 통합 채팅방 목록 조회 (오프라인 + 크루)
+   */
+  @Transactional(readOnly = true)
+  public List<com.multi.runrunbackend.domain.chat.dto.res.UnifiedChatRoomResDto> getAllChatRooms(
+      CustomUser principal) {
+    
+    // 1. 오프라인 채팅방 목록
+    List<ChatRoomListResDto> offlineRooms = getMyChatRoomList(principal);
+    
+    // 2. 크루 채팅방 목록
+    List<com.multi.runrunbackend.domain.crew.dto.res.CrewChatRoomListResDto> crewRooms = 
+        crewChatService.getMyChatRoomList(principal);
+    
+    // 3. 통합 DTO 변환
+    List<com.multi.runrunbackend.domain.chat.dto.res.UnifiedChatRoomResDto> allRooms = 
+        new java.util.ArrayList<>();
+    
+    offlineRooms.forEach(offline -> 
+        allRooms.add(com.multi.runrunbackend.domain.chat.dto.res.UnifiedChatRoomResDto
+            .fromOffline(offline)));
+    
+    crewRooms.forEach(crew -> 
+        allRooms.add(com.multi.runrunbackend.domain.chat.dto.res.UnifiedChatRoomResDto
+            .fromCrew(crew)));
+    
+    // 4. 최근 메시지 시간 순 정렬
+    allRooms.sort((a, b) -> {
+      LocalDateTime timeA = a.getLastMessageTime();
+      LocalDateTime timeB = b.getLastMessageTime();
+      
+      if (timeA == null && timeB == null) return 0;
+      if (timeA == null) return 1;
+      if (timeB == null) return -1;
+      
+      return timeB.compareTo(timeA);
+    });
+    
+    log.info("통합 채팅방 조회: 오프라인={}, 크루={}, 총={}개",
+        offlineRooms.size(), crewRooms.size(), allRooms.size());
+    
+    return allRooms;
   }
 }

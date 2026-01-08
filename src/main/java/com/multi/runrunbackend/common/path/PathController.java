@@ -188,12 +188,17 @@ public class PathController {
 
     @GetMapping("/chat")
     public String chatList() {
-        return "chat/chat-list";
+    return "chat/chat-list";
     }
 
-  @GetMapping("/chat/chat1")
-  public String chat1() {
+    @GetMapping("/chat/chat1")
+    public String chat1() {
     return "chat/chat1";
+    }
+
+  @GetMapping("/chat/crew")  // ⭐ 크루 채팅방 경로 추가
+  public String crewChat() {
+    return "chat/crew-chat";
   }
     @GetMapping("/myPage")
     public String myPageView() {

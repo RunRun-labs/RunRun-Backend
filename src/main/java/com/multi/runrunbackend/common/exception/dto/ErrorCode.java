@@ -319,6 +319,9 @@ public enum ErrorCode {
     ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
     HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다."),
     INVALID_READY_STATUS(HttpStatus.BAD_REQUEST, "SES_008", "Ready 상태 값이 올바르지 않습니다."),
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_009", "채팅방을 찾을 수 없습니다."),
+    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_010", "공지사항을 찾을 수 없습니다."),
+    INSUFFICIENT_PERMISSION(HttpStatus.FORBIDDEN, "SES_011", "권한이 부족합니다."),
     /*=====MAPBOX =====*/
     MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
             "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),

@@ -65,7 +65,7 @@ async function getCurrentUser() {
   }
 }
 
-// URL 파라미터에서 세션 ID 가져오기 (userId 제거!)
+// URL 파라미터에서 세션 ID 가져오기
 function getUrlParams() {
   const params = new URLSearchParams(window.location.search);
   return {
