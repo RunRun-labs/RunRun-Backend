@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <title>RUNRUN | 고스트런</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fugaz+One&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/css/ghost-run.css" th:href="@{/css/ghost-run.css}"/>
+</head>
+<body>
+<div class="container">
+  <!-- 러닝 화면 -->
+  <main class="running-page">
+    <!-- 상태 표시 영역 -->
+    <div class="status-bar">
+      <div class="status-badge" id="statusBadge">
+        <svg class="status-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2"/>
+          <circle cx="8" cy="8" r="2" fill="currentColor"/>
+        </svg>
+        <span class="status-text">준비 중</span>
+      </div>
+    </div>
+
+    <!-- 고스트 비교 영역 -->
+    <div class="ghost-comparison">
+      <div class="ghost-avatar">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <path d="M24 4L8 12V32L24 24L40 32V12L24 4Z" stroke="currentColor" stroke-width="2" fill="none"/>
+          <circle cx="18" cy="20" r="2" fill="currentColor"/>
+          <circle cx="30" cy="20" r="2" fill="currentColor"/>
+          <path d="M18 28C18 28 21 31 24 31C27 31 30 28 30 28" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="comparison-text">
+        <div class="comparison-status" id="comparisonStatus">👻 고스트 대기중...</div>
+        <div class="comparison-distance" id="comparisonDistance">-</div>
+      </div>
+    </div>
+
+    <!-- 메인 통계 -->
+    <div class="main-stats">
+      <div class="stat-card primary">
+        <div class="stat-label">현재 거리</div>
+        <div class="stat-value large" id="currentDistance">0.00</div>
+        <div class="stat-unit">km</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M7 3V7L10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            시간
+          </div>
+          <div class="stat-value" id="elapsedTime">00:00</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 2L9 5L12 6L10 9L10.5 12L7 10L3.5 12L4 9L2 6L5 5L7 2Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+            </svg>
+            현재 페이스
+          </div>
+          <div class="stat-value" id="currentPace">0:00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 고스트 기록 정보 -->
+    <div class="ghost-info-card">
+      <div class="ghost-info-header">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M9 2L3 6V16L9 12L15 16V6L9 2Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        </svg>
+        <span>고스트 기록</span>
+      </div>
+      <div class="ghost-info-stats">
+        <div class="ghost-info-item">
+          <span class="label">날짜</span>
+          <span class="value" id="ghostDate">-</span>
+        </div>
+        <div class="ghost-info-item">
+          <span class="label">완주 시간</span>
+          <span class="value" id="ghostTime">-</span>
+        </div>
+        <div class="ghost-info-item">
+          <span class="label">평균 페이스</span>
+          <span class="value" id="ghostPace">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 컨트롤 버튼 -->
+    <div class="controls">
+      <button type="button" id="startButton" class="control-btn primary">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <polygon points="5,3 5,17 17,10" fill="currentColor"/>
+        </svg>
+        시작
+      </button>
+      <button type="button" id="pauseButton" class="control-btn" style="display: none;">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="5" y="4" width="4" height="12" fill="currentColor"/>
+          <rect x="11" y="4" width="4" height="12" fill="currentColor"/>
+        </svg>
+        일시정지
+      </button>
+      <button type="button" id="resumeButton" class="control-btn primary" style="display: none;">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <polygon points="5,3 5,17 17,10" fill="currentColor"/>
+        </svg>
+        재개
+      </button>
+      <button type="button" id="quitButton" class="control-btn danger">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M5 5L15 15M5 15L15 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        포기
+      </button>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script src="/js/ghost-run.js" th:src="@{/js/ghost-run.js}"></script>
+</body>
+</html>

@@ -54,6 +54,16 @@ public class PathController {
     return "match/ghost";
   }
 
+  @GetMapping("/match/ghost-run")
+  public String ghostRunView() {
+  return "match/ghost-run";
+  }
+
+    @GetMapping("/match/ghost-result")
+    public String ghostResultView() {
+        return "match/ghost-result";
+    }
+
   @GetMapping("/match/solo")
   public String soloView() {
     return "match/solo";

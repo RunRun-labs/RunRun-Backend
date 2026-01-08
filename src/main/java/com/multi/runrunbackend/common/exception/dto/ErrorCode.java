@@ -124,26 +124,25 @@ public enum ErrorCode {
     /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
 
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "F001",
-        "파일 업로드에 실패했습니다."
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "F001",
+            "파일 업로드에 실패했습니다."
     ),
-
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
-        HttpStatus.BAD_REQUEST,
-        "F002",
-        "업로드할 파일이 비어 있습니다."
+            HttpStatus.BAD_REQUEST,
+            "F002",
+            "업로드할 파일이 비어 있습니다."
     ),
     FILE_NOT_IMAGE(
-        HttpStatus.BAD_REQUEST,
-        "F003",
-        "이미지 파일만 업로드할 수 있습니다."
+            HttpStatus.BAD_REQUEST,
+            "F003",
+            "이미지 파일만 업로드할 수 있습니다."
     ),
     FILE_SIZE_EXCEEDED(
-        HttpStatus.BAD_REQUEST,
-        "F004",
-        "파일 크기가 제한을 초과했습니다."
+            HttpStatus.BAD_REQUEST,
+            "F004",
+            "파일 크기가 제한을 초과했습니다."
     ),
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F005", "파일 삭제에 실패했습니다."),
 
@@ -310,6 +309,9 @@ public enum ErrorCode {
     /*===== 알림 =====*/
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "해당 알림을 찾을 수 없습니다."),
     READ_DENIED(HttpStatus.FORBIDDEN, "N001", "본인의 알림만 읽음 처리할 수 있습니다."),
+    /*=====고스트런=====*/
+    GHOST_SPLITS_NOT_FOUND(HttpStatus.NOT_FOUND, "GH001", "고스트 페이스 데이터를 찾을 수 없습니다."),
+    GHOST_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "GH002", "고스트 세션을 찾을 수 없습니다."),
     /*===== 세션/채팅 =====*/
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
     SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
@@ -319,6 +321,7 @@ public enum ErrorCode {
     ALL_USERS_NOT_READY(HttpStatus.BAD_REQUEST, "SES_006", "모든 참가자가 준비완료해야 합니다."),
     HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다."),
     INVALID_READY_STATUS(HttpStatus.BAD_REQUEST, "SES_008", "Ready 상태 값이 올바르지 않습니다."),
+    ALREADY_IN_PROGRESS(HttpStatus.BAD_REQUEST, "SES_009", "이미 시작된 세션입니다."),
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_009", "채팅방을 찾을 수 없습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_010", "공지사항을 찾을 수 없습니다."),
     INSUFFICIENT_PERMISSION(HttpStatus.FORBIDDEN, "SES_011", "권한이 부족합니다."),

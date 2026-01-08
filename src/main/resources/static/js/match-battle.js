@@ -22,9 +22,15 @@ let isGPSStarted = false; // GPS 추적 시작 여부
 // 타이머
 let elapsedTimerInterval = null;
 let countdownInterval = null;
+let timeoutCountdownInterval = null;  // ✅ 타임아웃 카운트다운 인터벌
+let finishedGpsInterval = null;  // ✅ 완주 후 GPS 전송 인터벌
+let resultPollingInterval = null;  // ✅ 결과 페이지 이동 폴링 인터벌
 
 // 현재 순위 데이터
 let currentRankings = [];
+
+// ✅ 타임아웃 정보
+let timeoutInfo = null;  // { startTime, timeoutSeconds }
 
 // localStorage에서 userId 가져오기
 const storedUserId = localStorage.getItem('userId');
@@ -143,10 +149,23 @@ function onConnected(frame) {
   
   // 배틀 종료 이벤트 구독
   stompClient.subscribe('/sub/battle/' + SESSION_ID + '/complete', function(message) {
-    console.log('🏁 모든 참가자 완주! 결과 페이지로 이동');
-    setTimeout(() => {
-      window.location.href = '/match/result?sessionId=' + SESSION_ID;
-    }, 2000);
+    console.log('🏁 [WebSocket] 배틀 종료 메시지 수신!');
+    console.log('📦 메시지 내용:', message.body);
+    
+    // 모든 타이머 정리
+    if (resultPollingInterval) clearInterval(resultPollingInterval);
+    if (finishedGpsInterval) clearInterval(finishedGpsInterval);
+    if (elapsedTimerInterval) clearInterval(elapsedTimerInterval);
+    if (timeoutCountdownInterval) clearInterval(timeoutCountdownInterval);
+    
+    // GPS 추적 중지
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId);
+    }
+    
+    // 결과 페이지로 즉시 이동
+    console.log('🚀 결과 페이지로 이동합니다...');
+    window.location.href = '/match/result?sessionId=' + SESSION_ID;
   });
   
   // 포기 메시지 구독 (새로 추가)
@@ -154,6 +173,13 @@ function onConnected(frame) {
     const data = JSON.parse(message.body);
     console.log('🚪 포기 알림 수신:', data);
     handleUserQuit(data);
+  });
+  
+  // ✅ 타임아웃 시작 메시지 구독
+  stompClient.subscribe('/sub/battle/' + SESSION_ID + '/timeout-start', function(message) {
+    const data = JSON.parse(message.body);
+    console.log('⏰ 타임아웃 시작 수신:', data);
+    handleTimeoutStart(data);
   });
   
   console.log('✅ 채널 구독 완료');
@@ -350,6 +376,14 @@ function onLocationUpdate(position) {
     
     // UI 업데이트
     updateMyProgress();
+  } else if (isFinished) {
+    // ✅ 완주 후에는 이동 거리 관계없이 주기적으로 GPS 전송
+    // (타임아웃 체크를 위해 필수!)
+    if (!lastPosition.lastSentTime || (now - lastPosition.lastSentTime) >= 2000) {
+      sendGpsData(lat, lng, speed);
+      lastPosition.lastSentTime = now;
+      console.log('🏁 완주 후 GPS 전송 (타임아웃 체크용)');
+    }
   }
 }
 
@@ -448,6 +482,42 @@ function handleRankingUpdate(rankings) {
   
   // 페이스 비교 렌더링
   renderPaceComparison(rankings);
+  
+  // ✅ 모든 참가자 완주 확인 (매 순위 업데이트마다)
+  checkAllFinishedAndRedirect(rankings);
+}
+
+/**
+ * ✅ 모든 참가자 완주 확인 및 결과 페이지 이동
+ */
+function checkAllFinishedAndRedirect(rankings) {
+  if (!rankings || rankings.length === 0) return;
+  
+  const allFinished = rankings.every(participant => participant.isFinished);
+  
+  if (allFinished) {
+    console.log('🎉🎉🎉 모든 참가자 완주 감지! 결과 페이지로 이동');
+    
+    // 모든 타이머 정리
+    if (resultPollingInterval) clearInterval(resultPollingInterval);
+    if (finishedGpsInterval) clearInterval(finishedGpsInterval);
+    if (elapsedTimerInterval) clearInterval(elapsedTimerInterval);
+    if (timeoutCountdownInterval) clearInterval(timeoutCountdownInterval);
+    
+    // GPS 추적 중지
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId);
+    }
+    
+    // WebSocket 연결 종료
+    if (stompClient && isConnected) {
+      stompClient.disconnect();
+    }
+    
+    // 결과 페이지로 이동
+    console.log('🚀 결과 페이지로 이동!');
+    window.location.href = '/match/result?sessionId=' + SESSION_ID;
+  }
 }
 
 /**
@@ -564,10 +634,19 @@ function createRankingItem(participant, isMe, allRankings) {
   // 진행률 바
   const progressBarContainer = document.createElement('div');
   progressBarContainer.className = 'progress-bar-container';
+  
   const progressBar = document.createElement('div');
   progressBar.className = 'progress-bar';
-  progressBar.style.width = `${participant.progressPercent}%`;
+  const progressPercent = Math.min(100, participant.progressPercent); // 100% 제한
+  progressBar.style.width = `${progressPercent}%`;
+  
+  // ✅ 진행률 퍼센트 텍스트 추가
+  const progressPercentText = document.createElement('div');
+  progressPercentText.className = 'progress-percent-text';
+  progressPercentText.textContent = `${progressPercent.toFixed(1)}%`;
+  
   progressBarContainer.appendChild(progressBar);
+  progressBarContainer.appendChild(progressPercentText);
   
   item.appendChild(content);
   item.appendChild(progressBarContainer);
@@ -724,8 +803,22 @@ function handleFinish() {
   // ✅ GPS 추적은 계속 (다른 참가자 기다림)
   // ✅ 타이머도 계속 진행
   
+  // ✅ 완주 후 2초마다 강제로 GPS 전송 (타임아웃 체크용)
+  if (!finishedGpsInterval) {
+    finishedGpsInterval = setInterval(() => {
+      if (lastPosition && lastPosition.lat && lastPosition.lng) {
+        sendGpsData(lastPosition.lat, lastPosition.lng, 0);
+        console.log('🔄 완주 후 주기적 GPS 전송 (타임아웃 체크용)');
+      }
+    }, 2000);  // 2초마다
+    console.log('⏰ 완주 후 GPS 타이머 시작');
+  }
+  
   // 완주 메시지 표시
   showFinishMessage();
+  
+  // ✅ 백업: 5초마다 배틀 상태 폴링 (WebSocket 실패 대비)
+  startResultPolling();
 }
 
 /**
@@ -733,6 +826,7 @@ function handleFinish() {
  */
 function showFinishMessage() {
   const messageDiv = document.createElement('div');
+  messageDiv.id = 'finish-message';
   messageDiv.style.cssText = `
     position: fixed;
     top: 50%;
@@ -740,14 +834,59 @@ function showFinishMessage() {
     transform: translate(-50%, -50%);
     background: rgba(0, 255, 136, 0.95);
     color: white;
-    padding: 30px 50px;
+    
+    /* ✅ 반응형 패딩 */
+    padding: clamp(20px, 5vw, 30px) clamp(30px, 8vw, 50px);
+    
+    /* ✅ 최대 너비 */
+    max-width: 90%;
+    min-width: 280px;
+    box-sizing: border-box;
+    
     border-radius: 20px;
-    font-size: 32px;
+    
+    /* ✅ 반응형 폰트 */
+    font-size: clamp(20px, 5vw, 32px);
     font-weight: 800;
+    line-height: 1.4;
+    
+    /* ✅ 텍스트 처리 */
+    text-align: center;
+    word-break: keep-all;
+    white-space: pre-line;
+    
     z-index: 9998;
     box-shadow: 0 10px 40px rgba(0, 255, 136, 0.5);
+    
+    /* ✅ 애니메이션 */
+    animation: bounceIn 0.5s ease-out;
   `;
-  messageDiv.textContent = '🏁 완주! 다른 참가자를 기다리는 중...';
+  
+  /* ✅ 짧고 명확한 메시지 */
+  messageDiv.textContent = '🏁 완주!\n잠시만 기다려주세요';
+  
+  // 애니메이션 정의
+  if (!document.getElementById('finish-message-animation')) {
+    const style = document.createElement('style');
+    style.id = 'finish-message-animation';
+    style.textContent = `
+      @keyframes bounceIn {
+        0% { 
+          transform: translate(-50%, -50%) scale(0.5); 
+          opacity: 0; 
+        }
+        60% { 
+          transform: translate(-50%, -50%) scale(1.1); 
+        }
+        100% { 
+          transform: translate(-50%, -50%) scale(1); 
+          opacity: 1; 
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
   document.body.appendChild(messageDiv);
   
   // 3초 후 메시지 제거
@@ -755,7 +894,9 @@ function showFinishMessage() {
     messageDiv.style.opacity = '0';
     messageDiv.style.transition = 'opacity 0.5s';
     setTimeout(() => {
-      document.body.removeChild(messageDiv);
+      if (document.body.contains(messageDiv)) {
+        document.body.removeChild(messageDiv);
+      }
     }, 500);
   }, 3000);
 }
@@ -855,14 +996,6 @@ function setupEventListeners() {
       }
     });
   }
-  
-  // 채팅 버튼 (TODO)
-  const chatButton = document.getElementById('chat-button');
-  if (chatButton) {
-    chatButton.addEventListener('click', () => {
-      alert('채팅 기능은 준비중입니다.');
-    });
-  }
 }
 
 /**
@@ -896,6 +1029,10 @@ function handleQuit() {
     clearInterval(elapsedTimerInterval);
   }
   
+  if (finishedGpsInterval) {
+    clearInterval(finishedGpsInterval);
+  }
+  
   // WebSocket 연결 종료
   if (stompClient && isConnected) {
     stompClient.disconnect();
@@ -915,7 +1052,223 @@ window.addEventListener('beforeunload', () => {
   if (elapsedTimerInterval) {
     clearInterval(elapsedTimerInterval);
   }
+  if (timeoutCountdownInterval) {
+    clearInterval(timeoutCountdownInterval);
+  }
+  if (finishedGpsInterval) {
+    clearInterval(finishedGpsInterval);
+  }
+  if (resultPollingInterval) {
+    clearInterval(resultPollingInterval);
+  }
   if (stompClient && isConnected) {
     stompClient.disconnect();
   }
 });
+
+/**
+ * ✅ 타임아웃 시작 처리
+ */
+function handleTimeoutStart(data) {
+  console.log('⏰ 타임아웃 시작:', data);
+  
+  timeoutInfo = {
+    startTime: new Date(),
+    timeoutSeconds: data.timeoutSeconds
+  };
+  
+  showTimeoutCountdown();
+}
+
+/**
+ * ✅ 타임아웃 카운트다운 표시
+ */
+function showTimeoutCountdown() {
+  // 기존 카운트다운 제거
+  const existing = document.getElementById('timeout-countdown');
+  if (existing) {
+    existing.remove();
+  }
+  
+  const countdown = document.createElement('div');
+  countdown.id = 'timeout-countdown';
+  countdown.style.cssText = `
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(255, 68, 68, 0.95), rgba(255, 107, 107, 0.95));
+    color: white;
+    padding: clamp(12px, 3vw, 16px) clamp(20px, 5vw, 30px);
+    border-radius: 30px;
+    font-size: clamp(16px, 4vw, 20px);
+    font-weight: 700;
+    z-index: 10000;
+    box-shadow: 0 8px 24px rgba(255, 68, 68, 0.5);
+    animation: pulse 1.5s infinite, slideDown 0.5s ease-out;
+    text-align: center;
+    min-width: 200px;
+    max-width: 90%;
+    box-sizing: border-box;
+  `;
+  
+  // 애니메이션 정의
+  if (!document.getElementById('timeout-countdown-animation')) {
+    const style = document.createElement('style');
+    style.id = 'timeout-countdown-animation';
+    style.textContent = `
+      @keyframes pulse {
+        0%, 100% { 
+          transform: translateX(-50%) scale(1); 
+          box-shadow: 0 8px 24px rgba(255, 68, 68, 0.5);
+        }
+        50% { 
+          transform: translateX(-50%) scale(1.05); 
+          box-shadow: 0 12px 32px rgba(255, 68, 68, 0.7);
+        }
+      }
+      @keyframes slideDown {
+        from {
+          transform: translateX(-50%) translateY(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(-50%) translateY(0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(countdown);
+  
+  // 1초마다 업데이트
+  function updateCountdown() {
+    if (!timeoutInfo) {
+      if (timeoutCountdownInterval) {
+        clearInterval(timeoutCountdownInterval);
+      }
+      return;
+    }
+    
+    const now = new Date();
+    const elapsed = Math.floor((now - timeoutInfo.startTime) / 1000);
+    const remaining = timeoutInfo.timeoutSeconds - elapsed;
+    
+    if (remaining > 0) {
+      countdown.innerHTML = `
+        <div style="font-size: clamp(14px, 3.5vw, 16px); margin-bottom: 4px;">
+          🏆 1등 완주! 제한 시간
+        </div>
+        <div style="font-size: clamp(24px, 6vw, 32px); font-weight: 900;">
+          ⏰ ${remaining}초
+        </div>
+      `;
+      
+      // 마지막 10초은 빨간색 강조
+      if (remaining <= 10) {
+        countdown.style.background = 'linear-gradient(135deg, rgba(220, 38, 38, 0.95), rgba(239, 68, 68, 0.95))';
+        countdown.style.animation = 'pulse 0.5s infinite, slideDown 0.5s ease-out';
+      }
+    } else {
+      // ✅ 타임아웃 만료!
+      console.log('⏰⏰⏰ 타임아웃 만료! 결과 페이지로 이동 준비');
+      
+      countdown.innerHTML = `
+        <div style="font-size: clamp(18px, 4.5vw, 24px); font-weight: 900;">
+          ⏰ 시간 만료!<br>결과 확인 중...
+        </div>
+      `;
+      countdown.style.background = 'linear-gradient(135deg, rgba(153, 27, 27, 0.95), rgba(185, 28, 28, 0.95))';
+      
+      // 인터벌 중지
+      if (timeoutCountdownInterval) {
+        clearInterval(timeoutCountdownInterval);
+        timeoutCountdownInterval = null;
+      }
+      
+      // ✅ 3초 후 강제로 결과 페이지 확인
+      setTimeout(() => {
+        console.log('🔍 타임아웃 만료 - 결과 페이지 이동 강제 실행');
+        
+        // 모든 타이머 정리
+        if (finishedGpsInterval) clearInterval(finishedGpsInterval);
+        if (elapsedTimerInterval) clearInterval(elapsedTimerInterval);
+        if (resultPollingInterval) clearInterval(resultPollingInterval);
+        
+        // GPS 추적 중지
+        if (watchId) {
+          navigator.geolocation.clearWatch(watchId);
+        }
+        
+        // WebSocket 연결 종료
+        if (stompClient && isConnected) {
+          stompClient.disconnect();
+        }
+        
+        // 결과 페이지로 강제 이동
+        console.log('🚀 결과 페이지로 이동!');
+        window.location.href = '/match/result?sessionId=' + SESSION_ID;
+      }, 3000);
+    }
+  }
+  
+  // 즉시 한 번 업데이트
+  updateCountdown();
+  
+  // 1초마다 업데이트
+  if (timeoutCountdownInterval) {
+    clearInterval(timeoutCountdownInterval);
+  }
+  timeoutCountdownInterval = setInterval(updateCountdown, 1000);
+}
+
+/**
+ * ✅ 결과 페이지 이동 폴링 시작 (WebSocket 백업)
+ */
+function startResultPolling() {
+  console.log('📡 결과 페이지 폴링 시작 (5초 간격)');
+  
+  if (resultPollingInterval) {
+    clearInterval(resultPollingInterval);
+  }
+  
+  resultPollingInterval = setInterval(() => {
+    const token = localStorage.getItem('accessToken');
+    
+    fetch('/api/match/session/' + SESSION_ID, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? 'Bearer ' + token : ''
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('📊 세션 상태 폴링:', data.data.status);
+      
+      // ✅ 배틀 종료되면 결과 페이지로 이동
+      if (data.data.status === 'COMPLETED') {
+        console.log('🎉 배틀 종료 감지! 결과 페이지로 이동');
+        clearInterval(resultPollingInterval);
+        
+        // 모든 타이머 정리
+        if (finishedGpsInterval) clearInterval(finishedGpsInterval);
+        if (elapsedTimerInterval) clearInterval(elapsedTimerInterval);
+        if (timeoutCountdownInterval) clearInterval(timeoutCountdownInterval);
+        
+        // GPS 추적 중지
+        if (watchId) {
+          navigator.geolocation.clearWatch(watchId);
+        }
+        
+        // 결과 페이지로 이동
+        window.location.href = '/match/result?sessionId=' + SESSION_ID;
+      }
+    })
+    .catch(error => {
+      console.error('❌ 세션 상태 폴링 실패:', error);
+    });
+  }, 5000);  // 5초마다 체크
+}

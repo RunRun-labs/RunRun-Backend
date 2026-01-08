@@ -45,16 +45,28 @@ public class DistanceRatingService {
     MatchSession session = matchSessionRepository.findById(sessionId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
-    results.sort(Comparator.comparingInt(RunningResult::getTotalTime));
+    // ✅ GIVE_UP만 제외 (COMPLETED + TIME_OUT 포함)
+    List<RunningResult> rankedResults = results.stream()
+        .filter(r -> r.getRunStatus() != com.multi.runrunbackend.domain.match.constant.RunStatus.GIVE_UP)
+        .collect(java.util.stream.Collectors.toList());
 
-    int n = results.size();
+    int n = rankedResults.size();
     if (n == 0) {
+      log.info("✅ 레이팅 계산 대상 없음: sessionId={}", sessionId);
       return;
     }
 
+    if (n < 2) {
+      log.info("✅ 레이팅 계산 2명 미만: sessionId={}, 대상={}명", sessionId, n);
+      return;
+    }
+
+    // ✅ 순위는 이미 BattleService에서 부여되어 있으므로 재정렬 불필요
+    List<RunningResult> resultsToProcess = rankedResults;
+
     List<DistanceRating> ratings = new ArrayList<>(n);
 
-    for (RunningResult rr : results) {
+    for (RunningResult rr : resultsToProcess) {
       User user = rr.getUser();
       DistanceRating rating = distanceRatingRepository
           .findByUserIdAndDistanceType(user.getId(), distanceType)
@@ -84,7 +96,7 @@ public class DistanceRatingService {
     List<BattleResult> battleResultList = new ArrayList<>(n);
 
     for (int i = 0; i < n; i++) {
-      RunningResult rr = results.get(i);
+      RunningResult rr = resultsToProcess.get(i);
       DistanceRating myRating = ratings.get(i);
       int rank = i + 1;
 
@@ -108,7 +120,7 @@ public class DistanceRatingService {
 
     battleResultRepository.saveAll(battleResultList);
 
-    log.info("Elo 정산 - SessionID: {}, 인원: {}", sessionId, n);
+    log.info("Elo 정산 완료 - SessionID: {}, 레이팅 계산 대상: {}명 (COMPLETED + TIME_OUT)", sessionId, n);
   }
 
   /**
