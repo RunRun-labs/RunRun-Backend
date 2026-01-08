@@ -70,7 +70,7 @@ public class FeedPostService {
             throw new InvalidRequestException(ErrorCode.RUNNING_RESULT_NOT_COMPLETED);
         }
 
-        if (feedPostRepository.existsByRunningResultId(runningResult.getId())) {
+        if (feedPostRepository.existsByRunningResultIdAndIsDeletedFalse(runningResult.getId())) {
             throw new DuplicateException(ErrorCode.FEED_POST_ALREADY_EXISTS);
         }
 

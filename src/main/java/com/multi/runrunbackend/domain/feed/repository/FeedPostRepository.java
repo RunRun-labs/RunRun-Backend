@@ -26,7 +26,7 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
 
     Optional<FeedPost> findByIdAndIsDeletedFalse(Long id);
 
-    boolean existsByRunningResultId(Long runningResultId);
+    boolean existsByRunningResultIdAndIsDeletedFalse(Long runningResultId);
 
     Page<FeedPost> findByIsDeletedFalseAndUserIdNotIn(Pageable pageable, Set<Long> excludedUserIds);
 }
