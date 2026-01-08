@@ -130,7 +130,7 @@ public class RecruitService {
           ? calculateDistance(req.getLatitude(), req.getLongitude(), recruit.getLatitude(),
           recruit.getLongitude())
           : null;
-      return RecruitListResDto.from(recruit, dist);
+      return RecruitListResDto.from(recruit, dist, user.getId());
     });
   }
 
