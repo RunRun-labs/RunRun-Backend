@@ -62,7 +62,7 @@ public class FeedPostService {
 
         RunningResult runningResult =
                 runningResultRepository
-                        .findByIdAndUserId(req.getRunningResultId(), user.getId())
+                        .findByIdAndUserIdAndIsDeletedFalse(req.getRunningResultId(), user.getId())
                         .orElseThrow(() ->
                                 new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND)
                         );

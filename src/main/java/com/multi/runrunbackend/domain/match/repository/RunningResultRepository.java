@@ -85,7 +85,7 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
      * 특정 사용자의 특정 런닝 결과 조회
      * 자기 러닝 결과만 공유하기 위함
      */
-    Optional<RunningResult> findByIdAndUserId(Long id, Long userId);
+    Optional<RunningResult> findByIdAndUserIdAndIsDeletedFalse(Long id, Long userId);
 
     /*
      * 오늘/주간 러닝 요약 정보 조회
