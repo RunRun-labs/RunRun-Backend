@@ -542,19 +542,28 @@ public class MatchSessionService {
           throw e;
         }
 
-        // ✅ 3. 남은 참가자들도 큐에서 제거 (세션 취소 시)
+        // ✅ 3. 남은 참가자들도 큐에서 제거 및 매칭 세션 Redis 키 삭제 (세션 취소 시)
         if (remainingCount > 0) {
           for (SessionUser remainingUser : remainingUsers) {
             try {
               Long remainingUserId = remainingUser.getUser().getId();
               matchingQueueService.removeQueueByUserId(remainingUserId);
-              log.info("✅ 남은 참가자 큐에서 제거 - User: {}", remainingUserId);
+              matchingQueueService.cleanupMatchSession(remainingUserId);
+              log.info("✅ 남은 참가자 큐 및 세션 키 제거 - User: {}", remainingUserId);
             } catch (Exception e) {
-              log.error("❌ 남은 참가자 큐 제거 실패 - User: {}",
+              log.error("❌ 남은 참가자 정리 실패 - User: {}",
                   remainingUser.getUser().getId(), e);
               // 큐 제거 실패해도 계속 진행
             }
           }
+        }
+        
+        // ✅ 나간 사용자의 Redis 키도 삭제
+        try {
+          matchingQueueService.cleanupMatchSession(userId);
+          log.info("✅ 나간 사용자 세션 키 제거 - User: {}", userId);
+        } catch (Exception e) {
+          log.error("❌ 나간 사용자 세션 키 제거 실패 - User: {}", userId, e);
         }
 
         // ✅ 4. 남은 참가자들에게 취소 알림 (WebSocket)
