@@ -285,7 +285,22 @@
       globalEventSource.addEventListener('message', (event) => {
         try {
           console.log('[SSE] 📩 Message received:', event.data);
-          const notification = JSON.parse(event.data);
+          
+          // ✅ "ping" (heartbeat) 데이터는 무시
+          if (event.data === 'ping' || event.data.trim() === 'ping') {
+            console.log('[SSE] 💓 Heartbeat received via message event, ignoring');
+            resetHeartbeatTimeout();
+            return;
+          }
+          
+          // ✅ JSON 유효성 검사
+          let notification;
+          try {
+            notification = JSON.parse(event.data);
+          } catch (parseErr) {
+            console.warn('[SSE] Message is not valid JSON, ignoring:', event.data);
+            return;
+          }
           
           // ✅ 메시지 수신 시에도 타임아웃 리셋 (연결이 살아있음을 확인)
           resetHeartbeatTimeout();
@@ -300,7 +315,7 @@
           
           console.log('[SSE] ✅ Custom event dispatched:', notification.notificationType);
         } catch (err) {
-          console.error('[SSE] Failed to parse message notification:', err);
+          console.error('[SSE] Failed to process message notification:', err);
         }
       });
 
