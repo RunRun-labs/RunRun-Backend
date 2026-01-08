@@ -233,9 +233,15 @@ function attachMyPostsHandler() {
     const myPostsBtn = document.querySelector('[data-role="my-posts"]');
     if (!myPostsBtn) return;
 
+    // 버튼 활성화 (disabled 속성 제거)
+    myPostsBtn.disabled = false;
+    myPostsBtn.style.cursor = "pointer";
+    myPostsBtn.style.opacity = "1";
+
     myPostsBtn.addEventListener("click", () => {
-        // 피드 기능 구현 후 연동 예정
-        alert("피드 기능 구현 후 연동 예정입니다.");
+        // localStorage에 "내 글" 탭 활성화 플래그 설정
+        localStorage.setItem("feedSortToMy", "true");
+        window.location.href = "/feed";
     });
 }
 
