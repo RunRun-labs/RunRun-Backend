@@ -550,7 +550,7 @@ public class MatchSessionService {
               matchingQueueService.removeQueueByUserId(remainingUserId);
               log.info("✅ 남은 참가자 큐에서 제거 - User: {}", remainingUserId);
             } catch (Exception e) {
-              log.error("❌ 남은 참가자 큐 제거 실패 - User: {}", 
+              log.error("❌ 남은 참가자 큐 제거 실패 - User: {}",
                   remainingUser.getUser().getId(), e);
               // 큐 제거 실패해도 계속 진행
             }
@@ -604,13 +604,14 @@ public class MatchSessionService {
 
     log.info("📤 세션 취소 메시지 전송: sessionId={}, leaver={}", sessionId, leaverName);
   }
+
   /**
    * targetDistance를 기반으로 DistanceType 결정
    */
   private DistanceType determineDistanceType(Double targetDistance) {
-    if (targetDistance == 3.5) {
+    if (targetDistance != null && Math.abs(targetDistance - 3.0) < 0.01) {
       return DistanceType.KM_3;
-    } else if (targetDistance == 5.0) {
+    } else if (targetDistance != null && Math.abs(targetDistance - 5.0) < 0.01) {
       return DistanceType.KM_5;
     } else {
       return DistanceType.KM_10;
