@@ -71,6 +71,11 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             Pageable pageable
     );
 
+    /**
+     * 러닝 결과 단건 조회
+     */
+
+    Optional<RunningResult> findByIdAndIsDeletedFalse(Long id);
 
     /**
      * 사용자의 완료된 러닝 기록 조회
