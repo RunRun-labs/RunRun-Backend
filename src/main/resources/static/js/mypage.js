@@ -189,7 +189,7 @@ function attachCouponsHandler() {
     if (!couponsBtn) return;
 
     couponsBtn.addEventListener("click", () => {
-        window.location.href = "/coupons";
+        window.location.href = "/coupon/my";
     });
 }
 
