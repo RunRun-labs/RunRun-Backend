@@ -5,6 +5,7 @@ import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.feed.dto.FeedPostWithCountsDto;
 import com.multi.runrunbackend.domain.feed.dto.req.FeedPostCreateReqDto;
 import com.multi.runrunbackend.domain.feed.dto.req.FeedPostUpdateReqDto;
 import com.multi.runrunbackend.domain.feed.dto.res.FeedPostResDto;
@@ -175,38 +176,32 @@ public class FeedPostService {
     ) {
         User me = getUserByPrincipal(principal);
 
-        // 1️⃣ 내가 차단한 유저
         Set<Long> excludedUserIds = userBlockRepository
                 .findAllByBlockerId(me.getId())
                 .stream()
                 .map(ub -> ub.getBlockedUser().getId())
                 .collect(Collectors.toSet());
 
-        // 2️⃣ 나를 차단한 유저
         userBlockRepository
                 .findAllByBlockedUserId(me.getId())
                 .stream()
                 .map(ub -> ub.getBlocker().getId())
                 .forEach(excludedUserIds::add);
 
-        Page<FeedPost> feedPosts;
+        Page<FeedPostWithCountsDto> feedPosts;
 
         if (excludedUserIds.isEmpty()) {
-            feedPosts = feedPostRepository.findAllByIsDeletedFalse(pageable);
+            feedPosts = feedPostRepository.findAllWithCounts(me, pageable);
         } else {
-            feedPosts = feedPostRepository
-                    .findByIsDeletedFalseAndUserIdNotIn(pageable, excludedUserIds);
+            feedPosts = feedPostRepository.findAllWithCounts(me, excludedUserIds, pageable);
         }
 
-        return feedPosts.map(feedPost -> {
-            long likeCount =
-                    feedLikeRepository.countByFeedPostAndIsDeletedFalse(feedPost);
-            long commentCount =
-                    feedCommentRepository.countByFeedPostAndIsDeletedFalse(feedPost);
-            boolean isLiked = feedLikeRepository.existsByFeedPostAndUserAndIsDeletedFalse(feedPost, me);
-
-            return FeedPostResDto.from(feedPost, likeCount, commentCount, isLiked);
-        });
+        return feedPosts.map(dto -> FeedPostResDto.from(
+                dto.getFeedPost(),
+                dto.getLikeCount(),
+                dto.getCommentCount(),
+                dto.getIsLiked()
+        ));
     }
 
     /**
