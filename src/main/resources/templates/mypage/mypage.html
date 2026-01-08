@@ -65,45 +65,44 @@
             />
 
 
-            <!-- 중앙: 이름 + 신체 정보 -->
+            <!-- 중앙: 티어/레이팅/포인트 정보 -->
             <div class="profile-text profile-center">
-
-
-                <p class="profile-meta profile-body">
-                    키:
-                    <span id="heightCm"
-                          th:text="${heightCm != null ? heightCm : '-'}">-</span>cm<br/>
-                    몸무게:
-                    <span id="weightKg"
-                          th:text="${weightKg != null ? weightKg : '-'}">-</span>kg
-                </p>
+                <div class="profile-meta">
+                    <div class="tier-section">
+                        <span class="tier-label">티어 :</span>
+                        <div class="tier-display">
+                            <img src="/img/tier/rabbit.png" alt="토끼" class="tier-image" id="tierImage"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                            <span class="tier-text" id="tierText">🐰</span>
+                        </div>
+                    </div>
+                    <div class="rating-section">
+                        <span class="rating-label">레이팅:</span>
+                        <span class="rating-value" id="ratingValue">-</span>
+                    </div>
+                    <div class="point-section">
+                        <span class="point-label">포인트:</span>
+                        <span class="point-value" th:text="${pointBalance != null ? pointBalance : '-'}">-</span>
+                    </div>
+                </div>
             </div>
 
-
-            <div class="profile-text profile-right">
-                <p class="profile-meta">
-                    누적:
-                    <span th:text="${totalDistance != null ? totalDistance : '-'}">-</span><br/>
-                    랭킹:
-                    <span th:text="${rank != null ? rank : '-'}">-</span><br/>
-                    포인트:
-                    <span th:text="${pointBalance != null ? pointBalance : '-'}">-</span>
-                </p>
+            <!-- 우측: 쿠폰함/친구/프로필 설정 버튼 -->
+            <div class="profile-actions-vertical">
+                <button class="action-button-vertical" type="button" data-role="coupons">쿠폰함</button>
+                <button class="action-button-vertical" type="button" data-role="friends">친구</button>
+                <button class="action-button-vertical" type="button" data-role="profile-settings">프로필 설정</button>
             </div>
 
-        </div>
-
-
-        <div class="profile-actions">
-            <button class="action-pill" type="button" data-role="">챌린지</button>
-            <button class="action-pill" type="button">친구</button>
-            <button class="action-pill" type="button">쿠폰함</button>
-            <button class="action-pill" type="button" data-role="profile-settings">프로필 설정</button>
         </div>
     </section>
 
     <section class="my-content-section">
         <div class="my-content-buttons">
+            <button class="my-content-button" type="button" data-role="challenge">
+                <span class="button-icon">🏅</span>
+                <span class="button-text">챌린지</span>
+            </button>
             <button class="my-content-button" type="button" data-role="my-courses">
                 <span class="button-icon">📍</span>
                 <span class="button-text">내 코스</span>
