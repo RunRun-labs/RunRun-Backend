@@ -146,10 +146,12 @@ function updateChatRoomUI() {
   }
 
   // 채팅방 이름
-  document.getElementById('group-name').textContent = currentRoom.roomName || '크루 채팅';
+  document.getElementById('group-name').textContent = currentRoom.roomName
+      || '크루 채팅';
 
   // 크루 뱃지
-  document.getElementById('crew-badge').textContent = `🏃 ${currentRoom.crewName || '크루'}`;
+  document.getElementById('crew-badge').textContent = `🏃 ${currentRoom.crewName
+  || '크루'}`;
 
   // ⭐ 크루 설명 표시
   const descriptionEl = document.getElementById('crew-description');
@@ -174,7 +176,8 @@ function loadParticipants(roomId) {
     if (result.success) {
       participantsList = result.data;
       const count = result.data.length;
-      document.getElementById('participant-count').textContent = `${count}명 참여중`;
+      document.getElementById(
+          'participant-count').textContent = `${count}명 참여중`;
 
       // 크루 멤버 수 표시
       document.getElementById('crew-member-count').textContent = `${count}명`;
@@ -276,11 +279,11 @@ function setupEventListeners() {
   }
 
   // ==== 공지사항 관련 ====
-  
+
   // 공지사항 추가 버튼
   const noticeAddBtn = document.getElementById('notice-add-btn');
   if (noticeAddBtn) {
-    noticeAddBtn.addEventListener('click', function(e) {
+    noticeAddBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       openCreateNoticeModal();
     });
@@ -289,7 +292,7 @@ function setupEventListeners() {
   // 공지사항 접기/펼치기 버튼
   const noticeToggleBtn = document.getElementById('notice-toggle-btn');
   if (noticeToggleBtn) {
-    noticeToggleBtn.addEventListener('click', function(e) {
+    noticeToggleBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       toggleNoticeList();
     });
@@ -299,17 +302,17 @@ function setupEventListeners() {
   const noticeModalOverlay = document.getElementById('notice-modal-overlay');
   const noticeModalClose = document.getElementById('notice-modal-close');
   const noticeCancelBtn = document.getElementById('notice-cancel-btn');
-  
+
   if (noticeModalClose) {
     noticeModalClose.addEventListener('click', closeNoticeModal);
   }
-  
+
   if (noticeCancelBtn) {
     noticeCancelBtn.addEventListener('click', closeNoticeModal);
   }
-  
+
   if (noticeModalOverlay) {
-    noticeModalOverlay.addEventListener('click', function(e) {
+    noticeModalOverlay.addEventListener('click', function (e) {
       if (e.target === noticeModalOverlay) {
         closeNoticeModal();
       }
@@ -326,7 +329,7 @@ function setupEventListeners() {
   const noticeTextarea = document.getElementById('notice-textarea');
   const noticeCharCurrent = document.getElementById('notice-char-current');
   if (noticeTextarea && noticeCharCurrent) {
-    noticeTextarea.addEventListener('input', function() {
+    noticeTextarea.addEventListener('input', function () {
       noticeCharCurrent.textContent = this.value.length;
     });
   }
@@ -338,7 +341,7 @@ function setupEventListeners() {
 
 function connectWebSocket() {
   console.log('⭐ connectWebSocket 시작, currentRoom:', currentRoom);  // 디버깅
-  
+
   if (!currentRoom) {
     console.error('❌ currentRoom이 없습니다!');
     return;
@@ -360,13 +363,13 @@ function connectWebSocket() {
     // 구독
     const subscribeUrl = '/sub/crew-chat/' + currentRoom.id;
     console.log('⭐ 구독 시작:', subscribeUrl);
-    
+
     stompClient.subscribe(subscribeUrl, function (response) {
       console.log('📩 메시지 수신:', response.body);
       const message = JSON.parse(response.body);
       console.log('📩 파싱된 메시지:', message);
       console.log('📩 메시지 타입:', message.messageType, message.type);
-      
+
       displayMessage(message);
 
       // 시스템 메시지 수신 시 참여자 목록 자동 갱신
@@ -457,7 +460,7 @@ function displayMessage(message, isPrevious = false) {
 
     // 공지사항 목록 다시 로드
     loadNotices();
-    
+
     // 실시간 메시지는 스크롤
     if (!isPrevious) {
       setTimeout(() => {
@@ -487,7 +490,8 @@ function displayMessage(message, isPrevious = false) {
     const isMyMessage = message.senderId == currentUser.id;
 
     const messageItem = document.createElement('div');
-    messageItem.className = `message-item ${isMyMessage ? 'message-right' : 'message-left'}`;
+    messageItem.className = `message-item ${isMyMessage ? 'message-right'
+        : 'message-left'}`;
 
     if (!isMyMessage) {
       const avatar = document.createElement('div');
@@ -507,7 +511,8 @@ function displayMessage(message, isPrevious = false) {
     }
 
     const bubble = document.createElement('div');
-    bubble.className = `message-bubble ${isMyMessage ? 'message-bubble-right' : 'message-bubble-left'}`;
+    bubble.className = `message-bubble ${isMyMessage ? 'message-bubble-right'
+        : 'message-bubble-left'}`;
     const text = document.createElement('p');
     text.className = 'message-text';
     text.textContent = message.content;
@@ -518,7 +523,8 @@ function displayMessage(message, isPrevious = false) {
       const time = document.createElement('p');
       time.className = 'message-time';
       const date = new Date(message.createdAt);
-      time.textContent = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      time.textContent = `${String(date.getHours()).padStart(2, '0')}:${String(
+          date.getMinutes()).padStart(2, '0')}`;
       contentWrapper.appendChild(time);
     }
 
@@ -634,7 +640,7 @@ function renderParticipantList() {
     if (participant.role) {
       const roleBadge = document.createElement('span');
       roleBadge.className = 'participant-role-badge';
-      
+
       // 역할별 스타일 분기
       if (participant.role === 'LEADER') {
         roleBadge.classList.add('leader');
@@ -649,7 +655,7 @@ function renderParticipantList() {
         roleBadge.classList.add('member');
         roleBadge.textContent = '멤버';
       }
-      
+
       nameRow.appendChild(roleBadge);
     }
 
@@ -682,24 +688,26 @@ let editingNoticeId = null; // 수정 중인 공지사항 ID
  * 공지사항 목록 로드
  */
 function loadNotices() {
-  if (!currentRoom) return;
+  if (!currentRoom) {
+    return;
+  }
 
   fetchWithAuth(`/api/crew-chat/rooms/${currentRoom.id}/notices`)
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        noticesList = result.data;
-        renderNotices();
-        updateNoticeCount();
-        
-        // 공지사항이 있으면 모든 사용자에게 표시
-        const noticeSection = document.getElementById('notice-section');
-        if (noticesList.length > 0) {
-          noticeSection.style.display = 'block';
-        }
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      noticesList = result.data;
+      renderNotices();
+      updateNoticeCount();
+
+      // 공지사항이 있거나 운영진 이상이면 표시
+      const noticeSection = document.getElementById('notice-section');
+      if (noticesList.length > 0 || isStaffOrAbove()) {
+        noticeSection.style.display = 'block';
       }
-    })
-    .catch(error => console.error('공지사항 로드 실패:', error));
+    }
+  })
+  .catch(error => console.error('공지사항 로드 실패:', error));
 }
 
 /**
@@ -707,7 +715,7 @@ function loadNotices() {
  */
 function renderNotices() {
   const noticeList = document.getElementById('notice-list');
-  
+
   if (noticesList.length === 0) {
     noticeList.innerHTML = '<div class="notice-empty">등록된 공지사항이 없습니다.</div>';
     return;
@@ -787,10 +795,18 @@ function formatNoticeDate(date) {
   const diffHours = Math.floor(diff / 3600000);
   const diffDays = Math.floor(diff / 86400000);
 
-  if (diffMinutes < 1) return '방금 전';
-  if (diffMinutes < 60) return `${diffMinutes}분 전`;
-  if (diffHours < 24) return `${diffHours}시간 전`;
-  if (diffDays < 7) return `${diffDays}일 전`;
+  if (diffMinutes < 1) {
+    return '방금 전';
+  }
+  if (diffMinutes < 60) {
+    return `${diffMinutes}분 전`;
+  }
+  if (diffHours < 24) {
+    return `${diffHours}시간 전`;
+  }
+  if (diffDays < 7) {
+    return `${diffDays}일 전`;
+  }
 
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -802,11 +818,15 @@ function formatNoticeDate(date) {
  * 공지사항 수정/삭제 권한 체크
  */
 function canEditNotice(notice) {
-  if (!currentUser || !currentUserRole) return false;
-  
+  if (!currentUser || !currentUserRole) {
+    return false;
+  }
+
   // 작성자 본인
-  if (notice.createdBy === currentUser.id) return true;
-  
+  if (notice.createdBy === currentUser.id) {
+    return true;
+  }
+
   // STAFF 이상
   return isStaffOrAbove();
 }
@@ -815,9 +835,9 @@ function canEditNotice(notice) {
  * STAFF 이상 권한 체크
  */
 function isStaffOrAbove() {
-  return currentUserRole === 'LEADER' || 
-         currentUserRole === 'SUB_LEADER' || 
-         currentUserRole === 'STAFF';
+  return currentUserRole === 'LEADER' ||
+      currentUserRole === 'SUB_LEADER' ||
+      currentUserRole === 'STAFF';
 }
 
 /**
@@ -839,7 +859,8 @@ function openEditNoticeModal(notice) {
   editingNoticeId = notice.id;
   document.getElementById('notice-modal-title').textContent = '공지사항 수정';
   document.getElementById('notice-textarea').value = notice.content;
-  document.getElementById('notice-char-current').textContent = notice.content.length;
+  document.getElementById(
+      'notice-char-current').textContent = notice.content.length;
   document.getElementById('notice-submit-btn').textContent = '수정';
   document.getElementById('notice-modal-overlay').classList.add('show');
 }
@@ -857,7 +878,7 @@ function closeNoticeModal() {
  */
 function submitNotice() {
   const content = document.getElementById('notice-textarea').value.trim();
-  
+
   if (!content) {
     alert('공지사항 내용을 입력해주세요.');
     return;
@@ -868,7 +889,7 @@ function submitNotice() {
     return;
   }
 
-  const reqDto = { content };
+  const reqDto = {content};
 
   if (editingNoticeId) {
     // 수정
@@ -877,19 +898,19 @@ function submitNotice() {
       headers: getAuthHeaders(),
       body: JSON.stringify(reqDto)
     })
-      .then(response => response.json())
-      .then(result => {
-        if (result.success) {
-          closeNoticeModal();
-          loadNotices();
-        } else {
-          alert(result.message || '공지사항 수정에 실패했습니다.');
-        }
-      })
-      .catch(error => {
-        console.error('공지사항 수정 실패:', error);
-        alert('공지사항 수정에 실패했습니다.');
-      });
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
+        closeNoticeModal();
+        loadNotices();
+      } else {
+        alert(result.message || '공지사항 수정에 실패했습니다.');
+      }
+    })
+    .catch(error => {
+      console.error('공지사항 수정 실패:', error);
+      alert('공지사항 수정에 실패했습니다.');
+    });
   } else {
     // 작성
     fetchWithAuth(`/api/crew-chat/rooms/${currentRoom.id}/notices`, {
@@ -897,19 +918,19 @@ function submitNotice() {
       headers: getAuthHeaders(),
       body: JSON.stringify(reqDto)
     })
-      .then(response => response.json())
-      .then(result => {
-        if (result.success) {
-          closeNoticeModal();
-          loadNotices();
-        } else {
-          alert(result.message || '공지사항 작성에 실패했습니다.');
-        }
-      })
-      .catch(error => {
-        console.error('공지사항 작성 실패:', error);
-        alert('공지사항 작성에 실패했습니다.');
-      });
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
+        closeNoticeModal();
+        loadNotices();
+      } else {
+        alert(result.message || '공지사항 작성에 실패했습니다.');
+      }
+    })
+    .catch(error => {
+      console.error('공지사항 작성 실패:', error);
+      alert('공지사항 작성에 실패했습니다.');
+    });
   }
 }
 
@@ -924,18 +945,18 @@ function deleteNotice(noticeId) {
   fetchWithAuth(`/api/crew-chat/notices/${noticeId}`, {
     method: 'DELETE'
   })
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        loadNotices();
-      } else {
-        alert(result.message || '공지사항 삭제에 실패했습니다.');
-      }
-    })
-    .catch(error => {
-      console.error('공지사항 삭제 실패:', error);
-      alert('공지사항 삭제에 실패했습니다.');
-    });
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      loadNotices();
+    } else {
+      alert(result.message || '공지사항 삭제에 실패했습니다.');
+    }
+  })
+  .catch(error => {
+    console.error('공지사항 삭제 실패:', error);
+    alert('공지사항 삭제에 실패했습니다.');
+  });
 }
 
 /**
@@ -945,10 +966,10 @@ function toggleNoticeList() {
   const noticeList = document.getElementById('notice-list');
   const toggleBtn = document.getElementById('notice-toggle-btn');
   const toggleText = toggleBtn.querySelector('.toggle-text');
-  
+
   noticeList.classList.toggle('collapsed');
   toggleBtn.classList.toggle('collapsed');
-  
+
   // 텍스트 변경
   if (noticeList.classList.contains('collapsed')) {
     toggleText.textContent = '펼치기';
@@ -961,22 +982,25 @@ function toggleNoticeList() {
  * 현재 사용자의 크루 역할 조회
  */
 function loadCurrentUserRole() {
-  if (!currentRoom || !currentUser) return;
+  if (!currentRoom || !currentUser) {
+    return;
+  }
 
   fetchWithAuth(`/api/crew-chat/rooms/${currentRoom.id}/users`)
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        const currentUserData = result.data.find(u => u.userId === currentUser.id);
-        if (currentUserData) {
-          currentUserRole = currentUserData.role;
-          
-          // STAFF 이상이면 공지 추가 버튼 표시
-          if (isStaffOrAbove()) {
-            document.getElementById('notice-add-btn').style.display = 'flex';
-          }
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      const currentUserData = result.data.find(
+          u => u.userId === currentUser.id);
+      if (currentUserData) {
+        currentUserRole = currentUserData.role;
+
+        // STAFF 이상이면 공지 추가 버튼 표시
+        if (isStaffOrAbove()) {
+          document.getElementById('notice-add-btn').style.display = 'flex';
         }
       }
-    })
-    .catch(error => console.error('사용자 역할 조회 실패:', error));
+    }
+  })
+  .catch(error => console.error('사용자 역할 조회 실패:', error));
 }
