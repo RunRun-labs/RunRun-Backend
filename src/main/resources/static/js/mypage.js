@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     attachProfileImageClickHandler();
     attachChallengeHandler();
     attachFriendHandler();
+    attachCouponsHandler();
     attachSettingsHandler();
     attachMyCoursesHandler();
     attachMyPostsHandler();
@@ -36,22 +37,55 @@ async function loadMyBodyInfo() {
 
         const payload = await res.json();
         const user = payload?.data ?? null;
-        renderBodyInfo(user);
+        renderTierAndRating(user);
         renderProfileImage(user);
     } catch (e) {
         console.error(e);
     }
 }
 
-function renderBodyInfo(user) {
-    const heightEl = document.getElementById("heightCm");
-    const weightEl = document.getElementById("weightKg");
+function renderTierAndRating(user) {
+    const tierImage = document.getElementById("tierImage");
+    const tierText = document.getElementById("tierText");
+    const ratingValue = document.getElementById("ratingValue");
 
-    const height = user?.heightCm;
-    const weight = user?.weightKg;
+    // 티어 정보 (추후 API 연동 예정)
+    const tier = user?.tier || "토끼";
+    const tierImagePath = `/img/tier/${tier.toLowerCase()}.png`;
+    
+    // 티어 이미지 설정
+    if (tierImage) {
+        tierImage.src = tierImagePath;
+        tierImage.alt = tier;
+        // 이미지 로드 실패 시 텍스트 표시
+        tierImage.onerror = function() {
+            this.style.display = "none";
+            if (tierText) {
+                tierText.style.display = "inline";
+            }
+        };
+        // 이미지 로드 성공 시 텍스트 숨김
+        tierImage.onload = function() {
+            if (tierText) {
+                tierText.style.display = "none";
+            }
+        };
+    }
+    
+    // 티어 텍스트 설정 (이미지가 없을 경우 대체)
+    if (tierText) {
+        const tierEmojiMap = {
+            "토끼": "🐰",
+            "rabbit": "🐰"
+        };
+        tierText.textContent = tierEmojiMap[tier] || "🐰";
+    }
 
-    heightEl.textContent = height ?? "-";
-    weightEl.textContent = weight ?? "-";
+    // 레이팅 정보 (추후 API 연동 예정)
+    const rating = user?.rating || null;
+    if (ratingValue) {
+        ratingValue.textContent = rating !== null ? rating : "-";
+    }
 }
 
 
@@ -86,7 +120,7 @@ function attachProfileEditHandler() {
 }
 
 function attachChallengeHandler() {
-    const challengeBtn = document.querySelector('.profile-actions .action-pill:first-child');
+    const challengeBtn = document.querySelector('[data-role="challenge"]');
     if (!challengeBtn) return;
 
     challengeBtn.addEventListener("click", () => {
@@ -95,11 +129,20 @@ function attachChallengeHandler() {
 }
 
 function attachFriendHandler() {
-    const friendBtn = document.querySelector('.profile-actions .action-pill:nth-child(2)');
+    const friendBtn = document.querySelector('[data-role="friends"]');
     if (!friendBtn) return;
 
     friendBtn.addEventListener("click", () => {
         window.location.href = "/friends/list";
+    });
+}
+
+function attachCouponsHandler() {
+    const couponsBtn = document.querySelector('[data-role="coupons"]');
+    if (!couponsBtn) return;
+
+    couponsBtn.addEventListener("click", () => {
+        window.location.href = "/coupons";
     });
 }
 
