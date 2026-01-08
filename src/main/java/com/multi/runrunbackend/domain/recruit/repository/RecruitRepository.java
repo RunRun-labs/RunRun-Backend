@@ -29,7 +29,9 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
              ) / 1000 AS distance
       FROM recruit r
       WHERE r.status = 'RECRUITING'
-      AND (:keyword IS NULL OR r.title LIKE CONCAT('%', :keyword, '%'))
+      AND (:keyword IS NULL OR 
+           r.title ILIKE CONCAT('%', :keyword, '%') OR 
+           r.meeting_place ILIKE CONCAT('%', :keyword, '%'))
       AND (:radius IS NULL OR 
           ST_DWithin(
               ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)::geography, 
