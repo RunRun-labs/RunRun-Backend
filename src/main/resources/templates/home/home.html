@@ -6,7 +6,7 @@
             name="viewport"
             content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>RUNRUN | User Profile</title>
+    <title>RUNRUN | Home</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link
@@ -15,55 +15,67 @@
     />
     <link
             rel="stylesheet"
-            href="/css/user-profile.css"
-            th:href="@{/css/user-profile.css}"
+            href="/css/home.css"
+            th:href="@{/css/home.css}"
     />
 </head>
-<body class="mypage-body">
-<main class="page mypage-page">
-    <header class="mypage-header">
-        <button class="back-button" type="button" aria-label="뒤로가기" data-role="back">
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M23.3333 13.3333L16.6667 20L23.3333 26.6667" stroke="#1E1E1E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<body class="home-body">
+<main class="page home-page">
+    <!-- 헤더: RUNRUN 타이틀 + 알림 아이콘 -->
+    <header class="home-header">
+        <h1 class="home-logo">RUNRUN</h1>
+        <button
+                class="notification-button"
+                type="button"
+                data-role="notification-button"
+                aria-label="알림 페이지로 이동"
+        >
+            <svg class="bell-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                 xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 3 16 3 16H21C21 16 19 14.25 19 9C19 5.13 15.87 2 12 2Z"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 21C9 22.1 9.9 23 11 23H13C14.1 23 15 22.1 15 21" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
+            <span class="notification-badge" data-role="notification-badge" hidden>0</span>
         </button>
-        <h1 class="user-profile-title" id="profileTitle">사용자 프로필</h1>
     </header>
 
-    <section class="profile-summary">
-        <div class="profile-row">
-            <!-- 좌측: 프로필 이미지 -->
-            <div class="profile-avatar">
-                <img
-                        class="avatar-img"
-                        data-role="profile-preview"
-                        alt="프로필 이미지"
-                        hidden
-                />
-                <span
-                        class="avatar-initial"
-                        data-role="profile-initial"
-                ></span>
+    <!-- 오늘의 러닝 통계 배너 -->
+    <section class="today-stats-section">
+        <div class="today-stats-header">
+            <h2 class="today-stats-title">Today</h2>
+        </div>
+        <div class="today-stats-grid">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <img src="https://www.figma.com/api/mcp/asset/6865a41f-9a2e-4bcb-94e4-1174cd32e1ae" alt="Distance"
+                         class="stat-icon-img"/>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-value" data-role="today-distance">0.0<span class="stat-unit">Km</span></p>
+                    <p class="stat-desc">Distance</p>
+                </div>
             </div>
-
-            <!-- 중앙: 누적/랭킹 정보 -->
-            <div class="profile-text profile-center">
-                <p class="profile-meta">
-                    누적:
-                    <span id="totalDistance">-</span><br/>
-                    랭킹:
-                    <span id="rank">-</span>
-                </p>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <img src="https://www.figma.com/api/mcp/asset/47c0ef7c-1972-4b2a-9dc0-4391c385d92a" alt="Duration"
+                         class="stat-icon-img"/>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-value" data-role="today-duration">00:00</p>
+                    <p class="stat-desc">Duration</p>
+                </div>
             </div>
-
-            <!-- 우측: 친구신청/차단 버튼 -->
-            <div class="profile-actions-right">
-                <button class="action-button friend-button" type="button" id="friendButton" data-role="friend">
-                    친구신청
-                </button>
-                <button class="action-button block-button" type="button" id="blockButton" data-role="block">
-                    사용자 차단
-                </button>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <img src="https://www.figma.com/api/mcp/asset/422fee5a-a265-477c-b511-8e58f1f2cb3a" alt="Calories"
+                         class="stat-icon-img"/>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-value" data-role="today-calories">0<span class="stat-unit">kcal</span></p>
+                    <p class="stat-desc">Calories</p>
+                </div>
             </div>
         </div>
     </section>
@@ -116,47 +128,31 @@
         </div>
     </section>
 
-    <section class="run-list" data-role="run-list">
-        <!-- 러닝 기록 카드는 JavaScript로 동적 생성 -->
-    </section>
-    
-    <!-- 빈 상태 UI -->
-    <div class="run-list-empty" id="runListEmpty" hidden>
-        <div class="empty-text-large">텅~</div>
-        <div class="empty-text-small" id="emptyStateMessage">사용자의 러닝 기록이 없거나 비공개 상태입니다</div>
-    </div>
-</main>
-
-<!-- 차단 모달 -->
-<div class="modal-overlay" id="blockModal" hidden>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">사용자 차단</h2>
-            <button class="modal-close" type="button" aria-label="닫기" data-role="close-block-modal">
+    <!-- 진행중인 챌린지 홍보 배너 -->
+    <section class="challenge-banner-section">
+        <div class="challenge-banner-container" data-role="challenge-banner-container">
+            <button class="challenge-nav-button challenge-nav-prev" type="button" data-role="challenge-prev" aria-label="이전 챌린지">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18M6 6L18 18" stroke="#1E1E1E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="challenge-banner-slider" data-role="challenge-banner-slider">
+                <!-- JS로 동적 생성 -->
+            </div>
+            <button class="challenge-nav-button challenge-nav-next" type="button" data-role="challenge-next" aria-label="다음 챌린지">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
         </div>
-        <div class="modal-body">
-            <p class="modal-text">이 사용자를 차단하시겠습니까?</p>
-            <div class="block-options">
-                <button class="block-option-button" type="button" data-role="block-only">
-                    차단
-                </button>
-                <button class="block-option-button" type="button" data-role="block-and-report">
-                    차단 및 신고
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+    </section>
+</main>
 
 <template id="bottomNavTemplate">
     <nav class="bottom-nav" aria-label="하단 메뉴">
         <a class="nav-item" th:href="@{/chat}" href="/chat">
             <img
-                    src="http://localhost:3845/assets/3ca81eaa50aaf4304e5454034789cf398897e16f.svg"
+                    src="/img/icons/chat.svg"
                     alt=""
                     aria-hidden="true"
             />
@@ -164,15 +160,15 @@
         </a>
         <a class="nav-item" th:href="@{/feed}" href="/feed">
             <img
-                    src="http://localhost:3845/assets/a25ca98a797a195cf0014d33755d97160983a834.svg"
+                    src="/img/icons/feed.svg"
                     alt=""
                     aria-hidden="true"
             />
             <span>feed</span>
         </a>
-        <a class="nav-item" th:href="@{/}" href="/">
+        <a class="nav-item active" th:href="@{/}" href="/">
             <img
-                    src="http://localhost:3845/assets/6d060744ca344e07264a3340d1ce76267f035268.svg"
+                    src="/img/icons/home.svg"
                     alt=""
                     aria-hidden="true"
             />
@@ -180,7 +176,7 @@
         </a>
         <a class="nav-item" th:href="@{/match}" href="/match">
             <img
-                    src="http://localhost:3845/assets/a1c3341d0388b5ec41a25350c4e525c869160bdd.svg"
+                    src="/img/icons/match.svg"
                     alt=""
                     aria-hidden="true"
             />
@@ -188,7 +184,7 @@
         </a>
         <a class="nav-item" th:href="@{/my}" href="/my">
             <img
-                    src="http://localhost:3845/assets/1894082a888c5c07d733295ec6a54ed9b0711586.svg"
+                    src="/img/icons/my.svg"
                     alt=""
                     aria-hidden="true"
             />
@@ -202,11 +198,6 @@
         th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
-<script>
-    // Thymeleaf에서 전달된 userId를 전역 변수로 설정
-    window.userProfileUserId = /*[[${userId}]]*/ null;
-</script>
-<script src="/js/user-profile.js" th:src="@{/js/user-profile.js}"></script>
+<script src="/js/home.js" th:src="@{/js/home.js}"></script>
 </body>
 </html>
-
