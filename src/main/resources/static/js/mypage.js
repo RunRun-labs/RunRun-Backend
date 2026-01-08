@@ -119,10 +119,57 @@ function attachProfileEditHandler() {
 
 function attachChallengeHandler() {
     const challengeBtn = document.querySelector('[data-role="challenge"]');
-    if (!challengeBtn) return;
+    const modal = document.querySelector('[data-role="challenge-modal"]');
+    const modalOverlay = document.querySelector('[data-role="challenge-modal-overlay"]');
+    const modalClose = document.querySelector('[data-role="challenge-modal-close"]');
+    const challengeOptions = document.querySelectorAll('[data-role="challenge-option"]');
 
+    if (!challengeBtn || !modal) return;
+
+    // 모달 열기
     challengeBtn.addEventListener("click", () => {
-        window.location.href = "/challenge";
+        modal.classList.add("active");
+        document.body.style.overflow = "hidden";
+    });
+
+    // 모달 닫기
+    const closeModal = () => {
+        modal.classList.remove("active");
+        document.body.style.overflow = "";
+    };
+
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", closeModal);
+    }
+
+    if (modalClose) {
+        modalClose.addEventListener("click", closeModal);
+    }
+
+    // ESC 키로 모달 닫기
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("active")) {
+            closeModal();
+        }
+    });
+
+    // 챌린지 옵션 클릭 처리
+    challengeOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+            const type = option.getAttribute("data-type");
+            let url = "/challenge";
+
+            switch (type) {
+                case "active":
+                    url = "/challenge";
+                    break;
+                case "ended":
+                    url = "/challenge/end";
+                    break;
+            }
+
+            window.location.href = url;
+        });
     });
 }
 
