@@ -152,7 +152,7 @@ public class MatchingScheduler {
       try {
         sessionId = matchSessionService.createOnlineSession(userIdSet, distance, avgDuration);
 
-        matchingQueueService.cleanupAfterMatched(userIds);
+        matchingQueueService.cleanupAfterMatched(userIds, sessionId);
 
         log.info("매칭 확정 성공 - Queue: {}, distance: {}, targetCount: {}, sessionId: {}, users: {}",
             queueKey, distance, targetCount, sessionId, userIds);
