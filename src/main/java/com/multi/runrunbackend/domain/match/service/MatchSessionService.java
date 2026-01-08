@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.match.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.BadRequestException;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
@@ -40,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -69,6 +69,7 @@ public class MatchSessionService {
   private final SessionUserRepository sessionUserRepository;
   private final RunningResultRepository runningResultRepository;
   private final CourseRepository courseRepository;
+  private final com.multi.runrunbackend.domain.chat.repository.OfflineChatMessageRepository chatMessageRepository;  // ⭐ 추가
   private final SimpMessagingTemplate messagingTemplate;
   private final RedisTemplate<String, Object> redisPubSubTemplate;  // ✅ Redis Pub/Sub 추가
   private final RedisTemplate<String, String> redisTemplate;  // ✅ Redis Ticket 삭제용
@@ -131,6 +132,13 @@ public class MatchSessionService {
 
     matchSessionRepository.save(matchSession);
 
+    // ⭐ 세션 ID가 재사용되었을 경우 MongoDB의 과거 메시지 삭제
+    int deletedCount = chatMessageRepository.deleteBySessionId(matchSession.getId());
+    if (deletedCount > 0) {
+      log.info("⭐ 오프라인 세션 생성: sessionId={}, 과거 메시지 {} 개 삭제",
+          matchSession.getId(), deletedCount);
+    }
+
     List<RecruitUser> participants = recruitUserRepository.findAllByRecruitId(
         recruit.getId());
 
@@ -180,6 +188,13 @@ public class MatchSessionService {
         .build();
 
     matchSessionRepository.save(session);
+
+    // ⭐ 세션 ID가 재사용되었을 경우 MongoDB의 과거 메시지 삭제
+    int deletedCount = chatMessageRepository.deleteBySessionId(session.getId());
+    if (deletedCount > 0) {
+      log.info("⭐ 온라인 세션 생성: sessionId={}, 과거 메시지 {} 개 삭제",
+          session.getId(), deletedCount);
+    }
 
     List<SessionUser> sessionUsers = new ArrayList<>();
 
@@ -303,6 +318,13 @@ public class MatchSessionService {
 
     matchSessionRepository.save(session);
 
+    // ⭐ 세션 ID가 재사용되었을 경우 MongoDB의 과거 메시지 삭제
+    int deletedCount = chatMessageRepository.deleteBySessionId(session.getId());
+    if (deletedCount > 0) {
+      log.info("⭐ 고스트 세션 생성: sessionId={}, 과거 메시지 {} 개 삭제",
+          session.getId(), deletedCount);
+    }
+
     SessionUser sessionUser = SessionUser.builder()
         .matchSession(session)
         .user(user)
@@ -382,6 +404,13 @@ public class MatchSessionService {
         .build();
 
     matchSessionRepository.save(session);
+
+    // ⭐ 세션 ID가 재사용되었을 경우 MongoDB의 과거 메시지 삭제
+    int deletedCount = chatMessageRepository.deleteBySessionId(session.getId());
+    if (deletedCount > 0) {
+      log.info("⭐ 솔로 세션 생성: sessionId={}, 과거 메시지 {} 개 삭제",
+          session.getId(), deletedCount);
+    }
 
     SessionUser sessionUser = SessionUser.builder()
         .matchSession(session)
@@ -475,7 +504,8 @@ public class MatchSessionService {
       log.info("✅ SessionUser soft delete 성공");
 
       // 남은 참가자 확인
-      List<SessionUser> remainingUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
+      List<SessionUser> remainingUsers = sessionUserRepository.findActiveUsersBySessionId(
+          sessionId);
       int remainingCount = remainingUsers.size();
 
       log.info("👥 남은 참가자: {}명", remainingCount);
@@ -581,7 +611,7 @@ public class MatchSessionService {
     String destination = "/sub/battle/" + sessionId + "/user-left";
     publishToRedis(destination, message);  // ✅ Redis로 발행
 
-    log.info("📤 참가자 이탈 메시지 전송: sessionId={}, leaver={}, remaining={}", 
+    log.info("📤 참가자 이탈 메시지 전송: sessionId={}, leaver={}, remaining={}",
         sessionId, leaverName, remainingCount);
   }
 
@@ -599,7 +629,7 @@ public class MatchSessionService {
       String payload = objectMapper.writeValueAsString(redisMessage);
 
       log.info("📤 [Redis Pub] 발행 시도 - channel: {}, destination: {}", channel, destination);
-      
+
       redisPubSubTemplate.convertAndSend(channel, payload);
 
       log.info("✅ [Redis Pub] 발행 성공 - channel: {}, payload length: {}", channel, payload.length());

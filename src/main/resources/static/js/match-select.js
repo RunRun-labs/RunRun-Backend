@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const routes = {
       online: "/match/online",
       offline: "/recruit",
-      ghost: "/match/ghost",
+      ghost: "/match/ghost?mode=select",
       solo: "/match/solo"
     };
 

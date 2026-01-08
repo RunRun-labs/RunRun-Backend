@@ -7,11 +7,13 @@ import com.multi.runrunbackend.domain.coupon.constant.CouponStatus;
 import com.multi.runrunbackend.domain.coupon.dto.req.CouponCreateReqDto;
 import com.multi.runrunbackend.domain.coupon.dto.req.CouponUpdateReqDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponCreateResDto;
+import com.multi.runrunbackend.domain.coupon.dto.res.CouponDetailResDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponPageResDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponUpdateResDto;
 import com.multi.runrunbackend.domain.coupon.service.CouponService;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -37,17 +39,34 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/coupon")
+@RequestMapping("/api/admin/coupons")
 public class CouponController {
 
     private final CouponService couponService;
 
     @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{coupon_id}")
+    public ResponseEntity<ApiResponse<CouponDetailResDto>> getCoupon(
+        @PathVariable(name = "coupon_id") Long couponId) {
+
+        CouponDetailResDto res = couponService.getCoupon(couponId);
+        return ResponseEntity.ok(ApiResponse.success("쿠폰 상세 조회 성공", res));
+    }
+
+    @GetMapping("/public/{coupon_id}")
+    public ResponseEntity<ApiResponse<CouponDetailResDto>> getPublicCoupon(
+        @PathVariable(name = "coupon_id") Long couponId) {
+
+        CouponDetailResDto res = couponService.getCoupon(couponId);
+        return ResponseEntity.ok(ApiResponse.success("쿠폰 상세 조회 성공", res));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<CouponPageResDto>> listCoupons(
-        @RequestParam(required = false) CouponStatus status,
-        @RequestParam(required = false) CouponCodeType codeType,
-        @RequestParam(required = false) CouponChannel channel,
+        @RequestParam(required = false) List<CouponStatus> statuses,
+        @RequestParam(required = false) List<CouponCodeType> codeTypes,
+        @RequestParam(required = false) List<CouponChannel> channels,
         @RequestParam(required = false) String keyword,
 
         @RequestParam(required = false)
@@ -62,7 +81,7 @@ public class CouponController {
         Pageable pageable
     ) {
         CouponPageResDto res = couponService.getCouponList(
-            status, codeType, channel, keyword, startFrom, endTo, pageable
+            statuses, codeTypes, channels, keyword, startFrom, endTo, pageable
         );
 
         return ResponseEntity.ok(ApiResponse.success("쿠폰 목록 조회 성공", res));

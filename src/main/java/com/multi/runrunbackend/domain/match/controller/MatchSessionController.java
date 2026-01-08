@@ -98,10 +98,10 @@ public class MatchSessionController {
   ) {
     // ✅ 1. 매칭 큐에서 제거
     matchingQueueService.removeQueue(principal);
-    
+
     // ✅ 2. 세션에서 나가기
     matchSessionService.leaveSession(sessionId, principal.getUserId());
-    
+
     return ResponseEntity.ok(ApiResponse.successNoData("대기방에서 나갔습니다."));
   }
 
@@ -144,6 +144,16 @@ public class MatchSessionController {
 
   }
 
+  @GetMapping("/ghost")
+  public ResponseEntity<ApiResponse<Slice<RunningRecordResDto>>> getMyRunningRecords(
+      @AuthenticationPrincipal CustomUser principal,
+      @RequestParam(required = false, defaultValue = "ALL") RunningResultFilterType filter,
+      @PageableDefault(size = 10, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    Slice<RunningRecordResDto> records = matchSessionService.getMyRunningRecords(principal, filter,
+        pageable);
+    return ResponseEntity.ok(ApiResponse.success("내 러닝 결과 조회 성공", records));
+  }
   /**
    * 고스트런 세션 정보 조회
    */
@@ -155,18 +165,6 @@ public class MatchSessionController {
     Map<String, Object> info = matchSessionService.getGhostSessionInfo(sessionId);
     return ResponseEntity.ok(ApiResponse.success("고스트런 세션 정보 조회 성공", info));
   }
-
-  @GetMapping("/ghost")
-  public ResponseEntity<ApiResponse<Slice<RunningRecordResDto>>> getMyRunningRecords(
-      @AuthenticationPrincipal CustomUser principal,
-      @RequestParam(required = false, defaultValue = "ALL") RunningResultFilterType filter,
-      @PageableDefault(size = 10, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable
-  ) {
-    Slice<RunningRecordResDto> records = matchSessionService.getMyRunningRecords(principal, filter,
-        pageable);
-    return ResponseEntity.ok(ApiResponse.success("내 러닝 결과 조회 성공", records));
-  }
-
   @PostMapping("/solorun/start")
   public ResponseEntity<ApiResponse<Long>> startSoloRun(
       @AuthenticationPrincipal CustomUser principal,

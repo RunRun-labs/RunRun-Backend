@@ -1,0 +1,491 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #1a1d2e;
+    color: #e0e0e0;
+}
+
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* 사이드바 */
+.sidebar {
+    width: 250px;
+    background-color: #22283a;
+    padding: 20px;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.logo h2 {
+    color: #d4ff00;
+    margin-bottom: 30px;
+    font-size: 24px;
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #b0b0b0;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.nav-item:hover {
+    background-color: #2a3042;
+    color: #fff;
+}
+
+.nav-item.active {
+    background-color: #d4ff00;
+    color: #1a1d2e;
+    font-weight: 600;
+}
+
+.nav-item .icon {
+    font-size: 20px;
+}
+
+/* 메인 컨텐츠 */
+.main-content {
+    margin-left: 250px;
+    flex: 1;
+    padding: 30px;
+}
+
+/* 헤더 */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.search-box input {
+    width: 400px;
+    padding: 12px 20px;
+    background-color: #2a3042;
+    border: 1px solid #3a3f52;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #d4ff00;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-create {
+    padding: 12px 24px;
+    background-color: #d4ff00;
+    color: #1a1d2e;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-create:hover {
+    background-color: #c0eb00;
+    transform: translateY(-2px);
+}
+
+.btn-delete {
+    padding: 12px 24px;
+    background-color: #ff4757;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-delete:hover {
+    background-color: #ee3344;
+    transform: translateY(-2px);
+}
+
+/* 필터 섹션 */
+.filter-section {
+    margin-bottom: 20px;
+}
+
+.filter-card {
+    background-color: #d4ff00;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.filter-card h3 {
+    color: #1a1d2e;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 15px;
+}
+
+.filter-item {
+    flex: 1;
+}
+
+.filter-item label {
+    display: block;
+    color: #1a1d2e;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.filter-item select,
+.filter-item input {
+    width: 100%;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    color: #1a1d2e;
+    font-size: 14px;
+}
+
+/* 테이블 */
+.table-section {
+    background-color: #22283a;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.product-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.product-table thead {
+    background-color: #2a3042;
+}
+
+.product-table th {
+    padding: 15px;
+    text-align: left;
+    color: #b0b0b0;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom: 2px solid #3a3f52;
+}
+
+.product-table td {
+    padding: 15px;
+    border-bottom: 1px solid #2a3042;
+    color: #e0e0e0;
+}
+
+.product-table tbody tr:hover {
+    background-color: #2a3042;
+}
+
+.product-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-active {
+    background-color: #d4ff00;
+    color: #1a1d2e;
+}
+
+.status-inactive {
+    background-color: #555;
+    color: #ccc;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit {
+    padding: 6px 12px;
+    background-color: #5eb3f6;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn-edit:hover {
+    background-color: #4a9dd4;
+}
+
+/* 페이지네이션 */
+.pagination-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+#pagination {
+    display: flex;
+    gap: 8px;
+}
+
+.page-btn {
+    padding: 8px 12px;
+    background-color: #2a3042;
+    color: #e0e0e0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.page-btn:hover {
+    background-color: #3a3f52;
+}
+
+.page-btn.active {
+    background-color: #d4ff00;
+    color: #1a1d2e;
+    font-weight: 600;
+}
+
+/* 모달 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    overflow-y: auto;
+}
+
+.modal-content {
+    background-color: #22283a;
+    margin: 50px auto;
+    max-width: 600px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: 1px solid #3a3f52;
+}
+
+.modal-header h2 {
+    color: #d4ff00;
+    font-size: 20px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #b0b0b0;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #fff;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    color: #e0e0e0;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    background-color: #2a3042;
+    border: 1px solid #3a3f52;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #d4ff00;
+}
+
+.image-upload-area {
+    margin-top: 10px;
+}
+
+.image-preview {
+    width: 100%;
+    height: 250px;
+    background-color: #2a3042;
+    border: 2px dashed #3a3f52;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-preview:hover {
+    border-color: #d4ff00;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.upload-placeholder {
+    text-align: center;
+    color: #b0b0b0;
+}
+
+.upload-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.btn-cancel {
+    padding: 12px 24px;
+    background-color: #3a3f52;
+    color: #e0e0e0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-cancel:hover {
+    background-color: #4a4f62;
+}
+
+.btn-submit {
+    padding: 12px 24px;
+    background-color: #d4ff00;
+    color: #1a1d2e;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-submit:hover {
+    background-color: #c0eb00;
+}
+
+/* =========================
+   Validation UI
+   ========================= */
+
+.input-error {
+    border-color: #ff4757 !important;
+    box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.15);
+}
+
+.field-error {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #ff4757;
+    display: none;
+    line-height: 1.3;
+}
+
+.field-error.active {
+    display: block;
+}
+
+.label-required {
+    color: #ff4757;
+    margin-left: 6px;
+    font-weight: 700;
+}
+
+.image-preview.input-error {
+    border-color: #ff4757 !important;
+}

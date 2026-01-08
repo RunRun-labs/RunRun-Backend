@@ -190,37 +190,20 @@ function formatDate(dateString) {
 }
 
 // ========================================
-// 멤버십 구독 (결제)
+// 멤버십 구독 (결제 페이지로 이동!)
 // ========================================
-async function subscribeMembership() {
+function subscribeMembership() {
     const token = localStorage.getItem('accessToken');
 
-    if (!confirm('프리미엄 멤버십을 구독하시겠습니까?')) {
+    // 로그인 체크
+    if (!token) {
+        alert('로그인이 필요합니다.');
+        window.location.href = '/login';
         return;
     }
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/memberships`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            alert(result.message || '멤버십 구독이 완료되었습니다!');
-            // 페이지 새로고침
-            location.reload();
-        } else {
-            alert(result.message || '멤버십 구독에 실패했습니다.');
-        }
-    } catch (error) {
-        console.error('멤버십 구독 실패:', error);
-        alert('멤버십 구독 중 오류가 발생했습니다.');
-    }
+    // 결제 페이지로 바로 이동!
+    window.location.href = '/payment/pay';
 }
 
 // ========================================
@@ -258,10 +241,8 @@ async function cancelMembership() {
 }
 
 // ========================================
-// 멤버십 내역 보기
+// 멤버십 내역 보기 (결제 내역 페이지로 이동)
 // ========================================
 function showMembershipDetail() {
-    alert('멤버십 내역 페이지는 준비 중입니다.');
-    // 실제로는 다른 페이지로 이동
-    // window.location.href = '/membership-detail.html';
+    window.location.href = '/payment/history';
 }
