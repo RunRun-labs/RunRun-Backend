@@ -83,7 +83,12 @@ public class FeedPostService {
         } else {
             // 코스 썸네일 URL 사용
             if (runningResult.getCourse() != null && runningResult.getCourse().getThumbnailUrl() != null) {
-                imageUrl = fileStorage.toHttpsUrl(runningResult.getCourse().getThumbnailUrl());
+                String thumbnailUrl = runningResult.getCourse().getThumbnailUrl();
+                if (!thumbnailUrl.startsWith("http")) {
+                    imageUrl = fileStorage.toHttpsUrl(thumbnailUrl);
+                } else {
+                    imageUrl = thumbnailUrl;
+                }
             }
         }
 
