@@ -179,6 +179,9 @@ public class CrewJoinService {
             throw new BusinessException(ErrorCode.JOIN_REQUEST_NOT_FOUND);
         }
 
+        // 승인 처리
+        joinRequest.approve();
+
         // 승인 시점에 다시 1인 1크루 정책 확인 (동시성 이슈 방지)
         validateNotInAnotherCrew(joinRequest.getUser().getId());
 
@@ -188,9 +191,6 @@ public class CrewJoinService {
                 CREW_JOIN_POINT,
                 "CREW_JOIN"
         );
-
-        // 승인 처리
-        joinRequest.approve();
 
         // 해당 사용자의 다른 크루 대기 중인 신청 모두 취소
         cancelOtherPendingRequestsForUser(joinRequest.getUser().getId(), crewId);
