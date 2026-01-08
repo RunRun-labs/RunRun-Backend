@@ -11,6 +11,7 @@ import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.course.repository.CourseRepository;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
+import com.multi.runrunbackend.domain.match.constant.Tier;
 import com.multi.runrunbackend.domain.match.dto.req.SoloRunStartReqDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingParticipantDto;
@@ -20,6 +21,8 @@ import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
+import com.multi.runrunbackend.domain.rating.entity.DistanceRating;
+import com.multi.runrunbackend.domain.rating.repository.DistanceRatingRepository;
 import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
 import com.multi.runrunbackend.domain.recruit.entity.RecruitUser;
@@ -58,6 +61,7 @@ public class MatchSessionService {
   private final SessionUserRepository sessionUserRepository;
   private final RunningResultRepository runningResultRepository;
   private final CourseRepository courseRepository;
+  private final DistanceRatingRepository distanceRatingRepository;
 
 
   @Transactional
@@ -220,10 +224,21 @@ public class MatchSessionService {
 
     log.info("👑 방장 userId: {}", hostUserId);
 
+    // targetDistance를 기반으로 DistanceType 결정
+    DistanceType distanceType = determineDistanceType(session.getTargetDistance());
+
     // 참가자 DTO 변환
     List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
         .map(su -> {
           User user = su.getUser();
+
+          // 티어 정보 조회
+          Tier tier =
+              distanceRatingRepository.findByUserIdAndDistanceType(user.getId(),
+                      distanceType)
+                  .map(DistanceRating::getCurrentTier)
+                  .orElse(Tier.거북이);
+
           return MatchWaitingParticipantDto.builder()
               .userId(user.getId())
               .name(user.getName())
@@ -231,6 +246,7 @@ public class MatchSessionService {
               .isReady(su.isReady())
               .isHost(user.getId().equals(hostUserId))
               .avgPace("5:" + (30 + (int) (Math.random() * 30)))  // 임시 하드코딩: 5:30 ~ 5:59
+              .tier(tier)
               .build();
         })
         .collect(Collectors.toList());
@@ -365,6 +381,18 @@ public class MatchSessionService {
     };
   }
 
+  /**
+   * targetDistance를 기반으로 DistanceType 결정
+   */
+  private DistanceType determineDistanceType(Double targetDistance) {
+    if (targetDistance == 3.5) {
+      return DistanceType.KM_3;
+    } else if (targetDistance == 5.0) {
+      return DistanceType.KM_5;
+    } else {
+      return DistanceType.KM_10;
+    }
+  }
 
 }
 
