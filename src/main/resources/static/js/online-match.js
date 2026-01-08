@@ -754,6 +754,11 @@ async function showMatchFound(sessionId) {
         if (userProfileImage && participant?.profileImage) {
           userProfileImage.src = participant.profileImage;
         }
+        // 내 티어 업데이트
+        const userTierEl = document.getElementById("userTier");
+        if (userTierEl) {
+          userTierEl.textContent = participant?.tier || "토끼";
+        }
         continue;
       }
       // 첫 번째가 본인이라고 가정하는 경우도 처리
@@ -761,6 +766,11 @@ async function showMatchFound(sessionId) {
         // 내 프로필 이미지 업데이트
         if (userProfileImage && participant?.profileImage) {
           userProfileImage.src = participant.profileImage;
+        }
+        // 내 티어 업데이트
+        const userTierEl = document.getElementById("userTier");
+        if (userTierEl) {
+          userTierEl.textContent = participant?.tier || "토끼";
         }
         continue;
       }
