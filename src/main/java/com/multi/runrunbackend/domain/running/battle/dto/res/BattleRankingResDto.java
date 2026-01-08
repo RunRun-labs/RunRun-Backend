@@ -29,4 +29,5 @@ public class BattleRankingResDto {
   private Boolean isFinished;          // 완주 여부
   private Long finishTime;             // 완주 시간 (밀리초) - 경과 시간
   private LocalDateTime finishTimeActual; // ✅ 실제 완주 시각 (순위 비교용)
+  private String status;               // 상태: RUNNING, FINISHED, TIMEOUT, GIVE_UP
 }
