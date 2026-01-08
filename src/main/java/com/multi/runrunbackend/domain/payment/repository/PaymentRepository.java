@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.payment.repository;
 
+import com.multi.runrunbackend.domain.payment.constant.PaymentStatus;
 import com.multi.runrunbackend.domain.payment.entity.Payment;
 import com.multi.runrunbackend.domain.user.entity.User;
 import jakarta.persistence.LockModeType;
@@ -39,4 +40,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      */
     Optional<Payment> findFirstByUserAndBillingKeyIsNotNullOrderByCreatedAtDesc(User user);
 
+    /**
+     * @description : 사용자의 특정 상태 결제 존재 여부 확인
+     */
+    boolean existsByUserAndPaymentStatus(User user, PaymentStatus paymentStatus);
 }
