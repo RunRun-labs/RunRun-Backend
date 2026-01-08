@@ -5,7 +5,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (backButton) {
         backButton.addEventListener("click", () => {
-            window.location.href = "/challenge";
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // 히스토리가 없을 경우 기본 경로로 이동
+                window.location.href = "/challenge";
+            }
         });
     }
 
