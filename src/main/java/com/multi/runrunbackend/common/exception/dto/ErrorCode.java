@@ -108,7 +108,6 @@ public enum ErrorCode {
     BILLING_PAYMENT_FAILED(HttpStatus.BAD_GATEWAY, "PM008", "빌링키 결제에 실패했습니다."),
     BILLING_KEY_NOT_FOUND(HttpStatus.NOT_FOUND, "PM009", "빌링키를 찾을 수 없습니다."),
     MEMBERSHIP_STILL_ACTIVE(HttpStatus.BAD_REQUEST, "PM010", "해지 예약 상태입니다. 종료일 이후 재가입 가능합니다."),
-    PAYMENT_IN_PROGRESS(HttpStatus.BAD_REQUEST, "PM011", "진행 중인 결제가 있습니다."),
 
     // ========== Point (포인트) ==========
     POINT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "포인트 정보를 찾을 수 없습니다"),
