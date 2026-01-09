@@ -922,86 +922,78 @@ function getAccessToken() {
 // ===========================
 
 /**
- * 가입 상태만 갱신하는 경량 함수
+ * 크루 전체 정보와 가입 상태를 함께 갱신
  */
-async function refreshJoinStatus() {
+async function refreshCrewInfo() {
     try {
         const token = getAccessToken();
         if (!token) {
-            // 로그인하지 않은 경우 폴링 중단
             stopPolling();
             return;
         }
 
-        const response = await fetch(`/api/crews/${crewId}/applied`, {
+        // 크루 전체 정보 다시 가져오기
+        const crewResponse = await fetch(`/api/crews/${crewId}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
 
-        if (!response.ok) {
-            console.warn('상태 갱신 실패:', response.status);
-            return;
+        if (crewResponse.ok) {
+            const crewResult = await crewResponse.json();
+            const crewData = crewResult.data || crewResult;
+
+            // 크루 정보 화면에 다시 그리기 (크루장 이름 포함)
+            updateCrewUI(crewData);
         }
 
-        const result = await response.json();
-        const data = result.data || result;
+        // 가입 상태도 확인
+        const appliedResponse = await fetch(`/api/crews/${crewId}/applied`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-        const crewJoinState = data?.crewJoinState || null;
+        if (appliedResponse.ok) {
+            const appliedResult = await appliedResponse.json();
+            const appliedData = appliedResult.data || appliedResult;
+            const crewJoinState = appliedData?.crewJoinState;
 
-        let newJoinStatus = null;
-        let newIsApplied = false;
+            let newJoinStatus = null;
+            let newIsApplied = false;
 
-        if (crewJoinState === 'PENDING') {
-            newJoinStatus = 'PENDING';
-            newIsApplied = true;
-        } else if (crewJoinState === 'APPROVED') {
-            newJoinStatus = 'APPROVED';
-            newIsApplied = true;
-        } else if (crewJoinState === 'NOT_APPLIED' || crewJoinState === 'CAN_REAPPLY') {
-            // NOT_APPLIED, CAN_REAPPLY (REJECTED, CANCELED 포함)는 모두 재신청 가능하도록 null로 처리
-            newJoinStatus = null;
-            newIsApplied = false;
-        } else {
-            // 기본값
-            newJoinStatus = null;
-            newIsApplied = false;
-        }
+            if (crewJoinState === 'PENDING') {
+                newJoinStatus = 'PENDING';
+                newIsApplied = true;
+            } else if (crewJoinState === 'APPROVED') {
+                newJoinStatus = 'APPROVED';
+                newIsApplied = true;
+            } else if (crewJoinState === 'NOT_APPLIED' || crewJoinState === 'CAN_REAPPLY') {
+                newJoinStatus = null;
+                newIsApplied = false;
+            }
 
-        // 상태가 변경된 경우에만 로그 출력 및 UI 업데이트
-        const previousJoinStatus = joinStatus; // 이전 상태 저장
-        if (isApplied !== newIsApplied || joinStatus !== newJoinStatus) {
-            console.log('상태 변경 감지!');
-            console.log('  이전:', {isApplied, joinStatus});
-            console.log('  현재:', {applied: newIsApplied, joinStatus: newJoinStatus});
+            // 상태 변경 확인
+            const previousJoinStatus = joinStatus;
+            if (isApplied !== newIsApplied || joinStatus !== newJoinStatus) {
+                console.log('상태 변경 감지!');
 
-            // 전역 변수 업데이트
-            isApplied = newIsApplied;
-            joinStatus = newJoinStatus;
+                isApplied = newIsApplied;
+                joinStatus = newJoinStatus;
 
-            // 버튼 UI만 업데이트
-            updateButtonUI();
+                updateButtonUI();
 
-            // 사용자에게 알림
-            if (newJoinStatus === 'APPROVED' && previousJoinStatus === 'PENDING') {
-                showToast('크루 가입이 승인되었습니다!');
-            } else if (newJoinStatus === null && previousJoinStatus === 'PENDING') {
-                showToast('크루 가입 신청이 취소되었습니다.');
-            } else if (newJoinStatus === null && previousJoinStatus === 'APPROVED') {
-                showToast('크루에서 탈퇴되었습니다.');
-            } else if (newJoinStatus === null && (previousJoinStatus === 'REJECTED' || previousJoinStatus === 'CANCELED')) {
-                // 거절/취소 후 재신청 가능 상태로 변경됨
-                if (previousJoinStatus === 'REJECTED') {
-                    showToast('크루 가입이 거절되었습니다. 다시 신청하실 수 있습니다.');
-                } else {
-                    showToast('크루 가입 신청이 취소되었습니다. 다시 신청하실 수 있습니다.');
+                // 알림 표시
+                if (newJoinStatus === 'APPROVED' && previousJoinStatus === 'PENDING') {
+                    showToast('크루 가입이 승인되었습니다!');
                 }
             }
         }
 
     } catch (error) {
-        console.error('상태 갱신 중 오류:', error);
+        console.error('크루 정보 갱신 중 오류:', error);
     }
 }
 
@@ -1016,7 +1008,7 @@ function startPolling() {
 
     console.log('실시간 상태 갱신 시작 (3초 간격)');
     pollingInterval = setInterval(() => {
-        refreshJoinStatus();
+        refreshCrewInfo();
     }, 3000);
 }
 
