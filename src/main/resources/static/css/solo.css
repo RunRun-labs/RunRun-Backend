@@ -194,6 +194,102 @@ body {
   line-height: 1.5;
 }
 
+/* 코스 선택 섹션 */
+.course-section {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.course-input-group {
+  width: 100%;
+}
+
+.course-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.course-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.course-input {
+  width: 100%;
+  padding: 16px 48px 16px 18px;
+  border: 2px solid var(--stroke);
+  border-radius: 12px;
+  background: #F5F6F8;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.course-input:hover {
+  background: #E8E9EB;
+  border-color: var(--neon-accent);
+}
+
+.course-input:focus {
+  background: var(--bg-primary);
+  border-color: var(--neon-accent);
+  box-shadow: 0 0 0 4px rgba(186, 255, 41, 0.25);
+}
+
+.course-search-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+  width: 20px;
+  height: 20px;
+  z-index: 1;
+  display: block;
+}
+
+.selected-course-info {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(186, 255, 41, 0.1);
+  border: 1px solid var(--neon-accent);
+  border-radius: 12px;
+}
+
+.course-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.course-address {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.map-section {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.map-container {
+  width: 100%;
+  height: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--stroke);
+}
+
 /* 거리 선택 섹션 */
 .distance-section {
   width: 100%;
@@ -269,7 +365,7 @@ body {
 .manual-distance-input {
   width: 100%;
   padding: 24px;
-  padding-right: 50px;
+  padding-right: 60px;
   border: 2px solid var(--stroke);
   border-radius: 16px;
   background: var(--bg-card);
@@ -281,11 +377,11 @@ body {
   outline: none;
   -moz-appearance: textfield;
   text-align: center;
-  padding-left: 50px;
+  padding-left: 60px;
   box-sizing: border-box;
   line-height: 1.5;
   height: auto;
-  text-indent: -8px;
+  text-indent: 0;
 }
 
 .manual-distance-input::-webkit-outer-spin-button,
@@ -314,7 +410,7 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(calc(-50% + 16px), -50%);
+  transform: translate(calc(-50% + 40px), -50%);
   font-size: 18px;
   font-weight: 600;
   color: var(--text-secondary);
@@ -322,6 +418,22 @@ body {
   user-select: none;
   white-space: nowrap;
   line-height: 1.5;
+}
+
+/* 에러 상태 스타일 */
+.manual-input-section.has-error .manual-distance-input {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+.manual-input-error {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ef4444;
+  min-height: 20px;
+  line-height: 1.4;
 }
 
 .manual-distance-input:read-only {

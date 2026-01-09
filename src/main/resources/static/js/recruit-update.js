@@ -7,6 +7,115 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedCourseId = null;
   let selectedAddress = null;
   let recruitId = null;
+  let isDistanceLocked = false;
+  let DRAFT_KEY = null;
+  let isLocationLockedByCourse = false;
+
+  // 러닝(코스) 선택 페이지에서 돌아올 때 query param으로 받은 값을 우선 적용
+  async function applyCourseFromQueryParams() {
+    try {
+      const u = new URL(window.location.href);
+      const courseId = u.searchParams.get("courseId");
+      const courseName = u.searchParams.get("courseName");
+      const courseDistanceKm = u.searchParams.get("courseDistanceKm");
+
+      if (courseId) {
+        selectedCourseId = parseInt(courseId, 10);
+
+        const courseInput = document.getElementById("course");
+        if (courseInput) {
+          courseInput.value = courseName || "코스 선택됨";
+        }
+
+        if (courseDistanceKm) {
+          setDistanceLock(parseFloat(courseDistanceKm));
+          updateConditionSummary();
+          updateChipSelection(); // ✅ 잠금 걸린 거리도 선택 표시되게
+        }
+
+        // ✅ await로 타이밍 보장
+        await applyCourseStartLocationIfNeeded();
+        return true;
+      }
+    } catch (e) {
+    }
+    return false;
+  }
+
+  async function fetchCourseDetail(courseId) {
+    if (!courseId) {
+      return null;
+    }
+    const token = localStorage.getItem("accessToken") || getCookie(
+        "accessToken");
+    const headers = {"Content-Type": "application/json"};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`/api/courses/${courseId}`, {
+      method: "GET",
+      headers,
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !body?.success) {
+      throw new Error(body?.message || "코스 정보를 불러올 수 없습니다.");
+    }
+    return body.data;
+  }
+
+  function setLocationLockByCourse(locked) {
+    isLocationLockedByCourse = locked === true;
+    const locationSummaryEl = document.getElementById("locationSummary");
+    if (locationSummaryEl) {
+      if (isLocationLockedByCourse) {
+        locationSummaryEl.classList.add("locked");
+      } else {
+        locationSummaryEl.classList.remove("locked");
+      }
+    }
+  }
+
+  async function applyCourseStartLocationIfNeeded() {
+    if (!selectedCourseId) {
+      setLocationLockByCourse(false);
+      return;
+    }
+    try {
+      setLocationLockByCourse(true);
+      const course = await fetchCourseDetail(selectedCourseId);
+      const lat = course?.startLat;
+      const lng = course?.startLng;
+      const addr = course?.address;
+      if (lat == null || lng == null || !Number.isFinite(lat)
+          || !Number.isFinite(lng)) {
+        throw new Error("코스 출발지 좌표가 없습니다.");
+      }
+      selectedLat = Number(lat);
+      selectedLng = Number(lng);
+      selectedAddress = addr ? String(addr) : "코스 출발지";
+      try {
+        updateLocationSummary();
+      } catch (e) {
+        // ignore
+      }
+      // 지도(모달)가 이미 만들어져 있으면 마커도 동기화
+      try {
+        if (map) {
+          const latlng = new kakao.maps.LatLng(selectedLat, selectedLng);
+          map.setCenter(latlng);
+          if (marker) {
+            marker.setMap(null);
+          }
+          marker = new kakao.maps.Marker({position: latlng, map});
+        }
+      } catch (e) {
+        // ignore
+      }
+    } catch (e) {
+      console.warn("코스 출발지 자동 적용 실패:", e?.message || e);
+      showToast(e?.message || "코스 출발지를 불러올 수 없습니다.", "error");
+    }
+  }
 
   const selectedTags = {
     distance: null,
@@ -14,6 +123,180 @@ document.addEventListener("DOMContentLoaded", () => {
     ages: [],
     gender: null,
   };
+
+  function setDistanceLock(distanceKm) {
+    if (distanceKm === null || distanceKm === undefined || Number.isNaN(
+        distanceKm)) {
+      return;
+    }
+
+    isDistanceLocked = true;
+    selectedTags.distance = distanceKm;
+
+    // 거리 칩(3/5/10) 잠금 + 선택 해제
+    document.querySelectorAll('.chip[data-distance]').forEach((chip) => {
+      chip.classList.remove("selected");
+      chip.disabled = true;
+      chip.classList.add("disabled");
+    });
+  }
+
+  function saveDraft(extra = {}) {
+    if (!DRAFT_KEY) {
+      return;
+    }
+    try {
+      const title = document.getElementById("title")?.value ?? "";
+      const content = document.getElementById("content")?.value ?? "";
+      const maxParticipants = document.getElementById("maxParticipants")?.value
+          ?? "";
+      const meetingDate = document.getElementById("meetingDate")?.value ?? "";
+      const meetingTime = document.getElementById("meetingTime")?.value ?? "";
+      const courseText = document.getElementById("course")?.value ?? "";
+
+      const draft = {
+        savedAt: Date.now(),
+        recruitId,
+        title,
+        content,
+        maxParticipants,
+        meetingDate,
+        meetingTime,
+        selectedLat,
+        selectedLng,
+        selectedAddress,
+        selectedCourseId,
+        courseText,
+        isDistanceLocked,
+        selectedTags: {
+          distance: selectedTags.distance,
+          pace: selectedTags.pace,
+          ages: Array.isArray(selectedTags.ages) ? [...selectedTags.ages] : [],
+          gender: selectedTags.gender,
+        },
+        ...extra,
+      };
+
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function restoreDraft() {
+    if (!DRAFT_KEY) {
+      return false;
+    }
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) {
+        return false;
+      }
+      const draft = JSON.parse(raw);
+      if (!draft || typeof draft !== "object") {
+        return false;
+      }
+
+      // 다른 글 draft면 무시
+      if (draft.recruitId != null && String(draft.recruitId) !== String(
+          recruitId)) {
+        return false;
+      }
+
+      // 너무 오래된 초안은 무시 (1시간)
+      if (draft.savedAt && Date.now() - draft.savedAt > 60 * 60 * 1000) {
+        sessionStorage.removeItem(DRAFT_KEY);
+        return false;
+      }
+
+      const titleEl = document.getElementById("title");
+      const contentEl = document.getElementById("content");
+      const maxEl = document.getElementById("maxParticipants");
+      const dateEl = document.getElementById("meetingDate");
+      const timeEl = document.getElementById("meetingTime");
+      const courseEl = document.getElementById("course");
+
+      if (titleEl && typeof draft.title
+          === "string") {
+        titleEl.value = draft.title;
+      }
+      if (contentEl && typeof draft.content
+          === "string") {
+        contentEl.value = draft.content;
+      }
+      if (maxEl && draft.maxParticipants != null) {
+        maxEl.value = String(
+            draft.maxParticipants);
+      }
+      if (dateEl && typeof draft.meetingDate
+          === "string") {
+        dateEl.value = draft.meetingDate;
+      }
+      if (timeEl && typeof draft.meetingTime
+          === "string") {
+        timeEl.value = draft.meetingTime;
+      }
+
+      if (typeof draft.selectedLat
+          === "number") {
+        selectedLat = draft.selectedLat;
+      }
+      if (typeof draft.selectedLng
+          === "number") {
+        selectedLng = draft.selectedLng;
+      }
+      if (typeof draft.selectedAddress
+          === "string") {
+        selectedAddress = draft.selectedAddress;
+      }
+      if (draft.selectedCourseId != null) {
+        selectedCourseId = Number(
+            draft.selectedCourseId);
+      }
+      if (courseEl && typeof draft.courseText === "string"
+          && draft.courseText) {
+        courseEl.value = draft.courseText;
+      }
+
+      if (draft.selectedTags && typeof draft.selectedTags === "object") {
+        selectedTags.distance = draft.selectedTags.distance ?? null;
+        selectedTags.pace = draft.selectedTags.pace ?? null;
+        selectedTags.ages = Array.isArray(draft.selectedTags.ages)
+            ? [...draft.selectedTags.ages] : [];
+        selectedTags.gender = draft.selectedTags.gender ?? null;
+      }
+
+      if (draft.isDistanceLocked) {
+        setDistanceLock(Number(selectedTags.distance));
+      }
+
+      // UI 반영
+      try {
+        updateLocationSummary();
+      } catch (e) {
+        // ignore
+      }
+      try {
+        updateChipSelection();
+      } catch (e) {
+        // ignore
+      }
+      try {
+        updateConditionSummary();
+      } catch (e) {
+        // ignore
+      }
+      try {
+        generateTimeOptions();
+      } catch (e) {
+        // ignore
+      }
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
   // URL에서 recruitId 추출
   function extractRecruitIdFromUrl() {
@@ -54,71 +337,124 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 데이터 초기화 함수
   async function initEditForm(data) {
-    // 텍스트 필드
-    document.getElementById("title").value = data.title || "";
-    document.getElementById("content").value = data.content || "";
-    document.getElementById("maxParticipants").value = data.maxParticipants || 2;
+    try {
+      // data가 없거나 null인 경우 처리
+      if (!data) {
+        throw new Error("모집글 데이터가 없습니다.");
+      }
 
-    // 글자수 카운터 업데이트
-    const titleInput = document.getElementById("title");
-    const titleCounter = document.getElementById("titleCounter");
-    const contentInput = document.getElementById("content");
-    const contentCounter = document.getElementById("contentCounter");
-    if (titleInput && titleCounter) {
-      updateCharCounter(titleInput, titleCounter, 100);
-    }
-    if (contentInput && contentCounter) {
-      updateCharCounter(contentInput, contentCounter, 500);
-    }
+      // 텍스트 필드
+      const titleInput = document.getElementById("title");
+      const contentInput = document.getElementById("content");
+      const maxParticipantsInput = document.getElementById("maxParticipants");
 
-    // 출발지
-    if (data.latitude && data.longitude && data.meetingPlace) {
-      selectedLat = data.latitude;
-      selectedLng = data.longitude;
-      selectedAddress = data.meetingPlace;
-      updateLocationSummary();
-    }
+      if (titleInput) {
+        titleInput.value = data.title || "";
+      }
+      if (contentInput) {
+        contentInput.value = data.content || "";
+      }
+      if (maxParticipantsInput) {
+        maxParticipantsInput.value = data.maxParticipants
+            || 2;
+      }
 
-    // 날짜/시간
-    if (data.meetingAt) {
-      const meetingDate = new Date(data.meetingAt);
-      const year = meetingDate.getFullYear();
-      const month = String(meetingDate.getMonth() + 1).padStart(2, "0");
-      const day = String(meetingDate.getDate()).padStart(2, "0");
-      const hours = String(meetingDate.getHours()).padStart(2, "0");
-      const minutes = String(meetingDate.getMinutes()).padStart(2, "0");
+      // 글자수 카운터 업데이트
+      const titleCounter = document.getElementById("titleCounter");
+      const contentCounter = document.getElementById("contentCounter");
+      if (titleInput && titleCounter) {
+        updateCharCounter(titleInput, titleCounter, 100);
+      }
+      if (contentInput && contentCounter) {
+        updateCharCounter(contentInput, contentCounter, 500);
+      }
 
-      document.getElementById("meetingDate").value = `${year}-${month}-${day}`;
-      document.getElementById("meetingTime").value = `${hours}:${minutes}`;
-    }
+      // 출발지
+      if (data.latitude && data.longitude && data.meetingPlace) {
+        selectedLat = data.latitude;
+        selectedLng = data.longitude;
+        selectedAddress = data.meetingPlace;
+        updateLocationSummary();
+      }
 
-    // 코스
-    if (data.courseId) {
-      selectedCourseId = data.courseId;
-      // 코스 이름은 API에서 가져와야 할 수도 있음
-      document.getElementById("course").value = data.courseImageUrl ? "코스 선택됨" : "";
-    }
+      // 날짜/시간
+      if (data.meetingAt) {
+        const meetingDate = new Date(data.meetingAt);
+        // Invalid Date 체크
+        if (isNaN(meetingDate.getTime())) {
+          console.error("Invalid meeting date:", data.meetingAt);
+        } else {
+          const year = meetingDate.getFullYear();
+          const month = String(meetingDate.getMonth() + 1).padStart(2, "0");
+          const day = String(meetingDate.getDate()).padStart(2, "0");
+          const hours = String(meetingDate.getHours()).padStart(2, "0");
+          const minutes = String(meetingDate.getMinutes()).padStart(2, "0");
 
-    // 러닝 조건
-    if (data.targetDistance) {
-      selectedTags.distance = data.targetDistance;
-    }
-    if (data.targetPace) {
-      selectedTags.pace = data.targetPace;
-    }
-    if (data.ageMin !== null && data.ageMax !== null) {
-      selectedTags.ages = convertAgeRangeToAges(data.ageMin, data.ageMax);
-    }
-    if (data.genderLimit) {
-      selectedTags.gender = data.genderLimit;
-    }
+          const meetingDateInput = document.getElementById("meetingDate");
+          const meetingTimeInput = document.getElementById("meetingTime");
+          if (meetingDateInput) {
+            meetingDateInput.value = `${year}-${month}-${day}`;
+          }
+          if (meetingTimeInput) {
+            meetingTimeInput.value = `${hours}:${minutes}`;
+          }
+        }
+      }
 
-    // 칩 선택 상태 업데이트
-    updateChipSelection();
-    updateConditionSummary();
+      // 코스
+      if (data.courseId) {
+        selectedCourseId = data.courseId;
+        const courseInput = document.getElementById("course");
+        if (courseInput) {
+          courseInput.value = data.courseImageUrl ? "코스 선택됨" : "";
+        }
+      }
 
-    // 시간 옵션 생성 (날짜가 설정된 후)
-    generateTimeOptions();
+      // 러닝 조건
+      if (data.targetDistance) {
+        selectedTags.distance = data.targetDistance;
+      }
+      if (data.targetPace) {
+        selectedTags.pace = data.targetPace;
+      }
+      if (data.ageMin !== null && data.ageMax !== null) {
+        selectedTags.ages = convertAgeRangeToAges(data.ageMin, data.ageMax);
+      }
+      if (data.genderLimit) {
+        selectedTags.gender = data.genderLimit;
+      }
+      // query param이 있으면(방금 선택해서 돌아온 경우) 서버값보다 우선
+      await applyCourseFromQueryParams();
+      // ✅ 코스가 선택된 상태면 출발지는 코스 출발지로 강제 + 잠금
+      await applyCourseStartLocationIfNeeded();
+
+      // 러닝 조건
+      if (data.targetDistance) {
+        selectedTags.distance = data.targetDistance;
+      }
+      if (data.targetPace) {
+        selectedTags.pace = data.targetPace;
+      }
+      if (data.ageMin !== null && data.ageMax !== null) {
+        selectedTags.ages = convertAgeRangeToAges(data.ageMin, data.ageMax);
+      }
+      if (data.genderLimit) {
+        selectedTags.gender = data.genderLimit;
+      }
+
+      // 칩 선택 상태 업데이트 (에러 발생 가능성 있음)
+      try {
+        updateChipSelection();
+        updateConditionSummary();
+        generateTimeOptions();
+      } catch (updateError) {
+        console.error("조건 업데이트 중 오류:", updateError);
+        // 치명적이지 않은 에러이므로 계속 진행
+      }
+    } catch (error) {
+      console.error("폼 초기화 중 오류:", error);
+      throw error; // 상위로 에러 전달
+    }
   }
 
   // 페이지 로드 시 데이터 가져오기
@@ -131,10 +467,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  DRAFT_KEY = `recruitDraft:update:${recruitId}`;
+
   // 모집글 데이터 로드
   async function loadRecruitData() {
     try {
-      const token = localStorage.getItem("accessToken") || getCookie("accessToken");
+      const token = localStorage.getItem("accessToken") || getCookie(
+          "accessToken");
       const headers = {
         "Content-Type": "application/json",
       };
@@ -148,15 +487,44 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: headers,
       });
 
+      // 응답이 JSON이 아닌 경우 처리
+      if (!response.ok) {
+        let errorMessage = "모집글을 불러올 수 없습니다.";
+        try {
+          const errorText = await response.text();
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || errorMessage;
+        } catch (e) {
+          // JSON 파싱 실패 시 기본 메시지 사용
+        }
+        showToast(errorMessage, "error");
+        setTimeout(() => {
+          window.location.href = "/recruit";
+        }, 2000);
+        return;
+      }
+
       const result = await response.json();
 
-      if (response.ok && result.success) {
-        await initEditForm(result.data);
+      if (result.success && result.data) {
+        try {
+          await initEditForm(result.data);
+          applyCourseFromQueryParams();
+          await applyCourseStartLocationIfNeeded();
+        } catch (initError) {
+          console.error("폼 초기화 중 오류 발생:", initError);
+          showToast("모집글을 불러오는 중 오류가 발생했습니다.", "error");
+          setTimeout(() => {
+            window.location.href = "/recruit";
+          }, 2000);
+          return;
+        }
       } else {
         showToast(result.message || "모집글을 불러올 수 없습니다.", "error");
         setTimeout(() => {
           window.location.href = "/recruit";
         }, 2000);
+        return;
       }
     } catch (error) {
       console.error("모집글 로드 중 오류 발생:", error);
@@ -165,118 +533,60 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "/recruit";
       }, 2000);
     }
+  } // ✅ loadRecruitData 끝
+
+  // 로컬 시간 기준으로 날짜 문자열 생성 (타임존 문제 방지)
+  function getLocalDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
-  // 나머지 코드는 recruit-create.js와 동일 (generateTimeOptions, setupDateChangeListener 등)
-  function generateTimeOptions() {
-    const timeOptionContainer = document.getElementById("timeOptionContainer");
+  // 로컬 시간 기준으로 시간 문자열 생성
+  function getLocalTimeString(date) {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // 시간 입력 검증 함수
+  function validateTimeInput() {
+    const dateInput = document.getElementById("meetingDate");
     const timeInput = document.getElementById("meetingTime");
 
-    if (!timeOptionContainer || !timeInput) {
-      return;
+    if (!dateInput || !timeInput || !dateInput.value || !timeInput.value) {
+      return true; // 날짜나 시간이 없으면 검증 통과 (나중에 제출 시 검증)
     }
 
-    // 기존 칩 모두 제거
-    timeOptionContainer.innerHTML = "";
+    const selectedDate = dateInput.value;
+    const selectedTime = timeInput.value;
 
-    // 현재 선택된 시간 값 가져오기
-    const currentSelectedTime = timeInput.value;
-
-    // 선택된 날짜 확인
-    const selectedDate = document.getElementById("meetingDate").value;
-
-    // 로컬 시간으로 오늘 날짜 문자열 생성 (toISOString 버그 방지)
+    // 날짜와 시간을 결합하여 LocalDateTime 생성
+    const selectedDateTime = new Date(`${selectedDate}T${selectedTime}:00`);
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const today = `${year}-${month}-${day}`;
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000); // 1시간 후
 
-    // 오늘 날짜인 경우, 현재 시간 + 1시간 이후만 표시
-    let minHour = 0;
-    let minMinute = 0;
-
+    // 오늘 날짜인 경우, 현재 시간 + 1시간 이후만 허용
+    const today = getLocalDateString(now);
     if (selectedDate === today) {
-      // 현재 시간 + 1시간 계산
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-
-      // 1시간 후 계산
-      let oneHourLaterHour = currentHour;
-      let oneHourLaterMinute = currentMinute;
-
-      // 1시간 추가
-      oneHourLaterMinute += 60;
-      if (oneHourLaterMinute >= 60) {
-        oneHourLaterHour += Math.floor(oneHourLaterMinute / 60);
-        oneHourLaterMinute = oneHourLaterMinute % 60;
-      }
-      if (oneHourLaterHour >= 24) {
-        oneHourLaterHour = 23; // 최대 23시까지만
-        oneHourLaterMinute = 59;
-      }
-
-      minHour = oneHourLaterHour;
-      minMinute = oneHourLaterMinute;
-
-      // 30분 단위로 올림 처리 (예: 14:15 -> 14:30, 14:45 -> 15:00)
-      if (minMinute > 0 && minMinute <= 30) {
-        minMinute = 30;
-      } else if (minMinute > 30) {
-        minHour += 1;
-        minMinute = 0;
-      }
-
-      // 24시를 넘으면 다음 날로 넘어가므로 시간 옵션 생성 중단
-      if (minHour >= 24) {
-        return;
+      if (selectedDateTime < oneHourLater) {
+        timeInput.setCustomValidity("모임 시간은 최소 1시간 후여야 합니다.");
+        timeInput.reportValidity();
+        return false;
       }
     }
 
-    for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        // 오늘 날짜인 경우, 현재 시간 + 1시간 이후만 활성화
-        if (selectedDate === today) {
-          if (hour < minHour || (hour === minHour && minute < minMinute)) {
-            continue; // 이 시간은 건너뛰기
-          }
-        }
-
-        const timeString = `${String(hour).padStart(2, "0")}:${String(
-            minute).padStart(2, "0")}`;
-        const timeChip = document.createElement("button");
-        timeChip.type = "button";
-        timeChip.className = "time-chip";
-        timeChip.textContent = timeString;
-        timeChip.dataset.time = timeString;
-
-        // 이미 선택된 시간이면 selected 클래스 추가
-        if (currentSelectedTime === timeString) {
-          timeChip.classList.add("selected");
-        }
-
-        // 클릭 이벤트: 시간 선택
-        timeChip.addEventListener("click", () => {
-          // 모든 칩에서 selected 클래스 제거
-          document.querySelectorAll(".time-chip").forEach(chip => {
-            chip.classList.remove("selected");
-          });
-
-          // 선택된 칩에 selected 클래스 추가
-          timeChip.classList.add("selected");
-
-          // 메인 화면의 시간 입력창에 값 표시
-          timeInput.value = timeString;
-
-          // 0.2초 후 모달 닫기
-          setTimeout(() => {
-            closeTimeModal();
-          }, 200);
-        });
-
-        timeOptionContainer.appendChild(timeChip);
-      }
+    // 최대 2주 후까지 허용
+    const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    if (selectedDateTime > twoWeeksLater) {
+      timeInput.setCustomValidity("모임 시간은 최대 2주 후까지 설정할 수 있습니다.");
+      timeInput.reportValidity();
+      return false;
     }
+
+    timeInput.setCustomValidity("");
+    return true;
   }
 
   function setupDateChangeListener() {
@@ -288,45 +598,102 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // 날짜 입력의 min/max 설정
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const twoWeeksLater = new Date(today);
+    twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+
+    dateInput.min = getLocalDateString(today);
+    dateInput.max = getLocalDateString(twoWeeksLater);
+
+    // 날짜 변경 시 시간 입력 제약 조건 업데이트
+    function updateTimeInputConstraints() {
+      const selectedDate = dateInput.value;
+      const todayStr = getLocalDateString(today);
+
+      if (selectedDate === todayStr) {
+        // 오늘 날짜인 경우: 현재 시간 + 1시간 이후만 허용
+        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+        timeInput.min = getLocalTimeString(oneHourLater);
+
+        // 현재 선택된 시간이 최소 시간보다 이전이면 초기화
+        if (timeInput.value && timeInput.value < timeInput.min) {
+          timeInput.value = '';
+        }
+      } else {
+        // 미래 날짜인 경우: 제한 없음
+        timeInput.min = '';
+      }
+
+      // 최대 시간: 23:59
+      timeInput.max = '23:59';
+    }
+
+    // 초기 설정
+    updateTimeInputConstraints();
+
+    // 날짜 입력 필드 전체 클릭 가능하게
+    dateInput.addEventListener("click", (e) => {
+      // 브라우저 기본 동작 유지하되, 전체 영역 클릭 가능하게
+      if (e.target === dateInput) {
+        // showPicker() API 사용 (최신 브라우저)
+        if (dateInput.showPicker) {
+          try {
+            dateInput.showPicker();
+          } catch (err) {
+            // showPicker()가 실패하면 focus()로 폴백
+            dateInput.focus();
+          }
+        } else {
+          // 구형 브라우저 폴백
+          dateInput.focus();
+        }
+      }
+    });
+
+    // 시간 입력 필드 전체 클릭 가능하게
+    timeInput.addEventListener("click", (e) => {
+      if (e.target === timeInput) {
+        // showPicker() API 사용 (최신 브라우저)
+        if (timeInput.showPicker) {
+          try {
+            timeInput.showPicker();
+          } catch (err) {
+            timeInput.focus();
+          }
+        } else {
+          timeInput.focus();
+        }
+      }
+    });
+
+    // 날짜 변경 시 시간 제약 조건 업데이트 및 자동 시간 설정
     dateInput.addEventListener("change", () => {
-      // 시간 선택 초기화
-      timeInput.value = "";
-      generateTimeOptions();
-    });
-  }
+      const selectedDate = dateInput.value;
+      const todayStr = getLocalDateString(today);
 
-  // [추가] 시간 모달 열기/닫기 로직
-  const timeModal = document.getElementById("timeBottomSheet");
-  const timeInput = document.getElementById("meetingTime");
-  const closeTimeModalBtn = document.getElementById("closeTimeModal");
+      if (selectedDate === todayStr && !timeInput.value) {
+        // 오늘 날짜 선택 시 자동으로 1시간 후 시간 설정
+        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+        timeInput.value = getLocalTimeString(oneHourLater);
+      } else {
+        timeInput.value = "";
+      }
 
-  // 모달 닫기 함수 (generateTimeOptions에서 호출됨)
-  function closeTimeModal() {
-    if (timeModal) {
-      timeModal.classList.remove("show");
-      document.body.style.overflow = "";
-    }
-  }
-
-  // 모달 요소가 존재할 때만 이벤트 연결
-  if (timeModal && timeInput) {
-    // 1. 입력창 클릭 시 모달 열기
-    timeInput.addEventListener("click", () => {
-      timeModal.classList.add("show");
-      document.body.style.overflow = "hidden";
-      generateTimeOptions();
+      updateTimeInputConstraints();
+      validateTimeInput();
     });
 
-    // 2. 닫기 버튼 클릭 시 닫기
-    if (closeTimeModalBtn) {
-      closeTimeModalBtn.addEventListener("click", closeTimeModal);
-    }
+    // 시간 입력 시 검증
+    timeInput.addEventListener("change", () => {
+      validateTimeInput();
+    });
 
-    // 3. 오버레이 클릭 시 닫기
-    const timeOverlay = timeModal.querySelector(".bottom-sheet-overlay");
-    if (timeOverlay) {
-      timeOverlay.addEventListener("click", closeTimeModal);
-    }
+    // 시간 입력 시 실시간 검증 (blur 이벤트)
+    timeInput.addEventListener("blur", () => {
+      validateTimeInput();
+    });
   }
 
   function initMap() {
@@ -442,6 +809,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (locationModal && locationSummary && closeLocationModalBtn
       && confirmLocationModalBtn) {
     function openLocationModal() {
+      if (isLocationLockedByCourse) {
+        showToast("코스를 선택한 경우 출발지는 코스 출발지로 고정됩니다.", "error");
+        return;
+      }
       locationModal.classList.add("show");
       document.body.style.overflow = "hidden";
 
@@ -490,9 +861,17 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "/recruit";
   });
 
-  document.getElementById("course").addEventListener("click", () => {
-    showToast("코스 조회 기능은 추후 구현 예정입니다.", "error");
-  });
+  // 러닝(코스) 선택: 코스 목록 -> 코스 상세의 '확인' 버튼으로 선택 확정
+  const courseInputEl = document.getElementById("course");
+  if (courseInputEl) {
+    courseInputEl.addEventListener("click", () => {
+      // 코스 선택하러 가기 전에 현재 작성 중 값 저장
+      saveDraft({from: "courseSelect"});
+      const returnTo = window.location.pathname + window.location.search;
+      window.location.href = `/course?selectMode=recruit&returnTo=${encodeURIComponent(
+          returnTo)}`;
+    });
+  }
 
   // 모달 열기/닫기
   const conditionModal = document.getElementById("conditionBottomSheet");
@@ -592,27 +971,62 @@ document.addEventListener("DOMContentLoaded", () => {
           chip.classList.remove("selected");
           selectedTags.ages.splice(index, 1);
         } else {
+          // 새로운 나이대를 선택하는 경우
           if (selectedTags.ages.length > 0) {
+            // 기존 선택된 나이대들과의 범위 계산
             const sorted = [...selectedTags.ages].sort((a, b) => a - b);
             const min = sorted[0];
             const max = sorted[sorted.length - 1];
 
-            const isConsecutive =
-                age === min - 10 ||
-                age === max + 10 ||
-                (age === 0 && min === 20) ||
-                (age === 20 && max === 0) ||
-                (age === 70 && max === 60) ||
-                (age === 60 && min === 70);
+            // 나이대 순서 배열
+            const allAges = [0, 20, 30, 40, 50, 60, 70];
 
-            if (!isConsecutive) {
-              showToast("연속된 나이대만 선택할 수 있습니다.", "error");
-              return;
+            // 선택하려는 나이대가 범위 밖에 있는 경우, 사이의 모든 나이대 선택
+            if (age < min) {
+              // 선택하려는 나이대가 기존 최소값보다 작은 경우
+              // age부터 min까지의 모든 나이대 선택
+              const startIndex = allAges.indexOf(age);
+              const endIndex = allAges.indexOf(min);
+
+              for (let i = startIndex; i <= endIndex; i++) {
+                const ageToAdd = allAges[i];
+                if (!selectedTags.ages.includes(ageToAdd)) {
+                  selectedTags.ages.push(ageToAdd);
+                  const chipToSelect = document.querySelector(
+                      `.chip[data-age="${ageToAdd}"]`);
+                  if (chipToSelect) {
+                    chipToSelect.classList.add("selected");
+                  }
+                }
+              }
+            } else if (age > max) {
+              // 선택하려는 나이대가 기존 최대값보다 큰 경우
+              // max부터 age까지의 모든 나이대 선택
+              const startIndex = allAges.indexOf(max);
+              const endIndex = allAges.indexOf(age);
+
+              for (let i = startIndex; i <= endIndex; i++) {
+                const ageToAdd = allAges[i];
+                if (!selectedTags.ages.includes(ageToAdd)) {
+                  selectedTags.ages.push(ageToAdd);
+                  const chipToSelect = document.querySelector(
+                      `.chip[data-age="${ageToAdd}"]`);
+                  if (chipToSelect) {
+                    chipToSelect.classList.add("selected");
+                  }
+                }
+              }
+            } else {
+              // 선택하려는 나이대가 범위 안에 있는 경우 (이미 선택된 나이대 사이)
+              // 이 경우는 발생하지 않아야 하지만 안전을 위해 처리
+              chip.classList.add("selected");
+              selectedTags.ages.push(age);
             }
+          } else {
+            // 첫 번째 선택인 경우
+            chip.classList.add("selected");
+            selectedTags.ages.push(age);
           }
-
-          chip.classList.add("selected");
-          selectedTags.ages.push(age);
         }
 
         selectedTags.ages.sort((a, b) => a - b);
@@ -993,7 +1407,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // 에러 코드 또는 메시지로 확인
         if (result.code === "RO16" || errorMessage.includes("참여 가능 성별이 아닙니다")) {
           errorMessage = "본인의 성별과 다른 성별 제한은 설정할 수 없습니다.";
-        } else if (result.code === "RO15" || errorMessage.includes("참여 가능 나이가 아닙니다")) {
+        } else if (result.code === "RO15" || errorMessage.includes(
+            "참여 가능 나이가 아닙니다")) {
           errorMessage = "본인의 나이가 포함된 연령대만 설정할 수 있습니다.";
         }
         showToast(errorMessage, "error");
@@ -1092,5 +1507,12 @@ document.addEventListener("DOMContentLoaded", () => {
   updateLocationSummary();
 
   // 모집글 데이터 로드 (페이지 로드 시)
-  loadRecruitData();
+  // - 코스 선택하러 나갔다가 돌아온 경우: draft 복원 후 서버 로드로 덮어쓰지 않음
+  const restored = restoreDraft();
+  if (!restored) {
+    loadRecruitData();
+  } else {
+    // 코스 선택 복귀 query param이 있으면 draft 위에 최종 반영
+    applyCourseFromQueryParams();
+  }
 });

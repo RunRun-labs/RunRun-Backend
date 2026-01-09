@@ -56,4 +56,16 @@ public class GPSDataDTO implements Serializable {
     
     @JsonProperty("speed")
     private Double speed;          // 속도 (m/s)
+
+    // 진행 방향 (degrees, 0=N, 90=E) - 지원 안 되는 기기/브라우저에서는 null 가능
+    @JsonProperty("heading")
+    private Double heading;
+
+    /**
+     * 코스 위 매칭 진행도 (미터)
+     * - 방장 프론트에서 "코스 선 위를 지나갈 때만" 계산한 누적 진행도
+     * - 참여자 화면에서 동일한 기준으로 선을 지우기 위해 브로드캐스트에 포함할 수 있음
+     */
+    @JsonProperty("matchedDistanceM")
+    private Double matchedDistanceM;
 }

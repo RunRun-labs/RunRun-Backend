@@ -179,15 +179,17 @@ body {
 
 .rank-text {
   position: absolute;
-  left: calc(50% + 22.36px);
+  left: calc(50% + 45px); /* ✅ 30px → 45px 증가 */
   top: 50%;
   transform: translate(-50%, -50%);
   font-family: "Inter", "Noto Sans KR", sans-serif;
   font-weight: 700;
-  font-size: 28px;
+  font-size: 18px; /* ✅ 20px → 18px 축소 */
   color: var(--accent-orange-light);
   line-height: normal;
-  width: 24.4px;
+  width: auto;
+  white-space: nowrap;
+  min-width: 24.4px;
 }
 
 .result-message {
@@ -203,10 +205,13 @@ body {
 .message-text {
   font-family: "Inter", "Noto Sans KR", sans-serif;
   font-weight: 700;
-  font-size: 14.1px;
+  font-size: clamp(12px, 3.5vw, 14.1px);
   color: var(--text-primary);
   text-align: center;
-  line-height: normal;
+  line-height: 1.4;
+  word-break: keep-all;
+  max-width: 100%;
+  padding: 0 8px;
 }
 
 .message-muted {
@@ -712,7 +717,7 @@ body {
   }
 
   .rank-text {
-    font-size: 24px;
+    font-size: 18px; /* ✅ 모바일에서 크기 축소 */
   }
 
   .completion-badge span {

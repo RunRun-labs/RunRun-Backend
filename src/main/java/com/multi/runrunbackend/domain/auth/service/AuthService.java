@@ -10,6 +10,8 @@ import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.jwt.dto.TokenDto;
 import com.multi.runrunbackend.common.jwt.service.TokenService;
 import com.multi.runrunbackend.domain.auth.dto.AuthSignInResDto;
+import com.multi.runrunbackend.domain.tts.entity.TtsVoicePack;
+import com.multi.runrunbackend.domain.tts.repository.TtsVoicePackRepository;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignInDto;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignUpDto;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -38,6 +40,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, String> redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
+    private final TtsVoicePackRepository ttsVoicePackRepository;
+
     private final CustomUserDetailService customUserDetailService;
     private final TokenService tokenService;
 
@@ -50,7 +54,10 @@ public class AuthService {
             : "ROLE_USER";
         userSignUpDto.setUserPassword(
             passwordEncoder.encode(userSignUpDto.getUserPassword()));
-        User user = User.toEntity(userSignUpDto);
+        TtsVoicePack ttsVoicePack = ttsVoicePackRepository.findById(1L)
+            .orElseThrow(() -> new NotFoundException(
+                ErrorCode.TTSVOICE_NOT_FOUND));
+        User user = User.toEntity(userSignUpDto, ttsVoicePack);
         user.setRole(role);
         User savedMember = userRepository.save(user);
 

@@ -53,6 +53,7 @@ public class CrewService {
     private final UserRepository userRepository;
     private final FileStorage s3FileStorage;
     private final MembershipRepository membershipRepository;
+    private final CrewChatService crewChatService;
 
     /**
      * @param reqDto 크루 생성 요청 DTO
@@ -86,6 +87,9 @@ public class CrewService {
         // 크루장 자동 등록
         CrewUser crewLeader = CrewUser.create(crew, user, CrewRole.LEADER);
         crewUserRepository.save(crewLeader);
+
+        // 채팅방 자동 생성
+        crewChatService.createChatRoomForCrew(crew, user);
 
         cancelOtherPendingRequestsForUser(user.getId(), crew.getId());
 
@@ -149,6 +153,9 @@ public class CrewService {
         // 모든 크루원 soft delete
         List<CrewUser> crewUsers = crewUserRepository.findAllByCrewIdAndIsDeletedFalse(crewId);
         crewUsers.forEach(CrewUser::delete);
+
+        // 채팅방 삭제
+        crewChatService.deleteChatRoom(crewId);
     }
 
     /**
