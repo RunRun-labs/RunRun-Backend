@@ -274,7 +274,7 @@ function createDropdownOptions(member) {
             </div>
         `);
     } else if (member.role === 'SUB_LEADER' || member.role === 'STAFF') {
-        // 부크루장/운영진 → 권한 해제 또는 크루장 위임 가능
+        // 부크루장/운영진 → 권한 해제 또는 크루장 위임
         options.push(`
             <div class="dropdown-item" onclick="changeRole(${member.userId}, 'MEMBER', event)">
                 <span class="role-icon">↓</span>
@@ -282,7 +282,7 @@ function createDropdownOptions(member) {
             </div>
         `);
         options.push(`
-            <div class="dropdown-item" onclick="changeRole(${member.userId}, 'LEADER', event)">
+            <div class="dropdown-item" onclick="delegateLeader(${member.userId}, event)">
                 <span class="role-icon">👑</span>
                 <span>크루장 위임</span>
             </div>
@@ -634,6 +634,47 @@ function getAccessToken() {
     } catch (error) {
         console.warn('토큰 가져오기 실패:', error);
         return null;
+    }
+}
+
+// ============================
+// 크루장 위임 처리
+// ============================
+async function delegateLeader(userId, event) {
+    event.stopPropagation();
+
+    if (!confirm('정말 크루장을 위임하시겠습니까?\n\n크루장 권한을 넘기면 본인은 일반 멤버가 됩니다.')) {
+        return;
+    }
+
+    try {
+        const token = getAccessToken();
+
+        if (!token) {
+            throw new Error('로그인이 필요합니다.');
+        }
+
+        const response = await fetch(`/api/crews/${crewId}/delegate-leader?newLeaderId=${userId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || '크루장 위임에 실패했습니다.');
+        }
+
+        alert('크루장 위임이 완료되었습니다.');
+
+        // 크루 상세 페이지로 이동
+        window.location.href = `/crews/${crewId}`;
+
+    } catch (error) {
+        console.error('크루장 위임 실패:', error);
+        alert(error.message || '크루장 위임 중 오류가 발생했습니다.');
     }
 }
 
