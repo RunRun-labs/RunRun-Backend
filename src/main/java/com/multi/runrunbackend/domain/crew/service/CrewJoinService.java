@@ -70,6 +70,9 @@ public class CrewJoinService {
         // 회원 조회
         User user = getUserOrThrow(principal);
 
+        // 포인트 검증 (100P 필요)
+        pointService.validateSufficientPoints(user.getId(), CREW_JOIN_POINT);
+
         // 모집 상태 확인 - 모집 마감이면 신청 불가
         if (crew.getCrewRecruitStatus() == CrewRecruitStatus.CLOSED) {
             throw new BusinessException(ErrorCode.CREW_RECRUITMENT_CLOSED);
