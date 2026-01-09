@@ -7,6 +7,7 @@ import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.friend.entity.Friend;
 import com.multi.runrunbackend.domain.friend.repository.FriendRepository;
+import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.dto.res.ProfileRunningHistoryResDto;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
@@ -20,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  *
@@ -38,6 +41,8 @@ public class ProfileRunningHistoryService {
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
 
+    private static final List<RunStatus> VISIBLE_STATUSES = List.of(RunStatus.COMPLETED, RunStatus.TIME_OUT);
+
     /**
      * 내 러닝 기록 조회
      */
@@ -49,7 +54,7 @@ public class ProfileRunningHistoryService {
         User me = getUserByPrincipal(principal);
 
         return runningResultRepository
-                .findCompletedByUser(me, pageable)
+                .findByUserAndRunStatusIn(me, VISIBLE_STATUSES, pageable)
                 .map(ProfileRunningHistoryResDto::from);
     }
 
@@ -71,7 +76,7 @@ public class ProfileRunningHistoryService {
         validateProfileAccess(me, target);
 
         return runningResultRepository
-                .findCompletedByUser(target, pageable)
+                .findByUserAndRunStatusIn(target, VISIBLE_STATUSES, pageable)
                 .map(ProfileRunningHistoryResDto::from);
     }
 

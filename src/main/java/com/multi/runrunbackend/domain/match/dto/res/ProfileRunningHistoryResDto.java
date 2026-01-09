@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.match.dto.res;
 
 import com.multi.runrunbackend.domain.course.entity.Course;
+import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import lombok.Builder;
@@ -40,6 +41,10 @@ public class ProfileRunningHistoryResDto {
     private String courseTitle;
     private String courseThumbnailUrl;
 
+    // 러닝 상태
+    private RunStatus runStatus;
+    private String runStatusDescription;
+
     public static ProfileRunningHistoryResDto from(RunningResult r) {
         Course c = r.getCourse();
 
@@ -54,6 +59,8 @@ public class ProfileRunningHistoryResDto {
                 .courseId(c != null ? c.getId() : null)
                 .courseTitle(c != null ? c.getTitle() : null)
                 .courseThumbnailUrl(c != null ? c.getThumbnailUrl() : null)
+                .runStatus(r.getRunStatus())
+                .runStatusDescription(r.getRunStatus().getDescription())
                 .build();
     }
 }
