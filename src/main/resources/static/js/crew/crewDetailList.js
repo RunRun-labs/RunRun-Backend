@@ -526,7 +526,7 @@ async function handleJoinOrCancel() {
 // ===========================
 // 크루 가입 신청 화면으로 이동
 // ===========================
-function handleJoinCrew() {
+async function handleJoinCrew() {
     console.log('크루 가입 신청 화면으로 이동');
 
     if (!crewId) {
@@ -548,7 +548,43 @@ function handleJoinCrew() {
         return;
     }
 
-    window.location.href = `/crews/${crewId}/join`;
+    // 포인트 잔액 확인
+    try {
+        const token = getAccessToken();
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            window.location.href = '/login';
+            return;
+        }
+
+        // 포인트 잔액 조회
+        const pointResponse = await fetch('/api/points/balance', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!pointResponse.ok) {
+            throw new Error('포인트 조회 실패');
+        }
+
+        const pointResult = await pointResponse.json();
+        const myPoints = pointResult.data;
+
+        // 100P 미만이면 가입 불가
+        if (myPoints < 100) {
+            alert(`크루 가입에는 100 포인트가 필요합니다.\n현재 보유 포인트: ${myPoints}P`);
+            return;
+        }
+
+        // 포인트 충분하면 가입 신청 페이지로 이동
+        window.location.href = `/crews/${crewId}/join`;
+
+    } catch (error) {
+        console.error('포인트 확인 실패:', error);
+        alert('포인트 확인 중 오류가 발생했습니다.');
+    }
 }
 
 // ===========================
