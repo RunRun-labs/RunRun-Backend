@@ -27,6 +27,9 @@ import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
+import com.multi.runrunbackend.domain.notification.constant.NotificationType;
+import com.multi.runrunbackend.domain.notification.constant.RelatedType;
+import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.rating.entity.DistanceRating;
 import com.multi.runrunbackend.domain.rating.repository.DistanceRatingRepository;
 import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
@@ -81,6 +84,7 @@ public class MatchSessionService {
   private final ObjectMapper objectMapper;  // ✅ JSON 변환용
   private final DistanceRatingRepository distanceRatingRepository;
   private final MatchingQueueService matchingQueueService;  // ✅ 매칭 큐 서비스
+  private final NotificationService notificationService;
 
 
   @Transactional
@@ -192,7 +196,39 @@ public class MatchSessionService {
 
     recruit.updateStatus(RecruitStatus.MATCHED);
 
+    sendOffMatchConfirmedNotifications(matchSession.getId(), host.getId());
+
     return matchSession.getId();
+  }
+
+  private void sendOffMatchConfirmedNotifications(Long sessionId, Long hostId) {
+    try {
+      List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
+
+      for (SessionUser sessionUser : sessionUsers) {
+        if (sessionUser.getUser().getId().equals(hostId)) {
+          continue;
+        }
+
+        try {
+          notificationService.create(
+              sessionUser.getUser(),
+              "오프라인 매칭 확정",
+              "방장이 매칭을 확정했습니다. 채팅방으로 이동하세요.",
+              NotificationType.MATCH,
+              RelatedType.OFF_CHAT_ROOM,
+              sessionId
+          );
+          log.info("오프라인 매칭 확정 알림 발송 완료 - sessionId: {}, receiverId: {}",
+              sessionId, sessionUser.getUser().getId());
+        } catch (Exception e) {
+          log.error("오프라인 매칭 확정 알림 생성 실패 - sessionId: {}, receiverId: {}",
+              sessionId, sessionUser.getUser().getId(), e);
+        }
+      }
+    } catch (Exception e) {
+      log.error("오프라인 매칭 확정 알림 발송 중 오류 발생 - sessionId: {}", sessionId, e);
+    }
   }
 
   @Transactional
@@ -278,28 +314,28 @@ public class MatchSessionService {
     DistanceType distanceType = determineDistanceType(session.getTargetDistance());
 
     // 참가자 DTO 변환
-        List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
-            .map(su -> {
-                User user = su.getUser();
+    List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
+        .map(su -> {
+          User user = su.getUser();
 
-              // 티어 정보 조회
-              Tier tier =
-                  distanceRatingRepository.findByUserIdAndDistanceType(user.getId(),
-                          distanceType)
-                      .map(DistanceRating::getCurrentTier)
-                      .orElse(Tier.거북이);
+          // 티어 정보 조회
+          Tier tier =
+              distanceRatingRepository.findByUserIdAndDistanceType(user.getId(),
+                      distanceType)
+                  .map(DistanceRating::getCurrentTier)
+                  .orElse(Tier.거북이);
 
-                return MatchWaitingParticipantDto.builder()
-                    .userId(user.getId())
-                    .name(user.getName())
-                    .profileImage(user.getProfileImageUrl())
-                    .isReady(su.isReady())
-                    .isHost(user.getId().equals(hostUserId))
-                    .avgPace(formatAveragePace(user.getAveragePace()))  // ✅ User의 averagePace 사용
-                    .tier(tier)
-                    .build();
-            })
-            .collect(Collectors.toList());
+          return MatchWaitingParticipantDto.builder()
+              .userId(user.getId())
+              .name(user.getName())
+              .profileImage(user.getProfileImageUrl())
+              .isReady(su.isReady())
+              .isHost(user.getId().equals(hostUserId))
+              .avgPace(formatAveragePace(user.getAveragePace()))  // ✅ User의 averagePace 사용
+              .tier(tier)
+              .build();
+        })
+        .collect(Collectors.toList());
 
     // Ready 카운트
     long readyCount = sessionUsers.stream().filter(SessionUser::isReady).count();
@@ -507,6 +543,7 @@ public class MatchSessionService {
 
   /**
    * 평균 페이스를 MM:SS 형식으로 변환
+   *
    * @param averagePace 평균 페이스 (BigDecimal, 분/km)
    * @return "MM:SS" 형식의 문자열 (null이면 "-")
    */
