@@ -706,12 +706,9 @@ public class BattleService {
         User user = su.getUser();
 
         // RunningResult에서 이미 저장된 결과 조회 시도
-        RunningResult existingResult = runningResultRepository.findAll().stream()
-            .filter(r -> r.getUser().getId().equals(user.getId())
-                && r.getRunningType() == RunningType.ONLINEBATTLE
-                && r.getStartedAt() != null
-                && r.getStartedAt().equals(session.getCreatedAt()))
-            .findFirst()
+        RunningResult existingResult = runningResultRepository
+            .findByUserIdAndRunningTypeAndStartedAt(user.getId(), RunningType.ONLINEBATTLE,
+                session.getCreatedAt())
             .orElse(null);
 
         if (existingResult != null) {
@@ -1069,7 +1066,7 @@ public class BattleService {
 
     // ✅ 모든 미완주자를 Redis에서 TIMEOUT 상태로 변경
     battleRedisService.setAllUnfinishedToTimeout(sessionId);
-    
+
     // ✅ Redis 업데이트 완료 대기 (200ms)
     try {
       log.info("⏳ Redis 업데이트 반영 대기 중... (200ms)");
@@ -1078,12 +1075,12 @@ public class BattleService {
       log.warn("⚠️ 대기 중 인터럽트 발생", e);
       Thread.currentThread().interrupt();
     }
-    
+
     // ✅ 업데이트 확인용 재조회
     List<BattleRankingResDto> updatedRankings = getRankings(sessionId);
     log.info("📊 업데이트 후 재조회 ({}명):", updatedRankings.size());
     for (BattleRankingResDto r : updatedRankings) {
-      log.info("  - rank={}, userId={}, status={}, finished={}", 
+      log.info("  - rank={}, userId={}, status={}, finished={}",
           r.getRank(), r.getUserId(), r.getStatus(), r.getIsFinished());
     }
 
