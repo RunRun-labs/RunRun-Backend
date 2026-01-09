@@ -53,7 +53,7 @@ public class DistanceRatingService {
     // ✅ GIVE_UP만 제외 (COMPLETED + TIME_OUT 포함)
     List<RunningResult> rankedResults = results.stream()
         .filter(r -> r.getRunStatus()
-            != com.multi.runrunbackend.domain.match.constant.RunStatus.GIVE_UP)
+            != RunStatus.GIVE_UP)
         .collect(java.util.stream.Collectors.toList());
 
     int n = rankedResults.size();
