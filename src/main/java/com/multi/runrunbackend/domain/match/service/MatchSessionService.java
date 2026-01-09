@@ -107,7 +107,11 @@ public class MatchSessionService {
       throw new ValidationException(ErrorCode.TOO_EARLY_TO_START);
     }
 
-    return createSessionInternal(recruit);
+    Long sessionId = createSessionInternal(recruit);
+
+    sendOffMatchConfirmedNotifications(sessionId, recruit.getUser().getId(), false);
+
+    return sessionId;
   }
 
   public MatchSessionDetailResDto getSessionDetail(Long sessionId, Long userId) {
@@ -137,7 +141,9 @@ public class MatchSessionService {
       return;
     }
 
-    createSessionInternal(recruit);
+    Long sessionId = createSessionInternal(recruit);
+
+    sendOffMatchConfirmedNotifications(sessionId, recruit.getUser().getId(), true);
   }
 
   private Long createSessionInternal(Recruit recruit) {
@@ -196,17 +202,16 @@ public class MatchSessionService {
 
     recruit.updateStatus(RecruitStatus.MATCHED);
 
-    sendOffMatchConfirmedNotifications(matchSession.getId(), host.getId());
-
     return matchSession.getId();
   }
 
-  private void sendOffMatchConfirmedNotifications(Long sessionId, Long hostId) {
+  private void sendOffMatchConfirmedNotifications(Long sessionId, Long hostId,
+      boolean includeHost) {
     try {
       List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
 
       for (SessionUser sessionUser : sessionUsers) {
-        if (sessionUser.getUser().getId().equals(hostId)) {
+        if (!includeHost && sessionUser.getUser().getId().equals(hostId)) {
           continue;
         }
 
@@ -214,7 +219,7 @@ public class MatchSessionService {
           notificationService.create(
               sessionUser.getUser(),
               "오프라인 매칭 확정",
-              "방장이 매칭을 확정했습니다. 채팅방으로 이동하세요.",
+              "매칭이 확정되었습니다. 채팅방으로 이동하세요.",
               NotificationType.MATCH,
               RelatedType.OFF_CHAT_ROOM,
               sessionId
