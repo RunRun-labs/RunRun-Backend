@@ -24,6 +24,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  *
  * @author : kimyongwon
@@ -41,6 +43,8 @@ public class ProfileRunningHistoryService {
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
     private final FileStorage fileStorage;
+
+    private static final List<RunStatus> VISIBLE_STATUSES = List.of(RunStatus.COMPLETED, RunStatus.TIME_OUT);
 
     /**
      * 내 러닝 기록 조회
