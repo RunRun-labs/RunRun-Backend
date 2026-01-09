@@ -23,6 +23,7 @@ import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
+import com.multi.runrunbackend.domain.match.service.RunningResultService;
 import com.multi.runrunbackend.domain.running.dto.FreeRunCoursePreviewResDto;
 import com.multi.runrunbackend.domain.running.dto.GPSDataDTO;
 import com.multi.runrunbackend.domain.running.dto.RunningCoursePathResDto;
@@ -64,6 +65,7 @@ public class RunningTrackingService {
     private final MatchSessionRepository sessionRepository;
     private final SessionUserRepository sessionUserRepository;
     private final RunningResultRepository runningResultRepository;
+    private final RunningResultService runningResultService;
     private final UserRepository userRepository;
     private final ChallengeProgressService challengeProgressService;
     private final CourseRepository courseRepository;
@@ -643,9 +645,9 @@ public class RunningTrackingService {
                         .runningType(RunningType.OFFLINE)
                         .build();
 
-                    runningResultRepository.save(result);
+                    RunningResult saved = runningResultService.saveAndUpdateAverage(result);
                     // 추가 : 챌린지 진행도 반영
-                    challengeProgressService.applyRunningResult(result);
+                    challengeProgressService.applyRunningResult(saved);
 
                     if (participant.getUser().getId().equals(hostUserId)) {
                         hostResult = result;
@@ -673,8 +675,7 @@ public class RunningTrackingService {
                 .runningType(RunningType.SOLO)
                 .build();
 
-            runningResultRepository.save(result);
-            hostResult = result;
+            hostResult = runningResultService.saveAndUpdateAverage(result);
 
             log.info("✅ 솔로런 기록 저장: userId={}, distance={}km, time={}초, pace={}분/km",
                 hostUserId,

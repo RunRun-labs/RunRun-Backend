@@ -1772,8 +1772,18 @@ function renderParticipantList() {
     }
 
     // 아바타 아이콘
-    avatar.innerHTML =
-      '<svg class="participant-avatar-icon" width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 0C4.925 0 0 4.925 0 11C0 17.075 4.925 22 11 22C17.075 22 22 17.075 22 11C22 4.925 17.075 0 11 0Z" fill="#E5E7EB"/></svg>';
+    // ✅ 프로필 이미지가 있으면 표시, 없으면 기본 SVG 아이콘
+    if (participant.profileImage) {
+      avatar.innerHTML = `<img src="${participant.profileImage}" alt="${participant.name}" 
+                               style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
+                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                          <svg class="participant-avatar-icon" width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                            <path d="M11 0C4.925 0 0 4.925 0 11C0 17.075 4.925 22 11 22C17.075 22 22 17.075 22 11C22 4.925 17.075 0 11 0Z" fill="#E5E7EB"/>
+                          </svg>`;
+    } else {
+      avatar.innerHTML =
+        '<svg class="participant-avatar-icon" width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 0C4.925 0 0 4.925 0 11C0 17.075 4.925 22 11 22C17.075 22 22 17.075 22 11C22 4.925 17.075 0 11 0Z" fill="#E5E7EB"/></svg>';
+    }
 
     // 준비 상태 배지
     const statusBadge = document.createElement("div");
