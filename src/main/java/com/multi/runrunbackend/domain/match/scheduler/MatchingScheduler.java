@@ -145,7 +145,7 @@ public class MatchingScheduler {
 
       List<Long> userIds = picked.stream().map(UserWithScore::userId).toList();
       Set<String> userIdSet = userIds.stream().map(String::valueOf).collect(Collectors.toSet());
-      int avgDuration = computeAvgWaitMinutes(userIds);
+      int avgDuration = computeAvgWaitSeconds(userIds);
 
       Long sessionId;
 
@@ -252,10 +252,10 @@ public class MatchingScheduler {
 
   }
 
-  private int computeAvgWaitMinutes(List<Long> userIds) {
+  private int computeAvgWaitSeconds(List<Long> userIds) {
     long now = System.currentTimeMillis();
 
-    long sumMinutes = 0L;
+    long sumSeconds = 0L;
     int counted = 0;
 
     for (Long userId : userIds) {
@@ -267,7 +267,7 @@ public class MatchingScheduler {
       try {
         long start = Long.parseLong(ts);
         long waitedMs = Math.max(0L, now - start);
-        sumMinutes += TimeUnit.MILLISECONDS.toMinutes(waitedMs);
+        sumSeconds += TimeUnit.MILLISECONDS.toSeconds(waitedMs);
         counted++;
       } catch (NumberFormatException ignore) {
       }
@@ -277,6 +277,6 @@ public class MatchingScheduler {
       return 0;
     }
 
-    return (int) (sumMinutes / counted);
+    return (int) (sumSeconds / counted);
   }
 }
