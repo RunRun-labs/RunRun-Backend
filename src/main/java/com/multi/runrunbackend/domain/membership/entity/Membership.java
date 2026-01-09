@@ -67,7 +67,7 @@ public class Membership extends BaseEntity {
     }
 
     /**
-     * @description : 멤버십 1주권 사용하기 위해 기간 선택할 수 있는 메서드
+     * @description : 멤버십 n주권 사용하기 위해 기간 선택할 수 있는 메서드
      */
     public void activateForDays(int days) {
         if (days <= 0) {
@@ -79,8 +79,8 @@ public class Membership extends BaseEntity {
 
         this.membershipStatus = MembershipStatus.ACTIVE;
         this.startDate = LocalDateTime.now();
-        this.nextBillingDate = LocalDateTime.now().plusDays(days);
-        this.endDate = null;
+        this.endDate = LocalDateTime.now().plusDays(days);
+        this.nextBillingDate = null;
     }
 
     /**
@@ -138,12 +138,5 @@ public class Membership extends BaseEntity {
         this.endDate = endDate;
     }
 
-    /**
-     * @description : nextBillingDate 설정 (체험권용)
-     * @author : BoKyung
-     * @since : 25. 12. 30. 월요일
-     */
-    public void setNextBillingDate(LocalDateTime nextBillingDate) {
-        this.nextBillingDate = nextBillingDate;
-    }
+
 }
