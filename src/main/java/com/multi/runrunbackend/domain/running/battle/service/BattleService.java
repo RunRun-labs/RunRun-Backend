@@ -832,14 +832,19 @@ public class BattleService {
         runningResultRepository.save(minimalResult);
 
         // 최소한의 BattleResult 저장
+        DistanceRating rating = distanceRatingRepository
+            .findByUserIdAndDistanceType(user.getId(), distanceType)
+            .orElse(null);
+        int currentRatingValue = rating != null ? rating.getCurrentRating() : 0;
+
         BattleResult minimalBattleResult = BattleResult.builder()
             .session(session)
             .user(user)
             .runningResult(minimalResult)
             .distanceType(distanceType)
             .ranking(0)
-            .previousRating(0)
-            .currentRating(0)
+            .previousRating(currentRatingValue)
+            .currentRating(currentRatingValue)
             .build();
 
         battleResultRepository.save(minimalBattleResult);
