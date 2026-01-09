@@ -42,8 +42,9 @@ public class RedisPublisher {
     try {
       // 객체를 JSON 문자열로 변환 (@class 필드 없음)
       String jsonMessage = objectMapper.writeValueAsString(message);
-      log.debug("📤 Redis Pub: channel={}", channel);
+      log.info("📤 Redis Pub: channel={}, message={}", channel, jsonMessage);  // INFO 레벨로 변경
       redisPubSubTemplate.convertAndSend(channel, jsonMessage);
+      log.info("✅ Redis Pub 성공: channel={}", channel);  // 추가 로그
     } catch (JsonProcessingException e) {
       log.error("❌ JSON 직렬화 실패: {}", e.getMessage(), e);
     }

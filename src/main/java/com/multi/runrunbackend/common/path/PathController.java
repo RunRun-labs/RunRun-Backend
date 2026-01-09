@@ -54,6 +54,16 @@ public class PathController {
         return "match/ghost";
     }
 
+    @GetMapping("/match/ghost-run")
+    public String ghostRunView() {
+        return "match/ghost-run";
+    }
+
+    @GetMapping("/match/ghost-result")
+    public String ghostResultView() {
+        return "match/ghost-result";
+    }
+
     @GetMapping("/match/solo")
     public String soloView() {
         return "match/solo";
@@ -196,6 +206,11 @@ public class PathController {
         return "chat/chat1";
     }
 
+    @GetMapping("/chat/crew")  // ⭐ 크루 채팅방 경로 추가
+    public String crewChat() {
+        return "chat/crew-chat";
+    }
+
     @GetMapping("/myPage")
     public String myPageView() {
         return "mypage/mypage";
@@ -309,10 +324,10 @@ public class PathController {
         return "friend/friend-list";
     }
 
-  @GetMapping("/notification")
-  public String notificationListView() {
-    return "notification/notification-list";
-  }
+    @GetMapping("/notification")
+    public String notificationListView() {
+        return "notification/notification-list";
+    }
 
     @GetMapping("/admin/coupon/inquiry")
     public String adminCouponInquiryView() {

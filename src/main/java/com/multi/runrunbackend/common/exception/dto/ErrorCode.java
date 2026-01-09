@@ -129,6 +129,7 @@ public enum ErrorCode {
         "F001",
         "파일 업로드에 실패했습니다."
     ),
+
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
         HttpStatus.BAD_REQUEST,
@@ -211,9 +212,9 @@ public enum ErrorCode {
 
     /*==== 경로 ====*/
     TMAP_API_FAILED(
-        HttpStatus.BAD_GATEWAY,
-        "EXT_001",
-        "TMAP 경로 API 호출에 실패했습니다."
+            HttpStatus.BAD_GATEWAY,
+            "EXT_001",
+            "TMAP 경로 API 호출에 실패했습니다."
     ),
 
     TMAP_EMPTY_RESPONSE(
@@ -307,6 +308,12 @@ public enum ErrorCode {
     BATTLE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀 결과를 찾을 수 없습니다."),
     DISTANCE_REQUIRED(HttpStatus.BAD_REQUEST, "M002", "코스 선택 안할 시 거리 선택은 필수 입니다."),
     INVALID_DISTANCE_TYPE(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 거리 타입입니다."),
+    /*===== 알림 =====*/
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "해당 알림을 찾을 수 없습니다."),
+    READ_DENIED(HttpStatus.FORBIDDEN, "N001", "본인의 알림만 읽음 처리할 수 있습니다."),
+    /*=====고스트런=====*/
+    GHOST_SPLITS_NOT_FOUND(HttpStatus.NOT_FOUND, "GH001", "고스트 페이스 데이터를 찾을 수 없습니다."),
+    GHOST_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "GH002", "고스트 세션을 찾을 수 없습니다."),
     /*===== 세션/채팅 =====*/
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_001", "세션을 찾을 수 없습니다."),
     SESSION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_002", "해당 세션에 참여하지 않은 사용자입니다."),
@@ -319,6 +326,10 @@ public enum ErrorCode {
         "자유러닝은 코스 저장이 필요합니다. 러닝 페이지에서 코스를 저장해주세요."),
     INVALID_READY_STATUS(HttpStatus.BAD_REQUEST, "SES_008", "Ready 상태 값이 올바르지 않습니다."),
     UNAUTHORIZED_COURSE(HttpStatus.FORBIDDEN, "SES_009", "해당 코스에 대한 권한이 없습니다."),
+    ALREADY_IN_PROGRESS(HttpStatus.BAD_REQUEST, "SES_009", "이미 시작된 세션입니다."),
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_009", "채팅방을 찾을 수 없습니다."),
+    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_010", "공지사항을 찾을 수 없습니다."),
+    INSUFFICIENT_PERMISSION(HttpStatus.FORBIDDEN, "SES_011", "권한이 부족합니다."),
     /*=====MAPBOX =====*/
     MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
         "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
