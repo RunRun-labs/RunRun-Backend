@@ -212,9 +212,9 @@ public enum ErrorCode {
 
     /*==== 경로 ====*/
     TMAP_API_FAILED(
-            HttpStatus.BAD_GATEWAY,
-            "EXT_001",
-            "TMAP 경로 API 호출에 실패했습니다."
+        HttpStatus.BAD_GATEWAY,
+        "EXT_001",
+        "TMAP 경로 API 호출에 실패했습니다."
     ),
 
     TMAP_EMPTY_RESPONSE(
@@ -324,12 +324,12 @@ public enum ErrorCode {
     HOST_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_007", "방장을 찾을 수 없습니다."),
     FREE_RUN_COURSE_REQUIRED(HttpStatus.BAD_REQUEST, "SES_008",
         "자유러닝은 코스 저장이 필요합니다. 러닝 페이지에서 코스를 저장해주세요."),
-    INVALID_READY_STATUS(HttpStatus.BAD_REQUEST, "SES_008", "Ready 상태 값이 올바르지 않습니다."),
-    UNAUTHORIZED_COURSE(HttpStatus.FORBIDDEN, "SES_009", "해당 코스에 대한 권한이 없습니다."),
-    ALREADY_IN_PROGRESS(HttpStatus.BAD_REQUEST, "SES_009", "이미 시작된 세션입니다."),
-    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_009", "채팅방을 찾을 수 없습니다."),
-    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_010", "공지사항을 찾을 수 없습니다."),
-    INSUFFICIENT_PERMISSION(HttpStatus.FORBIDDEN, "SES_011", "권한이 부족합니다."),
+    INVALID_READY_STATUS(HttpStatus.BAD_REQUEST, "SES_009", "Ready 상태 값이 올바르지 않습니다."),
+    UNAUTHORIZED_COURSE(HttpStatus.FORBIDDEN, "SES_010", "해당 코스에 대한 권한이 없습니다."),
+    ALREADY_IN_PROGRESS(HttpStatus.BAD_REQUEST, "SES_011", "이미 시작된 세션입니다."),
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_012", "채팅방을 찾을 수 없습니다."),
+    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "SES_013", "공지사항을 찾을 수 없습니다."),
+    INSUFFICIENT_PERMISSION(HttpStatus.FORBIDDEN, "SES_014", "권한이 부족합니다."),
     /*=====MAPBOX =====*/
     MAPBOX_ACCESS_TOKEN_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR, "M_001",
         "MAPBOX_ACCESS_TOKEN 설정이 비어있습니다."),
