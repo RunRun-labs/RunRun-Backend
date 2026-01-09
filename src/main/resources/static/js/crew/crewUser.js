@@ -120,6 +120,21 @@ function renderMembers(members) {
     document.getElementById('main-container').style.display = 'block';
 }
 
+// 멤버십 뱃지 생성 함수 - 크루장은 제외
+function getMembershipBadge(member) {
+    // 크루장은 멤버십 뱃지 표시 안 함
+    if (member.role === 'LEADER') {
+        return '';
+    }
+
+    // 부크루장이나 운영진만 멤버십 뱃지 표시
+    if (member.hasMembership && (member.role === 'SUB_LEADER' || member.role === 'STAFF')) {
+        return ' <span class="membership-badge">(💎 프리미엄)</span>';
+    }
+
+    return '';
+}
+
 // 크루장 카드 생성
 function createLeaderCard(member) {
     const avatar = createAvatar(member, true);
@@ -207,9 +222,9 @@ function createMemberCard(member) {
             <div class="member-info">
                 <div class="member-header">
                     <div class="member-left">
-                        <h3 class="member-name">${escapeHtml(member.userName)}${roleBadge}</h3>
-                        <p class="member-join-date">가입일: ${joinDate}</p>
-                    </div>
+    <h3 class="member-name">${escapeHtml(member.userName)}${roleBadge}</h3>
+    <p class="member-join-date">가입일: ${joinDate}${getMembershipBadge(member)}</p>
+</div>
                     ${actionSection}
                 </div>
             </div>
@@ -274,19 +289,32 @@ function createDropdownOptions(member) {
             </div>
         `);
     } else if (member.role === 'SUB_LEADER' || member.role === 'STAFF') {
-        // 부크루장/운영진 → 권한 해제 또는 크루장 위임
+        // 부크루장/운영진 → 권한 해제
         options.push(`
             <div class="dropdown-item" onclick="changeRole(${member.userId}, 'MEMBER', event)">
                 <span class="role-icon">↓</span>
                 <span>권한 해제</span>
             </div>
         `);
-        options.push(`
-            <div class="dropdown-item" onclick="delegateLeader(${member.userId}, event)">
-                <span class="role-icon">👑</span>
-                <span>크루장 위임</span>
-            </div>
-        `);
+
+        // 멤버십 보유자만 크루장 위임 가능 (중요!)
+        if (member.hasMembership) {
+            options.push(`
+                <div class="dropdown-item" onclick="delegateLeader(${member.userId}, event)">
+                    <span class="role-icon">👑</span>
+                    <span>크루장 위임</span>
+                </div>
+            `);
+        } else {
+            // 멤버십 없으면 비활성화된 상태로 표시
+            options.push(`
+                <div class="dropdown-item disabled" title="크루장 위임은 프리미엄 멤버십이 필요합니다">
+                    <span class="role-icon">👑</span>
+                    <span>크루장 위임</span>
+                    <span style="font-size: 11px; color: #999;">(멤버십 필요)</span>
+                </div>
+            `);
+        }
     }
 
     return options.join('');
