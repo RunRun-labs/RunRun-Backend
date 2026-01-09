@@ -44,13 +44,20 @@ public class CrewUserResDto {
     @Schema(description = "마지막 활동일")  // ex. 크루원 목록에서 마지막 활동 표시용
     private LocalDateTime lastActivityDate;
 
+    @Schema(description = "멤버십 보유 여부 (크루장 위임 가능 여부 판단용)")
+    private Boolean hasMembership;
+
     /**
      * @param crewUser           크루원 엔티티
      * @param participationCount 참여 횟수
      * @param lastActivityDate   마지막 활동일
      * @description : fromEntity : Entity → DTO 변환
      */
-    public static CrewUserResDto fromEntity(CrewUser crewUser, Integer participationCount, LocalDateTime lastActivityDate) {
+    public static CrewUserResDto fromEntity(CrewUser crewUser,
+                                            Integer participationCount,
+                                            LocalDateTime lastActivityDate,
+                                            Boolean hasMembership) {
+
         return CrewUserResDto.builder()
                 .userId(crewUser.getUser().getId())
                 .userName(crewUser.getUser().getName())
@@ -59,6 +66,7 @@ public class CrewUserResDto {
                 .createdAt(crewUser.getCreatedAt())
                 .participationCount(participationCount)
                 .lastActivityDate(lastActivityDate)
+                .hasMembership(hasMembership)
                 .build();
     }
 }
