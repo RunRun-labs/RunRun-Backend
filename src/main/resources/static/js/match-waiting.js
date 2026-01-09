@@ -106,6 +106,27 @@ function onConnected(frame) {
     console.error('❌ 에러 상세:', JSON.stringify(data, null, 2));
     alert('오류: ' + (data.message || data.error || JSON.stringify(data)));
   });
+  
+  // ✅ 5. 세션 취소 메시지 구독 (새로 추가)
+  stompClient.subscribe('/sub/battle/' + SESSION_ID + '/cancel', function(message) {
+    const data = JSON.parse(message.body);
+    console.log('❌❌❌ 세션 취소 수신!!!:', data);
+    console.log('❌ 구독 경로:', '/sub/battle/' + SESSION_ID + '/cancel');
+    console.log('❌ 메시지 내용:', data.message);
+    
+    // ✅ 타임아웃 없이 바로 모달 표시
+    handleSessionCancel(data);
+  });
+  console.log('✅ 세션 취소 구독 완료:', '/sub/battle/' + SESSION_ID + '/cancel');
+  
+  // ✅ 6. 참가자 나간 알림 구독 (새로 추가)
+  stompClient.subscribe('/sub/battle/' + SESSION_ID + '/user-left', function(message) {
+    const data = JSON.parse(message.body);
+    console.log('🚪 참가자 이탈 수신:', data);
+    console.log('🚪 구독 경로:', '/sub/battle/' + SESSION_ID + '/user-left');
+    handleUserLeft(data);
+  });
+  console.log('✅ 참가자 이탈 구독 완료:', '/sub/battle/' + SESSION_ID + '/user-left');
 }
 
 /**
@@ -287,15 +308,39 @@ function handleCancelBattle() {
   if (confirm("정말 대결을 취소하시겠습니까?")) {
     console.log("대결 취소");
     
-    // WebSocket 연결 종료
+    // ✅ WebSocket 연결 종료
     if (stompClient && isConnected) {
       stompClient.disconnect();
     }
     
-    // TODO: 서버에 취소 요청 API 호출
-    // fetch('/api/battle/cancel', { method: 'POST', ... })
+    // ✅ 대기방 나가기 API 호출
+    const token = localStorage.getItem('accessToken');
     
-    window.location.href = "/match/select";
+    fetch('/api/match/session/' + SESSION_ID + '/leave', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? 'Bearer ' + token : ''
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('취소 요청 실패');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('✅ 취소 성공:', data);
+    })
+    .catch(error => {
+      console.error('❌ 취소 실패:', error);
+      alert('취소 요청에 실패했습니다.');
+    })
+    .finally(() => {
+      // ✅ 성공하든 실패하든 본인은 바로 페이지 이동
+      console.log('>>> 본인 페이지 이동: /match/select');
+      window.location.href = "/match/select";
+    });
   }
 }
 
@@ -423,6 +468,40 @@ function handleTimeout(data) {
     // 메인으로 이동
     window.location.href = '/match/select';
   }
+}
+
+/**
+ * ✅ 세션 취소 메시지 처리 (새로 추가) - 상대방용
+ */
+function handleSessionCancel(data) {
+  console.log('>>>>>>>>> handleSessionCancel 함수 실행 시작!');
+  console.log('>>>>>>>>> data:', data);
+  console.log('>>>>>>>>> message:', data.message);
+  
+  // WebSocket 연결 종료
+  if (stompClient && isConnected) {
+    stompClient.disconnect();
+    console.log('>>>>>>>>> WebSocket 연결 종료');
+  }
+  
+  console.log('>>>>>>>>> 화면에 모달 표시!!!');
+  
+  // ✅ 화면에 큰 모달 창 표시
+  const message = data.message || '매칭이 취소되었습니다.';
+  showCancelModal(message);
+}
+
+/**
+ * ✅ 참가자 나간 알림 처리 (새로 추가)
+ */
+function handleUserLeft(data) {
+  console.log('💬 참가자 이탈:', data);
+  
+  // ✅ 세션 데이터 다시 로드 (참가자 목록 갱신)
+  loadSessionData();
+  
+  // 토스트 메시지 표시 (선택적)
+  // showToast(data.message);
 }
 
 /**
@@ -559,6 +638,88 @@ function createParticipantCard(participant) {
   `;
   
   return card;
+}
+
+/**
+ * ✅ 취소 모달 창 표시
+ */
+function showCancelModal(message) {
+  console.log('>>> showCancelModal 호출:', message);
+  
+  // 모달 HTML 생성
+  const modalHtml = `
+    <div id="cancel-modal" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    ">
+      <div style="
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      ">
+        <div style="
+          font-size: 48px;
+          margin-bottom: 20px;
+        ">⚠️</div>
+        <h2 style="
+          font-size: 24px;
+          font-weight: bold;
+          color: #1f2937;
+          margin-bottom: 16px;
+        ">매칭 취소</h2>
+        <p style="
+          font-size: 16px;
+          color: #6b7280;
+          margin-bottom: 32px;
+          line-height: 1.6;
+        ">${message}</p>
+        <button onclick="confirmCancelModal()" style="
+          background: #ef4444;
+          color: white;
+          border: none;
+          padding: 16px 48px;
+          border-radius: 12px;
+          font-size: 18px;
+          font-weight: bold;
+          cursor: pointer;
+          width: 100%;
+          transition: all 0.2s;
+        " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">확인</button>
+      </div>
+    </div>
+  `;
+  
+  // body에 모달 추가
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  console.log('>>> 모달 추가 완료');
+}
+
+/**
+ * ✅ 모달 확인 버튼 클릭
+ */
+function confirmCancelModal() {
+  console.log('>>> 확인 버튼 클릭 - 페이지 이동');
+  
+  // 모달 제거
+  const modal = document.getElementById('cancel-modal');
+  if (modal) {
+    modal.remove();
+  }
+  
+  // 페이지 이동
+  window.location.href = '/match/select';
 }
 
 /**

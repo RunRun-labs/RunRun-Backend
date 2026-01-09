@@ -2,17 +2,17 @@ package com.multi.runrunbackend.domain.tts.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
-import com.multi.runrunbackend.domain.tts.constant.TtsCue;
-import com.multi.runrunbackend.domain.tts.dto.req.TtsPresignBatchReqDto;
+import com.multi.runrunbackend.domain.tts.constant.TtsRunMode;
+import com.multi.runrunbackend.domain.tts.dto.req.TtsUpdateMyVoicePackReqDto;
+import com.multi.runrunbackend.domain.tts.dto.res.TtsMyVoicePackResDto;
 import com.multi.runrunbackend.domain.tts.dto.res.TtsPresignBatchResDto;
 import com.multi.runrunbackend.domain.tts.dto.res.TtsVoicePackResDto;
-import com.multi.runrunbackend.domain.tts.repository.TtsVoicePackRepository;
 import com.multi.runrunbackend.domain.tts.service.TtsVoicePackService;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,43 +30,44 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tts")
 public class TtsVoicePackController {
 
-    private final TtsVoicePackRepository voicePackRepository;
-    private final TtsVoicePackService presignService;
+    private final TtsVoicePackService ttsVoicePackService;
 
     @GetMapping("/voice-packs")
     public ApiResponse<List<TtsVoicePackResDto>> voicePacks(
         @AuthenticationPrincipal CustomUser pricipal
     ) {
-        List<TtsVoicePackResDto> rows = voicePackRepository.findAll().stream()
-            .map(v -> TtsVoicePackResDto.builder()
-                .id(v.getId())
-                .voiceType(v.getVoiceType().name())
-                .displayName(v.getDisplayName())
-                .lang(v.getLang())
-                .s3Bucket(v.getS3Bucket())
-                .baseS3Prefix(v.getBaseS3Prefix())
-                .build())
-            .toList();
-
-        return ApiResponse.success(rows);
+        return ApiResponse.success("TTS 보이스팩 목록 조회 성공", ttsVoicePackService.getVoicePacks());
     }
 
-    @GetMapping("/presigned/one")
-    public ApiResponse<Map<String, Object>> presignOne(
-        @RequestParam Long voicePackId,
-        @RequestParam TtsCue cue
+
+    @PostMapping("/presigned/batch/me")
+    public ApiResponse<TtsPresignBatchResDto> presignBatchForMe(
+        @AuthenticationPrincipal CustomUser principal,
+        @RequestParam TtsRunMode mode
     ) {
-        String url = presignService.presignOne(voicePackId, cue);
-        return ApiResponse.success(Map.of(
-            "voicePackId", voicePackId,
-            "cue", cue.name(),
-            "url", url
-        ));
+        return ApiResponse.success(
+            "TTS presigned URL 배치 발급 성공",
+            ttsVoicePackService.presignBatchForMe(principal, mode, true)
+        );
     }
 
-    @PostMapping("/presigned/batch")
-    public ApiResponse<TtsPresignBatchResDto> presignBatch(@RequestBody TtsPresignBatchReqDto req) {
+    @GetMapping("/me/voice-pack")
+    public ApiResponse<TtsMyVoicePackResDto> myVoicePack(
+        @AuthenticationPrincipal CustomUser principal
+    ) {
+        return ApiResponse.success("내 TTS 보이스팩 조회 성공",
+            ttsVoicePackService.getMyVoicePack(principal));
+    }
+
+    @PatchMapping("/me/voice-pack")
+    public ApiResponse<TtsMyVoicePackResDto> updateMyVoicePack(
+        @AuthenticationPrincipal CustomUser principal,
+        @RequestBody TtsUpdateMyVoicePackReqDto req
+    ) {
+
         return ApiResponse.success(
-            presignService.presignBatch(req.getVoicePackId(), req.getCues()));
+            "내 TTS 보이스팩 설정 변경 성공",
+            ttsVoicePackService.updateMyVoicePack(principal, req)
+        );
     }
 }

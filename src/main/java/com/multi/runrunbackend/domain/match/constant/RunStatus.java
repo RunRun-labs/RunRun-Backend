@@ -15,6 +15,7 @@ public enum RunStatus {
     IN_PROGRESS("진행중"),
     COMPLETED("완료"),
     GIVE_UP("포기"),
+    TIME_OUT("타임아웃"),  // ✅ 1등 완주 후 제한 시간 내 완주 실패
     CANCELLED("취소");
 
     private final String description;

@@ -33,17 +33,108 @@ public class CoursePathProcessor {
 
     private static final double THUMB_MIN_SEGMENT_M = 3.0;
 
+
     public LineString simplifyForStore(LineString path) {
-        return simplifyLineString(path, STORE_SIMPLIFY_TOLERANCE_M);
+        if (path == null || path.isEmpty()) {
+            return path;
+        }
+
+        List<double[]> coords = toCoordinateList(path);
+        coords = pruneSmallLoops(coords);
+
+        if (coords == null || coords.size() < 2) {
+            return path;
+        }
+
+        double lengthM = cumulativeDistance(coords, 0, coords.size() - 1);
+
+        // ✅ 정책: 10km 이하는 원본 유지, 단 포인트가 2000 초과면 2000으로 샘플링
+        if (lengthM <= 10_000) {
+            if (coords.size() > 2000) {
+                List<double[]> sampled = sampleCoordinates(coords, 2000);
+                return buildLineString(path, sampled);
+            }
+            return path;
+        }
+
+        if (coords.size() > 2000) {
+            List<double[]> sampled = sampleCoordinates(coords, 2000);
+            return buildLineString(path, sampled);
+        }
+        return path;
     }
+
+    private LineString buildLineString(LineString original, List<double[]> coords) {
+        if (original == null || coords == null || coords.size() < 2) {
+            return original;
+        }
+        Coordinate[] arr = new Coordinate[coords.size()];
+        for (int i = 0; i < coords.size(); i++) {
+            double[] c = coords.get(i);
+            arr[i] = new Coordinate(c[0], c[1]); // [lng, lat]
+        }
+        return original.getFactory().createLineString(arr);
+    }
+
+    private double pickStoreToleranceMeters(double lengthM) {
+        // 짧은 코스일수록 더 촘촘하게(형태 유지)
+        if (lengthM <= 500) {
+            return 2.0;        // 0~0.5km
+        }
+        if (lengthM <= 2_000) {
+            return 3.0;      // 0.5~2km
+        }
+        if (lengthM <= 10_000) {
+            return 6.0;     // 2~10km
+        }
+        if (lengthM <= 30_000) {
+            return 10.0;    // 10~30km
+        }
+        return STORE_SIMPLIFY_TOLERANCE_M;     // 30km~ (기존 12m)
+    }
+
+    private int pickMinStorePoints(double lengthM, int originalPoints) {
+        // “짧은데 꺾임이 있는 코스”가 2점으로 줄지 않게 최소 포인트 수 보장
+        int min;
+        if (lengthM <= 1_000) {
+            min = 20;        // 0~1km
+        } else if (lengthM <= 5_000) {
+            min = 60;   // 1~5km
+        } else {
+            min = 120;                        // 5km~
+        }
+        return Math.min(originalPoints, min);
+    }
+
+    // CoursePathProcessor.normalizeRoute(...)
 
     public List<double[]> normalizeRoute(List<double[]> coords) {
         if (coords == null) {
             return null;
         }
+
         List<double[]> mitigated = mitigateOverlap(coords);
         List<double[]> pruned = pruneSmallLoops(mitigated);
-        return simplifyCoordinates(pruned, ROUTE_SIMPLIFY_TOLERANCE_M);
+
+        if (pruned == null || pruned.size() < 2) {
+            return pruned;
+        }
+
+        double lengthM = cumulativeDistance(pruned, 0, pruned.size() - 1);
+
+        // ✅ 정책: 10km 이하는 원본 유지, 단 포인트가 2000 초과면 2000으로 샘플링
+        if (lengthM <= 10_000) {
+            if (pruned.size() > 2000) {
+                return sampleCoordinates(pruned, 2000);
+            }
+            return pruned;
+        }
+
+        // ✅ 정책: 10km 초과는 포인트 상한 2000 적용(넘으면 샘플링)
+        if (pruned.size() > 2000) {
+            return sampleCoordinates(pruned, 2000);
+        }
+        return pruned;
     }
 
     public List<double[]> prepareThumbnailPath(LineString rawPath) {

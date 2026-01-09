@@ -14,6 +14,10 @@
       rel="stylesheet"
   />
   <link rel="stylesheet" href="/css/solo.css" th:href="@{/css/solo.css}">
+  <script
+    type="text/javascript"
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services,clusterer">
+  </script>
 </head>
 <body>
 <div class="container">
@@ -46,6 +50,39 @@
       </div>
     </div>
 
+    <!-- 코스 선택 섹션 -->
+    <section class="course-section">
+      <div class="course-input-group">
+        <label for="course" class="course-label">코스 (선택사항)</label>
+        <div class="course-input-wrapper">
+          <input
+            type="text"
+            id="course"
+            class="course-input"
+            placeholder="코스를 선택하세요"
+            readonly
+          />
+          <svg class="course-search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 19L14.65 14.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- 선택된 코스 정보 (코스 선택 시 표시) -->
+      <div class="selected-course-info" id="selectedCourseInfo" style="display: none;">
+        <div class="course-name" id="courseName"></div>
+        <div class="course-address" id="courseAddress"></div>
+      </div>
+    </section>
+
+    <!-- 카카오맵 섹션 (코스 선택 시 표시) -->
+    <section class="map-section" id="mapSection" style="display: none;">
+      <div id="map" class="map-container"></div>
+    </section>
+
     <!-- 거리 선택 칩 섹션 -->
     <section class="distance-section">
       <div class="distance-chips" id="distanceChips">
@@ -66,6 +103,7 @@
           />
           <span class="manual-input-unit">km</span>
         </div>
+        <p class="manual-input-error" id="manualDistanceError"></p>
         <p class="course-mode-notice" id="courseModeNotice" style="display: none;">
           코스 지정 거리입니다
         </p>

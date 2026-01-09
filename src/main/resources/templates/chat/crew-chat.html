@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <title>RUNRUN | 크루 채팅</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <link rel="stylesheet" href="/css/crew-chat.css?v=2" th:href="@{/css/crew-chat.css(v=2)}">
+</head>
+<body>
+<div class="chat-page">
+  <!-- 헤더 -->
+  <header class="chat-header">
+    <div class="header-container">
+      <div class="header-left">
+        <button class="back-button" type="button" aria-label="뒤로가기">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="header-info">
+          <h1 class="group-name" id="group-name">크루 채팅</h1>
+          <p class="participant-count" id="participant-count">0명 참여중</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="header-icon-btn" type="button" aria-label="더보기" id="more-menu-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="4" r="1.5" fill="white"/>
+            <circle cx="10" cy="10" r="1.5" fill="white"/>
+            <circle cx="10" cy="16" r="1.5" fill="white"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 크루 정보 카드 -->
+    <div class="running-info-card">
+      <div class="info-card-left">
+        <span class="crew-badge" id="crew-badge">🏃 크루</span>
+        <span class="crew-description" id="crew-description">로딩 중...</span>
+      </div>
+      <div class="info-card-right">
+        <span class="member-count">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 8C10.21 8 12 6.21 12 4C12 1.79 10.21 0 8 0C5.79 0 4 1.79 4 4C4 6.21 5.79 8 8 8ZM8 10C5.33 10 0 11.34 0 14V16H16V14C16 11.34 10.67 10 8 10Z" fill="white"/>
+          </svg>
+          <span id="crew-member-count">0명</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 공지사항 영역 (헤더 바로 아래 고정) -->
+  <div class="notice-section" id="notice-section" style="display: none;">
+    <div class="notice-header">
+      <div class="notice-header-left">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 1L9.545 5.13L14 5.635L10.636 8.455L11.708 12.865L8 10.5L4.292 12.865L5.364 8.455L2 5.635L6.455 5.13L8 1Z" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.5"/>
+        </svg>
+        <span class="notice-title">공지사항</span>
+        <span class="notice-count" id="notice-count">0</span>
+      </div>
+      <div class="notice-header-right">
+        <button class="notice-add-btn" id="notice-add-btn" type="button" style="display: none;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 1V13M1 7H13" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="notice-toggle-btn collapsed" id="notice-toggle-btn" type="button">
+          <span class="toggle-text">펼치기</span>
+          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 1L6 6L11 1" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="notice-list collapsed" id="notice-list">
+      <!-- 공지사항 목록이 여기에 동적으로 추가됨 -->
+    </div>
+  </div>
+
+  <!-- 채팅 영역 -->
+  <main class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+      <!-- 메시지들이 여기에 동적으로 추가됨 -->
+    </div>
+
+    <!-- 스크롤 버튼 -->
+    <button class="scroll-to-bottom" type="button" aria-label="맨 아래로" id="scroll-to-bottom">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 5V19M12 19L19 12M12 19L5 12" stroke="#1F2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </main>
+
+  <!-- 메시지 입력 영역 -->
+  <div class="message-input-area">
+    <button class="attach-button" type="button" aria-label="첨부">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 5V19M5 12H19" stroke="#1F2937" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="input-wrapper">
+      <input 
+        type="text" 
+        class="message-input" 
+        id="message-input"
+        placeholder="메시지를 입력하세요..."
+        aria-label="메시지 입력"
+      />
+      <button class="emoji-button" type="button" aria-label="이모지">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="8" stroke="#757575" stroke-width="1.5"/>
+          <circle cx="7" cy="8" r="1" fill="#757575"/>
+          <circle cx="13" cy="8" r="1" fill="#757575"/>
+          <path d="M7 13C7 13 8.5 15 10 15C11.5 15 13 13 13 13" stroke="#757575" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <button class="send-button" type="button" id="send-button" aria-label="전송">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 2L9 11M18 2L12 18L9 11M18 2L2 8L9 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- 참여자 목록 모달 -->
+<div class="participant-modal-overlay" id="participant-modal-overlay">
+  <div class="participant-modal">
+    <div class="participant-modal-header">
+      <h2 class="participant-modal-title">참여자 목록</h2>
+      <button class="participant-modal-close" type="button" id="participant-modal-close" aria-label="닫기">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4L4 12M4 4L12 12" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="participant-ready-status">
+      <span class="member-total">총 <strong id="participant-total-count">0</strong>명</span>
+    </div>
+    <div class="participant-list" id="participant-list">
+      <!-- 참여자 목록이 여기에 동적으로 추가됨 -->
+    </div>
+    <div class="participant-modal-footer">
+      <button class="leave-chat-btn" type="button" id="leave-chat-btn">채팅방 나가기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 공지사항 작성/수정 모달 -->
+<div class="notice-modal-overlay" id="notice-modal-overlay">
+  <div class="notice-modal">
+    <div class="notice-modal-header">
+      <h2 class="notice-modal-title" id="notice-modal-title">공지사항 작성</h2>
+      <button class="notice-modal-close" type="button" id="notice-modal-close" aria-label="닫기">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4L4 12M4 4L12 12" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="notice-modal-body">
+      <textarea 
+        class="notice-textarea" 
+        id="notice-textarea"
+        placeholder="공지사항 내용을 입력하세요... (500자 이내)"
+        maxlength="500"
+      ></textarea>
+      <div class="notice-char-count">
+        <span id="notice-char-current">0</span> / 500
+      </div>
+    </div>
+    <div class="notice-modal-footer">
+      <button class="notice-cancel-btn" type="button" id="notice-cancel-btn">취소</button>
+      <button class="notice-submit-btn" type="button" id="notice-submit-btn">등록</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/crew-chat.js?v=3" th:src="@{/js/crew-chat.js(v=3)}"></script>
+</body>
+</html>
