@@ -23,6 +23,7 @@ import com.multi.runrunbackend.domain.membership.repository.MembershipRepository
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class CrewService {
 
     private final CrewRepository crewRepository;
@@ -51,6 +53,7 @@ public class CrewService {
     private final UserRepository userRepository;
     private final FileStorage s3FileStorage;
     private final MembershipRepository membershipRepository;
+    private final CrewChatService crewChatService;
 
     /**
      * @param reqDto 크루 생성 요청 DTO
@@ -84,6 +87,9 @@ public class CrewService {
         // 크루장 자동 등록
         CrewUser crewLeader = CrewUser.create(crew, user, CrewRole.LEADER);
         crewUserRepository.save(crewLeader);
+
+        // 채팅방 자동 생성
+        crewChatService.createChatRoomForCrew(crew, user);
 
         cancelOtherPendingRequestsForUser(user.getId(), crew.getId());
 
@@ -147,6 +153,9 @@ public class CrewService {
         // 모든 크루원 soft delete
         List<CrewUser> crewUsers = crewUserRepository.findAllByCrewIdAndIsDeletedFalse(crewId);
         crewUsers.forEach(CrewUser::delete);
+
+        // 채팅방 삭제
+        crewChatService.deleteChatRoom(crewId);
     }
 
     /**
@@ -415,5 +424,122 @@ public class CrewService {
         if (!hasValidMembership) {
             throw new BusinessException(ErrorCode.MEMBERSHIP_REQUIRED);
         }
+    }
+
+    /**
+     * @description : 크루 해체 (시스템 호출용 - 권한 체크 없음)
+     */
+    @Transactional
+    public void disbandCrew(Long crewId) {
+        Crew crew = findCrewById(crewId);
+
+        // 모든 크루원 soft delete
+        List<CrewUser> allMembers = crewUserRepository
+                .findByCrewAndIsDeletedFalse(crew);
+
+        for (CrewUser member : allMembers) {
+            member.delete();
+        }
+
+        // 크루 soft delete
+        crew.softDelete();
+
+        log.info("크루 해체 완료 - crewId: {}, 멤버 수: {}",
+                crewId, allMembers.size());
+    }
+
+    /**
+     * 크루장 멤버십 만료 처리
+     */
+    @Transactional
+    public void handleLeaderMembershipExpiry(Long crewId, Long leaderId) {
+        Crew crew = findCrewById(crewId);
+
+        // 이미 위임 대기 중이면 무시
+        if (crew.requiresDelegation()) {
+            log.info("이미 위임 대기 중인 크루입니다. crewId: {}", crewId);
+            return;
+        }
+
+        // 3일 유예 기간 설정
+        crew.requireLeaderDelegation();
+
+        // 크루 모집 자동 중단
+        if (crew.getCrewRecruitStatus() == CrewRecruitStatus.RECRUITING) {
+            crew.updateRecruitStatus(CrewRecruitStatus.CLOSED);
+        }
+
+        log.info("크루장 멤버십 만료 - 3일 유예 시작. crewId: {}, leaderId: {}, 기한: {}",
+                crewId, leaderId, crew.getDelegationDeadline());
+    }
+
+    /**
+     * 크루장 수동 위임
+     */
+    @Transactional
+    public void delegateLeaderManually(Long crewId, Long newLeaderId, CustomUser principal) {
+        User currentLeader = getUserOrThrow(principal);
+        Crew crew = findCrewById(crewId);
+
+        // 크루장 권한 확인
+        validateCrewLeader(crewId, currentLeader.getId());
+
+        // 새 크루장 검증
+        CrewUser newLeaderCrewUser = crewUserRepository
+                .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, newLeaderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+
+        // 부크루장 또는 운영진만 위임 가능
+        if (newLeaderCrewUser.getRole() != CrewRole.SUB_LEADER
+                && newLeaderCrewUser.getRole() != CrewRole.STAFF) {
+            throw new BusinessException(ErrorCode.ONLY_SUB_LEADER_OR_STAFF_CAN_BE_LEADER);
+        }
+
+        // 멤버십 확인
+        boolean hasValidMembership = membershipRepository
+                .existsByUser_IdAndMembershipStatusIn(
+                        newLeaderId,
+                        List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
+                );
+
+        if (!hasValidMembership) {
+            throw new BusinessException(ErrorCode.MEMBERSHIP_REQUIRED_FOR_LEADER);
+        }
+
+        // 권한 위임 실행
+        executeLeaderDelegation(crewId, currentLeader.getId(), newLeaderId);
+
+        // 위임 필요 상태 해제
+        if (crew.requiresDelegation()) {
+            crew.completeLeaderDelegation();
+        }
+
+        log.info("크루장 수동 위임 완료 - crewId: {}, 이전: {}, 새: {}",
+                crewId, currentLeader.getId(), newLeaderId);
+    }
+
+    /**
+     * 크루장 위임 실행 (공통)
+     */
+    @Transactional
+    public void executeLeaderDelegation(Long crewId, Long currentLeaderId, Long newLeaderId) {
+        Crew crew = findCrewById(crewId);
+
+        // 기존 크루장 → 일반 멤버
+        CrewUser currentLeader = crewUserRepository
+                .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, currentLeaderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+        currentLeader.changeRole(CrewRole.MEMBER);
+
+        // 새 크루장 → 크루장
+        CrewUser newLeader = crewUserRepository
+                .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, newLeaderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+        newLeader.changeRole(CrewRole.LEADER);
+
+        crew.changeLeader(newLeader.getUser());
+
+        log.info("크루장 권한 위임 완료 - crewId: {}, 이전: {}, 새: {}",
+                crewId, currentLeaderId, newLeaderId);
     }
 }

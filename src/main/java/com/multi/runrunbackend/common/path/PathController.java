@@ -54,10 +54,20 @@ public class PathController {
     return "match/ghost";
   }
 
-  @GetMapping("/match/solo")
-  public String soloView() {
-    return "match/solo";
-  }
+    @GetMapping("/match/ghost-run")
+    public String ghostRunView() {
+        return "match/ghost-run";
+    }
+
+    @GetMapping("/match/ghost-result")
+    public String ghostResultView() {
+        return "match/ghost-result";
+    }
+
+    @GetMapping("/match/solo")
+    public String soloView() {
+        return "match/solo";
+    }
 
   @GetMapping("/match/battleList")
   public String battleListView() {
@@ -156,6 +166,11 @@ public class PathController {
         return "payment/success";
     }
 
+    @GetMapping("/payment/free-success")
+    public String freePaymentSuccess() {
+        return "payment/free-success";
+    }
+
     @GetMapping("/payment/fail")
     public String paymentFailView() {
         return "payment/fail";
@@ -191,10 +206,16 @@ public class PathController {
         return "chat/chat-list";
     }
 
-  @GetMapping("/chat/chat1")
-  public String chat1() {
-    return "chat/chat1";
-  }
+    @GetMapping("/chat/chat1")
+    public String chat1() {
+        return "chat/chat1";
+    }
+
+    @GetMapping("/chat/crew")  // ⭐ 크루 채팅방 경로 추가
+    public String crewChat() {
+        return "chat/crew-chat";
+    }
+
     @GetMapping("/myPage")
     public String myPageView() {
         return "mypage/mypage";
@@ -252,21 +273,21 @@ public class PathController {
         return "course/courseCreate";
     }
 
-  @GetMapping("/courseDetail/{course_id}")
-  public String courseDetailView(
-      @PathVariable(name = "course_id") Long courseId,
-      Model model
-  ) {
+    @GetMapping("/courseDetail/{course_id}")
+    public String courseDetailView(
+        @PathVariable(name = "course_id") Long courseId,
+        Model model
+    ) {
 
         model.addAttribute("courseId", courseId);
         return "course/courseDetail";
     }
 
-  @GetMapping("/courseUpdate/{course_id}")
-  public String courseUpdateView(
-      @PathVariable(name = "course_id") Long courseId,
-      Model model
-  ) {
+    @GetMapping("/courseUpdate/{course_id}")
+    public String courseUpdateView(
+        @PathVariable(name = "course_id") Long courseId,
+        Model model
+    ) {
 
         model.addAttribute("courseId", courseId);
         return "course/courseUpdate";
@@ -364,6 +385,12 @@ public class PathController {
     @GetMapping("/coupon/event")
     public String couponEventView() {
         return "coupon/coupon-event";
+    }
+
+    @GetMapping("/running/{sessionId}")
+    public String runningView(@PathVariable(name = "sessionId") Long sessionId, Model model) {
+        model.addAttribute("sessionId", sessionId);
+        return "running/running";
     }
 
 }

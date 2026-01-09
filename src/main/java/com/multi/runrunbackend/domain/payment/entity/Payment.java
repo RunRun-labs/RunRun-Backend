@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.payment.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseCreatedEntity;
+import com.multi.runrunbackend.domain.coupon.entity.CouponIssue;
 import com.multi.runrunbackend.domain.payment.constant.MembershipGrade;
 import com.multi.runrunbackend.domain.payment.constant.PaymentMethod;
 import com.multi.runrunbackend.domain.payment.constant.PaymentStatus;
@@ -46,6 +47,10 @@ public class Payment extends BaseCreatedEntity {
 
     @Column(name = "coupon_code", length = 50)
     private String couponCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_issue_id")
+    private CouponIssue couponIssue;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", length = 50)
@@ -98,7 +103,7 @@ public class Payment extends BaseCreatedEntity {
             Integer originalAmount,
             Integer discountAmount,
             String orderId,
-            String couponCode
+            CouponIssue couponIssue
     ) {
         Payment payment = new Payment();
         payment.user = user;
@@ -108,7 +113,12 @@ public class Payment extends BaseCreatedEntity {
         payment.finalAmount = originalAmount - discountAmount;
         payment.paymentStatus = PaymentStatus.READY;
         payment.orderId = orderId;
-        payment.couponCode = couponCode;
+        payment.couponIssue = couponIssue;
+
+        if (couponIssue != null) {
+            payment.couponCode = couponIssue.getCoupon().getCode();
+        }
+
         payment.isAutoPayment = false;
         return payment;
     }
@@ -132,6 +142,7 @@ public class Payment extends BaseCreatedEntity {
         payment.paymentStatus = PaymentStatus.READY;
         payment.orderId = orderId;
         payment.billingKey = billingKey;
+        payment.couponIssue = null;
         payment.isAutoPayment = true;
         return payment;
     }

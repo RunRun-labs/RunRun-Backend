@@ -90,10 +90,10 @@ public class BattleController {
   }
 
   /**
-   * 참가자 포기 처리
+   * 참가자 포기 처리 (세션 상태 반환 포함)
    */
   @PostMapping("/{sessionId}/quit")
-  public ResponseEntity<ApiResponse<Void>> quitBattle(
+  public ResponseEntity<ApiResponse<Map<String, Object>>> quitBattle(
       @PathVariable Long sessionId,
       @AuthenticationPrincipal CustomUser principal
   ) {
@@ -101,10 +101,12 @@ public class BattleController {
 
     log.info("🚨 참가자 포기: sessionId={}, userId={}", sessionId, userId);
 
-    battleService.quitBattle(sessionId, userId);
+    // ✅ 포기 처리 및 세션 상태 반환
+    Map<String, Object> result = battleService.quitBattle(sessionId, userId);
 
-    log.info("✅ 포기 처리 성공: sessionId={}, userId={}", sessionId, userId);
+    log.info("✅ 포기 처리 성공: sessionId={}, userId={}, shouldShowResult={}", 
+        sessionId, userId, result.get("shouldShowResult"));
 
-    return ResponseEntity.ok(ApiResponse.success(null));
+    return ResponseEntity.ok(ApiResponse.success(result));
   }
 }

@@ -14,9 +14,10 @@
       rel="stylesheet"
   />
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-<script src="/js/running-tracker.js" th:src="@{/js/running-tracker.js}"></script>
-<link rel="stylesheet" href="/css/chat1.css" th:href="@{/css/chat1.css}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="/js/running-tracker.js" th:src="@{/js/running-tracker.js}"></script>
+  <script src="/js/tts-manager.js" th:src="@{/js/tts-manager.js}"></script>
+  <link rel="stylesheet" href="/css/chat1.css" th:href="@{/css/chat1.css}">
 </head>
 <body>
 <div class="chat-page">
@@ -25,8 +26,10 @@
     <div class="header-container">
       <div class="header-left">
         <button class="back-button" type="button" aria-label="뒤로가기">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+               xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round"/>
           </svg>
         </button>
         <div class="header-info">
@@ -35,8 +38,32 @@
         </div>
       </div>
       <div class="header-right">
+        <button class="header-icon-btn" type="button" aria-label="참여자 목록" id="participant-list-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+               xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z"
+                fill="white"/>
+            <path d="M10 12C5.58172 12 2 13.7909 2 16V20H18V16C18 13.7909 14.4183 12 10 12Z"
+                  fill="white"/>
+          </svg>
+        </button>
+        <button class="header-icon-btn hidden" type="button" aria-label="러닝 페이지"
+                id="go-running-page-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+               xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 5a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" fill="white"/>
+            <path d="M9.5 10.5 11 8.5h3l2 2.5h2.5" stroke="white" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 21l2-5 2-1.5 2.5 3.5 3.5 1" stroke="white" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 14l2-2 2.5-1.5" stroke="white" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round"/>
+          </svg>
+        </button>
         <button class="header-icon-btn" type="button" aria-label="더보기" id="more-menu-btn">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+               xmlns="http://www.w3.org/2000/svg">
             <circle cx="10" cy="4" r="1.5" fill="white"/>
             <circle cx="10" cy="10" r="1.5" fill="white"/>
             <circle cx="10" cy="16" r="1.5" fill="white"/>
@@ -44,7 +71,7 @@
         </button>
       </div>
     </div>
-    
+
     <!-- 러닝 정보 카드 -->
     <div class="running-info-card">
       <div class="info-card-left">
@@ -55,8 +82,11 @@
         <p class="date-time" id="meeting-time">로딩 중...</p>
       </div>
       <div class="info-card-location">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 0C4.13401 0 1 3.13401 1 7C1 12.5 8 16 8 16C8 16 15 12.5 15 7C15 3.13401 11.866 0 8 0ZM8 9.5C6.61929 9.5 5.5 8.38071 5.5 7C5.5 5.61929 6.61929 4.5 8 4.5C9.38071 4.5 10.5 5.61929 10.5 7C10.5 8.38071 9.38071 9.5 8 9.5Z" fill="white"/>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path
+              d="M8 0C4.13401 0 1 3.13401 1 7C1 12.5 8 16 8 16C8 16 15 12.5 15 7C15 3.13401 11.866 0 8 0ZM8 9.5C6.61929 9.5 5.5 8.38071 5.5 7C5.5 5.61929 6.61929 4.5 8 4.5C9.38071 4.5 10.5 5.61929 10.5 7C10.5 8.38071 9.38071 9.5 8 9.5Z"
+              fill="white"/>
         </svg>
         <span id="meeting-place">장소 미정</span>
       </div>
@@ -71,8 +101,10 @@
 
     <!-- 스크롤 버튼 -->
     <button class="scroll-to-bottom" type="button" aria-label="맨 아래로" id="scroll-to-bottom">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 5V19M12 19L19 12M12 19L5 12" stroke="#1F2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+           xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 5V19M12 19L19 12M12 19L5 12" stroke="#1F2937" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
   </main>
@@ -81,8 +113,11 @@
   <div class="ready-section" id="ready-section">
     <div class="ready-info">
       <div class="ready-avatar">
-        <svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#FEF3C7"/>
+        <svg width="18" height="21" viewBox="0 0 18 21" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path
+              d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z"
+              fill="#FEF3C7"/>
         </svg>
       </div>
       <div class="ready-text">
@@ -96,7 +131,7 @@
   <!-- 방장 컨트롤 (런닝 시작) -->
   <div class="host-control-section hidden" id="host-control-section">
     <div class="host-control-content">
-      <span>👑 방장입니다</span>
+      <span id="host-control-label">👑 방장입니다</span>
       <button class="start-running-btn" type="button" id="start-running-btn">🏃 런닝 시작</button>
     </div>
   </div>
@@ -109,69 +144,38 @@
     </div>
   </div>
 
-  <!-- 📍 실시간 GPS 통계 패널 -->
-  <div id="running-test-panel" style="display: none; position: fixed; top: 80px; right: 20px; background: white; border: 2px solid #10B981; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; max-width: 300px;">
-    <div style="background: #10B981; color: white; padding: 8px 12px; border-radius: 8px; margin: -20px -20px 15px -20px; font-weight: bold; text-align: center;">
-      📍 실시간 GPS 추적
-    </div>
-    
-    <div style="margin-bottom: 15px;">
-      <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">팀 평균 페이스</div>
-      <div style="font-size: 32px; font-weight: bold; color: #10B981;" id="test-pace">--:--</div>
-      <div style="font-size: 12px; color: #9CA3AF;">/km</div>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-      <div>
-        <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">현재 거리</div>
-        <div style="font-size: 24px; font-weight: bold; color: #1F2937;"><span id="test-distance">0.00</span> km</div>
-      </div>
-      <div>
-        <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">남은 거리</div>
-        <div style="font-size: 24px; font-weight: bold; color: #EF4444;"><span id="test-remaining">5.00</span> km</div>
-      </div>
-    </div>
-    
-    <div style="margin-bottom: 15px;">
-      <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">런닝 시간</div>
-      <div style="font-size: 20px; font-weight: bold; color: #1F2937;" id="test-time">00:00:00</div>
-    </div>
-    
-    <div style="border-top: 1px solid #E5E7EB; padding-top: 15px;">
-      <div style="font-size: 12px; color: #6B7280; margin-bottom: 8px;">km별 페이스</div>
-      <div id="test-segments" style="font-size: 13px; color: #4B5563;">
-        <div>데이터 수신 대기 중...</div>
-      </div>
-    </div>
-  </div>
-
   <!-- 메시지 입력 영역 -->
   <div class="message-input-area">
-    <button class="attach-button" type="button" aria-label="첨부">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <button class="attach-button" type="button" aria-label="러닝 통계" id="running-stats-toggle-btn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+           xmlns="http://www.w3.org/2000/svg">
         <path d="M12 5V19M5 12H19" stroke="#1F2937" stroke-width="2" stroke-linecap="round"/>
       </svg>
     </button>
     <div class="input-wrapper">
-      <input 
-        type="text" 
-        class="message-input" 
-        id="message-input"
-        placeholder="메시지를 입력하세요"
-        aria-label="메시지 입력"
+      <input
+          type="text"
+          class="message-input"
+          id="message-input"
+          placeholder="메시지를 입력하세요"
+          aria-label="메시지 입력"
       />
       <button class="emoji-button" type="button" aria-label="이모지">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
           <circle cx="10" cy="10" r="8" stroke="#757575" stroke-width="1.5"/>
           <circle cx="7" cy="8" r="1" fill="#757575"/>
           <circle cx="13" cy="8" r="1" fill="#757575"/>
-          <path d="M7 13C7 13 8.5 15 10 15C11.5 15 13 13 13 13" stroke="#757575" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7 13C7 13 8.5 15 10 15C11.5 15 13 13 13 13" stroke="#757575" stroke-width="1.5"
+                stroke-linecap="round"/>
         </svg>
       </button>
     </div>
     <button class="send-button" type="button" id="send-button" aria-label="전송">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M18 2L9 11M18 2L12 18L9 11M18 2L2 8L9 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+           xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 2L9 11M18 2L12 18L9 11M18 2L2 8L9 11" stroke="white" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
   </div>
@@ -182,13 +186,16 @@
   <div class="running-result-modal">
     <div class="result-modal-header">
       <h2 class="result-modal-title">🏆 런닝 결과</h2>
-      <button class="result-modal-close" type="button" id="running-result-modal-close" aria-label="닫기">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 4L4 12M4 4L12 12" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <button class="result-modal-close" type="button" id="running-result-modal-close"
+              aria-label="닫기">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4L4 12M4 4L12 12" stroke="#1f2937" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"/>
         </svg>
       </button>
     </div>
-    
+
     <!-- 스크롤 가능한 컨텐츠 영역 -->
     <div class="result-modal-content">
       <!-- 축하 메시지 -->
@@ -197,7 +204,7 @@
         <h3 class="celebration-title">완주 축하합니다!</h3>
         <p class="celebration-subtitle">수고하셨습니다</p>
       </div>
-      
+
       <!-- 주요 통계 -->
       <div class="result-main-stats">
         <div class="stat-grid">
@@ -218,19 +225,74 @@
           <div class="stat-unit">/km</div>
         </div>
       </div>
-      
+
       <!-- 구간별 페이스 -->
       <div class="result-segments-section">
         <h3 class="segments-title">📊 구간별 페이스</h3>
+      <!-- 결과 로딩(저장/처리 지연 대비) -->
+      <div class="result-loading" id="result-loading">
+        <div class="spinner"></div>
+        <div class="loading-text" id="result-loading-text">
+          러닝 결과 저장중입니다…
+        </div>
+      </div>
         <div id="result-segments" class="segments-list">
           <!-- 구간별 데이터가 여기에 추가됨 -->
         </div>
       </div>
     </div>
-    
+
     <!-- 닫기 버튼 (하단 고정) -->
     <div class="result-modal-footer">
-      <button class="result-close-button" type="button" onclick="closeRunningResultModal()">확인</button>
+      <button class="result-close-button" type="button" onclick="closeRunningResultModal()">확인
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 러닝 통계 모달 (러닝 시작 시 즉시 표시) -->
+<div class="participant-modal-overlay" id="running-stats-modal-overlay">
+  <div class="running-stats-modal">
+    <div class="result-modal-header">
+      <h2 class="result-modal-title">📈 러닝 통계</h2>
+      <button class="result-modal-close" type="button" id="running-stats-modal-close"
+              aria-label="닫기">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4L4 12M4 4L12 12" stroke="#1f2937" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="running-stats-content">
+      <div class="running-stats-grid">
+        <div class="running-stats-item">
+          <div class="running-stats-label">현재 거리</div>
+          <div class="running-stats-value"><span id="live-distance">0.00</span>km</div>
+        </div>
+        <div class="running-stats-item">
+          <div class="running-stats-label">남은 거리</div>
+          <div class="running-stats-value"><span id="live-remaining">0.00</span>km</div>
+        </div>
+        <div class="running-stats-item">
+          <div class="running-stats-label">평균 페이스</div>
+          <div class="running-stats-value"><span id="live-pace">--:--</span>/km</div>
+        </div>
+        <div class="running-stats-item">
+          <div class="running-stats-label">시간</div>
+          <div class="running-stats-value"><span id="live-time">00:00:00</span></div>
+        </div>
+      </div>
+      <p class="running-stats-hint">
+        러닝이 진행 중입니다. 러닝 페이지로 이동하면 코스/위치가 표시됩니다.
+      </p>
+    </div>
+
+    <div class="running-stats-footer">
+      <button class="result-close-button" type="button" id="go-running-page-btn-modal">
+        러닝 페이지로 가기
+      </button>
     </div>
   </div>
 </div>
@@ -240,9 +302,12 @@
   <div class="participant-modal">
     <div class="participant-modal-header">
       <h2 class="participant-modal-title">참여자 목록</h2>
-      <button class="participant-modal-close" type="button" id="participant-modal-close" aria-label="닫기">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 4L4 12M4 4L12 12" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <button class="participant-modal-close" type="button" id="participant-modal-close"
+              aria-label="닫기">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4L4 12M4 4L12 12" stroke="#1f2937" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"/>
         </svg>
       </button>
     </div>

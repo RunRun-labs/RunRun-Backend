@@ -92,7 +92,7 @@
           type="number"
           id="maxParticipants"
           class="form-input"
-          placeholder="최대 인원을 입력하세요"
+          placeholder="인원을 입력하세요. 최대 인원은 20명입니다"
           min="2"
           max="20"
           value="2"
@@ -102,19 +102,30 @@
     <!-- 모임 일시 -->
     <div class="form-group">
       <label class="form-label">모임 일시</label>
+      <p class="form-hint">날짜와 시간을 클릭하여 선택해주세요</p>
       <div class="datetime-group">
-        <input
-            type="date"
-            id="meetingDate"
-            class="form-input"
-        />
-        <input
-            type="text"
-            id="meetingTime"
-            class="form-input"
-            placeholder="시간 선택"
-            readonly
-        />
+        <div class="datetime-input-wrapper">
+          <input
+              type="date"
+              id="meetingDate"
+              class="form-input"
+          />
+          <svg class="datetime-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="datetime-input-wrapper">
+          <input
+              type="time"
+              id="meetingTime"
+              class="form-input"
+              step="60"
+          />
+          <svg class="datetime-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
       </div>
     </div>
 

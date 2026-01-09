@@ -250,8 +250,20 @@
     <div class="coupon-section">
         <div class="coupon-title">쿠폰</div>
         <div class="coupon-input-wrapper">
-            <input type="text" id="coupon-code" class="coupon-input" placeholder="사용 가능 쿠폰 1장">
-            <button class="apply-coupon-btn" onclick="applyCoupon()">쿠폰 사용하기 ›</button>
+            <input type="text" id="coupon-code" class="coupon-input"
+                   placeholder="쿠폰을 선택해주세요" readonly>
+            <button class="apply-coupon-btn" onclick="goToCouponPage()">
+                쿠폰 사용하기 ›
+            </button>
+        </div>
+        <div id="selected-coupon-info" style="display: none; margin-top: 12px; color: #666;">
+            <p>선택된 쿠폰: <span id="selected-coupon-name"></span></p>
+            <p>할인 혜택: <span id="selected-coupon-benefit"></span></p>
+            <p id="coupon-notice" style="margin-top: 8px; font-size: 12px;"></p>
+
+            <button onclick="removeCoupon()" style="color: #ff4444; background: none; border: none; cursor: pointer;">
+                쿠폰 제거
+            </button>
         </div>
     </div>
 
@@ -306,21 +318,156 @@
     let finalAmount = 9900;
     let couponCode = null;
 
-    // 쿠폰 적용
-    function applyCoupon() {
-        couponCode = document.getElementById('coupon-code').value;
-        if (!couponCode || couponCode.trim() === '') {
-            alert('쿠폰 코드를 입력해주세요');
-            return;
+    // 쿠폰 페이지로 이동
+    function goToCouponPage() {
+        localStorage.setItem('paymentReturnUrl', '/payment/pay');
+        window.location.href = '/coupon/my';
+    }
+
+    // 쿠폰 선택 완료 후 돌아왔을 때
+    window.addEventListener('load', async function () {
+        // 사용 가능한 쿠폰 개수 조회
+        await loadAvailableCouponCount();
+        const selectedCoupon = localStorage.getItem('selectedCoupon');
+        if (selectedCoupon) {
+            const coupon = JSON.parse(selectedCoupon);
+            applyCouponFromSelection(coupon);
+        } else {
+            resetCouponSelection();
+        }
+    });
+
+    // 쿠폰 선택 초기화 함수
+    function resetCouponSelection() {
+        couponCode = null;
+        finalAmount = 9900;
+
+        document.getElementById('coupon-code').value = '';
+        document.getElementById('selected-coupon-info').style.display = 'none';
+        document.getElementById('coupon-discount').textContent = '-0원';
+        document.getElementById('final-price').textContent = '9,900원';
+
+        // 쿠폰 안내 문구도 초기화
+        const noticeElement = document.getElementById('coupon-notice');
+        if (noticeElement) {
+            noticeElement.innerHTML = '';
+        }
+    }
+
+    // 사용 가능한 쿠폰 개수 조회 함수
+    async function loadAvailableCouponCount() {
+        try {
+            const response = await fetch('/api/coupon-issues?size=100&benefitTypes=FIXED_DISCOUNT,RATE_DISCOUNT,EXPERIENCE',
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+            if (!response.ok) {
+                console.error('쿠폰 조회 실패');
+                return;
+            }
+
+            const result = await response.json();
+            if (result.success && result.data && result.data.items) {
+                // 결제에 사용 가능한 쿠폰만 필터링
+                const availableCoupons = result.data.items.filter(coupon =>
+                    coupon.benefitType === 'FIXED_DISCOUNT' ||
+                    coupon.benefitType === 'RATE_DISCOUNT' ||
+                    coupon.benefitType === 'EXPERIENCE'
+                );
+
+                const count = availableCoupons.length;
+                const inputElement = document.getElementById('coupon-code');
+
+                if (count > 0) {
+                    inputElement.placeholder = `사용 가능 쿠폰 ${count}장`;
+                } else {
+                    inputElement.placeholder = '사용 가능한 쿠폰이 없습니다';
+                }
+            }
+        } catch (error) {
+            console.error('쿠폰 개수 조회 중 오류:', error);
+            // 오류 발생 시 기본 문구 유지
+            document.getElementById('coupon-code').placeholder = '쿠폰을 선택해주세요';
+        }
+    }
+
+    // 선택된 쿠폰 적용
+    function applyCouponFromSelection(coupon) {
+        couponCode = coupon.code;
+        document.getElementById('coupon-code').value = coupon.code;
+        document.getElementById('selected-coupon-name').textContent = coupon.name;
+        document.getElementById('selected-coupon-benefit').textContent = formatBenefit(coupon);
+        document.getElementById('selected-coupon-info').style.display = 'block';
+
+        const noticeElement = document.getElementById('coupon-notice');
+        if (coupon.benefitType === 'EXPERIENCE') {
+            // 체험권
+            noticeElement.innerHTML = '⚠️ <span style="color: #ff6b00;">체험권은 기간 종료 후 자동 해지됩니다. 계속 이용하시려면 재구독해주세요.</span>';
+        } else if (coupon.benefitType === 'FIXED_DISCOUNT' || coupon.benefitType === 'RATE_DISCOUNT') {
+            // 할인권
+            noticeElement.innerHTML = 'ℹ️ <span style="color: #666;">해당 할인권은 첫 달 할인이 적용되며, 다음 달부터 정상가(9,900원)로 자동결제됩니다.</span>';
+        } else {
+            noticeElement.innerHTML = '';
         }
 
-        const discountAmount = 9900;
-        finalAmount = 0;
+        // 할인 금액 적용
+        const discountAmount = calculateDiscountAmount(coupon);
+        finalAmount = 9900 - discountAmount;
 
         document.getElementById('coupon-discount').textContent = '-' + discountAmount.toLocaleString() + '원';
         document.getElementById('final-price').textContent = finalAmount.toLocaleString() + '원';
 
-        alert('쿠폰 적용 완료!');
+        // 선택된 쿠폰 정보 제거 (한 번만 사용)
+        localStorage.removeItem('selectedCoupon');
+    }
+
+    // 쿠폰 제거
+    function removeCoupon() {
+        couponCode = null;
+        finalAmount = 9900;
+
+        document.getElementById('coupon-code').value = '';
+        document.getElementById('selected-coupon-info').style.display = 'none';
+        document.getElementById('coupon-discount').textContent = '-0원';
+        document.getElementById('final-price').textContent = '9,900원';
+
+        const noticeElement = document.getElementById('coupon-notice');
+        if (noticeElement) {
+            noticeElement.innerHTML = '';
+        }
+
+        localStorage.removeItem('selectedCoupon');
+    }
+
+    // 혜택 포맷팅
+    function formatBenefit(coupon) {
+        if (coupon.benefitType === 'FIXED_DISCOUNT') {
+            return coupon.benefitValue.toLocaleString() + '원 할인';
+        } else if (coupon.benefitType === 'RATE_DISCOUNT') {
+            return coupon.benefitValue + '% 할인';
+        } else if (coupon.benefitType === 'EXPERIENCE') {
+            return coupon.benefitValue + '일 무료 체험';
+        }
+        return '할인';
+    }
+
+    // 할인 금액 계산
+    function calculateDiscountAmount(coupon) {
+        const originalAmount = 9900;
+
+        if (coupon.benefitType === 'FIXED_DISCOUNT') {
+            return Math.min(coupon.benefitValue, originalAmount);
+        } else if (coupon.benefitType === 'RATE_DISCOUNT') {
+            return Math.floor((originalAmount * coupon.benefitValue) / 100);
+        } else if (coupon.benefitType === 'EXPERIENCE') {
+            return originalAmount; // 100% 할인
+        }
+        return 0;
     }
 
     // 토스페이먼츠 v2 SDK 초기화
@@ -368,6 +515,12 @@
             payment = tossPayments.payment({customerKey: customerKeyFromServer});
 
             console.log('orderId:', orderId);
+
+            if (amount === 0) {
+                localStorage.setItem('freePaymentOrderId', orderId);
+                window.location.href = `/payment/free-success`;
+                return;
+            }
 
             // 2. 자동결제용 카드 등록 (빌링키 발급)
             await payment.requestBillingAuth({

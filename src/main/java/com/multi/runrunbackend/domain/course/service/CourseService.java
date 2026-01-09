@@ -19,6 +19,7 @@ import com.multi.runrunbackend.domain.course.dto.req.RouteRequestDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseCreateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseDetailResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseListResDto;
+import com.multi.runrunbackend.domain.course.dto.res.CoursePathResDto;
 import com.multi.runrunbackend.domain.course.dto.res.CourseUpdateResDto;
 import com.multi.runrunbackend.domain.course.dto.res.RouteResDto;
 import com.multi.runrunbackend.domain.course.entity.Course;
@@ -183,6 +184,18 @@ public class CourseService {
             s3FileStorage.toHttpsUrl(course.getThumbnailUrl()));
 
         return CourseDetailResDto.fromEntity(course, user, isLiked, isFavorited);
+    }
+
+
+    @Transactional(readOnly = true)
+    public CoursePathResDto getCoursePath(CustomUser principal, Long courseId) {
+
+        getUserOrThrow(principal);
+
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+        return CoursePathResDto.from(course);
     }
 
     @Transactional(readOnly = true)

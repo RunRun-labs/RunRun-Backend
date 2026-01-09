@@ -85,6 +85,14 @@ public class RedisConfig {
   }
 
   /**
+   * 크루 채팅 토픽 - crew-chat:* 패턴
+   */
+  @Bean
+  public PatternTopic crewChatTopic() {
+    return new PatternTopic("crew-chat:*");
+  }
+
+  /**
    * GPS 통계 토픽 - running:* 패턴
    */
   @Bean
@@ -106,12 +114,13 @@ public class RedisConfig {
   @Bean
   public RedisMessageListenerContainer redisMessageListenerContainer(
       RedisConnectionFactory connectionFactory,
-      MessageListenerAdapter chatListenerAdapter,
+      RedisSubscriber redisSubscriber,  // ⭐ MessageListenerAdapter 대신 직접 사용
       MessageListenerAdapter runningListenerAdapter,
       MessageListenerAdapter battleListenerAdapter,
       NotificationRedisSubscriber subscriber,
       ChannelTopic notificationTopic,
       PatternTopic chatTopic,
+      PatternTopic crewChatTopic,
       PatternTopic runningTopic,
       PatternTopic battleTopic
   ) {
@@ -119,8 +128,11 @@ public class RedisConfig {
     container.setConnectionFactory(connectionFactory);
     container.addMessageListener(subscriber, notificationTopic);
 
-    // 채팅 메시지 리스너
-    container.addMessageListener(chatListenerAdapter, chatTopic);
+    // 채팅 메시지 리스너 (오프라인 채팅)
+    container.addMessageListener(redisSubscriber, chatTopic);  // ⭐ 직접 등록
+
+    // 크루 채팅 메시지 리스너
+    container.addMessageListener(redisSubscriber, crewChatTopic);  // ⭐ 직접 등록
 
     // GPS 통계 리스너
     container.addMessageListener(runningListenerAdapter, runningTopic);
@@ -129,14 +141,6 @@ public class RedisConfig {
     container.addMessageListener(battleListenerAdapter, battleTopic);
 
     return container;
-  }
-
-  /**
-   * 채팅 메시지 리스너 어댑터
-   */
-  @Bean
-  public MessageListenerAdapter chatListenerAdapter(RedisSubscriber subscriber) {
-    return new MessageListenerAdapter(subscriber, "sendMessage");
   }
 
   /**
