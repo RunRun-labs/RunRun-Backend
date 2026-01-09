@@ -521,4 +521,22 @@ body {
         padding: 5px 12px;
         font-size: 12px;
     }
+
+    .stat-item.membership {
+        color: #FFD700;
+        font-weight: 600;
+    }
+
+    .dropdown-item.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .membership-badge {
+        font-size: 13px;
+        color: #FFD700;
+        font-weight: 500;
+        margin-left: 4px;
+    }
 }

@@ -3,6 +3,10 @@ package com.multi.runrunbackend.domain.payment.service;
 import com.multi.runrunbackend.common.exception.custom.*;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.coupon.constant.CouponBenefitType;
+import com.multi.runrunbackend.domain.coupon.entity.Coupon;
+import com.multi.runrunbackend.domain.coupon.entity.CouponIssue;
+import com.multi.runrunbackend.domain.coupon.service.CouponIssueService;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.entity.Membership;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
@@ -22,6 +26,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -42,6 +48,7 @@ public class PaymentService {
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
     private final TossPaymentClient tossPaymentClient;
+    private final CouponIssueService couponIssueService;
 
     /**
      * @description : 결제 요청 생성
@@ -57,22 +64,72 @@ public class PaymentService {
             if (membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
                 throw new BusinessException(ErrorCode.MEMBERSHIP_ALREADY_PREMIUM);
             }
+
+            // CANCELED 상태지만 아직 사용 가능한 경우
+            if (membership.getMembershipStatus() == MembershipStatus.CANCELED
+                    && membership.getEndDate() != null
+                    && membership.getEndDate().isAfter(LocalDateTime.now())) {
+                throw new BusinessException(ErrorCode.MEMBERSHIP_STILL_ACTIVE);
+            }
         });
+
+        // 기존 READY 상태 결제 정리
+        List<Payment> pendingPayments = paymentRepository
+                .findByUserAndPaymentStatus(user, PaymentStatus.READY);
+
+        if (!pendingPayments.isEmpty()) {
+            log.info("기존 READY 상태 결제 정리 - 사용자: {}, 건수: {}",
+                    user.getLoginId(), pendingPayments.size());
+
+            for (Payment pendingPayment : pendingPayments) {
+                // READY → CANCELED 변경
+                pendingPayment.cancelBySystem("새 결제 요청으로 자동 취소");
+
+                // 쿠폰 복구
+                if (pendingPayment.getCouponIssue() != null) {
+                    try {
+                        couponIssueService.cancelCouponUse(
+                                pendingPayment.getCouponIssue().getId()
+                        );
+                        log.info("쿠폰 복구 완료 - couponIssueId: {}",
+                                pendingPayment.getCouponIssue().getId());
+                    } catch (Exception e) {
+                        log.error("쿠폰 복구 실패 - couponIssueId: {}",
+                                pendingPayment.getCouponIssue().getId(), e);
+                    }
+                }
+            }
+        }
 
         // 주문 ID 생성
         String orderId = "ORDER_" + UUID.randomUUID().toString();
 
-        // 할인 금액 계산 (쿠폰)
-        Integer discountAmount = calculateDiscount(req.getCouponCode());
-
         // 프리미엄 가격 = 9900원 고정
         Integer originalAmount = PREMIUM_MONTHLY_PRICE;
+
+        // 할인 금액 계산 (쿠폰)
+        Integer discountAmount = 0;
+        CouponIssue couponIssue = null;
+
+        // 쿠폰 적용
+        if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
+            // 쿠폰 유효성 검증 및 조회
+            couponIssue = couponIssueService.validateCouponForPayment(
+                    user.getId(),
+                    req.getCouponCode()
+            );
+
+            // 할인 금액 계산
+            discountAmount = couponIssueService.calculateDiscount(
+                    couponIssue.getCoupon(),
+                    originalAmount
+            );
+        }
 
         // 최종 금액이 음수가 되지 않도록 체크
         Integer finalAmount = originalAmount - discountAmount;
         if (finalAmount < 0) {
-            log.error("할인 금액 초과 - 원가: {}, 할인: {}", originalAmount, discountAmount);
-            throw new BadRequestException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
+            finalAmount = 0;
         }
 
         // Payment 엔티티 생성
@@ -81,7 +138,7 @@ public class PaymentService {
                 originalAmount,
                 discountAmount,
                 orderId,
-                req.getCouponCode()
+                couponIssue
         );
         paymentRepository.save(payment);
 
@@ -94,7 +151,8 @@ public class PaymentService {
                 .orderName(PREMIUM_PLAN_NAME)
                 .customerName(user.getName())
                 .customerEmail(user.getEmail())
-                .customerKey(user.getId().toString())
+                .customerKey("USER_" + user.getId())
+                .isFreePayment(finalAmount == 0)
                 .build();
     }
 
@@ -122,6 +180,10 @@ public class PaymentService {
         // 금액 검증
         if (!payment.getFinalAmount().equals(req.getAmount())) {
             payment.cancelBySystem("결제 금액 불일치");
+            if (payment.getCouponIssue() != null) {
+                couponIssueService.cancelCouponUse(payment.getCouponIssue().getId());
+            }
+
             log.error("금액 불일치 - orderId: {}, 요청: {}원, DB: {}원",
                     req.getOrderId(), req.getAmount(), payment.getFinalAmount());
             throw new BadRequestException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
@@ -134,6 +196,11 @@ public class PaymentService {
             // 토스 응답 (DONE)
             if (!"DONE".equals(tossResponse.getStatus())) {
                 payment.fail();
+
+                if (payment.getCouponIssue() != null) {
+                    couponIssueService.cancelCouponUse(payment.getCouponIssue().getId());
+                }
+
                 log.error("토스 승인 실패 - orderId: {}, status: {}",
                         req.getOrderId(), tossResponse.getStatus());
                 throw new ExternalApiException(ErrorCode.PAYMENT_APPROVAL_FAILED);
@@ -148,11 +215,16 @@ public class PaymentService {
             // Payment 완료 처리
             payment.complete(tossResponse.getPaymentKey(), paymentMethod, billingKey);
 
+            // 쿠폰 사용 처리
+            if (payment.getCouponIssue() != null) {
+                couponIssueService.useCoupon(payment.getCouponIssue().getId());
+            }
+
             // Membership 활성화
             Membership membership = membershipRepository.findByUser(user)
                     .orElseGet(() -> membershipRepository.save(Membership.create(user)));
 
-            membership.reactivate();
+            activateMembershipWithCoupon(membership, payment);
 
             log.info("결제 승인 완료 - orderId: {}, 금액: {}원, 수단: {}",
                     req.getOrderId(), payment.getFinalAmount(), paymentMethod);
@@ -167,9 +239,29 @@ public class PaymentService {
 
         } catch (ExternalApiException e) {
             payment.fail();
+
+            // 예외 발생시 쿠폰 복구
+            if (payment.getCouponIssue() != null) {
+                try {
+                    couponIssueService.cancelCouponUse(payment.getCouponIssue().getId());
+                } catch (Exception ex) {
+                    log.error("쿠폰 복구 실패 - couponIssueId: {}",
+                            payment.getCouponIssue().getId(), ex);
+                }
+            }
+
             throw e;
         } catch (Exception e) {
             payment.fail();
+
+            if (payment.getCouponIssue() != null) {
+                try {
+                    couponIssueService.cancelCouponUse(payment.getCouponIssue().getId());
+                } catch (Exception ex) {
+                    log.error("쿠폰 복구 실패 - couponIssueId: {}",
+                            payment.getCouponIssue().getId(), ex);
+                }
+            }
             log.error("결제 승인 처리 중 오류 - orderId: {}", req.getOrderId(), e);
             throw new BusinessException(ErrorCode.PAYMENT_APPROVAL_FAILED);
         }
@@ -190,28 +282,6 @@ public class PaymentService {
         );
 
         return payments.map(PaymentHistoryResDto::fromEntity);
-    }
-
-    /**
-     * @description : 할인 금액 계산 (쿠폰 임시로 TODO 쿠폰 연결)
-     */
-    private Integer calculateDiscount(String couponCode) {
-        if (couponCode == null || couponCode.isBlank()) {
-            return 0;
-        }
-
-        // 쿠폰 코드별 할인 금액(일단 임시로)
-        switch (couponCode) {
-            case "TRIAL_1WEEK":
-                return 9900;
-            case "DISCOUNT_5000":
-                return 5000;
-            case "DISCOUNT_3000":
-                return 3000;
-            default:
-                log.warn("알 수 없는 쿠폰 코드: {}", couponCode);
-                return 0;
-        }
     }
 
     /**
@@ -331,8 +401,8 @@ public class PaymentService {
             throw new ForbiddenException(ErrorCode.PAYMENT_FORBIDDEN);
         }
 
-        // 0원 이하 결제 검증 (할인 쿠폰 적용 시)
-        if (payment.getFinalAmount() > 0) {
+        // 0원 결제 검증
+        if (payment.getFinalAmount() != 0) {
             log.error("무료 결제가 아님 - orderId: {}, amount: {}", orderId, payment.getFinalAmount());
             throw new BadRequestException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
@@ -346,16 +416,16 @@ public class PaymentService {
         // 무료 결제 완료 처리 (토스 API 호출 없음)
         payment.complete("FREE_" + orderId, PaymentMethod.CARD, null);
 
+        // 쿠폰 사용 처리
+        if (payment.getCouponIssue() != null) {
+            couponIssueService.useCoupon(payment.getCouponIssue().getId());
+        }
+
         // Membership 활성화
         Membership membership = membershipRepository.findByUser(user)
                 .orElseGet(() -> membershipRepository.save(Membership.create(user)));
 
-        String couponCode = payment.getCouponCode();
-        if ("TRIAL_1WEEK".equals(couponCode)) {
-            membership.activateForDays(7);
-        } else {
-            membership.reactivate();
-        }
+        activateMembershipWithCoupon(membership, payment);
 
         log.info("무료 결제 승인 완료 - orderId: {}, userId: {}", orderId, user.getId());
 
@@ -398,6 +468,11 @@ public class PaymentService {
         // 금액 검증
         if (!payment.getFinalAmount().equals(amount)) {
             payment.cancelBySystem("결제 금액 불일치");
+
+            if (payment.getCouponIssue() != null) {
+                couponIssueService.cancelCouponUse(payment.getCouponIssue().getId());
+            }
+
             throw new BadRequestException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
@@ -425,6 +500,16 @@ public class PaymentService {
 
             if (!"DONE".equals(payRes.getStatus())) {
                 payment.fail();
+
+                if (payment.getCouponIssue() != null) {
+                    try {
+                        couponIssueService.cancelCouponUse(payment.getCouponIssue().getId());
+                    } catch (Exception ex) {
+                        log.error("쿠폰 복구 실패 - couponIssueId: {}",
+                                payment.getCouponIssue().getId(), ex);
+                    }
+                }
+
                 throw new ExternalApiException(ErrorCode.BILLING_PAYMENT_FAILED);
             }
 
@@ -432,17 +517,16 @@ public class PaymentService {
             PaymentMethod paymentMethod = mapPaymentMethod(payRes.getMethod());
             payment.complete(payRes.getPaymentKey(), paymentMethod, billingKey);
 
+            // 쿠폰 사용 처리 추가
+            if (payment.getCouponIssue() != null) {
+                couponIssueService.useCoupon(payment.getCouponIssue().getId());
+            }
+
             // 멤버십 생성/활성화 (없으면 생성)
             Membership membership = membershipRepository.findByUser(user)
                     .orElseGet(() -> membershipRepository.save(Membership.create(user)));
 
-            String couponCode = payment.getCouponCode();
-
-            if ("TRIAL_1WEEK".equals(couponCode)) {
-                membership.activateForDays(7);
-            } else {
-                membership.reactivate();
-            }
+            activateMembershipWithCoupon(membership, payment);
 
             return PaymentApproveResDto.builder()
                     .orderId(payment.getOrderId())
@@ -454,13 +538,55 @@ public class PaymentService {
 
         } catch (ExternalApiException e) {
             payment.fail();
+
+            if (payment.getCouponIssue() != null) {
+                try {
+                    couponIssueService.cancelCouponUse(payment.getCouponIssue().getId());
+                } catch (Exception ex) {
+                    log.error("쿠폰 복구 실패 - couponIssueId: {}",
+                            payment.getCouponIssue().getId(), ex);
+                }
+            }
             throw e;
         } catch (Exception e) {
             payment.fail();
+
+            if (payment.getCouponIssue() != null) {
+                try {
+                    couponIssueService.cancelCouponUse(payment.getCouponIssue().getId());
+                } catch (Exception ex) {
+                    log.error("쿠폰 복구 실패 - couponIssueId: {}",
+                            payment.getCouponIssue().getId(), ex);
+                }
+            }
             log.error("빌링키 첫 결제 처리 중 오류 - orderId: {}", orderId, e);
             throw new BusinessException(ErrorCode.BILLING_PAYMENT_FAILED);
         }
     }
 
+    /**
+     * 쿠폰에 따른 멤버십 활성화 처리
+     */
+    private void activateMembershipWithCoupon(Membership membership, Payment payment) {
+        if (payment.getCouponIssue() != null) {
+            Coupon coupon = payment.getCouponIssue().getCoupon();
+
+            // EXPERIENCE 쿠폰 = 체험형 (benefitValue가 일수)
+            if (coupon.getBenefitType() == CouponBenefitType.EXPERIENCE) {
+                membership.activateForDays(coupon.getBenefitValue());
+                log.info("체험 멤버십 활성화 - {}일", coupon.getBenefitValue());
+            } else if (coupon.getBenefitType() == CouponBenefitType.FIXED_DISCOUNT
+                    || coupon.getBenefitType() == CouponBenefitType.RATE_DISCOUNT) {
+
+                membership.reactivate();
+            } else {
+
+                membership.reactivate();
+            }
+        } else {
+
+            membership.reactivate();
+        }
+    }
 
 }

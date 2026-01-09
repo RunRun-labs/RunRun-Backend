@@ -86,6 +86,21 @@ public enum ErrorCode {
     CANNOT_ASSIGN_LEADER_TO_MEMBER(HttpStatus.FORBIDDEN, "CR018",
         "일반 멤버는 크루장이 될 수 없습니다. 부크루장 또는 운영진에게만 위임 가능합니다."),
     CREW_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "CR019", "모집중인 크루가 아닙니다."),
+    /* ===== 크루 권한 / 멤버십 ===== */
+    LEADER_REQUIRES_PREMIUM(HttpStatus.FORBIDDEN, "CR020",
+            "크루장은 프리미엄 멤버십이 필요합니다."),
+    CANNOT_LEAVE_WITHOUT_SUCCESSOR(HttpStatus.BAD_REQUEST, "CR021",
+            "프리미엄 멤버십을 가진 부크루장에게 크루장을 위임한 후 탈퇴할 수 있습니다."),
+    NO_SUB_LEADERS(HttpStatus.NOT_FOUND, "CR022",
+            "해당 크루에 부크루장이 없습니다."),
+    NO_ELIGIBLE_MEMBERS(HttpStatus.NOT_FOUND, "CR023",
+            "해당 크루에 부크루장 또는 운영진이 없습니다."),
+    NO_ELIGIBLE_LEADERS(HttpStatus.NOT_FOUND, "CR024",
+            "크루장 위임이 가능한 멤버가 없습니다. (프리미엄 멤버십 필요)"),
+    ONLY_SUB_LEADER_OR_STAFF_CAN_BE_LEADER(HttpStatus.FORBIDDEN, "CR025",
+            "부크루장 또는 운영진만 크루장으로 위임할 수 있습니다."),
+    MEMBERSHIP_REQUIRED_FOR_LEADER(HttpStatus.FORBIDDEN, "CR026",
+            "크루장은 프리미엄 멤버십이 필요합니다."),
     /* ===== 멤버십 ===== */
     MEMBERSHIP_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "멤버십 정보를 찾을 수 없습니다."),
     MEMBERSHIP_ALREADY_PREMIUM(HttpStatus.CONFLICT, "M002", "이미 프리미엄 멤버십입니다."),
@@ -108,6 +123,8 @@ public enum ErrorCode {
     BILLING_KEY_ISSUE_FAILED(HttpStatus.BAD_GATEWAY, "PM007", "빌링키 발급에 실패했습니다."),
     BILLING_PAYMENT_FAILED(HttpStatus.BAD_GATEWAY, "PM008", "빌링키 결제에 실패했습니다."),
     BILLING_KEY_NOT_FOUND(HttpStatus.NOT_FOUND, "PM009", "빌링키를 찾을 수 없습니다."),
+    MEMBERSHIP_STILL_ACTIVE(HttpStatus.BAD_REQUEST, "PM010", "해지 예약 상태입니다. 종료일 이후 재가입 가능합니다."),
+
     // ========== Point (포인트) ==========
     POINT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "포인트 정보를 찾을 수 없습니다"),
     INSUFFICIENT_POINT(HttpStatus.BAD_REQUEST, "P002", "포인트가 부족합니다"),
@@ -125,26 +142,26 @@ public enum ErrorCode {
     /*==== 파일 ====*/
     FILE_UPLOAD_FAILED(
 
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "F001",
-        "파일 업로드에 실패했습니다."
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "F001",
+            "파일 업로드에 실패했습니다."
     ),
 
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "F002", "필수 파일이 누락되었습니다."),
     FILE_EMPTY(
-        HttpStatus.BAD_REQUEST,
-        "F002",
-        "업로드할 파일이 비어 있습니다."
+            HttpStatus.BAD_REQUEST,
+            "F002",
+            "업로드할 파일이 비어 있습니다."
     ),
     FILE_NOT_IMAGE(
-        HttpStatus.BAD_REQUEST,
-        "F003",
-        "이미지 파일만 업로드할 수 있습니다."
+            HttpStatus.BAD_REQUEST,
+            "F003",
+            "이미지 파일만 업로드할 수 있습니다."
     ),
     FILE_SIZE_EXCEEDED(
-        HttpStatus.BAD_REQUEST,
-        "F004",
-        "파일 크기가 제한을 초과했습니다."
+            HttpStatus.BAD_REQUEST,
+            "F004",
+            "파일 크기가 제한을 초과했습니다."
     ),
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F005", "파일 삭제에 실패했습니다."),
 
@@ -356,6 +373,7 @@ public enum ErrorCode {
     COUPON_ISSUE_NOT_AVAILABLE(HttpStatus.FORBIDDEN, "CPN_012", "사용할 수 있는 쿠폰 상태가 아닙니다"),
     COUPON_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "CPN_013", "쿠폰 정책을 찾을 수 없습니다"),
     COUPON_ROLE_ACTIVE(HttpStatus.BAD_REQUEST, "CPN_014", "쿠폰 정책이 활성화 상태입니다"),
+    COUPON_NOT_APPLICABLE_FOR_PAYMENT(HttpStatus.BAD_REQUEST, "CPN_015", "이 쿠폰은 멤버십 결제에 사용할 수 없습니다."),
     /* ===== 이용약관 ===== */
     TERMS_ACCESS_DENIED(HttpStatus.FORBIDDEN, "T001", "약관 관리 권한이 없습니다."),
     DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "T002", "이미 존재하는 약관 버전입니다."),

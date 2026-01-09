@@ -104,7 +104,18 @@ function renderMembershipCard(membership) {
 // 활성 멤버십 카드 렌더링
 // ========================================
 function renderActiveMembershipCard(cardElement, membership) {
-    const nextBillingDate = formatDate(membership.nextBillingDate);
+    let displayDate;
+    let isTrial = false;
+
+    if (membership.nextBillingDate === null || membership.nextBillingDate === undefined) {
+        // 체험권 (nextBillingDate가 null)
+        displayDate = formatDate(membership.endDate);
+        isTrial = true;
+    } else {
+        // 정기구독 (nextBillingDate가 있음)
+        displayDate = formatDate(membership.nextBillingDate);
+        isTrial = false;
+    }
 
     cardElement.className = 'membership-card premium';
     cardElement.innerHTML = `
@@ -112,11 +123,14 @@ function renderActiveMembershipCard(cardElement, membership) {
         <div class="status-badge">현재 이용중</div>
         <div class="membership-title-wrapper">
             <span class="membership-icon">⭐</span>
-            <h1 class="membership-title">프리미엄</h1>
+            <h1 class="membership-title">프리미엄 ${isTrial ? '(체험권)' : ''}</h1>
         </div>
-        <p class="membership-period">${nextBillingDate}까지</p>
+        <p class="membership-period">${displayDate}까지</p>
         <div class="button-group">
-            <button class="btn btn-cancel" onclick="cancelMembership()">멤버십 해지</button>
+        ${isTrial
+        ? `<button class="btn btn-cancel" onclick="subscribeMembership()">정기구독하기</button>`
+        : `<button class="btn btn-cancel" onclick="cancelMembership()">멤버십 해지</button>`
+    }
             <button class="btn btn-detail" onclick="showMembershipDetail()">멤버십 내역</button>
         </div>
     `;
@@ -126,7 +140,9 @@ function renderActiveMembershipCard(cardElement, membership) {
 // 해지 신청된 멤버십 카드 렌더링
 // ========================================
 function renderCanceledMembershipCard(cardElement, membership) {
-    const endDate = formatDate(membership.endDate);
+    const displayDate = membership.endDate
+        ? formatDate(membership.endDate)
+        : formatDate(membership.nextBillingDate);
 
     cardElement.className = 'membership-card premium';
     cardElement.innerHTML = `
@@ -182,11 +198,26 @@ async function reactivateMembership() {
 // 날짜 포맷 변환 함수
 // ========================================
 function formatDate(dateString) {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}.${month}.${day}`;
+
+    if (!dateString) {
+        return '정보 없음';
+    }
+
+    try {
+        const date = new Date(dateString);
+
+        // 유효한 날짜인지 확인
+        if (isNaN(date.getTime())) {
+            return '정보 없음';
+        }
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}.${month}.${day}`;
+    } catch (error) {
+        console.error('날짜 포맷 변환 실패:', error);
+        return '정보 없음';
+    }
 }
 
 // ========================================

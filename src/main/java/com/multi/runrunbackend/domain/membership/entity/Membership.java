@@ -67,7 +67,7 @@ public class Membership extends BaseEntity {
     }
 
     /**
-     * @description : 멤버십 1주권 사용하기 위해 기간 선택할 수 있는 메서드
+     * @description : 멤버십 n주권 사용하기 위해 기간 선택할 수 있는 메서드
      */
     public void activateForDays(int days) {
         if (days <= 0) {
@@ -76,11 +76,11 @@ public class Membership extends BaseEntity {
         if (days > 365) {
             throw new BusinessException(ErrorCode.MEMBERSHIP_PERIOD_TOO_LONG);
         }
-        
+
         this.membershipStatus = MembershipStatus.ACTIVE;
         this.startDate = LocalDateTime.now();
-        this.nextBillingDate = LocalDateTime.now().plusDays(days);
-        this.endDate = null;
+        this.endDate = LocalDateTime.now().plusDays(days);
+        this.nextBillingDate = null;
     }
 
     /**
@@ -137,4 +137,6 @@ public class Membership extends BaseEntity {
     public void setEndDate(LocalDateTime endDate) {
         this.endDate = endDate;
     }
+
+
 }
