@@ -112,22 +112,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const routeMap = {
-      RECRUIT: ``,
-      OFFLINE: `/chat/chat1?sessionId=${relatedId}`,
-      ONLINE: `/match/waiting?sessionId=${relatedId}`,
-      SOLORUN: `/match/solo?sessionId=${relatedId}`,
-      GHOSTRUN: `/match/ghost?sessionId=${relatedId}`,
-      CREW_CHAT: `/chat/crew?roomId=${relatedId}`,
+      OFF_CHAT_ROOM: `/chat/chat1?sessionId=${relatedId}`,
+      RECRUIT: `/recruit/${relatedId}`,
+      WAITING_ROOM: `/match/waiting?sessionId=${relatedId}`,
+
+      CRE_JOINT_REQUEST: `/crews/${relatedId}/join-requests`,
       CREW: `/crews/${relatedId}`,
-      CREW_JOIN_REQUEST: `/crews/${relatedId}/join`,
-      CREW_USER: `/crews/${relatedId}/users`,
-      MEMBERSHIP: ``,
-      PAYMENT: ``,
-      POINT_EXPIRATION: ``,
-      CHALLENGE: `/challenge/${relatedId}`,
+      CREW_USERS: `/crews/${relatedId}/users`,
+      CREW_MAIN: ` /crews/main`,
+      CREW_CHAT_ROOM: `/chat/crew?roomId=${relatedId}`,
+
+      MEMBERSHIP: `/membership`,
+
+      POINT_BALANCE: `/points/balance`,
+
+      CHALLENGE: `/challenge`,
+      CHALLENGE_END: `/challenge/end`,
+
       FEED_POST: ``,
-      FEED: `/feed/${relatedId}`,
-      FRIEND: `/friends/list`,
+
+      FRIEND_LIST: `/friends/list`
     };
 
     return routeMap[relatedType] || null;
