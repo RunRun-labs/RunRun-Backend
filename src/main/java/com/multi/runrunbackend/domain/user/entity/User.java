@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -81,6 +82,8 @@ public class User extends BaseEntity {
     @Column(name = "weight_kg")
     private Integer weightKg;
 
+    @Column(name = "average_pace", precision = 6, scale = 2)
+    private BigDecimal averagePace;
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
@@ -125,6 +128,10 @@ public class User extends BaseEntity {
     }
     public void updateTTS(TtsVoicePack ttsVoicePack) {
         this.ttsVoicePack = ttsVoicePack;
+    }
+
+    public void updateAveragePace(BigDecimal averagePace) {
+        this.averagePace = averagePace;
     }
 
     public static User toEntity(UserSignUpDto dto, TtsVoicePack ttsVoicePack) {
