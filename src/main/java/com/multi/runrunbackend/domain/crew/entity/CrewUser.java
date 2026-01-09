@@ -38,7 +38,7 @@ public class CrewUser extends BaseEntity {
     @Column(name = "role", nullable = false, length = 20)
     private CrewRole role;  // LEADER, SUB_LEADER, STAFF, MEMBER
 
-    @Column(name = "participation_count", nullable = false)
+    @Column(name = "participation_count", nullable = false, columnDefinition = "integer default 0")
     @Builder.Default
     private Integer participationCount = 0;  // 참여 횟수 (기본값 0)
 
