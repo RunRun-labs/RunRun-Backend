@@ -8,6 +8,7 @@ import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
+import com.multi.runrunbackend.domain.point.constant.PointPolicy;
 import com.multi.runrunbackend.domain.point.dto.req.*;
 import com.multi.runrunbackend.domain.point.dto.res.*;
 import com.multi.runrunbackend.domain.point.entity.PointExpiration;
@@ -21,6 +22,7 @@ import com.multi.runrunbackend.domain.point.repository.UserPointRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -43,6 +45,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PointService {
 
     private final UserPointRepository userPointRepository;
@@ -313,6 +316,119 @@ public class PointService {
                 user, null, "USE", amount, reason
         );
         pointHistoryRepository.save(history);
+    }
+
+    /**
+     * 러닝 완주 시 포인트 적립 (100m당 1P)
+     */
+    @Transactional
+    public void earnPointsForRunningComplete(Long userId, double distanceMeters) {
+        // 100m당 1P 계산
+        int points = (int) (distanceMeters / 100.0);
+
+        if (points <= 0) {
+            return;  // 0P면 적립 안 함
+        }
+
+        User user = getUserById(userId);
+
+        // UserPoint 적립 (비관적 락)
+        UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
+                .orElseGet(() -> {
+                    UserPoint newPoint = UserPoint.toEntity(user);
+                    return userPointRepository.save(newPoint);
+                });
+
+        // 프리미엄 멤버십 확인 및 1.5배 적용
+        boolean isPremium = checkPremiumMembership(userId);
+        int finalAmount = isPremium ? (int) (points * PREMIUM_MULTIPLIER) : points;
+
+        userPoint.addPoint(finalAmount);
+
+        // PointHistory 저장
+        PointHistory history = PointHistory.toEntity(
+                user, null, "EARN", finalAmount, "RUNNING_COMPLETE"
+        );
+        pointHistoryRepository.save(history);
+
+        // PointExpiration 저장 (1년 만료)
+        PointExpiration expiration = PointExpiration.toEntity(user, history, finalAmount);
+        pointExpirationRepository.save(expiration);
+
+        log.info("러닝 완주 포인트 적립: userId={}, distance={}m, points={}P (프리미엄: {})",
+                userId, distanceMeters, finalAmount, isPremium);
+    }
+
+    /**
+     * 출석 체크 시 포인트 적립 (50P)
+     */
+    @Transactional
+    public void earnPointsForAttendance(Long userId) {
+        User user = getUserById(userId);
+
+        int points = PointPolicy.ATTENDANCE.getPoints();
+
+        // UserPoint 적립 (비관적 락)
+        UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
+                .orElseGet(() -> {
+                    UserPoint newPoint = UserPoint.toEntity(user);
+                    return userPointRepository.save(newPoint);
+                });
+
+        // 프리미엄 멤버십 확인 및 1.5배 적용
+        boolean isPremium = checkPremiumMembership(userId);
+        int finalAmount = isPremium ? (int) (points * PREMIUM_MULTIPLIER) : points;
+
+        userPoint.addPoint(finalAmount);
+
+        // PointHistory 저장
+        PointHistory history = PointHistory.toEntity(
+                user, null, "EARN", finalAmount, "ATTENDANCE"
+        );
+        pointHistoryRepository.save(history);
+
+        // PointExpiration 저장 (1년 만료)
+        PointExpiration expiration = PointExpiration.toEntity(user, history, finalAmount);
+        pointExpirationRepository.save(expiration);
+
+        log.info("출석 체크 포인트 적립: userId={}, points={}P (프리미엄: {})",
+                userId, finalAmount, isPremium);
+    }
+
+    /**
+     * 챌린지 완료 시 포인트 적립 (100P)
+     */
+    @Transactional
+    public void earnPointsForChallengeSuccess(Long userId) {
+        User user = getUserById(userId);
+
+        int points = PointPolicy.CHALLENGE_SUCCESS.getPoints();
+
+        // UserPoint 적립 (비관적 락)
+        UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
+                .orElseGet(() -> {
+                    UserPoint newPoint = UserPoint.toEntity(user);
+                    return userPointRepository.save(newPoint);
+                });
+
+        // 프리미엄 멤버십 확인 및 1.5배 적용
+        boolean isPremium = checkPremiumMembership(userId);
+        int finalAmount = isPremium ? (int) (points * PREMIUM_MULTIPLIER) : points;
+
+        userPoint.addPoint(finalAmount);
+
+        // PointHistory 저장
+        PointHistory history = PointHistory.toEntity(
+                user, null, "EARN", finalAmount, "WEEKLY_MISSION"
+        );
+        pointHistoryRepository.save(history);
+
+        // PointExpiration 저장 (1년 만료)
+        PointExpiration expiration = PointExpiration.toEntity(user, history, finalAmount);
+        pointExpirationRepository.save(expiration);
+
+        log.info("챌린지 완료 포인트 적립: userId={}, points={}P (프리미엄: {})",
+                userId, finalAmount, isPremium);
     }
 
     /**
