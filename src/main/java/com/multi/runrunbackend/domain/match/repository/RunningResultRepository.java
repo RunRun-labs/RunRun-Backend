@@ -127,5 +127,26 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
       Pageable pageable
   );
 
+  /**
+   * 평균 페이스 계산을 위한 최근 5개 완주 기록 조회
+   * - 완주한 기록만 (COMPLETED)
+   * - avgPace가 null이 아닌 기록만
+   * - 삭제되지 않은 기록만
+   * - 최신순 정렬
+   *
+   * @param userId 사용자 ID
+   * @param pageable 페이지 정보 (size=5)
+   * @return 최근 5개 완주 기록
+   */
+  @Query("SELECT r FROM RunningResult r " +
+      "WHERE r.user.id = :userId " +
+      "AND r.runStatus = 'COMPLETED' " +
+      "AND r.avgPace IS NOT NULL " +
+      "AND r.isDeleted = false " +
+      "ORDER BY r.createdAt DESC")
+  List<RunningResult> findTop5ByUserIdForAverage(
+      @Param("userId") Long userId,
+      Pageable pageable
+  );
 
 }

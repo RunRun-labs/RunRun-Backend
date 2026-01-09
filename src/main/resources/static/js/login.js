@@ -17,6 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (togglePasswordBtn && passwordInput) {
     let isVisible = false;
+    const eyeIcon = togglePasswordBtn.querySelector('.eye-icon');
+    
     togglePasswordBtn.addEventListener("click", () => {
       isVisible = !isVisible;
       passwordInput.type = isVisible ? "text" : "password";
@@ -24,6 +26,12 @@ document.addEventListener("DOMContentLoaded", () => {
           "aria-label",
           isVisible ? "비밀번호 숨기기" : "비밀번호 표시"
       );
+      
+      // 아이콘 변경
+      if (eyeIcon) {
+        eyeIcon.src = isVisible ? '/img/eye-open.svg' : '/img/eye-closed.svg';
+        eyeIcon.alt = isVisible ? '비밀번호 표시 아이콘' : '비밀번호 감춤 아이콘';
+      }
     });
   }
 

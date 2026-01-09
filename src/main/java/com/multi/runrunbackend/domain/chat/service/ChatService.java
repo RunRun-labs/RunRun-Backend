@@ -125,13 +125,44 @@ public class ChatService {
 
         return sessionUsers.stream()
             .map(su -> {
+                User user = su.getUser();
                 Map<String, Object> map = new HashMap<>();
-                map.put("userId", su.getUser().getId());
-                map.put("name", su.getUser().getName());
+                map.put("userId", user.getId());
+                map.put("name", user.getName());
+                map.put("profileImage", user.getProfileImageUrl());  // ✅ 프로필 이미지 추가
                 map.put("isReady", su.isReady());
+                // ✅ 평균 페이스 추가 (User.averagePace를 "MM:SS" 형식으로 변환)
+                map.put("averagePace", formatAveragePace(user.getAveragePace()));
                 return map;
             })
             .collect(Collectors.toList());
+    }
+
+    /**
+     * 평균 페이스를 MM:SS 형식으로 변환
+     * @param averagePace 평균 페이스 (BigDecimal, 분/km)
+     * @return "MM:SS" 형식의 문자열 (null이면 "-")
+     */
+    private String formatAveragePace(java.math.BigDecimal averagePace) {
+        if (averagePace == null) {
+            return "-";
+        }
+
+        // BigDecimal을 double로 변환
+        double paceMinutes = averagePace.doubleValue();
+
+        // 분과 초 분리
+        int minutes = (int) paceMinutes;
+        int seconds = (int) Math.round((paceMinutes - minutes) * 60);
+
+        // 60초 처리 (예: 5.99분 -> 6:00으로)
+        if (seconds >= 60) {
+            minutes += 1;
+            seconds = 0;
+        }
+
+        // MM:SS 형식으로 반환
+        return String.format("%d:%02d", minutes, seconds);
     }
 
     @Transactional(readOnly = true)

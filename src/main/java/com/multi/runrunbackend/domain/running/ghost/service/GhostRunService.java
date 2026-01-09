@@ -8,6 +8,7 @@ import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
+import com.multi.runrunbackend.domain.match.service.RunningResultService;
 import com.multi.runrunbackend.domain.running.ghost.dto.req.GhostRunFinishReqDto;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class GhostRunService {
 
   private final RunningResultRepository runningResultRepository;
+  private final RunningResultService runningResultService;
   private final MatchSessionRepository matchSessionRepository;
   private final UserRepository userRepository;
   private final GhostCompareService ghostCompareService;
@@ -229,7 +231,7 @@ public class GhostRunService {
         .runStatus(RunStatus.COMPLETED)
         .build();
 
-    RunningResult savedResult = runningResultRepository.save(result);
+    RunningResult savedResult = runningResultService.saveAndUpdateAverage(result);
 
     // 메모리 정리
     endGhostSession(sessionId);

@@ -16,6 +16,7 @@ import com.multi.runrunbackend.domain.match.repository.BattleResultRepository;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
+import com.multi.runrunbackend.domain.match.service.RunningResultService;
 import com.multi.runrunbackend.domain.rating.entity.DistanceRating;
 import com.multi.runrunbackend.domain.rating.repository.DistanceRatingRepository;
 import com.multi.runrunbackend.domain.rating.service.DistanceRatingService;
@@ -57,6 +58,7 @@ public class BattleService {
   private final SessionUserRepository sessionUserRepository;
   private final UserRepository userRepository;
   private final RunningResultRepository runningResultRepository;
+  private final RunningResultService runningResultService;
   private final BattleResultRepository battleResultRepository;
   private final DistanceRatingRepository distanceRatingRepository;
   private final SimpMessagingTemplate messagingTemplate;
@@ -567,8 +569,8 @@ public class BattleService {
           .runningType(RunningType.ONLINEBATTLE)
           .build();
 
-      runningResultRepository.save(runningResult);
-      runningResults.add(runningResult);
+      RunningResult saved = runningResultService.saveAndUpdateAverage(runningResult);
+      runningResults.add(saved);
 
       savedCount++;
       log.info(
@@ -622,11 +624,11 @@ public class BattleService {
 
       battleResultRepository.save(giveUpBattleResult);
 
-      log.info("✅ 포기자 BattleResult 저장 (패널티 -{}점): userId={}, username={}, rating: {} -> {}",
+      log.info(" 포기자 BattleResult 저장 (패널티 -{}점): userId={}, username={}, rating: {} -> {}",
           penalty, user.getId(), user.getName(), previousRating, rating.getCurrentRating());
     }
 
-    log.info("✅ 배틀 결과 저장 및 레이팅 정산 완료: sessionId={}, 레이팅대상={}명, 포기자={}명",
+    log.info(" 배틀 결과 저장 및 레이팅 정산 완료: sessionId={}, 레이팅대상={}명, 포기자={}명",
         sessionId, ratedResults.size(), giveUpResults.size());
   }
 
@@ -657,17 +659,14 @@ public class BattleService {
    * 거리 타입 결정
    */
   private DistanceType determineDistanceType(Double targetDistance) {
-    if (targetDistance == null) {
-      return DistanceType.KM_5;  // 기본값
-    }
-
-    if (targetDistance <= 4.0) {
-      return DistanceType.KM_3;  // 0~4km → KM_3
-    } else if (targetDistance <= 7.5) {
-      return DistanceType.KM_5;  // 4~7.5km → KM_5
-    } else {
-      return DistanceType.KM_10; // 7.5km 이상 → KM_10
-    }
+    // targetDistance는 이미 km 단위
+    int km = targetDistance.intValue();
+    return switch (km) {
+      case 3 -> DistanceType.KM_3;
+      case 5 -> DistanceType.KM_5;
+      case 10 -> DistanceType.KM_10;
+      default -> DistanceType.KM_5;
+    };
   }
 
   /**
@@ -1070,7 +1069,7 @@ public class BattleService {
 
     // ✅ 모든 미완주자를 Redis에서 TIMEOUT 상태로 변경
     battleRedisService.setAllUnfinishedToTimeout(sessionId);
-
+    
     // ✅ Redis 업데이트 완료 대기 (200ms)
     try {
       log.info("⏳ Redis 업데이트 반영 대기 중... (200ms)");
@@ -1079,12 +1078,12 @@ public class BattleService {
       log.warn("⚠️ 대기 중 인터럽트 발생", e);
       Thread.currentThread().interrupt();
     }
-
+    
     // ✅ 업데이트 확인용 재조회
     List<BattleRankingResDto> updatedRankings = getRankings(sessionId);
     log.info("📊 업데이트 후 재조회 ({}명):", updatedRankings.size());
     for (BattleRankingResDto r : updatedRankings) {
-      log.info("  - rank={}, userId={}, status={}, finished={}",
+      log.info("  - rank={}, userId={}, status={}, finished={}", 
           r.getRank(), r.getUserId(), r.getStatus(), r.getIsFinished());
     }
 
