@@ -76,6 +76,7 @@ public class JwtConfig {
                     "/payment/history",
                     "/payment/success",
                     "/payment/fail",
+                    "/payment/free-success",
                     "/admin/coupon/create",
                     "/admin/coupon/inquiry",
                     "/admin/coupon/update/**",
@@ -98,10 +99,10 @@ public class JwtConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
 
-            ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                    .accessDeniedHandler(jwtAccessDeniedHandler));
+                ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
+                        UsernamePasswordAuthenticationFilter.class).exceptionHandling(
+                        exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                .accessDeniedHandler(jwtAccessDeniedHandler));
 
         return http.build();
 

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author : BoKyung
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class MembershipScheduler {
 
     private final MembershipService membershipService;
@@ -27,7 +29,7 @@ public class MembershipScheduler {
         log.info("=== 멤버십 만료 처리 스케줄러 시작 ===");
 
         membershipService.processExpiredMemberships();
-        
+
         log.info("=== 멤버십 만료 처리 스케줄러 종료 ===");
     }
 

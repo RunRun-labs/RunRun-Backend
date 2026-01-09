@@ -11,6 +11,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.time.LocalDateTime;
+
 /**
  * @author : BoKyung
  * @description : 크루 기본 정보 엔티티
@@ -61,6 +63,12 @@ public class Crew extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "crew_recruit_status", length = 20)
     private CrewRecruitStatus crewRecruitStatus;  // RECRUITING, CLOSED
+
+    @Column(name = "requires_delegation")
+    private Boolean requiresDelegation = false;  // 위임 필요 여부
+
+    @Column(name = "delegation_deadline")
+    private LocalDateTime delegationDeadline;  // 위임 기간
 
     /**
      * @param user   크루장 (User 엔티티)
@@ -162,6 +170,45 @@ public class Crew extends BaseEntity {
     public boolean isRecruiting() {
         return this.crewRecruitStatus == CrewRecruitStatus.RECRUITING
                 && this.crewStatus == CrewStatus.ACTIVE;
+    }
+
+    /**
+     * @description : 크루장 위임 필요 상태로 설정 (3일 기한)
+     */
+    public void requireLeaderDelegation() {
+        this.requiresDelegation = true;
+        this.delegationDeadline = LocalDateTime.now().plusDays(3);
+    }
+
+    /**
+     * @description : 크루장 위임 완료 처리
+     */
+    public void completeLeaderDelegation() {
+        this.requiresDelegation = false;
+        this.delegationDeadline = null;
+    }
+
+    /**
+     * @description : 위임 필요 상태인지 확인
+     */
+    public boolean requiresDelegation() {
+        return Boolean.TRUE.equals(this.requiresDelegation);
+    }
+
+    /**
+     * @description : 위임 기한이 지났는지 확인
+     */
+    public boolean isDelegationExpired() {
+        return Boolean.TRUE.equals(this.requiresDelegation)
+                && this.delegationDeadline != null
+                && LocalDateTime.now().isAfter(this.delegationDeadline);
+    }
+
+    /**
+     * @description : 크루장 변경 (위임 시 호출)
+     */
+    public void changeLeader(User newLeader) {
+        this.user = newLeader;
     }
 
 }
