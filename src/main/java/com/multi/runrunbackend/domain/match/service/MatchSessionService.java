@@ -279,7 +279,7 @@ public class MatchSessionService {
                     .profileImage(user.getProfileImageUrl())
                     .isReady(su.isReady())
                     .isHost(user.getId().equals(hostUserId))
-                    .avgPace("5:" + (30 + (int) (Math.random() * 30)))  // 임시 하드코딩: 5:30 ~ 5:59
+                    .avgPace(formatAveragePace(user.getAveragePace()))  // ✅ User의 averagePace 사용
                     .build();
             })
             .collect(Collectors.toList());
@@ -489,6 +489,33 @@ public class MatchSessionService {
             case KM_10 -> 10.0;
             default -> throw new ValidationException(ErrorCode.INVALID_DISTANCE_TYPE);
         };
+    }
+
+    /**
+     * 평균 페이스를 MM:SS 형식으로 변환
+     * @param averagePace 평균 페이스 (BigDecimal, 분/km)
+     * @return "MM:SS" 형식의 문자열 (null이면 "-")
+     */
+    private String formatAveragePace(BigDecimal averagePace) {
+        if (averagePace == null) {
+            return "-";
+        }
+
+        // BigDecimal을 double로 변환
+        double paceMinutes = averagePace.doubleValue();
+
+        // 분과 초 분리
+        int minutes = (int) paceMinutes;
+        int seconds = (int) Math.round((paceMinutes - minutes) * 60);
+
+        // 60초 처리 (예: 5.99분 -> 5:59가 아니라 6:00으로)
+        if (seconds >= 60) {
+            minutes += 1;
+            seconds = 0;
+        }
+
+        // MM:SS 형식으로 반환
+        return String.format("%d:%02d", minutes, seconds);
     }
 
     /**
