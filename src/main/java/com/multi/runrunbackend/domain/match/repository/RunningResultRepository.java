@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.match.repository;
 
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
+import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.user.entity.User;
 import java.math.BigDecimal;
@@ -69,6 +70,7 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
       @Param("endDate") LocalDateTime endDate,
       Pageable pageable
   );
+
   /**
    * 고스트런용: 사용자의 완료된 기록 조회
    *
@@ -128,13 +130,10 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
   );
 
   /**
-   * 평균 페이스 계산을 위한 최근 5개 완주 기록 조회
-   * - 완주한 기록만 (COMPLETED)
-   * - avgPace가 null이 아닌 기록만
-   * - 삭제되지 않은 기록만
-   * - 최신순 정렬
+   * 평균 페이스 계산을 위한 최근 5개 완주 기록 조회 - 완주한 기록만 (COMPLETED) - avgPace가 null이 아닌 기록만 - 삭제되지 않은 기록만 - 최신순
+   * 정렬
    *
-   * @param userId 사용자 ID
+   * @param userId   사용자 ID
    * @param pageable 페이지 정보 (size=5)
    * @return 최근 5개 완주 기록
    */
@@ -149,4 +148,6 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
       Pageable pageable
   );
 
+  Optional<RunningResult> findByUserIdAndRunningTypeAndStartedAt(Long id, RunningType runningType,
+      LocalDateTime createdAt);
 }
