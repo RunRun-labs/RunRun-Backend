@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let infowindow = null;
   let currentUserGender = null;
   let currentUserAge = null;
+  let coursePolyline = null; // 코스 경로 폴리라인
 
   const urlParams = new URLSearchParams(window.location.search);
   let recruitId = urlParams.get("recruitId");
@@ -104,25 +105,113 @@ document.addEventListener("DOMContentLoaded", () => {
     infowindow.open(map, marker);
   }
 
+  // ✅ 코스 경로를 지도에 표시하는 함수
+  async function loadAndDisplayCoursePath(courseId) {
+    if (!courseId || !map) return;
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/courses/${courseId}/path`, {
+        method: "GET",
+        headers: headers,
+      });
+
+      if (!response.ok) {
+        console.warn("코스 경로를 불러올 수 없습니다.");
+        return;
+      }
+
+      const result = await response.json();
+      if (!result.success || !result.data) {
+        console.warn("코스 경로 데이터가 없습니다.");
+        return;
+      }
+
+      const pathData = result.data;
+      let pathCoords = [];
+
+      // GeoJSON 형식 파싱 (Map<String, Object> 형식)
+      if (pathData.path) {
+        // path는 이미 GeoJSON 객체 (Map<String, Object>)
+        if (pathData.path.coordinates) {
+          pathCoords = pathData.path.coordinates;
+        } else if (typeof pathData.path === "string") {
+          // 문자열인 경우 파싱
+          try {
+            const parsed = JSON.parse(pathData.path);
+            if (parsed.coordinates) {
+              pathCoords = parsed.coordinates;
+            } else if (Array.isArray(parsed)) {
+              pathCoords = parsed;
+            }
+          } catch (e) {
+            console.warn("경로 파싱 실패:", e);
+            return;
+          }
+        } else if (Array.isArray(pathData.path)) {
+          pathCoords = pathData.path;
+        }
+      }
+
+      if (pathCoords.length < 2) {
+        console.warn("경로 좌표가 충분하지 않습니다.");
+        return;
+      }
+
+      // 기존 폴리라인 제거
+      if (coursePolyline) {
+        coursePolyline.setMap(null);
+        coursePolyline = null;
+      }
+
+      // 카카오맵 좌표로 변환 (GeoJSON은 [lng, lat] 순서)
+      const latLngs = pathCoords.map(
+        ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
+      );
+
+      // 폴리라인 생성
+      coursePolyline = new kakao.maps.Polyline({
+        path: latLngs,
+        strokeWeight: 5,
+        strokeColor: "#ff3d00",
+        strokeOpacity: 0.8,
+        strokeStyle: "solid",
+      });
+      coursePolyline.setMap(map);
+
+      // 경로 전체가 보이도록 지도 범위 조정
+      const bounds = new kakao.maps.LatLngBounds();
+      latLngs.forEach((p) => bounds.extend(p));
+      map.setBounds(bounds);
+
+      // relayout
+      setTimeout(() => {
+        if (map) {
+          map.relayout();
+        }
+      }, 0);
+
+      setTimeout(() => {
+        if (map) {
+          map.relayout();
+        }
+      }, 300);
+    } catch (error) {
+      console.error("코스 경로 로드 중 오류:", error);
+    }
+  }
+
   function displayRecruitDetail(recruitData) {
     // 제목
     document.getElementById("recruitTitle").textContent = recruitData.title
         || "";
-
-    if (recruitData.courseId && recruitData.courseImageUrl) {
-      const courseImageSection = document.getElementById("courseImageSection");
-      const courseImage = document.getElementById("courseImage");
-
-      let imageUrl = recruitData.courseImageUrl;
-      if (!imageUrl.startsWith("http")) {
-        imageUrl = imageUrl.startsWith("/") ? imageUrl : `/files/${imageUrl}`;
-      }
-
-      courseImage.src = imageUrl;
-      courseImageSection.style.display = "block";
-    } else {
-      document.getElementById("courseImageSection").style.display = "none";
-    }
 
     if (recruitData.latitude && recruitData.longitude) {
       initMap(
@@ -130,6 +219,11 @@ document.addEventListener("DOMContentLoaded", () => {
           recruitData.longitude,
           recruitData.meetingPlace || "출발지"
       );
+
+      // ✅ 코스가 선택된 모집글이면 경로 표시
+      if (recruitData.courseId) {
+        loadAndDisplayCoursePath(recruitData.courseId);
+      }
     }
 
     document.getElementById("meetingAt").textContent = formatDateTime(
@@ -168,24 +262,47 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("ageRange").textContent = "-";
     }
 
-    // 작성자
-    if (recruitData.authorLoginId) {
-      document.getElementById(
-          "authorLoginId").textContent = recruitData.authorLoginId;
-    } else {
-      document.getElementById("authorLoginId").textContent = "-";
+    // 작성자 (요소가 있는 경우에만 설정)
+    const authorLoginIdEl = document.getElementById("authorLoginId");
+    if (authorLoginIdEl) {
+      if (recruitData.authorLoginId) {
+        authorLoginIdEl.textContent = recruitData.authorLoginId;
+      } else {
+        authorLoginIdEl.textContent = "-";
+      }
     }
 
-    // 작성일자
-    if (recruitData.createdAt) {
-      document.getElementById("createdAt").textContent = formatDate(
-          recruitData.createdAt);
-    } else {
-      document.getElementById("createdAt").textContent = "-";
+    // 작성일자 (요소가 있는 경우에만 설정)
+    const createdAtEl = document.getElementById("createdAt");
+    if (createdAtEl) {
+      if (recruitData.createdAt) {
+        createdAtEl.textContent = formatDate(recruitData.createdAt);
+      } else {
+        createdAtEl.textContent = "-";
+      }
     }
 
-    document.getElementById("recruitContent").textContent = recruitData.content
-        || "";
+    // 상세 설명
+    const recruitContentEl = document.getElementById("recruitContent");
+    console.log("recruitContentEl:", recruitContentEl);
+    console.log("recruitData.content:", recruitData.content);
+    console.log("recruitData 전체:", recruitData);
+    
+    if (recruitContentEl) {
+      // content 필드 확인 (다양한 필드명 시도)
+      const content = recruitData.content || recruitData.description || recruitData.text || "";
+      
+      if (content && content.trim()) {
+        // CSS에 white-space: pre-wrap이 있으므로 textContent로 설정해도 줄바꿈이 표시됨
+        recruitContentEl.textContent = content;
+        console.log("상세 설명 설정 완료:", content);
+      } else {
+        recruitContentEl.textContent = "상세 설명이 없습니다.";
+        console.log("상세 설명 없음 - 기본 메시지 표시");
+      }
+    } else {
+      console.error("recruitContent 요소를 찾을 수 없습니다!");
+    }
   }
 
   function renderActionButton(recruitData) {
@@ -558,7 +675,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       // 먼저 사용자 정보 로드
       await loadCurrentUser();
-
+      
       const token = localStorage.getItem("accessToken");
       const headers = {
         "Content-Type": "application/json",
@@ -581,6 +698,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // ApiResponse 구조: { success: true, data: RecruitDetailResDto }
       const recruitData = result.data;
       console.log("API 응답 데이터:", recruitData);
+      console.log("content 필드:", recruitData?.content);
 
       if (!recruitData) {
         throw new Error("모집글 데이터가 없습니다.");

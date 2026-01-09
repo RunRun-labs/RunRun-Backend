@@ -311,6 +311,23 @@ select.form-input:focus {
   box-shadow: 0 0 0 3px rgba(186, 255, 41, 0.1);
 }
 
+/* 코스 선택 시 출발지 잠금(수정 불가) */
+.condition-summary.locked {
+  background: #F5F6F8;
+  border-color: rgba(17, 24, 39, 0.12);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.condition-summary.locked:hover {
+  border-color: rgba(17, 24, 39, 0.12);
+  box-shadow: none;
+}
+
+.condition-summary.locked .condition-summary-chevron {
+  opacity: 0.35;
+}
+
 .condition-summary-content {
   flex: 1;
   display: flex;
@@ -448,6 +465,21 @@ select.form-input:focus {
 
 #locationBottomSheet .bottom-sheet-content {
   max-height: 90vh;
+}
+
+/* 러닝 조건 모달: 탭 전환 시 높이(틀 크기) 흔들림 방지 */
+#conditionBottomSheet .bottom-sheet-content {
+  height: clamp(420px, 70vh, 560px);
+  max-height: none;
+}
+
+#conditionBottomSheet .tab-content {
+  /* 컨텐츠 영역은 고정 높이 안에서 내부 스크롤 */
+  overflow-y: auto;
+}
+
+#conditionBottomSheet .bottom-sheet-footer {
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
 }
 
 .bottom-sheet-header {

@@ -215,7 +215,11 @@ function createCourseCard(course) {
   card.className = "course-card";
   card.style.cursor = "pointer";
   card.addEventListener("click", () => {
-    window.location.href = `/courseDetail/${course.id}`;
+    // 코스 선택 모드(모집글에서 진입)면 query param을 상세로 그대로 전달
+    const currentUrl = new URL(window.location.href);
+    const params = currentUrl.searchParams;
+    const qs = params.toString();
+    window.location.href = `/courseDetail/${course.id}${qs ? "?" + qs : ""}`;
   });
 
   // Format course distance (코스 길이)

@@ -1,6 +1,8 @@
 package com.multi.runrunbackend.domain.tts.repository;
 
 import com.multi.runrunbackend.domain.tts.entity.TtsVoicePack;
+import com.multi.runrunbackend.domain.tts.constant.TtsVoiceType;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TtsVoicePackRepository extends JpaRepository<TtsVoicePack, Long> {
 
+    Optional<TtsVoicePack> findFirstByVoiceType(TtsVoiceType voiceType);
 }
 
 

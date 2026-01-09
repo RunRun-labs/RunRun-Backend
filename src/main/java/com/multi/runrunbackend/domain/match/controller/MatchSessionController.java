@@ -15,6 +15,7 @@ import com.multi.runrunbackend.domain.match.service.MatchingQueueService;
 import com.multi.runrunbackend.domain.running.battle.service.BattleService;
 import jakarta.validation.Valid;
 import java.util.Map;
+import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -45,6 +46,18 @@ public class MatchSessionController {
   private final MatchSessionService matchSessionService;
   private final MatchingQueueService matchingQueueService;
   private final BattleService battleService;
+
+
+    @GetMapping("/sessions/{sessionId}")
+    public ResponseEntity<ApiResponse<MatchSessionDetailResDto>> getSessionDetail(
+        @PathVariable Long sessionId,
+        @AuthenticationPrincipal CustomUser principal
+    ) {
+
+        MatchSessionDetailResDto res = matchSessionService.getSessionDetail(sessionId,
+            principal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("세션 상세 조회 성공", res));
+    }
 
   @PostMapping("/offline/confirm")
   public ResponseEntity<ApiResponse<OfflineMatchConfirmResDto>> confirmMatch(
@@ -168,7 +181,7 @@ public class MatchSessionController {
   @PostMapping("/solorun/start")
   public ResponseEntity<ApiResponse<Long>> startSoloRun(
       @AuthenticationPrincipal CustomUser principal,
-      @RequestBody SoloRunStartReqDto reqDto
+      @RequestBody @Valid SoloRunStartReqDto reqDto
   ) {
 
     Long sessionId = matchSessionService.createSoloSession(principal, reqDto);

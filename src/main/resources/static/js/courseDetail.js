@@ -49,6 +49,54 @@ let polyline = null;
 let startMarker = null;
 let endMarker = null;
 let loopMarker = null;
+let loadedCourse = null;
+
+// ==========================
+// Select Mode (from recruit)
+// ==========================
+function getSelectModeParams() {
+  const u = new URL(window.location.href);
+  const selectMode = u.searchParams.get("selectMode");
+  return {
+    isRecruitSelect: selectMode === "recruit",
+    isSoloSelect: selectMode === "solo",
+    isSelectMode: selectMode === "recruit" || selectMode === "solo",
+    returnTo: u.searchParams.get("returnTo"),
+  };
+}
+
+function setupSelectConfirm() {
+  const { isSelectMode, returnTo } = getSelectModeParams();
+  const bar = document.getElementById("selectConfirmBar");
+  const btn = document.getElementById("selectConfirmBtn");
+  if (!bar || !btn) return;
+
+  if (!isSelectMode || !returnTo) {
+    bar.style.display = "none";
+    const content = document.querySelector(".course-content");
+    if (content) content.classList.remove("has-select-confirm");
+    return;
+  }
+
+  bar.style.display = "block";
+  const content = document.querySelector(".course-content");
+  if (content) content.classList.add("has-select-confirm");
+
+  btn.addEventListener("click", () => {
+    if (!loadedCourse) {
+      alert("코스 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
+    const base = new URL(returnTo, window.location.origin);
+    base.searchParams.set("courseId", String(loadedCourse.id || getCourseIdFromUrl()));
+    base.searchParams.set("courseName", loadedCourse.title || "코스 선택됨");
+    if (loadedCourse.distanceM != null) {
+      base.searchParams.set("courseDistanceKm", (loadedCourse.distanceM / 1000).toFixed(2));
+    }
+    window.location.href = base.pathname + base.search + base.hash;
+  });
+}
 
 // Initialize map
 function initMap() {
@@ -219,6 +267,7 @@ async function loadCourseData() {
     console.log("API Response:", result);
 
     const course = result.data;
+    loadedCourse = course;
 
     if (!course) {
       throw new Error("코스 데이터가 없습니다");
@@ -1018,6 +1067,7 @@ function initSirenButton() {
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
     initSirenButton();
+    setupSelectConfirm();
     if (typeof kakao !== "undefined" && kakao.maps) {
       bootstrapMap();
     } else {
@@ -1027,6 +1077,7 @@ if (document.readyState === "loading") {
   });
 } else {
   initSirenButton();
+  setupSelectConfirm();
   if (typeof kakao !== "undefined" && kakao.maps) {
     bootstrapMap();
   } else {
