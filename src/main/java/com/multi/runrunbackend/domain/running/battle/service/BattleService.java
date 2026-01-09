@@ -865,23 +865,9 @@ public class BattleService {
    * 포기자 패널티 계산
    */
   private int calculateGiveUpPenalty(DistanceRating rating, DistanceType distanceType) {
-    int k = kFactor(rating.getUser(), distanceType);
+    int k = distanceRatingService.kFactor(rating.getUser(), distanceType);
 
     return Math.max(10, (int) Math.round(k * 0.25));
-  }
-
-  /**
-   * K-factor 계산 (DistanceRatingService와 동일한 로직)
-   */
-  private int kFactor(User user, DistanceType distanceType) {
-    long games = battleResultRepository.countByUserAndDistanceType(user, distanceType);
-    if (games < 10) {
-      return 40;
-    }
-    if (games < 30) {
-      return 32;
-    }
-    return 24;
   }
 
   /**

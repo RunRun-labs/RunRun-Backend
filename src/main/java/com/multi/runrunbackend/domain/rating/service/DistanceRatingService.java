@@ -240,7 +240,7 @@ public class DistanceRatingService {
   /**
    * 판수 기반 K-factor (원하면 거리/티어별로 다르게 가능)
    */
-  private int kFactor(User user, DistanceType distanceType) {
+  public int kFactor(User user, DistanceType distanceType) {
     long games = battleResultRepository.countByUserAndDistanceType(user, distanceType);
     if (games < 10) {
       return 40;
