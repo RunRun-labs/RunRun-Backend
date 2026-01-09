@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>RUNRUN | Sign Up</title>
+    <title>RUNRUN | 회원가입</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -23,7 +23,8 @@
     <main class="page signup-page">
       <button class="back-button" type="button" aria-label="뒤로가기">
         <img
-          src="http://localhost:3845/assets/5d8e7700a6d94e6f5d3b62853522a7c52a457010.svg"
+          th:src="@{/img/icons/back.svg}"
+          src="/img/icons/back.svg"
           alt="뒤로가기 아이콘"
         />
       </button>
@@ -33,7 +34,7 @@
       </div>
 
       <section class="headline">
-        <h1>Sign Up</h1>
+        <h1>회원가입</h1>
       </section>
 
       <form
@@ -45,7 +46,7 @@
         novalidate
       >
         <label class="field">
-          <span class="field-label">Name</span>
+          <span class="field-label">이름</span>
           <input
             type="text"
             name="userName"
@@ -56,7 +57,7 @@
         <p class="field-feedback" data-feedback="userName" aria-live="polite"></p>
 
         <label class="field">
-          <span class="field-label">Email</span>
+          <span class="field-label">이메일</span>
           <input
             type="email"
             name="userEmail"
@@ -67,11 +68,12 @@
         <p class="field-feedback" data-feedback="userEmail" aria-live="polite"></p>
 
         <label class="field">
-          <span class="field-label">Birth of date</span>
+          <span class="field-label">생년월일</span>
           <div class="input-with-icon">
             <input type="date" name="birthDate" required />
             <img
-              src="http://localhost:3845/assets/7d90faa173dfd37c43fa6a959f219368483ea026.svg"
+              th:src="@{/img/calendar-icon.svg}"
+              src="/img/calendar-icon.svg"
               alt=""
               aria-hidden="true"
             />
@@ -80,7 +82,7 @@
         <p class="field-feedback" data-feedback="birthDate" aria-live="polite"></p>
 
         <div class="field">
-          <span class="field-label">gender</span>
+          <span class="field-label">성별</span>
           <div class="gender-group" role="group" aria-label="성별 선택">
             <button
               class="gender-btn active"
@@ -106,7 +108,7 @@
         <p class="field-feedback" data-feedback="gender" aria-live="polite"></p>
 
         <label class="field">
-          <span class="field-label">ID</span>
+          <span class="field-label">아이디</span>
           <input
             type="text"
             name="loginId"
@@ -117,7 +119,7 @@
         <p class="field-feedback" data-feedback="loginId" aria-live="polite"></p>
 
         <label class="field">
-          <span class="field-label">Password</span>
+          <span class="field-label">비밀번호</span>
           <div class="input-with-icon">
             <input
               type="password"
@@ -131,9 +133,11 @@
               aria-label="비밀번호 표시 전환"
             >
               <img
-                src="http://localhost:3845/assets/5f93ca4606eb15bb593adb21fdac43a04d2c7abd.svg"
+                th:src="@{/img/eye-closed.svg}"
+                src="/img/eye-closed.svg"
                 alt=""
                 aria-hidden="true"
+                class="eye-icon"
               />
             </button>
           </div>
@@ -141,7 +145,7 @@
         <p class="field-feedback" data-feedback="userPassword" aria-live="polite"></p>
 
         <label class="field">
-          <span class="field-label">Set Password</span>
+          <span class="field-label">비밀번호 확인</span>
           <div class="input-with-icon">
             <input
               type="password"
@@ -155,9 +159,11 @@
               aria-label="비밀번호 표시 전환"
             >
               <img
-                src="http://localhost:3845/assets/5f93ca4606eb15bb593adb21fdac43a04d2c7abd.svg"
+                th:src="@{/img/eye-closed.svg}"
+                src="/img/eye-closed.svg"
                 alt=""
                 aria-hidden="true"
+                class="eye-icon"
               />
             </button>
           </div>
@@ -165,33 +171,33 @@
         <p class="field-feedback" data-feedback="confirmPassword" aria-live="polite"></p>
 
         <label class="field">
-          <span class="field-label">height</span>
+          <span class="field-label">키 (cm)</span>
           <input
             type="number"
             name="heightCm"
-            placeholder="키 (cm)"
+            placeholder="키를 입력하세요"
             min="0"
           />
         </label>
         <p class="field-feedback" data-feedback="heightCm" aria-live="polite"></p>
 
         <label class="field">
-          <span class="field-label">weight</span>
+          <span class="field-label">몸무게 (kg)</span>
           <input
             type="number"
             name="weightKg"
-            placeholder="몸무게 (kg)"
+            placeholder="몸무게를 입력하세요"
             min="0"
           />
         </label>
         <p class="field-feedback" data-feedback="weightKg" aria-live="polite"></p>
 
-        <button class="primary-button" type="submit">Register</button>
+        <button class="primary-button" type="submit">회원가입</button>
         <p class="form-message" data-role="signup-message" aria-live="polite"></p>
 
         <div class="signup-switch">
-          <span>Already have an account?</span>
-          <a th:href="@{/login}" href="/login">Login</a>
+          <span>이미 계정이 있으신가요?</span>
+          <a th:href="@{/login}" href="/login">로그인</a>
         </div>
       </form>
     </main>
