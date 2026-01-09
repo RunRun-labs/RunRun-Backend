@@ -163,4 +163,22 @@ public class CrewController {
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("가입 신청 상태 조회 성공", result));
     }
+
+    /**
+     * @param crewId      크루 ID
+     * @param newLeaderId 새로운 크루장 ID (부크루장 또는 운영진)
+     * @param principal   인증된 사용자 정보 (현재 크루장)
+     * @description : 크루장 위임 (부크루장 또는 운영진에게만 가능, 크루장만 실행 가능)
+     */
+    @PostMapping("/{crewId}/delegate-leader")
+    public ResponseEntity<ApiResponse<Void>> delegateLeader(
+            @PathVariable Long crewId,
+            @RequestParam Long newLeaderId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        crewService.delegateLeaderManually(crewId, newLeaderId, principal);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루장 위임이 완료되었습니다.", null));
+    }
 }
