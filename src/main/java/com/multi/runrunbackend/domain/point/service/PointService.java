@@ -566,6 +566,25 @@ public class PointService {
     }
 
     /**
+     * 포인트 충분한지 검증
+     */
+    public void validateSufficientPoints(Long userId, int requiredPoints) {
+        Integer availablePoints = userPointRepository.getTotalPointByUserId(userId);
+
+        if (availablePoints == null || availablePoints < requiredPoints) {
+            throw new BusinessException(ErrorCode.INSUFFICIENT_POINT);
+        }
+    }
+
+    /**
+     * 사용 가능한 포인트 잔액 조회
+     */
+    public Integer getAvailablePoints(Long userId) {
+        Integer availablePoints = userPointRepository.getTotalPointByUserId(userId);
+        return availablePoints != null ? availablePoints : 0;
+    }
+
+    /**
      * 이미지 URL 변환 (S3 key → HTTPS)
      */
     private String resolveImageUrl(String imageUrl) {
