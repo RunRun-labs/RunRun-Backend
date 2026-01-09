@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.entity.BattleResult;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
@@ -119,7 +120,7 @@ public class DistanceRatingService {
       int rank = i + 1;
       RunningResult rr = resultsToProcess.get(i);
       boolean isCompleted =
-          rr.getRunStatus() == com.multi.runrunbackend.domain.match.constant.RunStatus.COMPLETED;
+          rr.getRunStatus() == RunStatus.COMPLETED;
 
       int delta = calculateEloDelta(
           ratings.get(i),
