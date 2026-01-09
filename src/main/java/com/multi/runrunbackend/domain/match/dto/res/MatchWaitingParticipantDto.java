@@ -23,6 +23,6 @@ public class MatchWaitingParticipantDto {
     private String profileImage;
     private Boolean isReady;
     private Boolean isHost;  // 방장 여부
-    private String avgPace;  // 평균 페이스 (하드코딩: "5:30" 형식)
     private Tier tier;  // 티어 정보
+    private String avgPace;  // 평균 페이스 ("MM:SS" 형식, User.averagePace에서 계산)
 }

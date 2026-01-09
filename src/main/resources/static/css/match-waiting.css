@@ -433,9 +433,9 @@ body {
 
 .stat-value {
   font-family: "Inter", sans-serif;
-  font-weight: 600;
-  font-size: 12.6px;
-  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--text-secondary);
   text-align: center;
   white-space: nowrap;
 }
