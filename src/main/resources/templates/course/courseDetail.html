@@ -218,6 +218,13 @@
         </div>
       </main>
 
+      <!-- Select Confirm Bar (모집글에서 코스 선택 모드로 들어온 경우만 표시) -->
+      <div class="select-confirm-bar" id="selectConfirmBar" style="display: none">
+        <button class="select-confirm-button" type="button" id="selectConfirmBtn">
+          확인
+        </button>
+      </div>
+
       <!-- Bottom Navigation -->
       <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
     </div>

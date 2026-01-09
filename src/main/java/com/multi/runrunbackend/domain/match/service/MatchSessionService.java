@@ -17,6 +17,7 @@ import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.constant.Tier;
 import com.multi.runrunbackend.domain.match.dto.req.SoloRunStartReqDto;
+import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingParticipantDto;
 import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
@@ -105,6 +106,23 @@ public class MatchSessionService {
     return createSessionInternal(recruit);
   }
 
+  public MatchSessionDetailResDto getSessionDetail(Long sessionId, Long userId) {
+    MatchSession session = matchSessionRepository.findById(sessionId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+
+    // 세션 참여자만 조회 가능
+    sessionUserRepository.findBySessionIdAndUserId(sessionId, userId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_USER_NOT_FOUND));
+
+    // 세션 참여자만 조회 가능
+    sessionUserRepository.findBySessionIdAndUserId(sessionId, userId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_USER_NOT_FOUND));
+    List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(
+        sessionId);
+    return MatchSessionDetailResDto.from(session, sessionUsers);
+  }
+
+
   @Transactional
   public void createOfflineSessionBySystem(Long recruitId) {
     Recruit recruit = recruitRepository.findById(recruitId)
@@ -125,7 +143,7 @@ public class MatchSessionService {
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime recruitCreatedAt = recruit.getCreatedAt();
 
-    long waitingTime = ChronoUnit.SECONDS.between(recruitCreatedAt, now);
+    long waitingTime = ChronoUnit.MINUTES.between(recruitCreatedAt, now);
 
     MatchSession matchSession = MatchSession.builder()
         .recruit(recruit)
@@ -240,7 +258,8 @@ public class MatchSessionService {
         session.getId(), session.getStatus(), session.getTargetDistance());
 
     // 참가자 목록 조회
-    List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
+    List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(
+        sessionId);
 
     log.info("👥 참가자 수: {}", sessionUsers.size());
 
@@ -557,7 +576,7 @@ public class MatchSessionService {
             }
           }
         }
-        
+
         // ✅ 나간 사용자의 Redis 키도 삭제
         try {
           matchingQueueService.cleanupMatchSession(userId);
@@ -579,6 +598,15 @@ public class MatchSessionService {
       } else {
         // 2명 이상 남음 - 계속 진행
         log.info("✅ 충분한 참가자 남음({}/2명) - 계속 진행", remainingCount);
+
+        // ✅ 나간 사람만 Ticket 삭제
+        try {
+          String ticketKey = "match_ticket:" + userId;
+          Boolean deleted = redisTemplate.delete(ticketKey);
+          log.info("🗑️ Redis Ticket 삭제 (나간 사람): userId={}, deleted={}", userId, deleted);
+        } catch (Exception e) {
+          log.error("❌ Redis Ticket 삭제 실패", e);
+        }
 
         // ✅ 참가자 나간 것만 알림
         try {
