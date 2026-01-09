@@ -16,6 +16,8 @@ import com.multi.runrunbackend.domain.match.repository.BattleResultRepository;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
+import com.multi.runrunbackend.domain.rating.entity.DistanceRating;
+import com.multi.runrunbackend.domain.rating.repository.DistanceRatingRepository;
 import com.multi.runrunbackend.domain.rating.service.DistanceRatingService;
 import com.multi.runrunbackend.domain.running.battle.dto.TimeoutDto;
 import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto.GpsData;
@@ -25,6 +27,7 @@ import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +58,7 @@ public class BattleService {
   private final UserRepository userRepository;
   private final RunningResultRepository runningResultRepository;
   private final BattleResultRepository battleResultRepository;
+  private final DistanceRatingRepository distanceRatingRepository;
   private final SimpMessagingTemplate messagingTemplate;
   private final RedisTemplate<String, Object> redisPubSubTemplate;
   private final ObjectMapper objectMapper;
@@ -115,13 +119,13 @@ public class BattleService {
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
     List<SessionUser> participants = sessionUserRepository.findActiveUsersBySessionId(sessionId);
-    
+
     log.info("🔥🔥🔥 startBattle 호출: sessionId={}, 참가자={}명", sessionId, participants.size());
     for (SessionUser p : participants) {
-      log.info("  - userId={}, username={}, ready={}", 
+      log.info("  - userId={}, username={}, ready={}",
           p.getUser().getId(), p.getUser().getName(), p.isReady());
     }
-    
+
     boolean allReady = participants.stream().allMatch(SessionUser::isReady);
 
     if (!allReady) {
@@ -501,15 +505,19 @@ public class BattleService {
    */
   private void saveBattleResults(Long sessionId, LocalDateTime startedAt, boolean isTimeout) {
     log.info("🔥🔥🔥 saveBattleResults 호출: sessionId={}, isTimeout={}", sessionId, isTimeout);
-    log.info("🔥 호출 스택 트레이스:", new Exception().getStackTrace()[1]);
-    
-    // 1. Redis에서 순위 조회
+
     List<BattleRankingResDto> rankings = getRankings(sessionId);
 
     log.info("🔥🔥🔥 getRankings 반환 결과: {}명", rankings.size());
 
     if (rankings.isEmpty()) {
-      log.warn("⚠️ 순위 데이터 없음: sessionId={}", sessionId);
+      log.warn(" Redis 데이터 없음 - DB 복구 시도: sessionId={}", sessionId);
+      rankings = recoverRankingsFromDB(sessionId);
+    }
+
+    if (rankings.isEmpty()) {
+      log.error(" DB 복구도 실패 - 최소한 데이터 저장: sessionId={}", sessionId);
+      saveMinimalBattleResults(sessionId, startedAt);
       return;
     }
 
@@ -517,7 +525,7 @@ public class BattleService {
     log.info("📊 전체 순위 ({}명):", rankings.size());
     for (BattleRankingResDto r : rankings) {
       log.info("  - rank={}, userId={}, username={}, status={}, finished={}, distance={}m",
-          r.getRank(), r.getUserId(), r.getUsername(), r.getStatus(), 
+          r.getRank(), r.getUserId(), r.getUsername(), r.getStatus(),
           r.getIsFinished(), r.getTotalDistance());
     }
 
@@ -530,7 +538,7 @@ public class BattleService {
 
     // ✅ 모든 참가자 처리 (완주, 타임아웃, 포기 모두 저장)
     for (BattleRankingResDto ranking : rankings) {
-      log.info("🔍 처리 중: userId={}, rank={}, status={}", 
+      log.info("🔍 처리 중: userId={}, rank={}, status={}",
           ranking.getUserId(), ranking.getRank(), ranking.getStatus());
 
       User user = userRepository.findById(ranking.getUserId())
@@ -563,8 +571,9 @@ public class BattleService {
       runningResults.add(runningResult);
 
       savedCount++;
-      log.info("✅ RunningResult 저장 완료: userId={}, username={}, rank={}, status={}, runStatus={}, distance={}km",
-          ranking.getUserId(), ranking.getUsername(), ranking.getRank(), 
+      log.info(
+          "✅ RunningResult 저장 완료: userId={}, username={}, rank={}, status={}, runStatus={}, distance={}km",
+          ranking.getUserId(), ranking.getUsername(), ranking.getRank(),
           ranking.getStatus(), runStatus, runningResult.getTotalDistance());
     }
 
@@ -574,7 +583,8 @@ public class BattleService {
 
     // ✅ 레이팅 정산은 완주자와 타임아웃만 (포기자 제외)
     List<RunningResult> ratedResults = runningResults.stream()
-        .filter(r -> r.getRunStatus() == RunStatus.COMPLETED || r.getRunStatus() == RunStatus.TIME_OUT)
+        .filter(
+            r -> r.getRunStatus() == RunStatus.COMPLETED || r.getRunStatus() == RunStatus.TIME_OUT)
         .toList();
 
     List<RunningResult> giveUpResults = runningResults.stream()
@@ -586,25 +596,37 @@ public class BattleService {
       distanceRatingService.processBattleResults(sessionId, ratedResults, distanceType);
     }
 
-    // ✅ 포기자 BattleResult 별도 저장 (레이팅 없이)
+    // ✅ 포기자 BattleResult 별도 저장 (패널티 포함)
     for (RunningResult giveUpResult : giveUpResults) {
+      User user = giveUpResult.getUser();
+      DistanceRating rating = distanceRatingRepository
+          .findByUserIdAndDistanceType(user.getId(), distanceType)
+          .orElseGet(() -> createNewRatingForGiveUp(user, distanceType));
+
+      int previousRating = rating.getCurrentRating();
+
+      // ✅ 포기자 패널티: 타임아웃보다 더 큰 패널티
+      int penalty = calculateGiveUpPenalty(rating, distanceType);
+      rating.updateRating(-penalty, 0);  // 음수로 점수 감소
+      distanceRatingRepository.save(rating);
+
       BattleResult giveUpBattleResult = BattleResult.builder()
           .session(session)
-          .user(giveUpResult.getUser())
+          .user(user)
           .runningResult(giveUpResult)
           .distanceType(distanceType)
-          .ranking(0)  // 포기자는 순위 0
-          .previousRating(0)  // 레이팅 변화 없음
-          .currentRating(0)   // 레이팅 변화 없음
+          .ranking(0)
+          .previousRating(previousRating)
+          .currentRating(rating.getCurrentRating())
           .build();
 
       battleResultRepository.save(giveUpBattleResult);
 
-      log.info("✅ 포기자 BattleResult 저장: userId={}, username={}",
-          giveUpResult.getUser().getId(), giveUpResult.getUser().getName());
+      log.info("✅ 포기자 BattleResult 저장 (패널티 -{}점): userId={}, username={}, rating: {} -> {}",
+          penalty, user.getId(), user.getName(), previousRating, rating.getCurrentRating());
     }
 
-    log.info("✅ 배틀 결과 저장 및 레이팅 정산 완료: sessionId={}, 레이팅대상={}명, 포기자={}명", 
+    log.info("✅ 배틀 결과 저장 및 레이팅 정산 완료: sessionId={}, 레이팅대상={}명, 포기자={}명",
         sessionId, ratedResults.size(), giveUpResults.size());
   }
 
@@ -635,14 +657,17 @@ public class BattleService {
    * 거리 타입 결정
    */
   private DistanceType determineDistanceType(Double targetDistance) {
-    // targetDistance는 이미 km 단위
-    int km = targetDistance.intValue();
-    return switch (km) {
-      case 3 -> DistanceType.KM_3;
-      case 5 -> DistanceType.KM_5;
-      case 10 -> DistanceType.KM_10;
-      default -> DistanceType.KM_5;
-    };
+    if (targetDistance == null) {
+      return DistanceType.KM_5;  // 기본값
+    }
+
+    if (targetDistance <= 4.0) {
+      return DistanceType.KM_3;  // 0~4km → KM_3
+    } else if (targetDistance <= 7.5) {
+      return DistanceType.KM_5;  // 4~7.5km → KM_5
+    } else {
+      return DistanceType.KM_10; // 7.5km 이상 → KM_10
+    }
   }
 
   /**
@@ -657,6 +682,218 @@ public class BattleService {
     publishToRedis("/sub/battle/" + sessionId + "/complete", message);
 
     log.info("🏁 배틀 종료 메시지 전송: sessionId={}", sessionId);
+  }
+
+  /**
+   * DB에서 세션 정보를 기반으로 순위 복구
+   */
+  private List<BattleRankingResDto> recoverRankingsFromDB(Long sessionId) {
+    try {
+      MatchSession session = matchSessionRepository.findById(sessionId)
+          .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+
+      List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
+
+      if (sessionUsers.isEmpty()) {
+        log.warn(" DB에도 참가자 정보 없음: sessionId={}", sessionId);
+        return Collections.emptyList();
+      }
+
+      log.info(" DB에서 참가자 복구: sessionId={}, 참가자={}명", sessionId, sessionUsers.size());
+
+      List<BattleRankingResDto> recoveredRankings = new ArrayList<>();
+
+      for (SessionUser su : sessionUsers) {
+        User user = su.getUser();
+
+        // RunningResult에서 이미 저장된 결과 조회 시도
+        RunningResult existingResult = runningResultRepository.findAll().stream()
+            .filter(r -> r.getUser().getId().equals(user.getId())
+                && r.getRunningType() == RunningType.ONLINEBATTLE
+                && r.getStartedAt() != null
+                && r.getStartedAt().equals(session.getCreatedAt()))
+            .findFirst()
+            .orElse(null);
+
+        if (existingResult != null) {
+          // 이미 저장된 RunningResult가 있으면 그것을 기반으로 복구
+          double distanceMeters = existingResult.getTotalDistance().doubleValue() * 1000;
+          String status = existingResult.getRunStatus() == RunStatus.COMPLETED ? "FINISHED" :
+              existingResult.getRunStatus() == RunStatus.TIME_OUT ? "TIMEOUT" : "GIVE_UP";
+
+          Integer totalTime = existingResult.getTotalTime();
+          Long finishTimeMillis = totalTime != null ? totalTime.longValue() * 1000L : null;
+          LocalDateTime finishTimeActual = null;
+          if (existingResult.getRunStatus() == RunStatus.COMPLETED
+              && existingResult.getStartedAt() != null
+              && totalTime != null) {
+            finishTimeActual = existingResult.getStartedAt().plusSeconds(totalTime);
+          }
+
+          // 거리 타입 결정
+          DistanceType distanceType = determineDistanceType(session.getTargetDistance());
+          double targetDistanceMeters = session.getTargetDistance() * 1000.0;
+          double remainingDistance = Math.max(0, targetDistanceMeters - distanceMeters);
+          double progressPercent =
+              targetDistanceMeters > 0 ? (distanceMeters / targetDistanceMeters) * 100 : 0.0;
+
+          BattleRankingResDto dto = BattleRankingResDto.builder()
+              .userId(user.getId())
+              .username(user.getName())
+              .totalDistance(distanceMeters)
+              .remainingDistance(remainingDistance)
+              .progressPercent(progressPercent)
+              .status(status)
+              .isFinished(existingResult.getRunStatus() == RunStatus.COMPLETED)
+              .currentPace(
+                  existingResult.getAvgPace() != null
+                      ? String.format(
+                      "%d:%02d",
+                      existingResult.getAvgPace().intValue(),
+                      (int) (
+                          (existingResult.getAvgPace().doubleValue()
+                              - existingResult.getAvgPace().intValue()) * 60
+                      )
+                  )
+                      : "0:00"
+              )
+              .finishTime(finishTimeMillis)
+              .finishTimeActual(finishTimeActual)
+              .rank(0)  // 임시 순위
+              .build();
+          recoveredRankings.add(dto);
+        } else {
+          // RunningResult가 없으면 포기자로 간주
+          DistanceType distanceType = determineDistanceType(session.getTargetDistance());
+          double targetDistanceMeters = session.getTargetDistance() * 1000.0;
+
+          BattleRankingResDto dto = BattleRankingResDto.builder()
+              .userId(user.getId())
+              .username(user.getName())
+              .totalDistance(0.0)
+              .remainingDistance(targetDistanceMeters)
+              .progressPercent(0.0)
+              .status("GIVE_UP")
+              .isFinished(false)
+              .currentPace("0:00")
+              .rank(0)
+              .build();
+          recoveredRankings.add(dto);
+        }
+      }
+
+      // 거리 기준으로 정렬하여 순위 부여
+      recoveredRankings.sort((a, b) -> Double.compare(b.getTotalDistance(), a.getTotalDistance()));
+      for (int i = 0; i < recoveredRankings.size(); i++) {
+        BattleRankingResDto dto = recoveredRankings.get(i);
+        if (!"GIVE_UP".equals(dto.getStatus())) {
+          dto.setRank(i + 1);
+        }
+      }
+
+      log.info(" DB 복구 완료: sessionId={}, 복구된 참가자={}명", sessionId, recoveredRankings.size());
+      return recoveredRankings;
+
+    } catch (Exception e) {
+      log.error(" DB 복구 실패: sessionId={}", sessionId, e);
+      return Collections.emptyList();
+    }
+  }
+
+  /**
+   * 최소한의 배틀 결과 저장 (Redis/DB 복구 모두 실패한 경우)
+   */
+  private void saveMinimalBattleResults(Long sessionId, LocalDateTime startedAt) {
+    try {
+      MatchSession session = matchSessionRepository.findById(sessionId)
+          .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+
+      List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
+
+      if (sessionUsers.isEmpty()) {
+        log.error(" 참가자 정보도 없음 - 저장 불가: sessionId={}", sessionId);
+        return;
+      }
+
+      DistanceType distanceType = determineDistanceType(session.getTargetDistance());
+
+      for (SessionUser su : sessionUsers) {
+        User user = su.getUser();
+
+        // 최소한의 RunningResult 저장
+        RunningResult minimalResult = RunningResult.builder()
+            .user(user)
+            .course(null)
+            .totalDistance(BigDecimal.ZERO)
+            .totalTime(0)
+            .avgPace(BigDecimal.ZERO)
+            .startedAt(startedAt)
+            .runStatus(RunStatus.GIVE_UP)
+            .splitPace(new ArrayList<>())
+            .runningType(RunningType.ONLINEBATTLE)
+            .build();
+
+        runningResultRepository.save(minimalResult);
+
+        // 최소한의 BattleResult 저장
+        BattleResult minimalBattleResult = BattleResult.builder()
+            .session(session)
+            .user(user)
+            .runningResult(minimalResult)
+            .distanceType(distanceType)
+            .ranking(0)
+            .previousRating(0)
+            .currentRating(0)
+            .build();
+
+        battleResultRepository.save(minimalBattleResult);
+
+        log.warn(" 최소한 데이터 저장: sessionId={}, userId={}, username={}",
+            sessionId, user.getId(), user.getName());
+      }
+
+      log.warn(" 최소한의 데이터 저장 완료: sessionId={}, 참가자={}명",
+          sessionId, sessionUsers.size());
+
+    } catch (Exception e) {
+      log.error(" 최소한 데이터 저장도 실패: sessionId={}", sessionId, e);
+    }
+  }
+
+  /**
+   * 포기자 패널티 계산
+   */
+  private int calculateGiveUpPenalty(DistanceRating rating, DistanceType distanceType) {
+    int k = kFactor(rating.getUser(), distanceType);
+
+    return Math.max(10, (int) Math.round(k * 0.25));
+  }
+
+  /**
+   * K-factor 계산 (DistanceRatingService와 동일한 로직)
+   */
+  private int kFactor(User user, DistanceType distanceType) {
+    long games = battleResultRepository.countByUserAndDistanceType(user, distanceType);
+    if (games < 10) {
+      return 40;
+    }
+    if (games < 30) {
+      return 32;
+    }
+    return 24;
+  }
+
+  /**
+   * 포기자를 위한 새 레이팅 생성
+   */
+  private DistanceRating createNewRatingForGiveUp(User user, DistanceType type) {
+    return distanceRatingRepository.findByUserIdAndDistanceType(user.getId(), type)
+        .orElseGet(() -> distanceRatingRepository.save(
+            DistanceRating.builder()
+                .user(user)
+                .distanceType(type)
+                .build()
+        ));
   }
 
 
@@ -833,7 +1070,7 @@ public class BattleService {
 
     // ✅ 모든 미완주자를 Redis에서 TIMEOUT 상태로 변경
     battleRedisService.setAllUnfinishedToTimeout(sessionId);
-    
+
     // ✅ Redis 업데이트 완료 대기 (200ms)
     try {
       log.info("⏳ Redis 업데이트 반영 대기 중... (200ms)");
@@ -842,12 +1079,12 @@ public class BattleService {
       log.warn("⚠️ 대기 중 인터럽트 발생", e);
       Thread.currentThread().interrupt();
     }
-    
+
     // ✅ 업데이트 확인용 재조회
     List<BattleRankingResDto> updatedRankings = getRankings(sessionId);
     log.info("📊 업데이트 후 재조회 ({}명):", updatedRankings.size());
     for (BattleRankingResDto r : updatedRankings) {
-      log.info("  - rank={}, userId={}, status={}, finished={}", 
+      log.info("  - rank={}, userId={}, status={}, finished={}",
           r.getRank(), r.getUserId(), r.getStatus(), r.getIsFinished());
     }
 
