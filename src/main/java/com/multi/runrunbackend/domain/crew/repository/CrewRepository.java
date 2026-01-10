@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -71,5 +72,10 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
             @Param("closedStatus") CrewRecruitStatus closedStatus,
             Pageable pageable
     );
+
+    /**
+     * 위임 기한이 지난 크루 조회
+     */
+    List<Crew> findAllByRequiresDelegationTrueAndDelegationDeadlineBefore(LocalDateTime deadline);
 
 }

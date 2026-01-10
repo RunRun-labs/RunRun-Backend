@@ -33,4 +33,5 @@ public class BattleUserDto implements Serializable {
   private LocalDateTime startTime;     // 배틀 시작 시각
   private Boolean isFinished;          // 완주 여부
   private LocalDateTime finishTime;    // 완주 시각
+  private String status;               // 상태: RUNNING, FINISHED, TIMEOUT, GIVE_UP
 }

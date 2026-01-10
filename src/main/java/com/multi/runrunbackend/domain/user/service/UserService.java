@@ -44,14 +44,14 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserProfileResDto getUserProfile(
-            Long targetUserId,
-            CustomUser principal
+        Long targetUserId,
+        CustomUser principal
     ) {
 
         userBlockService.validateUserBlockStatus(targetUserId, principal);
 
         User target = userRepository.findById(targetUserId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
         return UserProfileResDto.from(target);
     }
@@ -69,7 +69,7 @@ public class UserService {
     @Transactional
     public void deleteUser(CustomUser principal) {
         User user = getUserByPrincipal(principal);
-        if (user.isDeleted()) {
+        if (user.getIsDeleted()) {
             throw new DuplicateException(ErrorCode.USER_ALREADY_DELETED);
         }
         user.deleteAccount();
@@ -83,7 +83,7 @@ public class UserService {
         String loginId = principal.getLoginId();
 
         return userRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     }
 
 

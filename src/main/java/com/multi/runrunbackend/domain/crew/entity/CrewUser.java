@@ -38,6 +38,10 @@ public class CrewUser extends BaseEntity {
     @Column(name = "role", nullable = false, length = 20)
     private CrewRole role;  // LEADER, SUB_LEADER, STAFF, MEMBER
 
+    @Column(name = "participation_count", nullable = false)
+    @Builder.Default
+    private Integer participationCount = 0;  // 참여 횟수 (기본값 0)
+
     /**
      * @description : create - 크루원 엔티티 생성 정적 팩토리 메서드
      * @filename : CrewUser
@@ -49,6 +53,7 @@ public class CrewUser extends BaseEntity {
         crewUser.crew = crew;
         crewUser.user = user;
         crewUser.role = role;
+        crewUser.participationCount = 0;  // 기본값 0
         return crewUser;
     }
 

@@ -35,76 +35,81 @@ public class JwtConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .sessionManagement(
-                        sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                ).authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/auth/**",
-                                "/login",
-                                "/signup",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/public/**",
-                                "/error",
-                                "/img/**",
-                                "/chat/**",
-                                "/ws/**",
-                                "/myPage/**",
-                                "/friends/**",
-                                "/profile/**",
-                                "/course_auto/**",
-                                "/files/**",
-                                "/challenge/**",
-                                "/course",
-                                "/courseCreate",
-                                "/courseDetail/**",
-                                "/courseUpdate/**",
-                                "/course_manual/**",
-                                "/crews/new",
-                                "/crews/**",
-                                "/match/**",
-                                "/recruit/**",
-                                "/setting/**",
-                                "/terms/**",
-                                "/tts-test",
-                                "/membership/**",
-                                "/payment/pay",
-                                "/payment/history",
-                                "/payment/success",
-                                "/payment/fail",
-                                "/admin/coupon/create",
-                                "/admin/coupon/inquiry",
-                                "/admin/coupon/update/**",
-                                "/admin/coupon/select",
-                                "/admin/coupon-role/inquiry",
-                                "/admin/coupon-role/create",
-                                "/admin/coupon-role/update/**",
-                                "/coupon/my",
-                                "/coupon/event",
-                                "/api/admin/coupons/public/**",
-                                "/points/**",
-                                "/admin/**",
-                                "/api/admin/coupons/public/**",
-                                "/notification",
-                                "/home",
-                                "/feed/**"
-                        ).permitAll()
-                        .requestMatchers(
-                                PathRequest.toStaticResources().atCommonLocations()
-                        ).permitAll()
-                        .anyRequest().authenticated()
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.csrf(AbstractHttpConfigurer::disable)
+        .formLogin(AbstractHttpConfigurer::disable)
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        )
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(
+                "/auth/**",
+                "/login",
+                "/signup",
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/public/**",
+                "/error",
+                "/img/**",
+                "/chat/**",
+                "/ws/**",
 
-                ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                        UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                        exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                                .accessDeniedHandler(jwtAccessDeniedHandler));
+                "/home",
+                "/myPage/**",
+                "/profile/**",
+                "/friends/**",
+                "/setting/**",
+                "/notification",
 
-        return http.build();
+                "/course",
+                "/courseCreate",
+                "/courseDetail/**",
+                "/courseUpdate/**",
+                "/course_auto/**",
+                "/course_manual/**",
 
-    }
+                "/challenge/**",
+                "/crews/new",
+                "/crews/**",
+                "/match/**",
+                "/recruit/**",
+
+                "/feed/**",
+                "/running/**",
+
+                "/terms/**",
+                "/tts-test",
+
+                "/membership/**",
+                "/payment/pay",
+                "/payment/history",
+                "/payment/success",
+                "/payment/fail",
+                "/payment/free-success",
+
+                "/coupon/my",
+                "/coupon/event",
+                "/points/**",
+
+                "/api/admin/coupons/public/**",
+                "/admin/**"
+            ).permitAll()
+            .requestMatchers(
+                PathRequest.toStaticResources().atCommonLocations()
+            ).permitAll()
+            .anyRequest().authenticated()
+        )
+        .addFilterBefore(
+            new JwtFilter(tokenProvider, redisTemplate),
+            UsernamePasswordAuthenticationFilter.class
+        )
+        .exceptionHandling(exception -> exception
+            .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+            .accessDeniedHandler(jwtAccessDeniedHandler)
+        );
+
+    return http.build();
+}
 
 }

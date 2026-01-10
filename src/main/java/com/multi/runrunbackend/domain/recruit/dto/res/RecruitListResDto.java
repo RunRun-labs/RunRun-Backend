@@ -30,8 +30,11 @@ public class RecruitListResDto {
   private Integer ageMax;
   private Double latitude;
   private Double longitude;
+  private Boolean isAuthor;
 
-  public static RecruitListResDto from(Recruit recruit, Double distance) {
+  public static RecruitListResDto from(Recruit recruit, Double distance, Long currentUserId) {
+    boolean isAuthor = currentUserId != null && recruit.getUser().getId().equals(currentUserId);
+    
     return RecruitListResDto.builder()
         .recruitId(recruit.getId())
         .title(recruit.getTitle())
@@ -48,6 +51,7 @@ public class RecruitListResDto {
         .ageMax(recruit.getAgeMax())
         .latitude(recruit.getLatitude())
         .longitude(recruit.getLongitude())
+        .isAuthor(isAuthor)
         .build();
   }
 }

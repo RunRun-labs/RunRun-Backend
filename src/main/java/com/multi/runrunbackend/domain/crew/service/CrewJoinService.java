@@ -18,6 +18,8 @@ import com.multi.runrunbackend.domain.crew.entity.CrewUser;
 import com.multi.runrunbackend.domain.crew.repository.CrewJoinRequestRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
+import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
+import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
 import com.multi.runrunbackend.domain.point.service.PointService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
@@ -47,8 +49,10 @@ public class CrewJoinService {
     private final CrewUserRepository crewUserRepository;
     private final CrewJoinRequestRepository crewJoinRequestRepository;
     private final UserRepository userRepository;
+    private final CrewChatService crewChatService;
     private final PointService pointService;
     private final FileStorage fileStorage;
+    private final MembershipRepository membershipRepository;
 
     private static final int CREW_JOIN_POINT = 100;
 
@@ -157,7 +161,7 @@ public class CrewJoinService {
      * @param crewId        크루 ID
      * @param principal     가입 신청하는 회원
      * @param joinRequestId 처리할 가입 신청 ID
-     * @description : 크루장이 가입 신청을 승인 (승인 시 크루원으로 추가) -> 100P 차감
+     * @description : 크루장이 가입 신청을 승인 (승인 시 크루원으로 추가)
      */
     @Transactional
     public void approveJoinRequest(Long crewId, CustomUser principal, Long joinRequestId) {
@@ -179,28 +183,38 @@ public class CrewJoinService {
             throw new BusinessException(ErrorCode.JOIN_REQUEST_NOT_FOUND);
         }
 
-        // 승인 시점에 다시 1인 1크루 정책 확인 (동시성 이슈 방지)
-        validateNotInAnotherCrew(joinRequest.getUser().getId());
+        Long userId = joinRequest.getUser().getId();
 
-        // 포인트 차감(100p)
-        pointService.deductPointsForCrewJoin(
-                joinRequest.getUser().getId(),
-                CREW_JOIN_POINT,
-                "CREW_JOIN"
-        );
+        // 승인 시점에 다시 1인 1크루 정책 확인 (동시성 이슈 방지)
+        validateNotInAnotherCrew(userId);
 
         // 승인 처리
         joinRequest.approve();
 
+        // 포인트 차감(100p)
+        pointService.deductPointsForCrewJoin(
+                userId,
+                CREW_JOIN_POINT,
+                "CREW_JOIN"
+        );
+
+        // 재검증 - 포인트 차감 중 다른 크루 승인된 경우 감지
+        if (crewUserRepository.existsByUserIdAndIsDeletedFalse(userId)) {
+            throw new BusinessException(ErrorCode.ALREADY_JOINED_CREW);
+        }
+
         // 해당 사용자의 다른 크루 대기 중인 신청 모두 취소
-        cancelOtherPendingRequestsForUser(joinRequest.getUser().getId(), crewId);
+        cancelOtherPendingRequestsForUser(userId, crewId);
 
         // 크루원으로 추가
         CrewUser crewUser = CrewUser.create(crew, joinRequest.getUser(), CrewRole.MEMBER);
         crewUserRepository.save(crewUser);
 
+        // 채팅방 참여자 추가
+        crewChatService.addUserToChatRoom(crewId, joinRequest.getUser());
+
         log.info("크루 가입 승인 완료 - crewId: {}, newMemberId: {}",
-                crewId, joinRequest.getUser().getId());
+                crewId, userId);
 
     }
 
@@ -254,9 +268,36 @@ public class CrewJoinService {
         CrewUser crewUser = crewUserRepository.findByCrewAndUserAndIsDeletedFalse(crew, user)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
 
-        // 크루장은 탈퇴 불가
+        // 크루장인 경우 특별 처리
         if (crewUser.getRole().equals(CrewRole.LEADER)) {
-            throw new BusinessException(ErrorCode.CANNOT_LEAVE_AS_LEADER);
+            // 부크루장 중 멤버십 있는 사람 찾기
+            List<CrewUser> subLeaders = crewUserRepository
+                    .findByCrewAndRoleAndIsDeletedFalse(crew, CrewRole.SUB_LEADER);
+
+            CrewUser newLeader = null;
+            for (CrewUser subLeader : subLeaders) {
+                // 멤버십 확인
+                boolean hasPremium = membershipRepository
+                        .existsByUser_IdAndMembershipStatusIn(
+                                subLeader.getUser().getId(),
+                                List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
+                        );
+
+                if (hasPremium) {
+                    newLeader = subLeader;
+                    break;
+                }
+            }
+
+            if (newLeader == null) {
+                // 위임할 사람 없음 -> 탈퇴 불가
+                throw new BusinessException(ErrorCode.CANNOT_LEAVE_WITHOUT_SUCCESSOR);
+            }
+
+            // 자동 위임
+            newLeader.changeRole(CrewRole.LEADER);
+            log.info("크루장 자동 위임 - crewId: {}, 기존: {}, 새로운: {}",
+                    crewId, user.getId(), newLeader.getUser().getId());
         }
 
         // CrewUser soft delete 처리
@@ -266,6 +307,9 @@ public class CrewJoinService {
         crewJoinRequestRepository.findByCrewAndUserAndJoinStatus(crew, user, JoinStatus.APPROVED)
                 .ifPresent(joinRequest -> joinRequest.delete());
 
+        // 채팅방 참여자 제거
+        crewChatService.removeUserFromChatRoom(crewId, user);
+
         log.info("크루 탈퇴 완료 - crewId: {}, userId: {}, role: {}",
                 crewId, user.getId(), crewUser.getRole());
     }
@@ -273,7 +317,7 @@ public class CrewJoinService {
     /**
      * @param crewId    크루 ID
      * @param principal 조회하는 사용자
-     * @description : 크루원 목록 조회 (역할 순서로 정렬: LEADER -> SUB_LEADER -> STAFF -> MEMBER)
+     * @description : 크루원 목록 조회 (역할 순서로 정렬: LEADER -> SUB_LEADER -> STAFF -> MEMBER, 멤버십 정보 포함)
      */
     public List<CrewUserResDto> getCrewUserList(Long crewId, CustomUser principal) {
         // 크루 조회
@@ -289,22 +333,22 @@ public class CrewJoinService {
         List<Object[]> results = crewUserRepository
                 .findAllWithParticipationCountAndLastActivity(crewId);
 
-        // DTO 변환 + S3 URL 변환
+        // DTO 변환 + S3 URL 변환 + 멤버십 정보 추가
         return results.stream()
                 .map(result -> {
                     CrewUser crewUser = (CrewUser) result[0];
                     Long participationCount = (Long) result[1];
                     LocalDateTime lastActivityDate = (LocalDateTime) result[2];
 
-                    // DTO 생성
-                    CrewUserResDto dto = CrewUserResDto.fromEntity(
-                            crewUser,
-                            participationCount.intValue(),
-                            lastActivityDate
-                    );
+                    // 멤버십 확인
+                    boolean hasMembership = membershipRepository
+                            .existsByUser_IdAndMembershipStatusIn(
+                                    crewUser.getUser().getId(),
+                                    List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
+                            );
 
                     // S3 URL 변환
-                    String profileImageUrl = dto.getProfileImageUrl();
+                    String profileImageUrl = crewUser.getUser().getProfileImageUrl();
                     if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
                         // S3 key면 HTTPS URL로 변환
                         if (!profileImageUrl.startsWith("http")) {
@@ -312,15 +356,16 @@ public class CrewJoinService {
                         }
                     }
 
-                    // 변환된 URL로 새 DTO 생성
+                    // DTO 생성 (멤버십 정보 포함)
                     return CrewUserResDto.builder()
-                            .userId(dto.getUserId())
-                            .userName(dto.getUserName())
+                            .userId(crewUser.getUser().getId())
+                            .userName(crewUser.getUser().getName())
                             .profileImageUrl(profileImageUrl)
-                            .role(dto.getRole())
-                            .createdAt(dto.getCreatedAt())
-                            .participationCount(dto.getParticipationCount())
-                            .lastActivityDate(dto.getLastActivityDate())
+                            .role(crewUser.getRole())
+                            .createdAt(crewUser.getCreatedAt())
+                            .participationCount(participationCount.intValue())
+                            .lastActivityDate(lastActivityDate)
+                            .hasMembership(hasMembership)
                             .build();
                 })
                 .toList();
@@ -359,6 +404,17 @@ public class CrewJoinService {
             // 일반 멤버는 크루장이 될 수 없음 (부크루장/운영진만 가능)
             if (targetCrewUser.getRole() == CrewRole.MEMBER) {
                 throw new BusinessException(ErrorCode.CANNOT_ASSIGN_LEADER_TO_MEMBER);
+            }
+
+            // 멤버십 확인
+            boolean hasPremium = membershipRepository
+                    .existsByUser_IdAndMembershipStatusIn(
+                            targetUser.getId(),
+                            List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
+                    );
+
+            if (!hasPremium) {
+                throw new BusinessException(ErrorCode.LEADER_REQUIRES_PREMIUM);
             }
 
             // 기존 크루장 찾기

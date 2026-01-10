@@ -8,7 +8,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 /**
  * @author : changwoo
- * @description : Please explain the class!!!
+ * @description : WebSocket 설정
  * @filename : WebSocketConfig
  * @since : 2025-12-17 수요일
  */
@@ -28,5 +28,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         .setAllowedOriginPatterns("*")
         .withSockJS();
   }
-
 }

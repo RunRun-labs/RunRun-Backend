@@ -96,4 +96,33 @@ public interface CrewUserRepository extends JpaRepository<CrewUser, Long> {
      * @description : 사용자가 가입한 크루 정보 조회
      */
     Optional<CrewUser> findByUserIdAndIsDeletedFalse(Long userId);
+
+    /**
+     * @param crewId 크루 ID
+     * @param userId 사용자 ID
+     * @description : 크루 ID와 사용자 ID로 크루원 조회 (채팅방 역할 표시용)
+     */
+    Optional<CrewUser> findByCrewIdAndUserIdAndIsDeletedFalse(Long crewId, Long userId);
+
+
+    /**
+     * @description : 특정 사용자가 특정 역할로 있는 크루원 정보 조회
+     */
+    Optional<CrewUser> findByUserAndRoleAndIsDeletedFalse(User user, CrewRole role);
+
+    /**
+     * @description : 특정 크루의 특정 역할 크루원 목록 조회
+     */
+    List<CrewUser> findByCrewAndRoleAndIsDeletedFalse(Crew crew, CrewRole role);
+
+    /**
+     * @description : 특정 크루의 모든 크루원 조회
+     */
+    List<CrewUser> findByCrewAndIsDeletedFalse(Crew crew);
+
+    /**
+     * 사용자 ID와 역할로 크루원 조회 (삭제되지 않은 것만)
+     */
+    Optional<CrewUser> findByUserIdAndRoleAndIsDeletedFalse(Long userId, CrewRole role);
+
 }

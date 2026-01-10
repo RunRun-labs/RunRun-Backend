@@ -27,46 +27,83 @@
     <h1 class="header-title">온라인 매칭</h1>
   </header>
 
+  <!-- 안내 박스 -->
+  <div class="info-box">
+    <div class="info-box-icon">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+           xmlns="http://www.w3.org/2000/svg">
+        <path
+            d="M10 2C5.58 2 2 5.58 2 10C2 14.42 5.58 18 10 18C14.42 18 18 14.42 18 10C18 5.58 14.42 2 10 2ZM10 15C9.45 15 9 14.55 9 14C9 13.45 9.45 13 10 13C10.55 13 11 13.45 11 14C11 14.55 10.55 15 10 15ZM11 11H9V6H11V11Z"
+            fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="info-box-content">
+      <h3 class="info-box-title">온라인 매칭</h3>
+      <p class="info-box-text">원하는 거리와 인원을 선택하면 비슷한 조건의 러너들과 함께 달릴 수 있어요</p>
+    </div>
+  </div>
+
   <main class="match-content">
     <section class="match-settings">
-    <div class="setting-group">
-      <h2 class="setting-title">거리 선택</h2>
-      <div class="option-buttons">
-        <button class="option-card" data-value="KM_3" data-type="distance" type="button">
-          <span class="card-value">3km</span>
-          <span class="card-tip">약 180kcal</span>
-        </button>
-        <button class="option-card" data-value="KM_5" data-type="distance" type="button">
-          <span class="card-value">5km</span>
-          <span class="card-tip">약 300kcal</span>
-        </button>
-        <button class="option-card" data-value="KM_10" data-type="distance" type="button">
-          <span class="card-value">10km</span>
-          <span class="card-tip">약 600kcal</span>
-        </button>
+      <div class="setting-group" data-type="distance">
+        <h2 class="setting-title">거리를 선택해주세요</h2>
+        <div class="option-buttons">
+          <button class="option-card" data-value="KM_3" data-type="distance" type="button">
+            <span class="card-value">3km</span>
+          </button>
+          <button class="option-card" data-value="KM_5" data-type="distance" type="button">
+            <span class="card-value">5km</span>
+          </button>
+          <button class="option-card" data-value="KM_10" data-type="distance" type="button">
+            <span class="card-value">10km</span>
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="setting-group">
-      <h2 class="setting-title">인원 선택</h2>
-      <div class="option-buttons">
-        <button class="option-card" data-value="2" data-type="participant" type="button">
-          <span class="card-value">2명</span>
-        </button>
-        <button class="option-card" data-value="3" data-type="participant" type="button">
-          <span class="card-value">3명</span>
-        </button>
-        <button class="option-card" data-value="4" data-type="participant" type="button">
-          <span class="card-value">4명</span>
-        </button>
+      <div class="setting-group" data-type="participant">
+        <h2 class="setting-title">인원을 선택해주세요</h2>
+        <div class="option-buttons">
+          <button class="option-card" data-value="2" data-type="participant" type="button">
+            <span class="card-value">2명</span>
+          </button>
+          <button class="option-card" data-value="3" data-type="participant" type="button">
+            <span class="card-value">3명</span>
+          </button>
+          <button class="option-card" data-value="4" data-type="participant" type="button">
+            <span class="card-value">4명</span>
+          </button>
+        </div>
       </div>
-    </div>
     </section>
 
-    <button class="start-button" id="startButton" type="button" disabled>
-      매칭 시작
-    </button>
+    <!-- 선택 요약 카드 -->
+    <div class="selection-summary" id="selectionSummary" style="display: none;">
+      <div class="summary-item">
+        <span class="summary-label">거리</span>
+        <span class="summary-value" id="selectedDistance">-</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <span class="summary-label">인원</span>
+        <span class="summary-value" id="selectedParticipant">-</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <span class="summary-label">레이팅</span>
+        <span class="summary-value" id="selectedRating">-</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <span class="summary-label">티어</span>
+        <span class="summary-value" id="selectedTier">-</span>
+      </div>
+    </div>
   </main>
+
+  <!-- 매칭 시작 버튼 (하단 고정) -->
+  <button class="start-button" id="startButton" type="button" disabled>
+    매칭 시작
+  </button>
 </div>
 
 <!-- 매칭 중 오버레이 -->
@@ -74,41 +111,45 @@
   <div class="radar-background">
     <div class="radar-grid"></div>
   </div>
-  
+
   <div class="matching-content">
     <!-- 레이더 파장 애니메이션 -->
     <div class="radar-container">
       <div class="radar-ripple"></div>
       <div class="radar-ripple"></div>
       <div class="radar-ripple"></div>
-      
+
       <!-- 중심 유저 프로필 -->
       <div class="center-profile">
         <div class="profile-image-wrapper">
-          <img id="userProfileImage" class="profile-image" src="" alt="프로필" />
-          <div class="profile-label">YOU</div>
+          <img id="userProfileImage" class="profile-image" src="" alt="프로필"/>
+          <div class="profile-label" id="userProfileLabel">
+            <span class="opponent-name">YOU</span>
+            <span class="opponent-tier" id="userTier">토끼</span>
+          </div>
         </div>
       </div>
-      
+
       <!-- 상대방 프로필들 (MATCH FOUND 시 표시) -->
       <div class="opponent-profiles" id="opponentProfiles"></div>
-      
+
       <!-- 연결선 (MATCH FOUND 시 표시) -->
       <svg class="connection-lines" id="connectionLines" style="display: none;">
-        <line class="connection-line" x1="50%" y1="50%" x2="0" y2="0" />
+        <line class="connection-line" x1="50%" y1="50%" x2="0" y2="0"/>
       </svg>
     </div>
-    
+
     <!-- 상태 텍스트 -->
     <div class="status-section">
       <h2 class="status-title" id="statusTitle">SEARCHING FOR PLAYERS...</h2>
-      <p class="status-subtitle" id="statusSubtitle">Finding users with similar skill and latency.</p>
+      <p class="status-subtitle" id="statusSubtitle">Finding users with similar skill and
+        latency.</p>
       <div class="match-found-section" id="matchFoundSection" style="display: none;">
         <div class="match-found-text" id="matchFoundText">MATCH FOUND!</div>
         <div class="countdown-text" id="countdownText"></div>
       </div>
     </div>
-    
+
     <!-- 취소 버튼 (WAITING 상태일 때만 표시) -->
     <button class="cancel-button" id="cancelButton" type="button">
       매칭 취소
@@ -121,6 +162,7 @@
     th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/online-match.js" th:src="@{/js/online-match.js}"></script>
 </body>
 </html>

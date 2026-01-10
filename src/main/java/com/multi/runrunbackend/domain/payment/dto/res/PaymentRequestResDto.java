@@ -22,4 +22,5 @@ public class PaymentRequestResDto {
     private String customerName;
     private String customerEmail;
     private String customerKey;
+    private Boolean isFreePayment;
 }

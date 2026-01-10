@@ -33,5 +33,10 @@ public interface OfflineChatMessageRepository extends MongoRepository<OfflineCha
    */
   int countBySessionId(Long sessionId);
 
+  /**
+   * 특정 세션의 모든 메시지 삭제 (디버깅용)
+   */
+  int deleteBySessionId(Long sessionId);
+
 }
 

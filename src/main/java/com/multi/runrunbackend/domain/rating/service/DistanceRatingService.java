@@ -3,14 +3,17 @@ package com.multi.runrunbackend.domain.rating.service;
 import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.entity.BattleResult;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.repository.BattleResultRepository;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
+import com.multi.runrunbackend.domain.rating.dto.res.DistanceRatingResDto;
 import com.multi.runrunbackend.domain.rating.entity.DistanceRating;
 import com.multi.runrunbackend.domain.rating.repository.DistanceRatingRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
+import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -18,6 +21,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -34,6 +38,7 @@ public class DistanceRatingService {
   private final DistanceRatingRepository distanceRatingRepository;
   private final BattleResultRepository battleResultRepository;
   private final MatchSessionRepository matchSessionRepository;
+  private final UserRepository userRepository;
 
   /**
    * 대결 종료 후 점수 정산 (2~4인 가변 대응) - 기대승률(Elo 확장) 기반
@@ -45,16 +50,28 @@ public class DistanceRatingService {
     MatchSession session = matchSessionRepository.findById(sessionId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
-    results.sort(Comparator.comparingInt(RunningResult::getTotalTime));
+    // ✅ GIVE_UP만 제외 (COMPLETED + TIME_OUT 포함)
+    List<RunningResult> rankedResults = results.stream()
+        .filter(r -> r.getRunStatus() != com.multi.runrunbackend.domain.match.constant.RunStatus.GIVE_UP)
+        .collect(java.util.stream.Collectors.toList());
 
-    int n = results.size();
+    int n = rankedResults.size();
     if (n == 0) {
+      log.info("✅ 레이팅 계산 대상 없음: sessionId={}", sessionId);
       return;
     }
 
+    if (n < 2) {
+      log.info("✅ 레이팅 계산 2명 미만: sessionId={}, 대상={}명", sessionId, n);
+      return;
+    }
+
+    // ✅ 순위는 이미 BattleService에서 부여되어 있으므로 재정렬 불필요
+    List<RunningResult> resultsToProcess = rankedResults;
+
     List<DistanceRating> ratings = new ArrayList<>(n);
 
-    for (RunningResult rr : results) {
+    for (RunningResult rr : resultsToProcess) {
       User user = rr.getUser();
       DistanceRating rating = distanceRatingRepository
           .findByUserIdAndDistanceType(user.getId(), distanceType)
@@ -84,7 +101,7 @@ public class DistanceRatingService {
     List<BattleResult> battleResultList = new ArrayList<>(n);
 
     for (int i = 0; i < n; i++) {
-      RunningResult rr = results.get(i);
+      RunningResult rr = resultsToProcess.get(i);
       DistanceRating myRating = ratings.get(i);
       int rank = i + 1;
 
@@ -108,7 +125,7 @@ public class DistanceRatingService {
 
     battleResultRepository.saveAll(battleResultList);
 
-    log.info("Elo 정산 - SessionID: {}, 인원: {}", sessionId, n);
+    log.info("Elo 정산 완료 - SessionID: {}, 레이팅 계산 대상: {}명 (COMPLETED + TIME_OUT)", sessionId, n);
   }
 
   /**
@@ -188,6 +205,7 @@ public class DistanceRatingService {
     return Math.max(min, Math.min(max, value));
   }
 
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   private DistanceRating createNewRating(User user, DistanceType type) {
     return distanceRatingRepository.save(
         DistanceRating.builder()
@@ -195,5 +213,22 @@ public class DistanceRatingService {
             .distanceType(type)
             .build()
     );
+  }
+
+
+  @Transactional(readOnly = true)
+  public DistanceRatingResDto getUserDistanceRating(CustomUser principal,
+      DistanceType distanceType) {
+    User user = userRepository.findByLoginId(principal.getLoginId())
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+    DistanceRating rating = distanceRatingRepository
+        .findByUserIdAndDistanceType(user.getId(), distanceType)
+        .orElseGet(() -> createNewRating(user, distanceType));
+
+    return DistanceRatingResDto.builder()
+        .currentRating(rating.getCurrentRating())
+        .currentTier(rating.getCurrentTier())
+        .build();
   }
 }

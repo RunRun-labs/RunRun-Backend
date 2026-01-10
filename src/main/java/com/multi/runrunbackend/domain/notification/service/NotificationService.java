@@ -15,6 +15,9 @@ import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -72,7 +75,7 @@ public class NotificationService {
     long timeoutMs = 60L * 60L * 1000L; // 1시간
     SseEmitter emitter = new SseEmitter(timeoutMs);
 
-    sseEmitterRepository.add(receiverId, emitter);
+    sseEmitterRepository.save(receiverId, emitter);
 
     emitter.onCompletion(() -> sseEmitterRepository.remove(receiverId, emitter));
     emitter.onTimeout(() -> sseEmitterRepository.remove(receiverId, emitter));
@@ -84,10 +87,58 @@ public class NotificationService {
           .name("connected")
           .data("ok"));
     } catch (IOException e) {
+      log.debug("[SSE Init FAILED] receiverId={}, error={}", receiverId, e.getClass().getSimpleName());
+      sseEmitterRepository.remove(receiverId, emitter);
+    } catch (RuntimeException e) {
+      // IllegalStateException, AsyncRequestNotUsableException 등 모든 RuntimeException 처리
+      log.debug("[SSE Init FAILED] receiverId={}, error={}", receiverId, e.getClass().getSimpleName());
       sseEmitterRepository.remove(receiverId, emitter);
     }
 
+    // Heartbeat 주기 전송 (20초마다)
+    scheduleHeartbeat(receiverId, emitter);
+
+    log.info("[SSE] subscribe userId={}, emitterHash={}",
+        receiverId, emitter.hashCode());
     return emitter;
+  }
+
+  /**
+   * SSE 연결에 대해 주기적으로 heartbeat를 전송하여 연결을 유지합니다. 프록시나 브라우저가 연결을 끊지 않도록 합니다.
+   */
+  private void scheduleHeartbeat(Long receiverId, SseEmitter emitter) {
+    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    scheduler.scheduleAtFixedRate(() -> {
+      try {
+        // emitter가 여전히 유효한지 확인
+        SseEmitter currentEmitter = sseEmitterRepository.get(receiverId);
+        if (currentEmitter == null || currentEmitter != emitter) {
+          log.debug("[SSE Heartbeat] receiverId={}, emitter changed or removed, stopping heartbeat",
+              receiverId);
+          scheduler.shutdown();
+          return;
+        }
+
+        emitter.send(SseEmitter.event()
+            .id("heartbeat-" + Instant.now().toEpochMilli())
+            .name("heartbeat")
+            .data("ping"));
+
+        log.debug("[SSE Heartbeat] receiverId={}", receiverId);
+      } catch (IOException e) {
+        log.debug("[SSE Heartbeat FAILED] receiverId={}, removing emitter, error={}",
+            receiverId, e.getClass().getSimpleName());
+        sseEmitterRepository.remove(receiverId, emitter);
+        scheduler.shutdown();
+      } catch (RuntimeException e) {
+        // IllegalStateException, AsyncRequestNotUsableException 등 모든 RuntimeException 처리
+        log.debug("[SSE Heartbeat FAILED] receiverId={}, removing emitter, error={}",
+            receiverId, e.getClass().getSimpleName());
+        sseEmitterRepository.remove(receiverId, emitter);
+        scheduler.shutdown();
+      }
+    }, 20, 20, TimeUnit.SECONDS); // 20초마다 전송
   }
 
 
