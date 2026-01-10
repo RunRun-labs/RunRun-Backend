@@ -327,7 +327,8 @@ public class PointService {
         int points = (int) (distanceMeters / 100.0);
 
         if (points <= 0) {
-            return;  // 0P면 적립 안 함
+            log.warn("[포인트 0 - 적립 안 함] userId={}, distanceMeters={}", userId, distanceMeters);
+            return;
         }
 
         User user = getUserById(userId);
