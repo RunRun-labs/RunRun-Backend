@@ -4,6 +4,15 @@ import com.multi.runrunbackend.common.exception.custom.FileUploadException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.util.FileNameGenerator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -13,19 +22,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
 
 /**
  * @author : kyungsoo
@@ -35,7 +31,6 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
  */
 
 @Component
-@Profile("s3")
 @RequiredArgsConstructor
 @Slf4j
 public class S3FileStorage implements FileStorage {
@@ -63,20 +58,20 @@ public class S3FileStorage implements FileStorage {
                 String sha256 = sha256Hex(bytes);
 
                 PutObjectRequest req = PutObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .contentType(safeContentType(file))
-                    .metadata(Map.of("sha256", sha256))
-                    .build();
+                        .bucket(bucket)
+                        .key(key)
+                        .contentType(safeContentType(file))
+                        .metadata(Map.of("sha256", sha256))
+                        .build();
 
                 s3.putObject(req, RequestBody.fromBytes(bytes));
             } else {
                 // 큰 파일은 스트리밍 업로드(해시 비교 생략)
                 PutObjectRequest req = PutObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .contentType(safeContentType(file))
-                    .build();
+                        .bucket(bucket)
+                        .key(key)
+                        .contentType(safeContentType(file))
+                        .build();
 
                 try (InputStream in = file.getInputStream()) {
                     s3.putObject(req, RequestBody.fromInputStream(in, file.getSize()));
@@ -89,7 +84,7 @@ public class S3FileStorage implements FileStorage {
             throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
         } catch (S3Exception e) {
             log.warn("S3 업로드 실패: {}",
-                e.awsErrorDetails() != null ? e.awsErrorDetails().errorMessage() : e.getMessage());
+                    e.awsErrorDetails() != null ? e.awsErrorDetails().errorMessage() : e.getMessage());
             throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
         } catch (Exception e) {
             throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
@@ -98,7 +93,7 @@ public class S3FileStorage implements FileStorage {
 
     @Override
     public String uploadIfChanged(MultipartFile file, FileDomainType domainType, Long refId,
-        String existingUrl) {
+                                  String existingUrl) {
         if (file == null || file.isEmpty()) {
             return existingUrl;
         }
@@ -129,9 +124,9 @@ public class S3FileStorage implements FileStorage {
             String oldSha = null;
             try {
                 var head = s3.headObject(HeadObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(existingKey)
-                    .build());
+                        .bucket(bucket)
+                        .key(existingKey)
+                        .build());
                 oldSha = head.metadata() != null ? head.metadata().get("sha256") : null;
             } catch (NoSuchKeyException e) {
                 return upload(file, domainType, refId);
@@ -167,9 +162,9 @@ public class S3FileStorage implements FileStorage {
     private void safeDelete(String key) {
         try {
             s3.deleteObject(DeleteObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build());
+                    .bucket(bucket)
+                    .key(key)
+                    .build());
         } catch (S3Exception e) {
 
             throw new FileUploadException(ErrorCode.FILE_DELETE_FAILED);
@@ -179,8 +174,8 @@ public class S3FileStorage implements FileStorage {
     private String buildKey(FileDomainType domainType, Long refId, String fileName) {
         // uploads/{domainDir}/{refId}/{yyyyMMdd}/{fileName}
         String date = DateTimeFormatter.ofPattern("yyyyMMdd")
-            .withZone(ZoneId.of("Asia/Seoul"))
-            .format(Instant.now());
+                .withZone(ZoneId.of("Asia/Seoul"))
+                .format(Instant.now());
 
         return "uploads/" + domainType.getDir() + "/" + refId + "/" + date + "/" + fileName;
     }
