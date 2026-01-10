@@ -11,8 +11,6 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.chat.repository.OfflineChatMessageRepository;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.course.repository.CourseRepository;
-import com.multi.runrunbackend.domain.match.constant.RunStatus;
-import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.constant.Tier;
@@ -20,7 +18,6 @@ import com.multi.runrunbackend.domain.match.dto.req.SoloRunStartReqDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingParticipantDto;
-import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
@@ -48,8 +45,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -278,28 +273,28 @@ public class MatchSessionService {
     DistanceType distanceType = determineDistanceType(session.getTargetDistance());
 
     // 참가자 DTO 변환
-        List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
-            .map(su -> {
-                User user = su.getUser();
+    List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
+        .map(su -> {
+          User user = su.getUser();
 
-              // 티어 정보 조회
-              Tier tier =
-                  distanceRatingRepository.findByUserIdAndDistanceType(user.getId(),
-                          distanceType)
-                      .map(DistanceRating::getCurrentTier)
-                      .orElse(Tier.거북이);
+          // 티어 정보 조회
+          Tier tier =
+              distanceRatingRepository.findByUserIdAndDistanceType(user.getId(),
+                      distanceType)
+                  .map(DistanceRating::getCurrentTier)
+                  .orElse(Tier.거북이);
 
-                return MatchWaitingParticipantDto.builder()
-                    .userId(user.getId())
-                    .name(user.getName())
-                    .profileImage(user.getProfileImageUrl())
-                    .isReady(su.isReady())
-                    .isHost(user.getId().equals(hostUserId))
-                    .avgPace(formatAveragePace(user.getAveragePace()))  // ✅ User의 averagePace 사용
-                    .tier(tier)
-                    .build();
-            })
-            .collect(Collectors.toList());
+          return MatchWaitingParticipantDto.builder()
+              .userId(user.getId())
+              .name(user.getName())
+              .profileImage(user.getProfileImageUrl())
+              .isReady(su.isReady())
+              .isHost(user.getId().equals(hostUserId))
+              .avgPace(formatAveragePace(user.getAveragePace()))  // ✅ User의 averagePace 사용
+              .tier(tier)
+              .build();
+        })
+        .collect(Collectors.toList());
 
     // Ready 카운트
     long readyCount = sessionUsers.stream().filter(SessionUser::isReady).count();
@@ -374,36 +369,36 @@ public class MatchSessionService {
     return session.getId();
   }
 
-  public Slice<RunningRecordResDto> getMyRunningRecords(CustomUser principal,
-      RunningResultFilterType filterType, Pageable pageable) {
-    User user = getUser(principal);
-
-    BigDecimal min = filterType != null ? switch (filterType) {
-      case UNDER_3 -> BigDecimal.ZERO;
-      case BETWEEN_3_5 -> BigDecimal.valueOf(3.0);
-      case BETWEEN_5_10 -> BigDecimal.valueOf(5.0);
-      case OVER_10 -> BigDecimal.valueOf(10.0);
-      case ALL -> null;
-    } : null;
-
-    BigDecimal max = filterType != null ? switch (filterType) {
-      case UNDER_3 -> BigDecimal.valueOf(3.0);
-      case BETWEEN_3_5 -> BigDecimal.valueOf(5.0);
-      case BETWEEN_5_10 -> BigDecimal.valueOf(10.0);
-      case OVER_10 -> null;
-      case ALL -> null;
-    } : null;
-
-    Slice<RunningResult> resultSlice = runningResultRepository.findMySoloRecordsByDistance(
-        user.getId(),
-        RunStatus.COMPLETED,
-        min,
-        max,
-        pageable
-    );
-
-    return resultSlice.map(RunningRecordResDto::from);
-  }
+//  public Slice<RunningRecordResDto> getMyRunningRecords(CustomUser principal,
+//      RunningResultFilterType filterType, Pageable pageable) {
+//    User user = getUser(principal);
+//
+//    BigDecimal min = filterType != null ? switch (filterType) {
+//      case UNDER_3 -> BigDecimal.ZERO;
+//      case BETWEEN_3_5 -> BigDecimal.valueOf(3.0);
+//      case BETWEEN_5_10 -> BigDecimal.valueOf(5.0);
+//      case OVER_10 -> BigDecimal.valueOf(10.0);
+//      case ALL -> null;
+//    } : null;
+//
+//    BigDecimal max = filterType != null ? switch (filterType) {
+//      case UNDER_3 -> BigDecimal.valueOf(3.0);
+//      case BETWEEN_3_5 -> BigDecimal.valueOf(5.0);
+//      case BETWEEN_5_10 -> BigDecimal.valueOf(10.0);
+//      case OVER_10 -> null;
+//      case ALL -> null;
+//    } : null;
+//
+//    Slice<RunningResult> resultSlice = runningResultRepository.findMySoloRecordsByDistance(
+//        user.getId(),
+//        RunStatus.COMPLETED,
+//        min,
+//        max,
+//        pageable
+//    );
+//
+//    return resultSlice.map(RunningRecordResDto::from);
+//  }
 
   @Transactional
   public Long createSoloSession(CustomUser principal, SoloRunStartReqDto reqDto) {
@@ -507,6 +502,7 @@ public class MatchSessionService {
 
   /**
    * 평균 페이스를 MM:SS 형식으로 변환
+   *
    * @param averagePace 평균 페이스 (BigDecimal, 분/km)
    * @return "MM:SS" 형식의 문자열 (null이면 "-")
    */
