@@ -4,10 +4,13 @@ import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.TokenException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.friend.entity.Friend;
 import com.multi.runrunbackend.domain.friend.repository.FriendRepository;
+import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.dto.res.ProfileRunningHistoryResDto;
+import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -20,6 +23,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
 
 /**
  *
@@ -47,17 +55,37 @@ public class ProfileRunningHistoryService {
     @Transactional(readOnly = true)
     public Slice<ProfileRunningHistoryResDto> getMyRunningRecords(
             CustomUser principal,
+            LocalDate startDate,
+            LocalDate endDate,
             Pageable pageable
     ) {
         User me = getUserByPrincipal(principal);
 
-        return runningResultRepository
-                .findByUserAndRunStatusInAndIsDeletedFalse(
-                        me,
-                        VISIBLE_STATUSES,
-                        pageable
-                )
-                .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        java.time.LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
+        java.time.LocalDateTime end = (endDate != null) ? endDate.atTime(java.time.LocalTime.MAX) : null;
+
+        // 날짜 필터가 있는 경우 날짜 필터링 쿼리 사용, 없으면 기본 쿼리 사용
+        if (start != null || end != null) {
+            return runningResultRepository
+                    .findMyRecordsByStatuses(
+                            me.getId(),
+                            VISIBLE_STATUSES,
+                            null, // minDistance
+                            null, // maxDistance
+                            start,
+                            end,
+                            pageable
+                    )
+                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        } else {
+            return runningResultRepository
+                    .findByUserAndRunStatusInAndIsDeletedFalse(
+                            me,
+                            VISIBLE_STATUSES,
+                            pageable
+                    )
+                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        }
     }
 
     /**
@@ -67,6 +95,8 @@ public class ProfileRunningHistoryService {
     public Slice<ProfileRunningHistoryResDto> getUserRunningRecords(
             Long userId,
             CustomUser principal,
+            LocalDate startDate,
+            LocalDate endDate,
             Pageable pageable
     ) {
         User me = getUserByPrincipal(principal);
@@ -77,12 +107,30 @@ public class ProfileRunningHistoryService {
 
         validateProfileAccess(me, target);
 
-        return runningResultRepository
-                .findByUserAndRunStatusInAndIsDeletedFalse(
-                        target,
-                        VISIBLE_STATUSES,
-                        pageable)
-                .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        java.time.LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
+        java.time.LocalDateTime end = (endDate != null) ? endDate.atTime(java.time.LocalTime.MAX) : null;
+
+        // 날짜 필터가 있는 경우 날짜 필터링 쿼리 사용, 없으면 기본 쿼리 사용
+        if (start != null || end != null) {
+            return runningResultRepository
+                    .findMyRecordsByStatuses(
+                            target.getId(),
+                            VISIBLE_STATUSES,
+                            null, // minDistance
+                            null, // maxDistance
+                            start,
+                            end,
+                            pageable
+                    )
+                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        } else {
+            return runningResultRepository
+                    .findByUserAndRunStatusInAndIsDeletedFalse(
+                            target,
+                            VISIBLE_STATUSES,
+                            pageable)
+                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        }
     }
 
     /**
