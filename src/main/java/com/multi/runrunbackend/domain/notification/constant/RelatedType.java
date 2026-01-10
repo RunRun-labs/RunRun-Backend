@@ -10,6 +10,7 @@ public enum RelatedType {
   OFF_CHAT_ROOM,
   RECRUIT,
   WAITING_ROOM,
+  ONLINE,
 
   CREW_JOIN_REQUEST,
   CREW,
