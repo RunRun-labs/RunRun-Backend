@@ -3,15 +3,7 @@ package com.multi.runrunbackend.domain.feed.entity;
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,17 +30,22 @@ public class FeedPost extends BaseEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "runing_result_id", nullable = false)
+    @JoinColumn(name = "running_result_id", nullable = false)
     private RunningResult runningResult;
 
     @Column(length = 500)
     private String content;
 
-    public static FeedPost create(User user, RunningResult runningResult, String content) {
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
+
+    public static FeedPost create(User user, RunningResult runningResult, String content, String imageUrl) {
         FeedPost post = new FeedPost();
         post.user = user;
         post.runningResult = runningResult;
         post.content = content;
+        post.imageUrl = imageUrl;
         return post;
     }
 

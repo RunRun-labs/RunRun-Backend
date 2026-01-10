@@ -27,4 +27,8 @@ public interface UserBlockRepository extends JpaRepository<UserBlock, Long> {
     // 내가 차단한 목록 조회
     @Query("SELECT ub FROM UserBlock ub JOIN FETCH ub.blockedUser WHERE ub.blocker.id = :blockerId")
     List<UserBlock> findAllByBlockerId(@Param("blockerId") Long blockerId);
+
+    // 나를 차단한 유저 목록 조회
+    @Query("SELECT ub FROM UserBlock ub JOIN FETCH ub.blocker WHERE ub.blockedUser.id = :userId")
+    List<UserBlock> findAllByBlockedUserId(@Param("userId") Long userId);
 }
