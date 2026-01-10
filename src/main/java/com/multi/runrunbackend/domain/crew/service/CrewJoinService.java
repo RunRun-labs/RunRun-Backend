@@ -241,6 +241,35 @@ public class CrewJoinService {
     // 채팅방 참여자 추가
     crewChatService.addUserToChatRoom(crewId, joinRequest.getUser());
 
+    User newMember = joinRequest.getUser();
+    try {
+      List<CrewUser> allMembers = crewUserRepository
+          .findByCrewAndIsDeletedFalse(crew);
+
+      for (CrewUser member : allMembers) {
+        try {
+          notificationService.create(
+              member.getUser(),
+              "새 크루원 가입",
+              newMember.getName() + "님이 크루에 가입했습니다.",
+              NotificationType.CREW,
+              RelatedType.CREW,
+              crewId
+          );
+          log.debug("크루원 가입 알림 발송 완료 - crewId: {}, receiverId: {}, newMemberId: {}",
+              crewId, member.getUser().getId(), newMember.getId());
+        } catch (Exception e) {
+          log.error("크루원 가입 알림 생성 실패 - crewId: {}, receiverId: {}, newMemberId: {}",
+              crewId, member.getUser().getId(), newMember.getId(), e);
+        }
+      }
+      log.info("크루원 전체에게 가입 알림 발송 완료 - crewId: {}, newMemberId: {}, totalMembers: {}",
+          crewId, newMember.getId(), allMembers.size());
+    } catch (Exception e) {
+      log.error("크루원 전체 알림 발송 중 오류 발생 - crewId: {}, newMemberId: {}",
+          crewId, newMember.getId(), e);
+    }
+
     log.info("크루 가입 승인 완료 - crewId: {}, newMemberId: {}",
         crewId, userId);
 
