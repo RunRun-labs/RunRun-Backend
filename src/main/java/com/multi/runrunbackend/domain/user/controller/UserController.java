@@ -3,6 +3,8 @@ package com.multi.runrunbackend.domain.user.controller;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
+import com.multi.runrunbackend.domain.user.dto.res.AttendanceCheckResDto;
+import com.multi.runrunbackend.domain.user.dto.res.AttendanceStatusResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserProfileResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
 import com.multi.runrunbackend.domain.user.service.UserService;
@@ -28,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
@@ -73,6 +75,30 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.success("회원 탈퇴가 완료되었습니다.", null)
         );
+    }
+
+    /**
+     * 출석 체크 API
+     */
+    @PostMapping("/attendance")
+    @ResponseBody
+    public ResponseEntity<AttendanceCheckResDto> checkAttendance(
+            @AuthenticationPrincipal CustomUser customUser
+    ) {
+        AttendanceCheckResDto result = userService.checkAttendance(customUser.getUserId());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 출석 현황 조회 API
+     */
+    @GetMapping("/attendance/status")
+    @ResponseBody
+    public ResponseEntity<AttendanceStatusResDto> getAttendanceStatus(
+            @AuthenticationPrincipal CustomUser customUser
+    ) {
+        AttendanceStatusResDto result = userService.getAttendanceStatus(customUser.getUserId());
+        return ResponseEntity.ok(result);
     }
 
 }
