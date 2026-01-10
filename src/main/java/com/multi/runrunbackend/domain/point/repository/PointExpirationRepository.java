@@ -40,4 +40,16 @@ public interface PointExpirationRepository extends JpaRepository<PointExpiration
             "AND pe.expiresAt <= :now")
     List<PointExpiration> findExpiredPoints(@Param("now") LocalDateTime now);
 
+    /**
+     * @description : 만료일이 하루 후인 활성 포인트 조회 (만료 전 알림용)
+     */
+    @Query("SELECT pe FROM PointExpiration pe " +
+            "WHERE pe.expirationStatus = 'ACTIVE' " +
+            "AND pe.remainingPoint > 0 " +
+            "AND pe.expiresAt BETWEEN :startDateTime AND :endDateTime")
+    List<PointExpiration> findPointsExpiringTomorrow(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
 }
