@@ -337,6 +337,21 @@ function getRunningTypeLabel(runningType) {
     return typeMap[runningType] || runningType || "-";
 }
 
+/**
+ * 러닝 상태를 한국어로 변환
+ * RunStatus enum 참고: COMPLETED("완료"), TIME_OUT("타임아웃"), GIVE_UP("포기"), IN_PROGRESS("진행중"), CANCELLED("취소")
+ */
+function getRunStatusLabel(runStatus) {
+    const statusMap = {
+        COMPLETED: "완료",
+        TIME_OUT: "타임아웃",
+        GIVE_UP: "포기",
+        IN_PROGRESS: "진행중",
+        CANCELLED: "취소"
+    };
+    return statusMap[runStatus] || runStatus || "-";
+}
+
 // 러닝 기록 무한 스크롤 관련 전역 변수
 let currentPage = 0;
 let hasNext = true;
@@ -480,6 +495,12 @@ function createRunCard(record) {
     const imageUrl = record.courseThumbnailUrl || null;
     const courseTitle = record.courseTitle || '러닝';
 
+    // 러닝 상태 확인
+    const runStatus = record.runStatus || 'COMPLETED';
+    const statusLabel = getRunStatusLabel(runStatus);
+    const isCompleted = runStatus === 'COMPLETED';
+    const canShare = isCompleted; // COMPLETED 상태만 공유 가능
+
     // 이미지가 있을 때만 img 태그 추가
     const thumbContent = imageUrl
         ? `<img src="${imageUrl}" alt="${courseTitle}" style="display: block; cursor: pointer;" onerror="this.style.display='none'" data-image-url="${imageUrl}" />`
@@ -492,7 +513,10 @@ function createRunCard(record) {
         <div class="run-content">
             <div class="run-header">
                 <span class="run-date">${formattedDate}</span>
-                <span class="run-type">${getRunningTypeLabel(record.runningType)}</span>
+                <div class="run-header-right">
+                    <span class="run-type">${getRunningTypeLabel(record.runningType)}</span>
+                    <span class="run-status-badge run-status-${runStatus.toLowerCase().replace('_', '-')}">${statusLabel}</span>
+                </div>
             </div>
             <p class="run-title">${courseTitle}</p>
             <div class="run-stats">
@@ -510,7 +534,7 @@ function createRunCard(record) {
                 <span class="run-pace-value">${paceStr}</span>
             </div>
             <div class="run-actions">
-                <button class="run-share" type="button">공유</button>
+                <button class="run-share" type="button" ${!canShare ? 'disabled' : ''} ${!canShare ? 'style="opacity: 0.5; cursor: not-allowed;"' : ''}>공유</button>
                 <button class="run-delete" type="button" data-record-id="${record.runningResultId}">삭제</button>
             </div>
         </div>
@@ -538,15 +562,21 @@ function createRunCard(record) {
         });
     }
 
-    // 공유 버튼 클릭 이벤트 추가
+    // 공유 버튼 클릭 이벤트 추가 (COMPLETED 상태만 가능)
     const shareBtn = article.querySelector('.run-share');
-    if (shareBtn) {
+    if (shareBtn && canShare) {
         shareBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const recordId = record.runningResultId;
             if (recordId) {
                 window.location.href = `/feed/post?runningResultId=${recordId}`;
             }
+        });
+    } else if (shareBtn && !canShare) {
+        // 공유 불가능한 상태일 때 클릭 이벤트는 추가하지 않음 (disabled 상태)
+        shareBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
         });
     }
 
