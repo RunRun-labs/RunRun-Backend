@@ -6,6 +6,7 @@ import com.multi.runrunbackend.domain.challenge.entity.UserChallenge;
 import com.multi.runrunbackend.domain.challenge.repository.UserChallengeRepository;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
+import com.multi.runrunbackend.domain.point.service.PointService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import java.util.List;
 public class ChallengeProgressService {
 
     private final UserChallengeRepository userChallengeRepository;
+    private final PointService pointService;
 
     /**
      * 러닝 종료 시 챌린지 진행도 반영
@@ -57,11 +59,25 @@ public class ChallengeProgressService {
                 continue;
             }
 
+            // 여기에 진행도 업데이트 전 값 저장
+            double previousProgress = uc.getProgressValue();
+            double targetValue = challenge.getTargetValue();
+            boolean wasCompleted = (previousProgress >= targetValue);
+
             // 아래 private 메서드들은 이 메서드의 트랜잭션에 참여합니다.
             switch (challenge.getChallengeType()) {
                 case DISTANCE -> applyDistanceChallenge(uc, runningResult);
                 case TIME -> applyTimeChallenge(uc, runningResult);
                 case COUNT -> applyCountChallenge(uc, runDate);
+            }
+
+            // 여기에 챌린지 완료 체크 및 포인트 적립 추가 -> 진행도 업데이트 후 값 확인
+            double currentProgress = uc.getProgressValue();
+            boolean isNowCompleted = (currentProgress >= targetValue);
+
+            // 방금 완료된 경우에만 포인트 적립 (중복 방지)
+            if (!wasCompleted && isNowCompleted) {
+                pointService.earnPointsForChallengeSuccess(user.getId());
             }
         }
     }
