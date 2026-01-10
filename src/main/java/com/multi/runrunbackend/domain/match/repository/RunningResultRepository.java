@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+
 /**
  * 런닝 결과 Repository
  *
@@ -39,6 +40,9 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
      */
     Optional<RunningResult> findByIdAndUserIdAndIsDeletedFalse(Long id, Long userId);
 
+    @Query("SELECT r FROM RunningResult r WHERE r.course.id = :courseId AND r.runStatus = :runStatus AND r.isDeleted = false ORDER BY r.createdAt DESC")
+    List<RunningResult> findGhostCandidates(@Param("courseId") Long courseId,
+                                            @Param("runStatus") RunStatus runStatus);
 
     /**
      * 여러 상태의 러닝 기록 조회 (마이페이지 등)
@@ -49,34 +53,9 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             Pageable pageable
     );
 
-    /* ===================== GHOST RUN ===================== */
 
-    /**
-     * 고스트런 후보 기록 조회
-     */
-    @Query("""
-                SELECT r FROM RunningResult r
-                WHERE r.course.id = :courseId
-                  AND r.runStatus = :runStatus
-                  AND r.isDeleted = false
-                ORDER BY r.createdAt DESC
-            """)
-    List<RunningResult> findGhostCandidates(
-            @Param("courseId") Long courseId,
-            @Param("runStatus") RunStatus runStatus
-    );
 
-    /**
-     * 고스트런용 완료 기록 전체 조회
-     */
-    @Query("""
-                SELECT r FROM RunningResult r
-                WHERE r.user.id = :userId
-                  AND r.runStatus = 'COMPLETED'
-                  AND r.isDeleted = false
-                ORDER BY r.createdAt DESC
-            """)
-    List<RunningResult> findCompletedRecordsByUserId(@Param("userId") Long userId);
+
 
     /* ===================== FILTER / SEARCH ===================== */
 
@@ -100,22 +79,18 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             Pageable pageable
     );
 
-    /**
-     * 상태 + 거리 + 기간 복합 조건 조회
-     */
-    @Query("""
-                SELECT r FROM RunningResult r
-                WHERE r.user.id = :userId
-                  AND r.runStatus IN :runStatuses
-                  AND r.isDeleted = false
-                  AND (:minDistance IS NULL OR r.totalDistance > :minDistance)
-                  AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance)
-                  AND (:startDate IS NULL OR r.startedAt >= :startDate)
-                  AND (:endDate IS NULL OR r.startedAt <= :endDate)
-            """)
+    @Query("SELECT r FROM RunningResult r " +
+            "WHERE r.user.id = :userId " +
+            "AND r.runStatus IN :runStatuses " +
+            "AND r.isDeleted = false " +
+            "AND (:minDistance IS NULL OR r.totalDistance > :minDistance) " +
+            "AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance) " +
+            "AND (CAST(:startDate AS timestamp) IS NULL OR r.startedAt >= :startDate) " +
+            "AND (CAST(:endDate AS timestamp) IS NULL OR r.startedAt <= :endDate)"
+    )
     Slice<RunningResult> findMyRecordsByStatuses(
             @Param("userId") Long userId,
-            @Param("runStatuses") List<RunStatus> runStatuses,
+            @Param("runStatuses") List<RunStatus> runStatuses, // List로 변경
             @Param("minDistance") BigDecimal minDistance,
             @Param("maxDistance") BigDecimal maxDistance,
             @Param("startDate") LocalDateTime startDate,
@@ -123,11 +98,21 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             Pageable pageable
     );
 
+    /**
+     * 고스트런용: 사용자의 완료된 기록 조회
+     *
+     * @param userId 사용자 ID
+     * @return 완료된 런닝 기록 리스트
+     */
+    @Query("SELECT r FROM RunningResult r " +
+            "WHERE r.user.id = :userId " +
+            "AND r.runStatus = 'COMPLETED' " +
+            "AND r.isDeleted = false " +
+            "ORDER BY r.createdAt DESC")
+    List<RunningResult> findCompletedRecordsByUserId(@Param("userId") Long userId);
+
     /* ===================== SUMMARY ===================== */
 
-    /**
-     * 오늘 러닝 요약
-     */
     @Query("""
                 SELECT
                     COALESCE(SUM(r.totalDistance), 0),
@@ -139,14 +124,11 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
                   AND r.startedAt < :end
             """)
     List<Object[]> findTodaySummary(
-            @Param("userId") Long userId,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
+            Long userId,
+            LocalDateTime start,
+            LocalDateTime end
     );
 
-    /**
-     * 주간 러닝 요약
-     */
     @Query("""
                 SELECT
                     FUNCTION('date_part', 'dow', r.startedAt),
@@ -159,9 +141,9 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
                 GROUP BY FUNCTION('date_part', 'dow', r.startedAt)
             """)
     List<Object[]> findWeeklySummary(
-            @Param("userId") Long userId,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
+            Long userId,
+            LocalDateTime start,
+            LocalDateTime end
     );
 
     /* ===================== FEED ===================== */
@@ -187,6 +169,24 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
             Pageable pageable
     );
 
+
+    /**
+     * 사용자의 완료된 러닝 기록 조회
+     */
+    Slice<RunningResult> findCompletedByUser(
+            User user,
+            Pageable pageable
+    );
+
+    /**
+     * 러닝 기록 조회 (상태 지정 가능) - 마이페이지 등에서 사용
+     */
+    @Query("SELECT r FROM RunningResult r WHERE r.user = :user AND r.runStatus IN :statuses AND r.isDeleted = false")
+    Slice<RunningResult> findByUserAndRunStatusIn(
+            @Param("user") User user,
+            @Param("statuses") List<RunStatus> statuses,
+            Pageable pageable
+    );
     /* ===================== STAT ===================== */
 
     /**
