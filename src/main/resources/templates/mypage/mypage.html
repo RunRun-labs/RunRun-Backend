@@ -18,6 +18,8 @@
             href="/css/mypage.css"
             th:href="@{/css/mypage.css}"
     />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
 </head>
 <body class="mypage-body">
 <main class="page mypage-page">
@@ -223,6 +225,7 @@
         th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/mypage.js" th:src="@{/js/mypage.js}"></script>
 </body>
 </html>

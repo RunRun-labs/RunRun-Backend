@@ -166,6 +166,13 @@
 
   // ============== 토스트 알림 ==============
   function showToastNotification(notification) {
+    // ✅ /match/online 페이지에서는 토스트 표시하지 않음
+    const isOnlineMatchPage = window.location.pathname === '/match/online';
+    if (isOnlineMatchPage) {
+      console.log('[SSE] 온라인 매칭 페이지에서는 토스트 표시 안함');
+      return;
+    }
+
     const existingToast = document.getElementById('notification-toast');
     if (existingToast) {
       existingToast.remove();
@@ -305,7 +312,30 @@
           // ✅ 메시지 수신 시에도 타임아웃 리셋 (연결이 살아있음을 확인)
           resetHeartbeatTimeout();
           
-          // 토스트 표시
+          // ✅ MATCH_FOUND + ONLINE 알림 처리
+          const isOnlineMatchPage = window.location.pathname === '/match/online';
+          const isMatchFoundOnline = notification.notificationType === 'MATCH_FOUND' && 
+                                     notification.relatedType === 'ONLINE' && 
+                                     notification.relatedId;
+          
+          if (isMatchFoundOnline) {
+            if (!isOnlineMatchPage) {
+              // 다른 페이지에서 받은 경우: 온라인 매칭 페이지로 이동
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (다른 페이지) - 온라인 매칭 페이지로 이동');
+              window.location.href = `/match/online?autoMatch=${notification.relatedId}`;
+              return; // 토스트 표시하지 않고 바로 리턴
+            } else {
+              // 온라인 매칭 페이지에서 직접 받은 경우: 토스트 표시 안 함 (레이더 애니메이션 실행 중)
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (온라인 매칭 페이지) - 토스트 표시 안 함, 레이더 애니메이션 사용');
+              // CustomEvent는 발생시켜서 online-match.js에서 처리할 수 있도록 함
+              window.dispatchEvent(new CustomEvent('notification-received', { 
+                detail: notification 
+              }));
+              return; // 토스트 표시하지 않고 리턴
+            }
+          }
+          
+          // 다른 알림은 기존 로직대로 처리 (토스트 표시)
           showToastNotification(notification);
           
           // CustomEvent 발생 (다른 스크립트에서 감지 가능)
@@ -328,6 +358,30 @@
           // ✅ 알림 수신 시에도 타임아웃 리셋 (연결이 살아있음을 확인)
           resetHeartbeatTimeout();
           
+          // ✅ MATCH_FOUND + ONLINE 알림 처리
+          const isOnlineMatchPage = window.location.pathname === '/match/online';
+          const isMatchFoundOnline = notification.notificationType === 'MATCH_FOUND' && 
+                                     notification.relatedType === 'ONLINE' && 
+                                     notification.relatedId;
+          
+          if (isMatchFoundOnline) {
+            if (!isOnlineMatchPage) {
+              // 다른 페이지에서 받은 경우: 온라인 매칭 페이지로 이동
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (다른 페이지) - 온라인 매칭 페이지로 이동');
+              window.location.href = `/match/online?autoMatch=${notification.relatedId}`;
+              return; // 토스트 표시하지 않고 바로 리턴
+            } else {
+              // 온라인 매칭 페이지에서 직접 받은 경우: 토스트 표시 안 함 (레이더 애니메이션 실행 중)
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (온라인 매칭 페이지) - 토스트 표시 안 함, 레이더 애니메이션 사용');
+              // CustomEvent는 발생시켜서 online-match.js에서 처리할 수 있도록 함
+              window.dispatchEvent(new CustomEvent('notification-received', { 
+                detail: notification 
+              }));
+              return; // 토스트 표시하지 않고 리턴
+            }
+          }
+          
+          // 다른 알림은 기존 로직대로 처리 (토스트 표시)
           showToastNotification(notification);
           
           window.dispatchEvent(new CustomEvent('notification-received', { 
@@ -391,9 +445,32 @@
   // ============== BFCache 대응 ==============
   window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
+      // BFCache에서 복원된 경우
       console.log('[SSE] 🔄 Page restored from BFCache - reconnecting...');
       isConnected = false;
       reconnect();
+    } else {
+      // 일반 페이지 로드된 경우 - 연결 확인 및 재연결 보장
+      console.log('[SSE] 🔄 Page loaded - ensuring SSE connection...');
+      // DOMContentLoaded가 이미 실행되었을 수 있으므로, 연결이 없으면 재연결
+      if (!globalEventSource || globalEventSource.readyState !== 1) {
+        console.log('[SSE] Connection not active - reinitializing...');
+        isConnected = false;
+        if (globalEventSource) {
+          try {
+            globalEventSource.close();
+          } catch (e) {
+            // 이미 닫힌 경우 무시
+          }
+        }
+        globalEventSource = null;
+        // 약간의 지연 후 재연결 (다른 스크립트가 로드되기 전에)
+        setTimeout(() => {
+          initNotificationSubscription();
+        }, 50);
+      } else {
+        console.log('[SSE] Connection already active');
+      }
     }
   });
 
@@ -408,10 +485,20 @@
 
   // ============== 페이지 언로드 시 정리 ==============
   window.addEventListener('beforeunload', () => {
-    if (globalEventSource) {
-      console.log('[SSE] 🚪 Page unloading - closing connection');
-      globalEventSource.close();
+    // ✅ 연결을 닫지 않고 플래그만 설정
+    // 새 페이지에서 자동으로 재연결되므로 알림 누락 방지
+    console.log('[SSE] 🚪 Page unloading - marking as disconnected (will reconnect on new page)');
+    isConnected = false;
+    
+    // heartbeat 타임아웃 정리
+    if (heartbeatTimeoutId) {
+      clearTimeout(heartbeatTimeoutId);
+      heartbeatTimeoutId = null;
     }
+    
+    // 연결은 닫지 않음 (브라우저가 자동으로 닫음)
+    // 새 페이지에서 자동으로 재연결되므로 알림 누락 방지
+    // globalEventSource.close(); // 제거 - 새 페이지에서 재연결 보장
   });
 
   // ============== 초기 연결 ==============

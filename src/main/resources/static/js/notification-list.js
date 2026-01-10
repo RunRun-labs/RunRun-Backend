@@ -52,6 +52,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // 알림 타입에 따른 아이콘 반환
   function getNotificationIcon(notificationType) {
     const iconMap = {
+      MATCH_FOUND: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>`,
       MATCH: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 11l3 3L22 4"/>
         <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
@@ -115,6 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
       OFF_CHAT_ROOM: `/chat/chat1?sessionId=${relatedId}`,
       RECRUIT: `/recruit/${relatedId}`,
       WAITING_ROOM: `/match/waiting?sessionId=${relatedId}`,
+      ONLINE: `/match/waiting?sessionId=${relatedId}`,
 
       CRE_JOINT_REQUEST: `/crews/${relatedId}/join-requests`,
       CREW: `/crews/${relatedId}`,

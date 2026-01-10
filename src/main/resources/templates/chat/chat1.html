@@ -18,6 +18,8 @@
   <script src="/js/running-tracker.js" th:src="@{/js/running-tracker.js}"></script>
   <script src="/js/tts-manager.js" th:src="@{/js/tts-manager.js}"></script>
   <link rel="stylesheet" href="/css/chat1.css" th:href="@{/css/chat1.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
 </head>
 <body>
 <div class="chat-page">
@@ -330,6 +332,7 @@
     th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/chat1.js" th:src="@{/js/chat1.js}"></script>
 </body>
 </html>
