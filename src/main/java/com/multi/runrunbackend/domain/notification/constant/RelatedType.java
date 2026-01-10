@@ -11,7 +11,7 @@ public enum RelatedType {
   RECRUIT,
   WAITING_ROOM,
 
-  CRE_JOINT_REQUEST,
+  CREW_JOIN_REQUEST,
   CREW,
   CREW_USERS,
   CREW_MAIN,
