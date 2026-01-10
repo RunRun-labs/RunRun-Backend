@@ -20,6 +20,7 @@ import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
+import com.multi.runrunbackend.domain.point.constant.PointPolicy;
 import com.multi.runrunbackend.domain.point.service.PointService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
@@ -197,8 +198,8 @@ public class CrewJoinService {
         // 포인트 차감(100p)
         pointService.deductPointsForCrewJoin(
                 userId,
-                CREW_JOIN_POINT,
-                "CREW_JOIN"
+                PointPolicy.CREW_JOIN.getPoints(),
+                PointPolicy.CREW_JOIN.getDescription()
         );
 
         // 재검증 - 포인트 차감 중 다른 크루 승인된 경우 감지
