@@ -80,4 +80,15 @@ public interface SessionUserRepository extends JpaRepository<SessionUser, Long> 
       "AND ms.type = 'ONLINE' " +
       "AND ms.status = 'STANDBY'")
   Optional<SessionUser> findActiveOnlineSession(@Param("userId") Long userId);
+
+  /**
+   * 사용자의 활성 세션 조회 (STANDBY 또는 IN_PROGRESS 상태)
+   */
+  @Query("SELECT su FROM SessionUser su " +
+      "JOIN FETCH su.matchSession ms " +
+      "WHERE su.user.id = :userId " +
+      "AND su.isDeleted = false " +
+      "AND (ms.status = 'STANDBY' OR ms.status = 'IN_PROGRESS') " +
+      "ORDER BY ms.createdAt DESC")
+  Optional<SessionUser> findActiveSession(@Param("userId") Long userId);
 }
