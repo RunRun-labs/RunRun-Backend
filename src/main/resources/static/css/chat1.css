@@ -487,12 +487,12 @@ body {
 }
 
 .attach-button {
+  display: none; /* + 버튼 숨김 */
   background: none;
   border: none;
   padding: 8px;
   border-radius: 20px;
   cursor: pointer;
-  display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -529,11 +529,11 @@ body {
 }
 
 .emoji-button {
+  display: none; /* 이모티콘 버튼 숨김 */
   background: none;
   border: none;
   padding: 4px;
   cursor: pointer;
-  display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
