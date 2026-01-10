@@ -17,6 +17,7 @@ import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.constant.Tier;
 import com.multi.runrunbackend.domain.match.dto.req.SoloRunStartReqDto;
+import com.multi.runrunbackend.domain.match.dto.res.ActiveSessionResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingParticipantDto;
@@ -47,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -764,6 +766,82 @@ public class MatchSessionService {
       log.error("❌ Redis Pub 실패: destination={}", destination, e);
       log.error("❌ 에러 상세: {}", e.getMessage());
     }
+  }
+
+
+  public ActiveSessionResDto getActiveSession(Long userId) {
+
+    Optional<SessionUser> activeSessionOpt = sessionUserRepository.findActiveSession(userId);
+    if (activeSessionOpt.isEmpty()) {
+      try {
+        List<SessionUser> allSessionUsers = sessionUserRepository.findAll()
+            .stream()
+            .filter(su -> {
+              try {
+                return su.getUser().getId().equals(userId);
+              } catch (Exception e) {
+                return false;
+              }
+            })
+            .limit(10)
+            .collect(Collectors.toList());
+
+        for (SessionUser su : allSessionUsers) {
+          try {
+            MatchSession ms = su.getMatchSession();
+            String logMsg = String.format(
+                "  - sessionId: %d, status: %s, type: %s, su.isDeleted: %s",
+                ms.getId(), ms.getStatus(), ms.getType(), su.getIsDeleted());
+            log.info("  - sessionId: {}, status: {}, type: {}, su.isDeleted: {}",
+                ms.getId(),
+                ms.getStatus(),
+                ms.getType(),
+                su.getIsDeleted());
+          } catch (Exception e) {
+            log.warn("  - SessionUser 정보 조회 실패: {}", e.getMessage());
+          }
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        log.warn("디버깅 정보 조회 실패:", e);
+      }
+
+      return null;
+    }
+
+    SessionUser sessionUser = activeSessionOpt.get();
+    MatchSession session = sessionUser.getMatchSession();
+    SessionStatus status = session.getStatus();
+    SessionType type = session.getType();
+    Long sessionId = session.getId();
+
+    log.info(" 활성 세션 발견 - sessionId: {}, status: {}, type: {}",
+        sessionId, status, type);
+
+    String redirectUrl;
+    if (status == SessionStatus.STANDBY) {
+      redirectUrl = "/match/waiting?sessionId=" + sessionId;
+    } else if (status == SessionStatus.IN_PROGRESS) {
+      if (type == SessionType.ONLINE) {
+        redirectUrl = "/match/battle?sessionId=" + sessionId;
+      } else {
+        redirectUrl = "/running/" + sessionId;
+      }
+    } else {
+      log.warn(" 예상치 못한 세션 상태 - sessionId: {}, status: {}", sessionId, status);
+      return null; // 예상치 못한 상태
+    }
+
+    log.info(" 활성 세션 조회 성공 - userId: {}, sessionId: {}, status: {}, redirectUrl: {}",
+        userId, sessionId, status, redirectUrl);
+
+    ActiveSessionResDto result = ActiveSessionResDto.builder()
+        .sessionId(sessionId)
+        .status(status.name())
+        .redirectUrl(redirectUrl)
+        .build();
+
+    return result;
   }
 }
 
