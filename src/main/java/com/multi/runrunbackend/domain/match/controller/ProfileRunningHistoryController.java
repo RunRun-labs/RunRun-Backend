@@ -11,10 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  *
@@ -73,5 +70,53 @@ public class ProfileRunningHistoryController {
         return ResponseEntity.ok(
                 ApiResponse.success("러닝 기록 조회 성공", result)
         );
+    }
+
+    /**
+     * 공유되지 않은 러닝 기록 조회 (피드 공유용)
+     */
+    @GetMapping("/unshared")
+    public ResponseEntity<ApiResponse<Slice<ProfileRunningHistoryResDto>>> getUnsharedRunningRecords(
+            @AuthenticationPrincipal CustomUser principal,
+            @PageableDefault(
+                    size = 10,
+                    sort = "startedAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        Slice<ProfileRunningHistoryResDto> result =
+                profileRunningHistoryService.getUnsharedRunningRecords(principal, pageable);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("공유되지 않은 러닝 기록 조회 성공", result)
+        );
+    }
+
+    /**
+     * 러닝 기록 상세 조회 (단일)
+     */
+    @GetMapping("/{recordId}/detail")
+    public ResponseEntity<ApiResponse<ProfileRunningHistoryResDto>> getRunningRecordDetail(
+            @PathVariable Long recordId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        ProfileRunningHistoryResDto result =
+                profileRunningHistoryService.getRunningRecordDetail(recordId, principal);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("러닝 기록 상세 조회 성공", result)
+        );
+    }
+
+    /*
+     * 내 러닝 기록 삭제
+     */
+    @DeleteMapping("/{recordId}")
+    public ResponseEntity<ApiResponse<Void>> deleteRunningRecord(
+            @PathVariable Long recordId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        profileRunningHistoryService.deleteRunningRecord(recordId, principal);
+        return ResponseEntity.ok(ApiResponse.success("러닝 기록 삭제 성공", null));
     }
 }

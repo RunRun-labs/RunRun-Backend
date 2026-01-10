@@ -46,6 +46,50 @@ body {
     padding-bottom: 130px;
 }
 
+/* 상단 네비게이션 */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    margin: 16px 0;
+    border-bottom: 1px solid var(--stroke);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.top-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.top-nav-item {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: var(--bg);
+    border: 1px solid var(--stroke);
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.top-nav-item:hover {
+    background: #f9fafb;
+    border-color: var(--text-muted);
+}
+
+.top-nav-item.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-strong);
+    font-weight: 700;
+}
+
 /* 헤더: RUNRUN 타이틀 + 알림 */
 .home-header {
     margin-top: 40px;

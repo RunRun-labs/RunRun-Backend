@@ -14,7 +14,8 @@ public enum FileDomainType {
     CREW_IMAGE("crew"),
     PRODUCT_IMAGE("product"),
     CHALLENGE_IMAGE("challenge"),
-    POINT_PRODUCT("point-products");
+    POINT_PRODUCT("point-products"),
+    FEED_IMAGE("feed");
 
     private final String dir;
 }

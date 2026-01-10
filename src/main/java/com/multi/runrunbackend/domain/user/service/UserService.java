@@ -119,7 +119,8 @@ public class UserService {
 
         if (file != null && !file.isEmpty()) {
             validateProfileImage(file);
-            finalUrl = fileStorage.upload(file, FileDomainType.PROFILE, user.getId());
+            String key = fileStorage.uploadIfChanged(file, FileDomainType.PROFILE, user.getId(), user.getProfileImageUrl());
+            finalUrl = fileStorage.toHttpsUrl(key);
         }
 
         user.updateProfileImage(finalUrl);

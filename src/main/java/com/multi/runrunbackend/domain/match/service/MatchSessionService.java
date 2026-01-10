@@ -275,32 +275,31 @@ public class MatchSessionService {
 
     log.info("👑 방장 userId: {}", hostUserId);
 
-    // targetDistance를 기반으로 DistanceType 결정
     DistanceType distanceType = determineDistanceType(session.getTargetDistance());
 
     // 참가자 DTO 변환
-    List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
-        .map(su -> {
-          User user = su.getUser();
+        List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
+            .map(su -> {
+                User user = su.getUser();
 
-          // 티어 정보 조회
-          Tier tier =
-              distanceRatingRepository.findByUserIdAndDistanceType(user.getId(),
-                      distanceType)
-                  .map(DistanceRating::getCurrentTier)
-                  .orElse(Tier.거북이);
+              // 티어 정보 조회
+              Tier tier =
+                  distanceRatingRepository.findByUserIdAndDistanceType(user.getId(),
+                          distanceType)
+                      .map(DistanceRating::getCurrentTier)
+                      .orElse(Tier.거북이);
 
-          return MatchWaitingParticipantDto.builder()
-              .userId(user.getId())
-              .name(user.getName())
-              .profileImage(user.getProfileImageUrl())
-              .isReady(su.isReady())
-              .isHost(user.getId().equals(hostUserId))
-              .avgPace("5:" + (30 + (int) (Math.random() * 30)))  // 임시 하드코딩: 5:30 ~ 5:59
-              .tier(tier)
-              .build();
-        })
-        .collect(Collectors.toList());
+                return MatchWaitingParticipantDto.builder()
+                    .userId(user.getId())
+                    .name(user.getName())
+                    .profileImage(user.getProfileImageUrl())
+                    .isReady(su.isReady())
+                    .isHost(user.getId().equals(hostUserId))
+                    .avgPace(formatAveragePace(user.getAveragePace()))  // ✅ User의 averagePace 사용
+                    .tier(tier)
+                    .build();
+            })
+            .collect(Collectors.toList());
 
     // Ready 카운트
     long readyCount = sessionUsers.stream().filter(SessionUser::isReady).count();
@@ -504,6 +503,33 @@ public class MatchSessionService {
       case KM_10 -> 10.0;
       default -> throw new ValidationException(ErrorCode.INVALID_DISTANCE_TYPE);
     };
+  }
+
+  /**
+   * 평균 페이스를 MM:SS 형식으로 변환
+   * @param averagePace 평균 페이스 (BigDecimal, 분/km)
+   * @return "MM:SS" 형식의 문자열 (null이면 "-")
+   */
+  private String formatAveragePace(BigDecimal averagePace) {
+    if (averagePace == null) {
+      return "-";
+    }
+
+    // BigDecimal을 double로 변환
+    double paceMinutes = averagePace.doubleValue();
+
+    // 분과 초 분리
+    int minutes = (int) paceMinutes;
+    int seconds = (int) Math.round((paceMinutes - minutes) * 60);
+
+    // 60초 처리 (예: 5.99분 -> 5:59가 아니라 6:00으로)
+    if (seconds >= 60) {
+      minutes += 1;
+      seconds = 0;
+    }
+
+    // MM:SS 형식으로 반환
+    return String.format("%d:%02d", minutes, seconds);
   }
 
   /**

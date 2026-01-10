@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     attachBackButtonHandler();
     attachFriendButtonHandler(userId);
     attachBlockButtonHandler(userId);
+    attachFriendDeleteModalHandlers(userId);
     attachBlockModalHandlers(userId);
     loadUserProfile(userId);
 
@@ -173,10 +174,8 @@ function attachFriendButtonHandler(userId) {
         const isSent = friendBtn.classList.contains("is-sent");
 
         if (isFriend) {
-            // 친구 삭제
-            if (confirm("친구를 삭제하시겠습니까?")) {
-                await deleteFriend(userId);
-            }
+            // 친구인 경우 모달 표시
+            openFriendDeleteModal();
         } else if (isReceived) {
             // 받은 친구 요청 수락
             await acceptReceivedFriendRequest(userId);
@@ -257,11 +256,13 @@ async function requestFriend(userId) {
     }
 }
 
-async function deleteFriend(userId) {
+async function deleteFriend(userId, showAlert = true) {
     try {
         const token = localStorage.getItem("accessToken");
         if (!token) {
-            alert("로그인이 필요합니다.");
+            if (showAlert) {
+                alert("로그인이 필요합니다.");
+            }
             return;
         }
 
@@ -284,12 +285,17 @@ async function deleteFriend(userId) {
             throw new Error(errorData.message || "친구 삭제 실패");
         }
 
-        alert("친구가 삭제되었습니다.");
+        if (showAlert) {
+            alert("친구가 삭제되었습니다.");
+        }
         // 친구 상태 업데이트 (친구 아님)
         await checkFriendStatus(targetUserId);
     } catch (e) {
         console.error("Error deleting friend:", e);
-        alert(e.message || "친구 삭제에 실패했습니다.");
+        if (showAlert) {
+            alert(e.message || "친구 삭제에 실패했습니다.");
+        }
+        throw e; // 에러를 다시 throw하여 상위 함수에서 처리 가능하도록
     }
 }
 
@@ -470,6 +476,7 @@ async function checkFriendStatus(targetUserId) {
  */
 function updateFriendButtonStatus(status, friendId = null) {
     const friendBtn = document.getElementById("friendButton");
+    const blockBtn = document.getElementById("blockButton");
     if (!friendBtn) return;
 
     // 기존 클래스 제거
@@ -480,25 +487,146 @@ function updateFriendButtonStatus(status, friendId = null) {
             friendBtn.classList.add("is-friend");
             friendBtn.textContent = "친구삭제";
             friendBtn.dataset.friendId = friendId || "";
+            // 친구인 경우 차단 버튼 숨김
+            if (blockBtn) {
+                blockBtn.setAttribute("hidden", "hidden");
+            }
             break;
         case "sent":
             friendBtn.classList.add("is-sent");
             friendBtn.textContent = "요청 보냄";
             friendBtn.dataset.friendId = friendId || "";
+            // 친구 요청 보낸 경우 차단 버튼 표시
+            if (blockBtn) {
+                blockBtn.removeAttribute("hidden");
+            }
             break;
         case "received":
             friendBtn.classList.add("is-received");
             friendBtn.textContent = "요청 수락";
             friendBtn.dataset.friendId = friendId || "";
+            // 친구 요청 받은 경우 차단 버튼 표시
+            if (blockBtn) {
+                blockBtn.removeAttribute("hidden");
+            }
             break;
         case "none":
         default:
             friendBtn.textContent = "친구신청";
             friendBtn.dataset.friendId = "";
+            // 친구가 아닌 경우 차단 버튼 표시
+            if (blockBtn) {
+                blockBtn.removeAttribute("hidden");
+            }
             break;
     }
 }
 
+function openFriendDeleteModal() {
+    const modal = document.getElementById("friendDeleteModal");
+    if (!modal) return;
+    modal.removeAttribute("hidden");
+}
+
+function closeFriendDeleteModal() {
+    const modal = document.getElementById("friendDeleteModal");
+    if (!modal) return;
+    modal.setAttribute("hidden", "hidden");
+}
+
+function attachFriendDeleteModalHandlers(userId) {
+    const modal = document.getElementById("friendDeleteModal");
+    if (!modal) return;
+
+    // 모달 닫기 버튼
+    const closeBtn = modal.querySelector('[data-role="close-friend-delete-modal"]');
+    if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeFriendDeleteModal();
+        });
+    }
+
+    // 모달 배경 클릭 시 닫기
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+            closeFriendDeleteModal();
+        }
+    });
+
+    // 모달 내용 클릭 시 이벤트 전파 방지
+    const modalContent = modal.querySelector(".modal-content");
+    if (modalContent) {
+        modalContent.addEventListener("click", (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    // 삭제만 버튼
+    const deleteOnlyBtn = modal.querySelector('[data-role="delete-only"]');
+    if (deleteOnlyBtn) {
+        deleteOnlyBtn.addEventListener("click", async () => {
+            await deleteFriend(userId);
+            closeFriendDeleteModal();
+        });
+    }
+
+    // 삭제 및 차단 버튼
+    const deleteAndBlockBtn = modal.querySelector('[data-role="delete-and-block"]');
+    if (deleteAndBlockBtn) {
+        deleteAndBlockBtn.addEventListener("click", async () => {
+            await deleteFriendAndBlock(userId);
+            closeFriendDeleteModal();
+        });
+    }
+}
+
+/**
+ * 친구 삭제 및 차단
+ */
+async function deleteFriendAndBlock(userId) {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
+        const targetUserId = Number(userId);
+        if (isNaN(targetUserId)) {
+            throw new Error("잘못된 사용자 ID입니다.");
+        }
+
+        // 1. 친구 삭제 (알림 없이)
+        await deleteFriend(targetUserId, false);
+
+        // 2. 차단
+        const blockRes = await fetch(`/users/blocks/${targetUserId}`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!blockRes.ok) {
+            const errorData = await blockRes.json().catch(() => ({}));
+            throw new Error(errorData.message || "차단 실패");
+        }
+
+        alert("친구가 삭제되고 차단되었습니다.");
+        
+        // 차단 후 이전 페이지로 이동
+        window.history.back();
+    } catch (e) {
+        console.error("Error deleting friend and blocking user:", e);
+        alert(e.message || "친구 삭제 및 차단에 실패했습니다.");
+    }
+}
+
+/**
+ * 차단 버튼 핸들러
+ */
 function attachBlockButtonHandler(userId) {
     const blockBtn = document.getElementById("blockButton");
     if (!blockBtn) return;
@@ -550,22 +678,17 @@ function attachBlockModalHandlers(userId) {
     }
 
     // 차단 버튼
-    const blockOnlyBtn = modal.querySelector('[data-role="block-only"]');
-    if (blockOnlyBtn) {
-        blockOnlyBtn.addEventListener("click", async () => {
+    const blockBtn = modal.querySelector('[data-role="block-only"]');
+    if (blockBtn) {
+        blockBtn.addEventListener("click", async () => {
             await blockUser(userId, false);
-        });
-    }
-
-    // 차단 및 신고 버튼
-    const blockAndReportBtn = modal.querySelector('[data-role="block-and-report"]');
-    if (blockAndReportBtn) {
-        blockAndReportBtn.addEventListener("click", async () => {
-            await blockUser(userId, true);
         });
     }
 }
 
+/**
+ * 사용자 차단
+ */
 async function blockUser(userId, shouldReport) {
     try {
         const token = localStorage.getItem("accessToken");
@@ -574,7 +697,6 @@ async function blockUser(userId, shouldReport) {
             return;
         }
 
-        // userId가 Number인지 확인
         const targetUserId = Number(userId);
         if (isNaN(targetUserId)) {
             throw new Error("잘못된 사용자 ID입니다.");
@@ -593,13 +715,7 @@ async function blockUser(userId, shouldReport) {
         }
 
         closeBlockModal();
-
-        if (shouldReport) {
-            // TODO: 신고 API 연동 (나중에 구현 예정)
-            alert("사용자가 차단되었습니다. 신고 기능은 곧 구현될 예정입니다.");
-        } else {
-            alert("사용자가 차단되었습니다.");
-        }
+        alert("사용자가 차단되었습니다.");
 
         // 차단 후 이전 페이지로 이동
         window.history.back();

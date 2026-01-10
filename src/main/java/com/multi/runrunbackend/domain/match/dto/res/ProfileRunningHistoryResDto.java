@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.match.dto.res;
 
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
@@ -40,8 +41,13 @@ public class ProfileRunningHistoryResDto {
     private String courseTitle;
     private String courseThumbnailUrl;
 
-    public static ProfileRunningHistoryResDto from(RunningResult r) {
+    public static ProfileRunningHistoryResDto from(RunningResult r, FileStorage fileStorage) {
         Course c = r.getCourse();
+
+        String thumbnailUrl = null;
+        if (c != null && c.getThumbnailUrl() != null) {
+            thumbnailUrl = fileStorage.toHttpsUrl(c.getThumbnailUrl());
+        }
 
         return ProfileRunningHistoryResDto.builder()
                 .runningResultId(r.getId())
@@ -52,8 +58,8 @@ public class ProfileRunningHistoryResDto {
                 .runningType(r.getRunningType())
                 .runningTypeDescription(r.getRunningType().getDescription())
                 .courseId(c != null ? c.getId() : null)
-                .courseTitle(c != null ? c.getTitle() : null)
-                .courseThumbnailUrl(c != null ? c.getThumbnailUrl() : null)
+                .courseTitle(c != null ? c.getAddress() : null)
+                .courseThumbnailUrl(thumbnailUrl) // S3 URL로 변환된 값 사용
                 .build();
     }
 }

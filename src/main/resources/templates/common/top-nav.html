@@ -1,23 +1,23 @@
 <!doctype html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-  <body>
-    <nav class="top-nav" aria-label="상단 메뉴" th:fragment="topNav">
-      <a class="top-nav-item active" th:href="@{/course}" href="/course">
-        <span>코스</span>
-      </a>
-      <a class="top-nav-item" th:href="@{/point}" href="/point">
-        <span>포인트</span>
-      </a>
-      <a class="top-nav-item" th:href="@{/membership}" href="/membership">
-        <span>맴버쉽</span>
-      </a>
-      <a class="top-nav-item" th:href="@{/crew}" href="/crew">
-        <span>크루</span>
-      </a>
-      <a class="top-nav-item" th:href="@{/notification}" href="/notification">
-        <span>알림</span>
-      </a>
-    </nav>
-  </body>
+<body>
+<nav class="top-nav" aria-label="상단 메뉴" th:fragment="topNav">
+  <a class="top-nav-item" th:href="@{/course}" href="/course">
+    <span>코스</span>
+  </a>
+  <a class="top-nav-item" th:href="@{/point}" href="/point">
+    <span>포인트</span>
+  </a>
+  <a class="top-nav-item" th:href="@{/membership}" href="/membership">
+    <span>맴버쉽</span>
+  </a>
+  <a class="top-nav-item" th:href="@{/crews/main}" href="/crews/main">
+    <span>크루</span>
+  </a>
+  <a class="top-nav-item" th:href="@{/notification}" href="/notification">
+    <span>알림</span>
+  </a>
+</nav>
+</body>
 </html>
 

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | 나의 런 공유</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/feed-create.css"
+            th:href="@{/css/feed-create.css}"
+    />
+</head>
+<body class="feed-create-body">
+<main class="page feed-create-page">
+    <header class="feed-create-header">
+        <button class="back-button" type="button" aria-label="뒤로가기" data-role="back-button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h1 class="feed-create-title">나의 런 공유</h1>
+    </header>
+
+    <form id="feedPostForm" class="feed-post-form">
+        <!-- 이미지 영역 -->
+        <div class="image-section">
+            <div class="image-container" id="imageContainer">
+                <img id="previewImage" class="preview-image" src="" alt="코스 이미지" hidden />
+                <div class="image-placeholder" id="imagePlaceholder">
+                    <span>이미지 로딩 중...</span>
+                </div>
+                <button type="button" class="image-upload-button" id="imageUploadButton" aria-label="이미지 업로드">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V5C1 4.46957 1.21071 3.96086 1.58579 3.58579C1.96086 3.21071 2.46957 3 3 3H9L11 5H21C21.5304 5 22.0391 5.21071 22.4142 5.58579C22.7893 5.96086 23 6.46957 23 7V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <input type="file" id="imageInput" accept="image/*" hidden />
+            </div>
+            <p class="course-title-label" id="courseTitleLabel">이곳은 코스 제목 영역</p>
+        </div>
+
+        <!-- 러닝 통계 (읽기 전용) -->
+        <div class="stats-section">
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-icon">🏃‍♂️</span>
+                    <span class="stat-value" id="distanceValue">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">⏱</span>
+                    <span class="stat-value" id="timeValue">-</span>
+                </div>
+            </div>
+            <p class="pace-text" id="paceText">평균 페이스: -</p>
+        </div>
+
+        <!-- 내용 입력 영역 -->
+        <div class="content-section">
+            <label class="content-label" for="contentInput">내용</label>
+            <textarea
+                    id="contentInput"
+                    class="content-textarea"
+                    placeholder="(러닝 경험에 대해 알려주세요!)"
+                    maxlength="500"
+                    rows="5"
+            ></textarea>
+        </div>
+
+        <!-- 등록하기 버튼 -->
+        <button type="submit" class="submit-button" id="submitButton">
+            등록하기
+        </button>
+    </form>
+</main>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/feed-create.js" th:src="@{/js/feed-create.js}"></script>
+</body>
+</html>

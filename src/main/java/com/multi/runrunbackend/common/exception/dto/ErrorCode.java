@@ -166,6 +166,53 @@ public enum ErrorCode {
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F005", "파일 삭제에 실패했습니다."),
 
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F006", "이미지 파일만 업로드 가능합니다."),
+    /*===== 피드 관련=====*/
+    FEED_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "FEED_001",
+            "피드를 찾을 수 없습니다."
+    ),
+    FEED_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "FEED_002",
+            "해당 피드에 대한 권한이 없습니다."
+    ),
+    RUNNING_RESULT_NOT_COMPLETED(
+            HttpStatus.BAD_REQUEST,
+            "FEED_003",
+            "완료되지 않은 러닝은 피드에 공유할 수 없습니다."
+    ),
+    FEED_POST_ALREADY_EXISTS(
+            HttpStatus.CONFLICT,
+            "FEED_004",
+            "이미 피드에 공유된 러닝 결과입니다."
+
+    ),
+    FEED_ALREADY_DELETED(
+            HttpStatus.BAD_REQUEST,
+            "FEED_005",
+            "이미 삭제된 피드입니다."
+    ),
+    FEED_ALREADY_LIKED(
+            HttpStatus.CONFLICT,
+            "FEED_006",
+            "이미 좋아요한 피드입니다."
+    ),
+    FEED_NOT_LIKED(
+            HttpStatus.NOT_FOUND,
+            "FEED_007",
+            "해당 피드 좋아요 내역을 찾을 수 없습니다."
+    ),
+    FEED_COMMENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "FEED_008",
+            "피드 댓글을 찾을 수 없습니다."
+    ),
+    FEED_COMMENT_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "FEED_009",
+            "해당 피드 댓글에 대한 권한이 없습니다."
+    ),
     /* ===== 챌린지 ===== */
     ALREADY_JOINED(
             HttpStatus.CONFLICT,
@@ -319,9 +366,11 @@ public enum ErrorCode {
     AGE_RESTRICTION(HttpStatus.BAD_REQUEST, "R015", "참여 가능 나이가 아닙니다."),
     GENDER_RESTRICTION(HttpStatus.BAD_REQUEST, "R016", "참여 가능 성별이 아닙니다."),
     BIRTHDATE_REQUIRED(HttpStatus.BAD_REQUEST, "R017", "권한이 없는 나이대 입니다."),
-    /*=====매칭=====*/
-    RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "러닝 결과를 찾을 수 없습니다."),
-    /*===== 배틀 결과 =====*/
+    /*=====러닝결과=====*/
+    RUNNING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "RUN001", "러닝 결과를 찾을 수 없습니다."),
+    RUNNING_RESULT_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "RUN002", "이미 삭제된 러닝 결과입니다."),
+    RUNNING_RESULT_FORBIDDEN(HttpStatus.FORBIDDEN, "RUN003", "해당 러닝 기록에 대한 권한이 없습니다."),
+    /*===== 배틀/매칭 =====*/
     BATTLE_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀 결과를 찾을 수 없습니다."),
     DISTANCE_REQUIRED(HttpStatus.BAD_REQUEST, "M002", "코스 선택 안할 시 거리 선택은 필수 입니다."),
     INVALID_DISTANCE_TYPE(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 거리 타입입니다."),
