@@ -49,66 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${month}/${day} ${hours}:${minutes}`;
   }
 
-  // 알림 타입에 따른 아이콘 반환
-  function getNotificationIcon(notificationType) {
-    const iconMap = {
-      MATCH_FOUND: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>`,
-      MATCH: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M9 11l3 3L22 4"/>
-        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-      </svg>`,
-      RECRUIT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-      </svg>`,
-      RUNNING: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-      </svg>`,
-      CHALLENGE: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-      </svg>`,
-      CREW: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-      </svg>`,
-      CHAT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-      </svg>`,
-      FRIEND: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-        <circle cx="8.5" cy="7" r="4"/>
-        <path d="M20 8v6M23 11h-6"/>
-      </svg>`,
-      FEED: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <path d="M9 9h6v6H9z"/>
-      </svg>`,
-      POINT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z"/>
-        <path d="M9 12h6"/>
-      </svg>`,
-      PAYMENT: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z"/>
-        <path d="M9 12h6"/>
-      </svg>`,
-      SYSTEM: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z"/>
-        <path d="M9 12h6"/>
-      </svg>`,
-      default: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 16v-4M12 8h.01"/>
-      </svg>`
-    };
-
-    return iconMap[notificationType] || iconMap.default;
-  }
-
   // RelatedType에 따른 라우팅 URL 반환
   function getRouteUrl(relatedType, relatedId) {
     if (!relatedType || !relatedId) {
@@ -124,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
       CRE_JOINT_REQUEST: `/crews/${relatedId}/join-requests`,
       CREW: `/crews/${relatedId}`,
       CREW_USERS: `/crews/${relatedId}/users`,
-      CREW_MAIN: ` /crews/main`,
+      CREW_MAIN: `/crews/main`,
       CREW_CHAT_ROOM: `/chat/crew?roomId=${relatedId}`,
 
       MEMBERSHIP: `/membership`,
@@ -134,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
       CHALLENGE: `/challenge`,
       CHALLENGE_END: `/challenge/end`,
 
-      FEED_POST: ``,
+      FEED_POST: `/feed/records`,
 
       FRIEND_LIST: `/friends/list`
     };
@@ -170,6 +110,76 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // 매치 세션 유효성 검증 (STANDBY 상태 및 참가자 확인)
+  async function validateMatchSession(sessionId) {
+    const token = getToken();
+    if (!token) {
+      return false;
+    }
+
+    // 현재 사용자 ID 가져오기
+    const currentUserIdStr = localStorage.getItem("userId");
+    if (!currentUserIdStr) {
+      console.error("사용자 ID를 찾을 수 없습니다.");
+      return false;
+    }
+
+    const currentUserId = parseInt(currentUserIdStr, 10);
+    if (isNaN(currentUserId)) {
+      console.error("유효하지 않은 사용자 ID:", currentUserIdStr);
+      return false;
+    }
+
+    try {
+      const response = await fetch(`/api/match/session/${sessionId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      // 200 OK면 응답 본문 확인
+      if (response.ok) {
+        const result = await response.json();
+        
+        // ApiResponse 구조: { success: true, data: { status: "STANDBY", participants: [...], ... } }
+        if (result.success && result.data) {
+          const sessionData = result.data;
+          const sessionStatus = sessionData.status;
+          const participants = sessionData.participants || [];
+          
+          // ✅ 1. STANDBY 상태인지 확인
+          if (sessionStatus !== "STANDBY") {
+            console.log(`매치 세션이 STANDBY 상태가 아님: ${sessionStatus}`);
+            return false;
+          }
+          
+          // ✅ 2. 현재 사용자가 참가자 목록에 있는지 확인
+          const isParticipant = participants.some(
+            participant => participant.userId === currentUserId
+          );
+          
+          if (!isParticipant) {
+            console.log(`현재 사용자(${currentUserId})가 세션(${sessionId})의 참가자가 아님`);
+            return false;
+          }
+          
+          // STANDBY 상태이고 참가자인 경우에만 유효
+          return true;
+        }
+        
+        return false;
+      }
+
+      // 404나 다른 에러면 유효하지 않은 세션
+      return false;
+    } catch (error) {
+      console.error("매치 세션 유효성 확인 실패:", error);
+      return false;
+    }
+  }
+
   // 알림 클릭 처리
   async function handleNotificationClick(notification) {
     // 읽지 않은 알림이면 읽음 처리
@@ -191,6 +201,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 라우팅 처리
     if (notification.relatedType && notification.relatedId) {
+      // ✅ 매치 세션 관련 알림인 경우 유효성 확인
+      if (notification.relatedType === "WAITING_ROOM" || notification.relatedType === "ONLINE") {
+        const isValid = await validateMatchSession(notification.relatedId);
+        if (!isValid) {
+          alert("이미 종료되거나 유효하지 않은 매치 세션입니다.");
+          return; // 이동 중단
+        }
+      }
+
       const routeUrl = getRouteUrl(notification.relatedType,
           notification.relatedId);
       if (routeUrl) {

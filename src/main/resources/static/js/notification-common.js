@@ -508,4 +508,109 @@
     initNotificationSubscription();
   }
 
+  // ============== 하단 내비게이션 바 매치 버튼 클릭 처리 ==============
+  function initBottomNavHandler() {
+    const bottomNav = document.querySelector(".bottom-nav");
+    
+    if (!bottomNav) {
+      console.warn('[BottomNav] ⚠️ .bottom-nav 요소를 찾을 수 없습니다.');
+      return false;
+    }
+
+    // 매치 버튼 찾기
+    const matchLink = bottomNav.querySelector('a[href*="/match"]');
+    
+    if (!matchLink) {
+      console.warn('[BottomNav] ⚠️ 매치 링크를 찾을 수 없습니다.');
+      return false;
+    }
+
+    // 이미 이벤트가 등록되어 있는지 확인 (data 속성 사용)
+    if (matchLink.dataset.handlerAttached === 'true') {
+      console.log('[BottomNav] ℹ️ 이미 이벤트 리스너가 등록되어 있습니다.');
+      return true;
+    }
+
+    // 클릭 이벤트 가로채기
+    matchLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('[BottomNav] 🖱️ 매치 버튼 클릭됨');
+
+      const token = getToken();
+      
+      if (!token) {
+        console.log('[BottomNav] ℹ️ 토큰이 없음, 매치 선택 페이지로 이동');
+        window.location.href = "/match/select";
+        return;
+      }
+
+      try {
+        console.log('[BottomNav] 📡 API 호출: /api/match/active-session');
+        const response = await fetch("/api/match/active-session", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        console.log('[BottomNav] 📡 API 응답 상태:', response.status);
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('[BottomNav] 📡 API 응답:', result);
+
+          if (result.success && result.data) {
+            console.log('[BottomNav] ✅ 활성 세션 발견:', result.data);
+            console.log('[BottomNav] 🚀 리다이렉트:', result.data.redirectUrl);
+            window.location.href = result.data.redirectUrl;
+            return;
+          }
+        }
+
+        // 활성 세션이 없으면 매치 선택 페이지로 이동
+        console.log('[BottomNav] ℹ️ 활성 세션 없음, 매치 선택 페이지로 이동');
+        window.location.href = "/match/select";
+      } catch (error) {
+        console.error('[BottomNav] ❌ 활성 세션 확인 실패:', error);
+        window.location.href = "/match/select";
+      }
+    });
+
+    // 이벤트 등록 완료 표시
+    matchLink.dataset.handlerAttached = 'true';
+    console.log('[BottomNav] ✅ 매치 버튼 이벤트 리스너 등록 완료');
+    return true;
+  }
+
+  // 하단 내비게이션 바 초기화
+  function initBottomNav() {
+    // DOM이 로드되었는지 확인
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        initBottomNavHandler();
+      });
+    } else {
+      // DOM이 이미 로드된 경우
+      initBottomNavHandler();
+    }
+
+    // 추가 안전장치: MutationObserver로 동적 추가된 bottom-nav 감지
+    const observer = new MutationObserver(() => {
+      if (document.querySelector(".bottom-nav") && 
+          !document.querySelector('.bottom-nav a[href*="/match"][data-handler-attached="true"]')) {
+        initBottomNavHandler();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  // 하단 내비게이션 바 초기화 실행
+  initBottomNav();
+
 })();
