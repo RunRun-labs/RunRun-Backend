@@ -79,6 +79,9 @@ public class CrewChatService {
    * 메시지 전송 (MongoDB 저장 + Redis Pub/Sub 발행)
    */
   public void sendMessage(CrewChatMessageDto messageDto) {
+    // 현재 시간 설정
+    LocalDateTime now = LocalDateTime.now();
+    
     // MongoDB에 저장
     CrewChatMessage chatMessage = CrewChatMessage.builder()
         .roomId(messageDto.getRoomId())
@@ -86,17 +89,18 @@ public class CrewChatService {
         .senderName(messageDto.getSenderName())
         .content(messageDto.getContent())
         .messageType(messageDto.getMessageType())
-        .createdAt(LocalDateTime.now())
+        .createdAt(now)
         .build();
 
     chatMessageRepository.save(chatMessage);
 
-    // Redis Pub/Sub으로 발행
+    // DTO에 시간 설정 후 Redis Pub/Sub으로 발행
+    messageDto.setCreatedAt(now);
     String channel = "crew-chat:" + messageDto.getRoomId();
-    redisPublisher.publishObject(channel, messageDto);  // publishObject 사용
+    redisPublisher.publishObject(channel, messageDto);
 
-    log.info("크루 메시지 전송: roomId={}, sender={}", messageDto.getRoomId(),
-        messageDto.getSenderName());
+    log.info("크루 메시지 전송: roomId={}, sender={}, createdAt={}", 
+        messageDto.getRoomId(), messageDto.getSenderName(), now);
   }
 
   /**

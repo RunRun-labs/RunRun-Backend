@@ -185,7 +185,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 8px;
+  padding-bottom: 80px; /* 하단 버튼에 가려지지 않도록 여백 증가 */
   display: flex;
   flex-direction: column;
   gap: 12px;

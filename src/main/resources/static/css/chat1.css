@@ -187,7 +187,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 8px; /* 최소 패딩만 유지 */
+  padding-bottom: 20px; /* 공백 최소화 */
   display: flex;
   flex-direction: column;
   gap: 12px;
