@@ -168,6 +168,13 @@ public class PathController {
         return "chat/crew-chat";
     }
 
+    /* ===================== NOTIFICATION ===================== */
+
+    @GetMapping("/notification")
+    public String notificationListView() {
+        return "notification/notification-list";
+    }
+
     /* ===================== MY PAGE ===================== */
 
     @GetMapping("/myPage")

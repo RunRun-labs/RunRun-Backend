@@ -5,6 +5,7 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.match.dto.req.OfflineMatchConfirmReqDto;
 import com.multi.runrunbackend.domain.match.dto.req.OnlineMatchJoinReqDto;
 import com.multi.runrunbackend.domain.match.dto.req.SoloRunStartReqDto;
+import com.multi.runrunbackend.domain.match.dto.res.ActiveSessionResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.OfflineMatchConfirmResDto;
@@ -15,6 +16,7 @@ import com.multi.runrunbackend.domain.running.battle.service.BattleService;
 import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/match")
+@Slf4j
 public class MatchSessionController {
 
   private final MatchSessionService matchSessionService;
@@ -123,6 +126,28 @@ public class MatchSessionController {
     return ResponseEntity.ok(ApiResponse.success(info));
   }
 
+
+  @GetMapping("/active-session")
+  public ResponseEntity<ApiResponse<ActiveSessionResDto>> getActiveSession(
+      @AuthenticationPrincipal CustomUser principal
+  ) {
+    Long userId = principal.getUserId();
+
+    try {
+      ActiveSessionResDto activeSession = matchSessionService.getActiveSession(userId);
+
+      if (activeSession == null) {
+        return ResponseEntity.ok(ApiResponse.success("활성 세션이 없습니다.", null));
+      }
+
+      return ResponseEntity.ok(ApiResponse.success("활성 세션 조회 성공", activeSession));
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
   /**
    * 타임아웃 처리 (5분 경과)
    */
@@ -150,16 +175,7 @@ public class MatchSessionController {
 
   }
 
-//  @GetMapping("/ghost")
-//  public ResponseEntity<ApiResponse<Slice<RunningRecordResDto>>> getMyRunningRecords(
-//      @AuthenticationPrincipal CustomUser principal,
-//      @RequestParam(required = false, defaultValue = "ALL") RunningResultFilterType filter,
-//      @PageableDefault(size = 10, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable
-//  ) {
-//    Slice<RunningRecordResDto> records = matchSessionService.getMyRunningRecords(principal, filter,
-//        pageable);
-//    return ResponseEntity.ok(ApiResponse.success("내 러닝 결과 조회 성공", records));
-//  }
+
 
   /**
    * 고스트런 세션 정보 조회

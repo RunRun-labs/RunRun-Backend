@@ -434,21 +434,53 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 페이지 이탈 시 매칭 취소
-  window.addEventListener("beforeunload", () => {
-    if (isMatching) {
-      const token = localStorage.getItem("accessToken");
-      fetch("/api/match/online/join", {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        keepalive: true
-      }).catch(() => {
-      });
+  // ✅ beforeunload에서 매칭 취소 제거
+  // 다른 페이지로 이동해도 매칭은 계속 진행되어야 함
+  // 사용자가 명시적으로 취소 버튼을 누를 때만 handleCancel()에서 취소 처리
+  // 브라우저를 닫거나 새로고침하는 경우는 서버의 타임아웃/하트비트로 처리
+
+  // ✅ URL에서 autoMatch 파라미터 확인 (다른 페이지에서 매칭 알림 받아서 온 경우)
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoMatchSessionId = urlParams.get('autoMatch');
+  
+  if (autoMatchSessionId) {
+    console.log('[online-match] autoMatch 파라미터 감지 - 자동으로 매칭 완료 처리:', autoMatchSessionId);
+    
+    // 매칭 중 상태로 설정 (애니메이션이 정상 작동하도록)
+    isMatching = true;
+    
+    // 매칭 오버레이 표시 (showMatchFound가 오버레이가 이미 표시된 상태를 가정함)
+    if (matchingOverlay) {
+      matchingOverlay.style.display = "flex";
     }
-  });
+    
+    // 매칭 시작 버튼 숨기기
+    if (startButton) {
+      startButton.style.display = "none";
+    }
+    
+    // 매칭 UI 초기화 (SEARCHING 상태로 시작)
+    resetMatchUI();
+    
+    // 레이더 애니메이션과 매칭 완료 연출 실행
+    // 약간의 지연을 주어 DOM이 완전히 로드되고 애니메이션이 시작되도록 함
+    setTimeout(async () => {
+      try {
+        await showMatchFound(autoMatchSessionId);
+      } catch (error) {
+        console.error('[online-match] autoMatch 처리 오류:', error);
+        alert('매칭 완료 처리 중 오류가 발생했습니다.');
+        isMatching = false;
+        if (matchingOverlay) {
+          hideMatchingOverlay();
+        }
+      }
+      
+      // URL에서 파라미터 제거 (새로고침 시 중복 실행 방지)
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }, 300); // 애니메이션이 보이도록 약간 더 지연
+  }
 });
 
 // 매칭 시작 처리

@@ -7,20 +7,25 @@ package com.multi.runrunbackend.domain.notification.constant;
  * @since : 2025-12-17 수요일
  */
 public enum RelatedType {
+  OFF_CHAT_ROOM,
   RECRUIT,
-  OFFLINE,
+  WAITING_ROOM,
   ONLINE,
-  SOLORUN,
-  GHOSTRUN,
-  CREW_CHAT,
-  CREW,
+
   CREW_JOIN_REQUEST,
-  CREW_USER,
+  CREW,
+  CREW_USERS,
+  CREW_MAIN,
+  CREW_CHAT_ROOM,
+
   MEMBERSHIP,
-  PAYMENT,
-  POINT_EXPIRATION,
+
+  POINT_BALANCE,
+
   CHALLENGE,
-  FEED_POST,
-  FEED,
-  FRIEND
+  CHALLENGE_END,
+
+  FEED_RECORD,
+
+  FRIEND_LIST
 }

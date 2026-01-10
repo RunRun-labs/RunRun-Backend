@@ -20,7 +20,11 @@ import com.multi.runrunbackend.domain.point.repository.PointProductRepository;
 import com.multi.runrunbackend.domain.point.repository.UserPointRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import com.multi.runrunbackend.domain.notification.service.NotificationService;
+import com.multi.runrunbackend.domain.notification.constant.NotificationType;
+import com.multi.runrunbackend.domain.notification.constant.RelatedType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -43,6 +47,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PointService {
 
     private final UserPointRepository userPointRepository;
@@ -52,6 +57,7 @@ public class PointService {
     private final MembershipRepository membershipRepository;
     private final PointProductRepository pointProductRepository;
     private final FileStorage fileStorage;
+    private final NotificationService notificationService;
 
     private static final int DAILY_LIMIT = 500;
     private static final double PREMIUM_MULTIPLIER = 1.5;
@@ -517,6 +523,59 @@ public class PointService {
                 expiration.expire();
             }
         }
+    }
+
+    /**
+     * 포인트 만료 전 알림 발송 (스케줄러 처리)
+     */
+    @Transactional
+    public void sendPointExpiryNotifications() {
+        log.info("=== 포인트 만료 전 알림 발송 시작 ===");
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tomorrowStart = now.plusDays(1).withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime tomorrowEnd = now.plusDays(1).withHour(23).withMinute(59).withSecond(59);
+
+        // 만료일이 하루 후인 활성 포인트 조회
+        List<PointExpiration> expiringPoints = pointExpirationRepository
+                .findPointsExpiringTomorrow(tomorrowStart, tomorrowEnd);
+
+        log.info("만료 전 알림 대상 포인트: {}건", expiringPoints.size());
+
+        // 사용자별로 그룹화하여 포인트 합계 계산
+        Map<Long, Integer> userPointMap = new HashMap<>();
+        for (PointExpiration expiration : expiringPoints) {
+            Long userId = expiration.getUser().getId();
+            userPointMap.put(userId,
+                    userPointMap.getOrDefault(userId, 0) + expiration.getRemainingPoint());
+        }
+
+        int sentCount = 0;
+
+        // 사용자별로 알림 발송
+        for (Map.Entry<Long, Integer> entry : userPointMap.entrySet()) {
+            try {
+                User user = getUserById(entry.getKey());
+                Integer expiringAmount = entry.getValue();
+
+                notificationService.create(
+                        user,
+                        "포인트 소멸 안내",
+                        expiringAmount + "P가 내일 소멸됩니다.",
+                        NotificationType.POINT,
+                        RelatedType.POINT_BALANCE,
+                        entry.getKey()  // userId
+                );
+                sentCount++;
+                log.debug("포인트 만료 전 알림 발송 완료 - userId: {}, expiringAmount: {}P",
+                        entry.getKey(), expiringAmount);
+            } catch (Exception e) {
+                log.error("포인트 만료 전 알림 발송 실패 - userId: {}",
+                        entry.getKey(), e);
+            }
+        }
+
+        log.info("=== 포인트 만료 전 알림 발송 완료 - 총 {}명에게 발송 ===", sentCount);
     }
 
     // ========================================
