@@ -48,7 +48,5 @@ public class FeedLike extends BaseSoftDeleteEntity {
         return like;
     }
 
-    public void restore() {
-        this.isDeleted = false;
-    }
+   
 }
