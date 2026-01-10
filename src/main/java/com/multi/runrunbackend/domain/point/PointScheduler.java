@@ -30,4 +30,14 @@ public class PointScheduler {
 
         log.info("=== 포인트 만료 처리 스케줄러 종료 ===");
     }
+
+    /**
+     * @description : 포인트 만료 하루 전 알림 발송 (스케줄러-> 매일 자정)
+     */
+    @Scheduled(cron = "0 0 0 * * *")
+    public void sendPointExpiryNotifications() {
+        log.info("=== 포인트 만료 전 알림 스케줄러 시작 ===");
+        pointService.sendPointExpiryNotifications();
+        log.info("=== 포인트 만료 전 알림 스케줄러 종료 ===");
+    }
 }
