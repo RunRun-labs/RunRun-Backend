@@ -41,6 +41,9 @@ public class ProfileRunningHistoryResDto {
     private String courseTitle;
     private String courseThumbnailUrl;
 
+    // 러닝 상태
+    private String runStatus;
+
     public static ProfileRunningHistoryResDto from(RunningResult r, FileStorage fileStorage) {
         Course c = r.getCourse();
 
@@ -60,6 +63,7 @@ public class ProfileRunningHistoryResDto {
                 .courseId(c != null ? c.getId() : null)
                 .courseTitle(c != null ? c.getAddress() : null)
                 .courseThumbnailUrl(thumbnailUrl) // S3 URL로 변환된 값 사용
+                .runStatus(r.getRunStatus().name())
                 .build();
     }
 }

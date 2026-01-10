@@ -57,9 +57,9 @@ public class ProfileRunningHistoryService {
         User me = getUserByPrincipal(principal);
 
         return runningResultRepository
-                .findByUserAndRunStatusAndIsDeletedFalse(
+                .findByUserAndRunStatusInAndIsDeletedFalse(
                         me,
-                        RunStatus.COMPLETED,
+                        VISIBLE_STATUSES,
                         pageable
                 )
                 .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
@@ -83,9 +83,9 @@ public class ProfileRunningHistoryService {
         validateProfileAccess(me, target);
 
         return runningResultRepository
-                .findByUserAndRunStatusAndIsDeletedFalse(
+                .findByUserAndRunStatusInAndIsDeletedFalse(
                         target,
-                        RunStatus.COMPLETED,
+                        VISIBLE_STATUSES,
                         pageable)
                 .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
     }
