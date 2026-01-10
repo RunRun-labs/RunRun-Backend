@@ -109,11 +109,45 @@ public class ChallengeScheduler {
         today
     );
 
+    Map<Challenge, List<UserChallenge>> challengesByChallenge = activeParticipations.stream()
+        .collect(Collectors.groupingBy(UserChallenge::getChallenge));
+
     int count = 0;
-    for (UserChallenge uc : activeParticipations) {
-      uc.fail();
-      count++;
+    for (Map.Entry<Challenge, List<UserChallenge>> entry : challengesByChallenge.entrySet()) {
+      Challenge challenge = entry.getKey();
+      List<UserChallenge> participants = entry.getValue();
+
+      for (UserChallenge uc : participants) {
+        uc.fail();
+        count++;
+      }
+
+      try {
+        for (UserChallenge uc : participants) {
+          try {
+            notificationService.create(
+                uc.getUser(),
+                "챌린지 실패",
+                challenge.getTitle() + " 챌린지가 종료되었습니다.",
+                NotificationType.CHALLENGE,
+                RelatedType.CHALLENGE_END,
+                challenge.getId()
+            );
+            log.debug("챌린지 실패 알림 발송 완료 - challengeId: {}, receiverId: {}",
+                challenge.getId(), uc.getUser().getId());
+          } catch (Exception e) {
+            log.error("챌린지 실패 알림 생성 실패 - challengeId: {}, receiverId: {}",
+                challenge.getId(), uc.getUser().getId(), e);
+          }
+        }
+        log.info("챌린지 실패 알림 발송 완료 - challengeId: {}, title: {}, 실패 참가자 수: {}",
+            challenge.getId(), challenge.getTitle(), participants.size());
+      } catch (Exception e) {
+        log.error("챌린지 실패 알림 발송 중 오류 발생 - challengeId: {}, title: {}",
+            challenge.getId(), challenge.getTitle(), e);
+      }
     }
+
     if (count > 0) {
       log.info("Processed {} failed challenge participations.", count);
     }
