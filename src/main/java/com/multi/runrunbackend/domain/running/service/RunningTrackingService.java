@@ -31,16 +31,6 @@ import com.multi.runrunbackend.domain.running.dto.RunningStatsDTO;
 import com.multi.runrunbackend.domain.running.dto.req.FinishRunningReqDto;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
@@ -48,6 +38,11 @@ import org.locationtech.jts.geom.LineString;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * 런닝 추적 서비스 - 실시간 GPS 데이터 처리 - 통계 계산 - 런닝 결과 저장
@@ -87,9 +82,9 @@ public class RunningTrackingService {
         Long userId = gpsData.getUserId();
 
         log.debug("📡 GPS 처리: sessionId={}, userId={}, distance={}km, time={}초",
-            "matchedDistanceM={}",
-            sessionId, userId, gpsData.getTotalDistance(), gpsData.getRunningTime(),
-            gpsData.getMatchedDistanceM());
+                "matchedDistanceM={}",
+                sessionId, userId, gpsData.getTotalDistance(), gpsData.getRunningTime(),
+                gpsData.getMatchedDistanceM());
         log.info("getMatchedDistanceM : " + gpsData.getMatchedDistanceM());
         // 1. Redis List에 GPS 데이터 추가 (계속 누적)
         saveUserGPSData(gpsData);
@@ -99,7 +94,7 @@ public class RunningTrackingService {
 
         // 3. 세션 정보 조회 (목표 거리)
         MatchSession session = sessionRepository.findById(sessionId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         Double targetDistance = session.getTargetDistance();
 
@@ -128,7 +123,7 @@ public class RunningTrackingService {
             if (session.getCourse() != null && session.getCourse().getPath() != null) {
                 double totalM = computeLineStringMeters(session.getCourse().getPath());
                 double matchedM = gpsData.getMatchedDistanceM() != null && Double.isFinite(
-                    gpsData.getMatchedDistanceM()) ? gpsData.getMatchedDistanceM() : 0.0;
+                        gpsData.getMatchedDistanceM()) ? gpsData.getMatchedDistanceM() : 0.0;
                 // 5m 여유 (좌표/근사 오차)
                 courseDone = matchedM >= Math.max(0.0, totalM - 5.0);
             }
@@ -152,34 +147,34 @@ public class RunningTrackingService {
     @Transactional(readOnly = true)
     public RunningCoursePathResDto getSessionCoursePath(CustomUser principal, Long sessionId) {
         User user = userRepository.findById(principal.getUserId())
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
         // 세션 참여자 검증
         sessionUserRepository.findBySessionIdAndUserId(sessionId, user.getId())
-            .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         MatchSession session = sessionRepository.findById(sessionId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         Course course = session.getCourse();
         if (course == null || course.getPath() == null) {
             return RunningCoursePathResDto.builder()
-                .courseId(null)
-                .fullPath(null)
-                .remainingPath(null)
-                .startLat(null)
-                .startLng(null)
-                .distanceM(null)
-                .hostMatchedDistM(null)
-                .build();
+                    .courseId(null)
+                    .fullPath(null)
+                    .remainingPath(null)
+                    .startLat(null)
+                    .startLng(null)
+                    .distanceM(null)
+                    .hostMatchedDistM(null)
+                    .build();
         }
 
         RunningStatsDTO latest = getLatestRunningStats(sessionId, principal);
         double matchedM = 0.0;
         // ✅ STANDBY 상태일 때는 진행도를 0으로 고정 (이전 러닝 데이터 무시)
         if (session.getStatus() == SessionStatus.IN_PROGRESS &&
-            latest != null && latest.getHostMatchedDistM() != null &&
-            Double.isFinite(latest.getHostMatchedDistM())) {
+                latest != null && latest.getHostMatchedDistM() != null &&
+                Double.isFinite(latest.getHostMatchedDistM())) {
             matchedM = Math.max(0.0, latest.getHostMatchedDistM());
         }
 
@@ -187,14 +182,14 @@ public class RunningTrackingService {
         Map<String, Object> remaining = sliceLineStringGeoJson(course.getPath(), matchedM);
 
         return RunningCoursePathResDto.builder()
-            .courseId(course.getId())
-            .fullPath(full)
-            .remainingPath(remaining)
-            .startLat(course.getStartLat())
-            .startLng(course.getStartLng())
-            .distanceM(course.getDistanceM())
-            .hostMatchedDistM(matchedM)
-            .build();
+                .courseId(course.getId())
+                .fullPath(full)
+                .remainingPath(remaining)
+                .startLat(course.getStartLat())
+                .startLng(course.getStartLng())
+                .distanceM(course.getDistanceM())
+                .hostMatchedDistM(matchedM)
+                .build();
     }
 
     private Double resolveHostMatchedDistM(MatchSession session, GPSDataDTO gpsData) {
@@ -240,8 +235,8 @@ public class RunningTrackingService {
         // ✅ 단, GPS 오차가 큰 기기에서는 너무 빡세면 진행도가 아예 안 올라가서 선이 안 지워짐
         // -> accuracy 기반으로 허용거리 조절 (코스 근처 지나가면 사라지게: 50m~150m로 확대)
         double accM = gpsData.getAccuracy() != null && Double.isFinite(gpsData.getAccuracy())
-            ? gpsData.getAccuracy()
-            : 30.0;
+                ? gpsData.getAccuracy()
+                : 30.0;
         double thresholdM = clamp(accM * 2.0, 50.0, 150.0); // 1.8 → 2.0, 40~120m → 50~150m로 증가
         if (r.minDistM > thresholdM) {
             return prev;
@@ -273,7 +268,7 @@ public class RunningTrackingService {
     }
 
     private MatchResult matchAlongMeters(LineString path, double lat, double lng,
-        Double prevAlongM) {
+                                         Double prevAlongM) {
         Coordinate[] coords = path.getCoordinates();
         if (coords == null || coords.length < 2) {
             return null;
@@ -485,8 +480,8 @@ public class RunningTrackingService {
         double dLat = Math.toRadians(lat2 - lat1);
         double dLng = Math.toRadians(lng2 - lng1);
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-            + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-            * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }
@@ -511,7 +506,7 @@ public class RunningTrackingService {
      */
     public RunningStatsDTO getLatestRunningStats(Long sessionId, CustomUser principal) {
         User user = userRepository.findById(principal.getUserId())
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
         return getRunningStat(sessionId);
     }
 
@@ -531,7 +526,7 @@ public class RunningTrackingService {
             return objectMapper.readValue(json, RunningStatsDTO.class);
         } catch (Exception e) {
             log.warn("latest running stats parse failed: sessionId={}, err={}", sessionId,
-                e.getMessage());
+                    e.getMessage());
             return null;
         }
     }
@@ -544,20 +539,20 @@ public class RunningTrackingService {
      */
     @Transactional
     public void finishOfflineRunning(Long sessionId, String loginId,
-        FinishRunningReqDto req) {
+                                     FinishRunningReqDto req) {
 
         log.info("🏁 오프라인 런닝 종료: sessionId={}, loginId={}", sessionId, loginId);
 
         Long courseId = (req != null) ? req.getCourseId() : null;
         // 0. loginId로 User 조회
         User hostUser = userRepository.findByLoginId(loginId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
         Long hostUserId = hostUser.getId();
 
         // 1. 세션 조회 (필요시 코스 연결) 및 상태 업데이트
         MatchSession session = sessionRepository.findById(sessionId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         // ✅ 자유러닝(코스 없음)인데 courseId도 없으면 에러
         // OFFLINE과 SOLO 모두 코스 없으면 코스 저장 강제
@@ -569,7 +564,7 @@ public class RunningTrackingService {
             // 자유러닝(코스 없음) 종료: 코스 저장 후 finish에 courseId를 전달하면 세션/결과에 연결한다.
             if (session.getCourse() == null) {
                 Course course = courseRepository.findById(courseId)
-                    .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+                        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
                 // ✅ 코스 소유자가 방장인지 검증
                 if (!course.getUser().getId().equals(hostUserId)) {
@@ -610,8 +605,8 @@ public class RunningTrackingService {
 
         // 4. 평균 페이스 계산
         BigDecimal avgPace = calculateAveragePace(
-            finalGPS.getTotalDistance(),
-            finalGPS.getRunningTime()
+                finalGPS.getTotalDistance(),
+                finalGPS.getRunningTime()
         );
         List<SessionUser> participants = null;
         // 5. split_pace JSON 생성
@@ -619,7 +614,7 @@ public class RunningTrackingService {
         if (session.getType() == SessionType.OFFLINE) {
             // 6. 모든 참여자 조회
             participants = sessionUserRepository.findActiveUsersBySessionId(
-                sessionId);
+                    sessionId);
 
             log.info("👥 참여자 수: {}", participants.size());
         }
@@ -633,17 +628,17 @@ public class RunningTrackingService {
             if (participants != null) {
                 for (SessionUser participant : participants) {
                     RunningResult result = RunningResult.builder()
-                        .user(participant.getUser())
-                        .course(session.getCourse())
-                        .totalDistance(BigDecimal.valueOf(finalGPS.getTotalDistance())
-                            .setScale(2, java.math.RoundingMode.HALF_UP))
-                        .totalTime(finalGPS.getRunningTime())
-                        .avgPace(avgPace)
-                        .splitPace(splitPace)
-                        .startedAt(startedAt)
-                        .runStatus(RunStatus.COMPLETED)
-                        .runningType(RunningType.OFFLINE)
-                        .build();
+                            .user(participant.getUser())
+                            .course(session.getCourse())
+                            .totalDistance(BigDecimal.valueOf(finalGPS.getTotalDistance())
+                                    .setScale(2, java.math.RoundingMode.HALF_UP))
+                            .totalTime(finalGPS.getRunningTime())
+                            .avgPace(avgPace)
+                            .splitPace(splitPace)
+                            .startedAt(startedAt)
+                            .runStatus(RunStatus.COMPLETED)
+                            .runningType(RunningType.OFFLINE)
+                            .build();
 
                     RunningResult saved = runningResultService.saveAndUpdateAverage(result);
                     // 추가 : 챌린지 진행도 반영
@@ -654,34 +649,37 @@ public class RunningTrackingService {
                     }
 
                     log.info("✅ 기록 저장: userId={}, distance={}km, time={}초, pace={}분/km",
-                        participant.getUser().getId(),
-                        finalGPS.getTotalDistance(),
-                        finalGPS.getRunningTime(),
-                        avgPace);
+                            participant.getUser().getId(),
+                            finalGPS.getTotalDistance(),
+                            finalGPS.getRunningTime(),
+                            avgPace);
                 }
             }
         } else if (session.getType() == SessionType.SOLO) {
             // ✅ 솔로런: 방장(본인)에게만 RunningResult 저장
             RunningResult result = RunningResult.builder()
-                .user(hostUser)
-                .course(session.getCourse())
-                .totalDistance(BigDecimal.valueOf(finalGPS.getTotalDistance())
-                    .setScale(2, java.math.RoundingMode.HALF_UP))
-                .totalTime(finalGPS.getRunningTime())
-                .avgPace(avgPace)
-                .splitPace(splitPace)
-                .startedAt(startedAt)
-                .runStatus(RunStatus.COMPLETED)
-                .runningType(RunningType.SOLO)
-                .build();
+                    .user(hostUser)
+                    .course(session.getCourse())
+                    .totalDistance(BigDecimal.valueOf(finalGPS.getTotalDistance())
+                            .setScale(2, java.math.RoundingMode.HALF_UP))
+                    .totalTime(finalGPS.getRunningTime())
+                    .avgPace(avgPace)
+                    .splitPace(splitPace)
+                    .startedAt(startedAt)
+                    .runStatus(RunStatus.COMPLETED)
+                    .runningType(RunningType.SOLO)
+                    .build();
 
             hostResult = runningResultService.saveAndUpdateAverage(result);
 
+
+            challengeProgressService.applyRunningResult(hostResult);
+
             log.info("✅ 솔로런 기록 저장: userId={}, distance={}km, time={}초, pace={}분/km",
-                hostUserId,
-                finalGPS.getTotalDistance(),
-                finalGPS.getRunningTime(),
-                avgPace);
+                    hostUserId,
+                    finalGPS.getTotalDistance(),
+                    finalGPS.getRunningTime(),
+                    avgPace);
         }
         if (hostResult != null) {
             session.updateRunningResult(hostResult);
@@ -693,12 +691,12 @@ public class RunningTrackingService {
         if (session.getType() == SessionType.OFFLINE) {
             // 10. 러닝 결과 저장 완료 후 시스템 메시지 전송
             ChatMessageDto systemMessage = ChatMessageDto.builder()
-                .sessionId(sessionId)
-                .senderId(null)
-                .senderName("SYSTEM")
-                .content("🏁 런닝이 종료되었습니다! 수고하셨습니다!")
-                .messageType("SYSTEM")
-                .build();
+                    .sessionId(sessionId)
+                    .senderId(null)
+                    .senderName("SYSTEM")
+                    .content("🏁 런닝이 종료되었습니다! 수고하셨습니다!")
+                    .messageType("SYSTEM")
+                    .build();
             chatService.sendMessage(systemMessage);
         }
         log.info("🏁 오프라인 런닝 종료 완료: sessionId={}", sessionId);
@@ -711,14 +709,14 @@ public class RunningTrackingService {
     public FreeRunCoursePreviewResDto previewFreeRunCourse(CustomUser principal, Long sessionId) {
 
         User user = userRepository.findById(principal.getUserId())
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
         // 세션 참여자 검증
         sessionUserRepository.findBySessionIdAndUserId(sessionId, user.getId())
-            .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         MatchSession session = sessionRepository.findById(sessionId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         // ✅ 방장인지 검증
         // SOLO는 recruit가 없으니, 요청자를 host로 취급(솔로는 본인만 있음)
@@ -727,8 +725,8 @@ public class RunningTrackingService {
             hostUserId = user.getId();
         } else {
             hostUserId = session.getRecruit() != null
-                ? session.getRecruit().getUser().getId()
-                : null;
+                    ? session.getRecruit().getUser().getId()
+                    : null;
         }
 
         if (hostUserId == null || !hostUserId.equals(user.getId())) {
@@ -771,21 +769,21 @@ public class RunningTrackingService {
                 // ✅ 시작 시간 기록 (첫 GPS)
                 if (startTime < 0) {
                     startTime = gps.getTimestamp() != null ? gps.getTimestamp()
-                        : System.currentTimeMillis();
+                            : System.currentTimeMillis();
                     startLat = gps.getLatitude();
                     startLng = gps.getLongitude();
                 }
 
                 // ✅ 초반 튀는 GPS 필터링: 시작 후 10초 이내이거나 50m 이내는 제외
                 long currentTime =
-                    gps.getTimestamp() != null ? gps.getTimestamp() : System.currentTimeMillis();
+                        gps.getTimestamp() != null ? gps.getTimestamp() : System.currentTimeMillis();
                 double timeSinceStart = (currentTime - startTime) / 1000.0; // 초
 
                 if (timeSinceStart < 10) {
                     // 시작 후 10초 이내: 거리 체크
                     double distFromStart = haversineMeters(
-                        startLat, startLng,
-                        gps.getLatitude(), gps.getLongitude()
+                            startLat, startLng,
+                            gps.getLatitude(), gps.getLongitude()
                     );
                     if (distFromStart > 50) {
                         // 50m 이상 튀면 제외
@@ -804,8 +802,8 @@ public class RunningTrackingService {
                 if (!coords.isEmpty()) {
                     Coordinate lastCoord = coords.get(coords.size() - 1);
                     double distFromLast = haversineMeters(
-                        lastCoord.y, lastCoord.x, // (lat, lng)
-                        gps.getLatitude(), gps.getLongitude()
+                            lastCoord.y, lastCoord.x, // (lat, lng)
+                            gps.getLatitude(), gps.getLongitude()
                     );
                     if (distFromLast > 100) {
                         // 100m 이상 점프는 제외
@@ -829,7 +827,7 @@ public class RunningTrackingService {
 
         // LineString 생성 + 저장용 샘플링/정리(포인트 과다/노이즈 완화)
         LineString raw = new org.locationtech.jts.geom.GeometryFactory(
-            new org.locationtech.jts.geom.PrecisionModel(), 4326
+                new org.locationtech.jts.geom.PrecisionModel(), 4326
         ).createLineString(coords.toArray(new Coordinate[0]));
         LineString cleaned = coursePathProcessor.simplifyForStore(raw);
 
@@ -853,7 +851,7 @@ public class RunningTrackingService {
             // km를 m로 변환 (실제 뛴 거리)
             finalDistanceM = (int) Math.max(0, Math.round(finalGPS.getTotalDistance() * 1000));
             log.info("✅ 실제 뛴 거리 사용: {}m (GPS 트랙 계산 거리: {}m)",
-                finalDistanceM, (int) Math.round(distM));
+                    finalDistanceM, (int) Math.round(distM));
         } else {
             // fallback: 계산된 거리 사용 (드물게 발생)
             finalDistanceM = (int) Math.max(0, Math.round(distM));
@@ -861,11 +859,11 @@ public class RunningTrackingService {
         }
 
         return FreeRunCoursePreviewResDto.builder()
-            .path(pathJson)
-            .distanceM(finalDistanceM)  // 실제 뛴 거리 사용
-            .startLat(start != null ? start.getY() : null)
-            .startLng(start != null ? start.getX() : null)
-            .build();
+                .path(pathJson)
+                .distanceM(finalDistanceM)  // 실제 뛴 거리 사용
+                .startLat(start != null ? start.getY() : null)
+                .startLng(start != null ? start.getX() : null)
+                .build();
     }
 
     // ===== Redis 헬퍼 메서드 =====
@@ -876,8 +874,8 @@ public class RunningTrackingService {
     private void saveUserGPSData(GPSDataDTO gpsData) {
         try {
             String trackKey = String.format("running:%d:user:%d:track",
-                gpsData.getSessionId(),
-                gpsData.getUserId());
+                    gpsData.getSessionId(),
+                    gpsData.getUserId());
 
             // GPS 데이터를 JSON 문자열로 변환
             String json = objectMapper.writeValueAsString(gpsData);
@@ -911,10 +909,10 @@ public class RunningTrackingService {
             // 조건: 아직 기록 안 됐고 && 해당 거리 도달
             if (Boolean.FALSE.equals(gpsRedisTemplate.hasKey(kmKey)) && distance >= km) {
                 gpsRedisTemplate.opsForValue()
-                    .set(kmKey, String.valueOf(time), Duration.ofHours(2));
+                        .set(kmKey, String.valueOf(time), Duration.ofHours(2));
 
                 log.info("🎯 {}km 도달: sessionId={}, userId={}, time={}초 ({}분)",
-                    km, sessionId, userId, time, String.format("%.1f", time / 60.0));
+                        km, sessionId, userId, time, String.format("%.1f", time / 60.0));
             }
         }
     }
@@ -938,7 +936,7 @@ public class RunningTrackingService {
         if (keys != null && !keys.isEmpty()) {
             gpsRedisTemplate.delete(keys);
             log.info("🗑️ Redis 데이터 삭제: sessionId={}, userId={}, count={}",
-                sessionId, userId, keys.size());
+                    sessionId, userId, keys.size());
         }
 
         // ✅ latestStats 키도 삭제
@@ -979,22 +977,22 @@ public class RunningTrackingService {
         boolean isCompleted = targetDistance != null && totalDistance >= targetDistance;
 
         return RunningStatsDTO.builder()
-            .sessionId(sessionId)
-            .teamAveragePace(avgPace)
-            .totalDistance(totalDistance)
-            .remainingDistance(remainingDistance)
-            .totalRunningTime(runningTime)
-            .segmentPaces(segmentPaces)
-            .kmReached(kmReached)
-            // ✅ 참가자 화면에서도 방장 GPS를 표시할 수 있도록 포함
-            .hostLatitude(gpsData.getLatitude())
-            .hostLongitude(gpsData.getLongitude())
-            .hostHeading(gpsData.getHeading())
-            // ✅ 참여자도 방장과 동일한 기준(코스 위 진행도)으로 선을 지울 수 있도록 포함
-            .hostMatchedDistM(gpsData.getMatchedDistanceM())
-            .isCompleted(isCompleted)
-            .timestamp(System.currentTimeMillis())
-            .build();
+                .sessionId(sessionId)
+                .teamAveragePace(avgPace)
+                .totalDistance(totalDistance)
+                .remainingDistance(remainingDistance)
+                .totalRunningTime(runningTime)
+                .segmentPaces(segmentPaces)
+                .kmReached(kmReached)
+                // ✅ 참가자 화면에서도 방장 GPS를 표시할 수 있도록 포함
+                .hostLatitude(gpsData.getLatitude())
+                .hostLongitude(gpsData.getLongitude())
+                .hostHeading(gpsData.getHeading())
+                // ✅ 참여자도 방장과 동일한 기준(코스 위 진행도)으로 선을 지울 수 있도록 포함
+                .hostMatchedDistM(gpsData.getMatchedDistanceM())
+                .isCompleted(isCompleted)
+                .timestamp(System.currentTimeMillis())
+                .build();
     }
 
     private String latestStatsKey(Long sessionId) {
@@ -1008,7 +1006,7 @@ public class RunningTrackingService {
             gpsRedisTemplate.opsForValue().set(key, json, LATEST_STATS_TTL);
         } catch (Exception e) {
             log.warn("latest running stats save failed: sessionId={}, err={}", sessionId,
-                e.getMessage());
+                    e.getMessage());
         }
     }
 
@@ -1059,12 +1057,12 @@ public class RunningTrackingService {
                 if (Boolean.TRUE.equals(gpsRedisTemplate.hasKey(kmKey))) {
                     // 아직 알림을 보내지 않았다면
                     String notifiedKey = String.format("running:%d:user:%d:km:%d:notified",
-                        sessionId, userId,
-                        km);
+                            sessionId, userId,
+                            km);
                     if (Boolean.FALSE.equals(gpsRedisTemplate.hasKey(notifiedKey))) {
                         // 알림 보냄 표시 (TTL 2시간)
                         gpsRedisTemplate.opsForValue()
-                            .set(notifiedKey, "true", Duration.ofHours(2));
+                                .set(notifiedKey, "true", Duration.ofHours(2));
                         return km;  // 새로 도달한 km 반환
                     }
                 }
@@ -1110,7 +1108,7 @@ public class RunningTrackingService {
         // ✅ 세션에 연결된 러닝 결과가 "정본"
         // - 참여자도 동일 세션 결과를 보게 해야, 저장 딜레이로 이전 기록이 뜨는 문제를 방지할 수 있다.
         MatchSession session = sessionRepository.findById(sessionId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         RunningResult result = session.getRunningResult();
 
@@ -1122,8 +1120,8 @@ public class RunningTrackingService {
 
         // split_pace는 이미 List<Map<String, Object>> 타입으로 파싱되어 있음 (Hibernate 자동 변환)
         List<Map<String, Object>> splitPaceList = result.getSplitPace() != null
-            ? result.getSplitPace()
-            : new ArrayList<>();
+                ? result.getSplitPace()
+                : new ArrayList<>();
 
         // 응답 데이터 생성
         Map<String, Object> response = new HashMap<>();
