@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.match.dto.res;
 
+import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
@@ -46,6 +47,11 @@ public class ProfileRunningHistoryResDto {
 
     public static ProfileRunningHistoryResDto from(RunningResult r, FileStorage fileStorage) {
         Course c = r.getCourse();
+
+        String thumbnailUrl = null;
+        if (c != null && c.getThumbnailUrl() != null) {
+            thumbnailUrl = fileStorage.toHttpsUrl(c.getThumbnailUrl());
+        }
 
         return ProfileRunningHistoryResDto.builder()
                 .runningResultId(r.getId())
