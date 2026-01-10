@@ -23,6 +23,8 @@ public class PathController {
         return "home/home";
     }
 
+    /* ===================== MATCH ===================== */
+
     @GetMapping("/match/select")
     public String matchSelectView() {
         return "match/match-select";
@@ -80,10 +82,12 @@ public class PathController {
     return "match/battle-detail";
   }
 
-  @GetMapping("/recruit")
-  public String recruitListView() {
-    return "recruit/recruit-list";
-  }
+    /* ===================== RECRUIT ===================== */
+
+    @GetMapping("/recruit")
+    public String recruitListView() {
+        return "recruit/recruit-list";
+    }
 
   @GetMapping("/recruit/create")
   public String recruitCreateView() {
@@ -101,6 +105,8 @@ public class PathController {
     model.addAttribute("recruitId", id);
     return "recruit/recruit-update";
   }
+
+    /* ===================== CREW ===================== */
 
     @GetMapping("/crews")
     public String crewListPage() {
@@ -151,55 +157,11 @@ public class PathController {
         return "membership/membership";
     }
 
-    @GetMapping("/payment/pay")
-    public String paymentPayView() {
-        return "payment/pay";
-    }
-
-    @GetMapping("/payment/history")
-    public String paymentHistoryView() {
-        return "payment/history";
-    }
-
-    @GetMapping("/payment/success")
-    public String paymentSuccessView() {
-        return "payment/success";
-    }
-
-    @GetMapping("/payment/free-success")
-    public String freePaymentSuccess() {
-        return "payment/free-success";
-    }
-
-    @GetMapping("/payment/fail")
-    public String paymentFailView() {
-        return "payment/fail";
-    }
-
-    @GetMapping("/points")
-    public String point() {
-        return "point/point";
-    }
-
-    @GetMapping("/points/balance")
-    public String pointBalance() {
-        return "point/pointBalance";
-    }
-
-    @GetMapping("/points/history")
-    public String pointHistory() {
-        return "point/pointHistory";
-    }
-
-    @GetMapping("/points/shop")
-    public String pointShop() {
-        return "point/pointShop";
-    }
-
     @GetMapping("/admin/points/products")
     public String pointProductManagement() {
         return "admin/point-product-list";
     }
+    /* ===================== CHAT ===================== */
 
     @GetMapping("/chat")
     public String chatList() {
@@ -211,10 +173,12 @@ public class PathController {
         return "chat/chat1";
     }
 
-    @GetMapping("/chat/crew")  // ⭐ 크루 채팅방 경로 추가
+    @GetMapping("/chat/crew")
     public String crewChat() {
         return "chat/crew-chat";
     }
+
+    /* ===================== MY PAGE ===================== */
 
     @GetMapping("/myPage")
     public String myPageView() {
@@ -226,42 +190,58 @@ public class PathController {
         return "mypage/mypage-edit";
     }
 
-  @GetMapping("/challenge")
-  public String challengeView() {
-    return "challenge/challenge";
-  }
+    /* ===================== FEED ===================== */
 
-  @GetMapping("/challenge/{id}")
-  public String challengeDetailView(@PathVariable Long id, Model model) {
-    model.addAttribute("challengeId", id);
-    return "challenge/challenge-detail";
-  }
-
-  @GetMapping("/challenge/create")
-  public String challengeCreateView() {
-    return "challenge/challenge-create";
-  }
-
-  @GetMapping("/challenge/{id}/edit")
-  public String challengeEditView(@PathVariable Long id, Model model) {
-    model.addAttribute("challengeId", id);
-    return "challenge/challenge-edit";
-  }
-
-  @GetMapping("/challenge/end")
-  public String challengeEndView() {
-    return "challenge/challenge-end";
-  }
-
-  @GetMapping("/course_auto")
-  public String testView() {
-    return "courseAuto";
-  }
-
-    @GetMapping("/course_manual")
-    public String test2View() {
-        return "courseManual";
+    @GetMapping("/feed")
+    public String feedView() {
+        return "feed/feed";
     }
+
+    @GetMapping("/feed/records")
+    public String myRecordView() {
+        return "feed/myrecord-list";
+    }
+
+    @GetMapping("/feed/post")
+    public String feedPostCreateView() {
+        return "feed/feed-create";
+    }
+
+    @GetMapping("/feed/update")
+    public String feedUpdateView() {
+        return "feed/feed-update";
+    }
+
+    /* ===================== CHALLENGE ===================== */
+
+    @GetMapping("/challenge")
+    public String challengeView() {
+        return "challenge/challenge";
+    }
+
+    @GetMapping("/challenge/{id}")
+    public String challengeDetailView(@PathVariable Long id, Model model) {
+        model.addAttribute("challengeId", id);
+        return "challenge/challenge-detail";
+    }
+
+    @GetMapping("/challenge/create")
+    public String challengeCreateView() {
+        return "challenge/challenge-create";
+    }
+
+    @GetMapping("/challenge/{id}/edit")
+    public String challengeEditView(@PathVariable Long id, Model model) {
+        model.addAttribute("challengeId", id);
+        return "challenge/challenge-edit";
+    }
+
+    @GetMapping("/challenge/end")
+    public String challengeEndView() {
+        return "challenge/challenge-end";
+    }
+
+    /* ===================== COURSE ===================== */
 
     @GetMapping("/course")
     public String courseView() {
@@ -274,21 +254,13 @@ public class PathController {
     }
 
     @GetMapping("/courseDetail/{course_id}")
-    public String courseDetailView(
-        @PathVariable(name = "course_id") Long courseId,
-        Model model
-    ) {
-
+    public String courseDetailView(@PathVariable(name = "course_id") Long courseId, Model model) {
         model.addAttribute("courseId", courseId);
         return "course/courseDetail";
     }
 
     @GetMapping("/courseUpdate/{course_id}")
-    public String courseUpdateView(
-        @PathVariable(name = "course_id") Long courseId,
-        Model model
-    ) {
-
+    public String courseUpdateView(@PathVariable(name = "course_id") Long courseId, Model model) {
         model.addAttribute("courseId", courseId);
         return "course/courseUpdate";
     }
@@ -387,8 +359,57 @@ public class PathController {
         return "coupon/coupon-event";
     }
 
+    /* ===================== PAYMENT / POINT ===================== */
+
+    @GetMapping("/payment/pay")
+    public String paymentPayView() {
+        return "payment/pay";
+    }
+
+    @GetMapping("/payment/history")
+    public String paymentHistoryView() {
+        return "payment/history";
+    }
+
+    @GetMapping("/payment/success")
+    public String paymentSuccessView() {
+        return "payment/success";
+    }
+
+    @GetMapping("/payment/free-success")
+    public String freePaymentSuccess() {
+        return "payment/free-success";
+    }
+
+    @GetMapping("/payment/fail")
+    public String paymentFailView() {
+        return "payment/fail";
+    }
+
+    @GetMapping("/points")
+    public String point() {
+        return "point/point";
+    }
+
+    @GetMapping("/points/balance")
+    public String pointBalance() {
+        return "point/pointBalance";
+    }
+
+    @GetMapping("/points/history")
+    public String pointHistory() {
+        return "point/pointHistory";
+    }
+
+    @GetMapping("/points/shop")
+    public String pointShop() {
+        return "point/pointShop";
+    }
+
+    /* ===================== RUNNING ===================== */
+
     @GetMapping("/running/{sessionId}")
-    public String runningView(@PathVariable(name = "sessionId") Long sessionId, Model model) {
+    public String runningView(@PathVariable Long sessionId, Model model) {
         model.addAttribute("sessionId", sessionId);
         return "running/running";
     }

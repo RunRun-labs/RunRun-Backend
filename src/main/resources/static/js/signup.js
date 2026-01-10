@@ -109,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   toggleButtons.forEach((btn) => {
     const input = btn.parentElement?.querySelector("input");
+    const eyeIcon = btn.querySelector('.eye-icon');
     if (!input) return;
     let visible = false;
     btn.addEventListener("click", () => {
@@ -118,6 +119,12 @@ document.addEventListener("DOMContentLoaded", () => {
         "aria-label",
         visible ? "비밀번호 숨기기" : "비밀번호 표시"
       );
+      
+      // 아이콘 변경
+      if (eyeIcon) {
+        eyeIcon.src = visible ? '/img/eye-open.svg' : '/img/eye-closed.svg';
+        eyeIcon.alt = visible ? '비밀번호 표시 아이콘' : '비밀번호 감춤 아이콘';
+      }
     });
   });
 
