@@ -45,8 +45,7 @@ public class FriendService {
   private final NotificationService notificationService;
 
   /**
-   * 친구 요청 보내기
-   * REQUESTED 생성
+   * 친구 요청 보내기 REQUESTED 생성
    */
   @Transactional
   public Long sendRequest(CustomUser principal, Long targetUserId) {
@@ -86,8 +85,7 @@ public class FriendService {
   }
 
   /**
-   * 받은 친구 요청 목록 조회
-   * receiver = me, status = REQUESTED
+   * 받은 친구 요청 목록 조회 receiver = me, status = REQUESTED
    */
   @Transactional(readOnly = true)
   public List<FriendResDto> getReceivedRequests(CustomUser principal) {
@@ -101,8 +99,7 @@ public class FriendService {
   }
 
   /**
-   * 보낸 친구 요청 목록 조회
-   * requester = me, status = REQUESTED
+   * 보낸 친구 요청 목록 조회 requester = me, status = REQUESTED
    */
   @Transactional(readOnly = true)
   public List<FriendResDto> getSentRequests(CustomUser principal) {
@@ -116,8 +113,7 @@ public class FriendService {
   }
 
   /**
-   * 친구 요청 수락
-   * REQUESTED → ACCEPTED
+   * 친구 요청 수락 REQUESTED → ACCEPTED
    */
   @Transactional
   public void acceptRequest(CustomUser principal, Long requestId) {
@@ -128,11 +124,26 @@ public class FriendService {
     validatePending(friend);
 
     friend.accept();
+
+    try {
+      notificationService.create(
+          friend.getRequester(),
+          "친구 요청 수락",
+          me.getName() + "님이 친구 요청을 수락했습니다.",
+          NotificationType.FRIEND,
+          RelatedType.FRIEND_LIST,
+          friend.getId()
+      );
+      log.info("친구 요청 수락 알림 발송 완료 - friendId: {}, requesterId: {}, receiverId: {}",
+          friend.getId(), friend.getRequester().getId(), friend.getReceiver().getId());
+    } catch (Exception e) {
+      log.error("친구 요청 수락 알림 생성 실패 - friendId: {}, requesterId: {}, receiverId: {}",
+          friend.getId(), friend.getRequester().getId(), friend.getReceiver().getId(), e);
+    }
   }
 
   /**
-   * 친구 요청 거절
-   * REQUESTED → REJECTED
+   * 친구 요청 거절 REQUESTED → REJECTED
    */
   @Transactional
   public void rejectRequest(CustomUser principal, Long requestId) {
@@ -146,8 +157,7 @@ public class FriendService {
   }
 
   /**
-   * 친구 목록 조회
-   * ACCEPTED
+   * 친구 목록 조회 ACCEPTED
    */
   @Transactional(readOnly = true)
   public Page<FriendResDto> getFriends(
@@ -168,8 +178,7 @@ public class FriendService {
   }
 
   /**
-   * 친구 삭제
-   * ACCEPTED → 관계 종료
+   * 친구 삭제 ACCEPTED → 관계 종료
    */
   @Transactional
   public void deleteFriend(CustomUser principal, Long friendUserId) {
