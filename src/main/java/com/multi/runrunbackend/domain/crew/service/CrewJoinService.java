@@ -456,6 +456,8 @@ public class CrewJoinService {
         .findByCrewAndUserAndIsDeletedFalse(crew, targetUser)
         .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_CREW_USER));
 
+    CrewRole oldRole = targetCrewUser.getRole(); // 이전 역할 저장
+
     // 크루장으로 변경하는 경우 -> 기존 크루장을 일반 멤버로 강등
     if (newRole == CrewRole.LEADER) {
       // 일반 멤버는 크루장이 될 수 없음 (부크루장/운영진만 가능)
@@ -488,8 +490,49 @@ public class CrewJoinService {
     // 권한 변경
     targetCrewUser.changeRole(newRole);
 
-    log.info("크루원 권한 변경 완료 - crewId: {}, userId: {}, newRole: {}",
-        crewId, userId, newRole);
+    if (newRole == CrewRole.SUB_LEADER || newRole == CrewRole.STAFF) {
+      try {
+        List<CrewUser> allMembers = crewUserRepository
+            .findByCrewAndIsDeletedFalse(crew);
+
+        String roleName = newRole == CrewRole.SUB_LEADER ? "부크루장" : "운영진";
+        String message = targetUser.getName() + "님이 " + roleName + "으로 임명되었습니다.";
+
+        for (CrewUser member : allMembers) {
+          // 권한이 변경된 본인은 제외
+          if (member.getUser().getId().equals(userId)) {
+            continue;
+          }
+
+          try {
+            notificationService.create(
+                member.getUser(),
+                "크루원 권한 변경",
+                message,
+                NotificationType.CREW,
+                RelatedType.CREW_USERS,
+                crewId
+            );
+            log.debug(
+                "크루원 권한 변경 알림 발송 완료 - crewId: {}, receiverId: {}, targetUserId: {}, newRole: {}",
+                crewId, member.getUser().getId(), userId, newRole);
+          } catch (Exception e) {
+            log.error(
+                "크루원 권한 변경 알림 생성 실패 - crewId: {}, receiverId: {}, targetUserId: {}, newRole: {}",
+                crewId, member.getUser().getId(), userId, newRole, e);
+          }
+        }
+        log.info(
+            "크루원 전체에게 권한 변경 알림 발송 완료 - crewId: {}, targetUserId: {}, newRole: {}, totalMembers: {}",
+            crewId, userId, newRole, allMembers.size());
+      } catch (Exception e) {
+        log.error("크루원 전체 알림 발송 중 오류 발생 - crewId: {}, targetUserId: {}, newRole: {}",
+            crewId, userId, newRole, e);
+      }
+    }
+
+    log.info("크루원 권한 변경 완료 - crewId: {}, userId: {}, oldRole: {}, newRole: {}",
+        crewId, userId, oldRole, newRole);
   }
 
   /**
