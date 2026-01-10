@@ -14,15 +14,17 @@ import org.springframework.stereotype.Component;
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
 
-    @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response,
-        AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        log.warn("접근 거부: 사용자가 {} 경로에 접근할 권한이 없습니다. 403 Forbidden 반환.", request.getRequestURI());
-
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"error\": \"접근 권한이 없습니다.\"}");
-        response.getWriter().flush();
+  @Override
+  public void handle(HttpServletRequest request, HttpServletResponse response,
+      AccessDeniedException accessDeniedException) throws IOException, ServletException {
+    log.warn("접근 거부: 사용자가 {} 경로에 접근할 권한이 없습니다. 403 Forbidden 반환.", request.getRequestURI());
+    if (response.isCommitted()) {
+      return; // :흰색_확인_표시: 이미 커밋됐으면 아무 것도 쓰지 않음
     }
+    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+    response.setContentType("application/json;charset=UTF-8");
+    response.getWriter().write("{\"error\": \"접근 권한이 없습니다.\"}");
+    response.getWriter().flush();
+  }
 }
 

@@ -14,6 +14,8 @@
       rel="stylesheet"
   />
   <link rel="stylesheet" href="/css/match-select.css" th:href="@{/css/match-select.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
 </head>
 <body>
 <main class="page">
@@ -28,52 +30,60 @@
   </header>
 
   <section class="match-buttons">
-    <button class="match-button" data-match-type="online" type="button">
+    <button class="match-button match-button-online" data-match-type="online" type="button">
       <div class="match-icon">
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="32" cy="32" r="28" stroke="#000" stroke-width="2.5" fill="none"/>
-          <circle cx="32" cy="32" r="18" stroke="#000" stroke-width="2.5" fill="none"/>
-          <circle cx="32" cy="32" r="8" stroke="#000" stroke-width="2.5" fill="none"/>
-          <path d="M32 4L32 12M32 52L32 60M4 32L12 32M52 32L60 32" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+              fill="currentColor"/>
         </svg>
       </div>
-      <span class="match-label">온라인 매칭</span>
+      <div class="match-content">
+        <span class="match-label">온라인 매칭</span>
+        <span class="match-description">실시간으로 다른 러너와 매칭</span>
+      </div>
     </button>
 
-    <button class="match-button" data-match-type="offline" type="button">
+    <button class="match-button match-button-offline" data-match-type="offline" type="button">
       <div class="match-icon">
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M32 8L12 18L32 28L52 18L32 8Z" stroke="#000" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
-          <path d="M12 18V46L32 56L52 46V18" stroke="#000" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
-          <path d="M32 28V56" stroke="#000" stroke-width="2.5"/>
-          <circle cx="32" cy="32" r="3" fill="#000"/>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+              fill="currentColor"/>
         </svg>
       </div>
-      <span class="match-label">오프라인 매칭</span>
+      <div class="match-content">
+        <span class="match-label">오프라인 매칭</span>
+        <span class="match-description">주변 러너와 함께 달리기</span>
+      </div>
     </button>
 
-    <button class="match-button" data-match-type="ghost" type="button">
+    <button class="match-button match-button-ghost" data-match-type="ghost" type="button">
       <div class="match-icon">
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M32 12C20 12 12 20 12 30C12 38 16 44 24 46V54H40V46C48 44 52 38 52 30C52 20 44 12 32 12Z" stroke="#000" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
-          <circle cx="26" cy="30" r="2.5" fill="#000"/>
-          <circle cx="38" cy="30" r="2.5" fill="#000"/>
-          <path d="M26 38C26 40.5 28.5 42.5 32 42.5C35.5 42.5 38 40.5 38 38" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M20 20L18 18M46 20L48 18M20 44L18 46M46 44L48 46" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+              fill="currentColor"/>
         </svg>
       </div>
-      <span class="match-label">고스트 매칭</span>
+      <div class="match-content">
+        <span class="match-label">고스트 매칭</span>
+        <span class="match-description">과거 기록과 경쟁하기</span>
+      </div>
     </button>
 
-    <button class="match-button" data-match-type="solo" type="button">
+    <button class="match-button match-button-solo" data-match-type="solo" type="button">
       <div class="match-icon">
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="32" cy="24" r="10" stroke="#000" stroke-width="2.5" fill="none"/>
-          <path d="M16 50C16 42 23 36 32 36C41 36 48 42 48 50" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M32 16V8M32 40V32" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
+              fill="currentColor"/>
         </svg>
       </div>
-      <span class="match-label">솔로 플레이</span>
+      <div class="match-content">
+        <span class="match-label">솔로 플레이</span>
+        <span class="match-description">혼자서 자유롭게 달리기</span>
+      </div>
     </button>
   </section>
 </main>

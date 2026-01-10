@@ -540,7 +540,20 @@ public class PointService {
 
         // user로 Membership 조회
         return membershipRepository.findByUser(user)
-                .map(membership -> membership.getMembershipStatus() == MembershipStatus.ACTIVE)
+                .map(membership -> {
+                    // ACTIVE이거나, CANCELED이지만 아직 종료 전인 경우
+                    if (membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
+                        return true;
+                    }
+
+                    if (membership.getMembershipStatus() == MembershipStatus.CANCELED
+                            && membership.getEndDate() != null
+                            && membership.getEndDate().isAfter(LocalDateTime.now())) {
+                        return true;
+                    }
+
+                    return false;
+                })
                 .orElse(false);
     }
 

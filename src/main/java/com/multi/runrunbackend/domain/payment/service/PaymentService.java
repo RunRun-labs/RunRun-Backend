@@ -26,6 +26,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -62,11 +64,46 @@ public class PaymentService {
             if (membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
                 throw new BusinessException(ErrorCode.MEMBERSHIP_ALREADY_PREMIUM);
             }
+
+            // CANCELED 상태지만 아직 사용 가능한 경우
+            if (membership.getMembershipStatus() == MembershipStatus.CANCELED
+                    && membership.getEndDate() != null
+                    && membership.getEndDate().isAfter(LocalDateTime.now())) {
+                throw new BusinessException(ErrorCode.MEMBERSHIP_STILL_ACTIVE);
+            }
         });
+
+        // 기존 READY 상태 결제 정리
+        List<Payment> pendingPayments = paymentRepository
+                .findByUserAndPaymentStatus(user, PaymentStatus.READY);
+
+        if (!pendingPayments.isEmpty()) {
+            log.info("기존 READY 상태 결제 정리 - 사용자: {}, 건수: {}",
+                    user.getLoginId(), pendingPayments.size());
+
+            for (Payment pendingPayment : pendingPayments) {
+                // READY → CANCELED 변경
+                pendingPayment.cancelBySystem("새 결제 요청으로 자동 취소");
+
+                // 쿠폰 복구
+                if (pendingPayment.getCouponIssue() != null) {
+                    try {
+                        couponIssueService.cancelCouponUse(
+                                pendingPayment.getCouponIssue().getId()
+                        );
+                        log.info("쿠폰 복구 완료 - couponIssueId: {}",
+                                pendingPayment.getCouponIssue().getId());
+                    } catch (Exception e) {
+                        log.error("쿠폰 복구 실패 - couponIssueId: {}",
+                                pendingPayment.getCouponIssue().getId(), e);
+                    }
+                }
+            }
+        }
 
         // 주문 ID 생성
         String orderId = "ORDER_" + UUID.randomUUID().toString();
-
+        
         // 프리미엄 가격 = 9900원 고정
         Integer originalAmount = PREMIUM_MONTHLY_PRICE;
 
@@ -537,7 +574,6 @@ public class PaymentService {
             // EXPERIENCE 쿠폰 = 체험형 (benefitValue가 일수)
             if (coupon.getBenefitType() == CouponBenefitType.EXPERIENCE) {
                 membership.activateForDays(coupon.getBenefitValue());
-                membership.setNextBillingDate(null);
                 log.info("체험 멤버십 활성화 - {}일", coupon.getBenefitValue());
             } else if (coupon.getBenefitType() == CouponBenefitType.FIXED_DISCOUNT
                     || coupon.getBenefitType() == CouponBenefitType.RATE_DISCOUNT) {

@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.match.dto.res;
 
+import com.multi.runrunbackend.domain.match.constant.Tier;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,4 +24,5 @@ public class MatchWaitingParticipantDto {
     private Boolean isReady;
     private Boolean isHost;  // 방장 여부
     private String avgPace;  // 평균 페이스 (하드코딩: "5:30" 형식)
+    private Tier tier;  // 티어 정보
 }

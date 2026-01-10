@@ -50,4 +50,5 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
             LocalDateTime endDate
     );
 
+
 }
