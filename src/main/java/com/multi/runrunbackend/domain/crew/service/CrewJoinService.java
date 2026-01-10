@@ -325,6 +325,40 @@ public class CrewJoinService {
     CrewUser crewUser = crewUserRepository.findByCrewAndUserAndIsDeletedFalse(crew, user)
         .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
 
+    try {
+      List<CrewUser> allMembers = crewUserRepository
+          .findByCrewAndIsDeletedFalse(crew);
+
+      String message = user.getName() + "님이 크루를 탈퇴했습니다.";
+
+      for (CrewUser member : allMembers) {
+        if (member.getUser().getId().equals(user.getId())) {
+          continue;
+        }
+
+        try {
+          notificationService.create(
+              member.getUser(),
+              "크루원 탈퇴",
+              message,
+              NotificationType.CREW,
+              RelatedType.CREW_USERS,
+              crewId
+          );
+          log.debug("크루원 탈퇴 알림 발송 완료 - crewId: {}, receiverId: {}, leavingUserId: {}",
+              crewId, member.getUser().getId(), user.getId());
+        } catch (Exception e) {
+          log.error("크루원 탈퇴 알림 생성 실패 - crewId: {}, receiverId: {}, leavingUserId: {}",
+              crewId, member.getUser().getId(), user.getId(), e);
+        }
+      }
+      log.info("크루원 전체에게 탈퇴 알림 발송 완료 - crewId: {}, leavingUserId: {}, totalMembers: {}",
+          crewId, user.getId(), allMembers.size());
+    } catch (Exception e) {
+      log.error("크루원 전체 알림 발송 중 오류 발생 - crewId: {}, leavingUserId: {}",
+          crewId, user.getId(), e);
+    }
+
     // 크루장인 경우 특별 처리
     if (crewUser.getRole().equals(CrewRole.LEADER)) {
       // 부크루장 중 멤버십 있는 사람 찾기
