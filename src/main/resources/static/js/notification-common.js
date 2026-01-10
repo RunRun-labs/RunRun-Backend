@@ -256,14 +256,37 @@
       return null;
     }
 
-    // 기존 연결이 있으면 재사용
-    if (globalEventSource && isConnected) {
-      console.log('[SSE] Reusing existing connection');
+    // ✅ /home 페이지에서는 기존 연결 재사용하지 않음 (항상 새로 생성하여 이벤트 리스너 보장)
+    const isHomePage = window.location.pathname === '/home' || window.location.pathname === '/';
+    
+    if (!isHomePage && globalEventSource && globalEventSource.readyState === 1 && isConnected) {
+      console.log('[SSE] ✅ Reusing existing valid connection');
       return globalEventSource;
+    }
+    
+    // ✅ 기존 연결이 있지만 유효하지 않거나 /home 페이지면 정리
+    if (globalEventSource) {
+      console.log('[SSE] ⚠️ Existing connection is invalid or home page - closing...');
+      console.log('[SSE]   - readyState:', globalEventSource.readyState);
+      console.log('[SSE]   - isConnected:', isConnected);
+      console.log('[SSE]   - isHomePage:', isHomePage);
+      try {
+        if (globalEventSource.readyState !== 2 && globalEventSource.abortController && !globalEventSource.abortController.signal.aborted) {
+          globalEventSource.abortController.abort();
+        }
+        if (globalEventSource.readyState !== 2) {
+          globalEventSource.close();
+        }
+      } catch (e) {
+        console.warn('[SSE] Error closing invalid connection:', e);
+      }
+      globalEventSource = null;
+      isConnected = false;
     }
 
     try {
-      console.log('[SSE] Initializing new connection...');
+      console.log('[SSE] 🔌 Initializing new SSE connection...');
+      console.log('[SSE]   - Current pathname:', window.location.pathname);
       
       globalEventSource = new EventSourcePolyfill('/api/notifications/subscribe', {
         headers: {
@@ -292,6 +315,7 @@
       globalEventSource.addEventListener('message', (event) => {
         try {
           console.log('[SSE] 📩 Message received:', event.data);
+          console.log('[SSE]   - Current pathname:', window.location.pathname);
           
           // ✅ "ping" (heartbeat) 데이터는 무시
           if (event.data === 'ping' || event.data.trim() === 'ping') {
@@ -321,7 +345,12 @@
           if (isMatchFoundOnline) {
             if (!isOnlineMatchPage) {
               // 다른 페이지에서 받은 경우: 온라인 매칭 페이지로 이동
-              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (다른 페이지) - 온라인 매칭 페이지로 이동');
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (다른 페이지)');
+              console.log('[SSE]   - Current pathname:', window.location.pathname);
+              console.log('[SSE]   - SessionId:', notification.relatedId);
+              console.log('[SSE] 🚀 리다이렉트: /match/online?autoMatch=' + notification.relatedId);
+              
+              // ✅ 즉시 리다이렉트 (비동기 작업 방해 방지)
               window.location.href = `/match/online?autoMatch=${notification.relatedId}`;
               return; // 토스트 표시하지 않고 바로 리턴
             } else {
@@ -353,6 +382,8 @@
       globalEventSource.addEventListener('notification', (event) => {
         try {
           console.log('[SSE] 🔔 Notification event received:', event.data);
+          console.log('[SSE]   - Current pathname:', window.location.pathname);
+          
           const notification = JSON.parse(event.data);
           
           // ✅ 알림 수신 시에도 타임아웃 리셋 (연결이 살아있음을 확인)
@@ -367,7 +398,12 @@
           if (isMatchFoundOnline) {
             if (!isOnlineMatchPage) {
               // 다른 페이지에서 받은 경우: 온라인 매칭 페이지로 이동
-              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (다른 페이지) - 온라인 매칭 페이지로 이동');
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (다른 페이지)');
+              console.log('[SSE]   - Current pathname:', window.location.pathname);
+              console.log('[SSE]   - SessionId:', notification.relatedId);
+              console.log('[SSE] 🚀 리다이렉트: /match/online?autoMatch=' + notification.relatedId);
+              
+              // ✅ 즉시 리다이렉트 (비동기 작업 방해 방지)
               window.location.href = `/match/online?autoMatch=${notification.relatedId}`;
               return; // 토스트 표시하지 않고 바로 리턴
             } else {
@@ -444,32 +480,83 @@
 
   // ============== BFCache 대응 ==============
   window.addEventListener('pageshow', (event) => {
+    console.log('[SSE] 🔄 pageshow 이벤트 발생 - persisted:', event.persisted, ', pathname:', window.location.pathname);
+    
     if (event.persisted) {
       // BFCache에서 복원된 경우
       console.log('[SSE] 🔄 Page restored from BFCache - reconnecting...');
       isConnected = false;
+      if (globalEventSource) {
+        try {
+          if (globalEventSource.readyState !== 2 && globalEventSource.abortController) {
+            globalEventSource.abortController.abort();
+          }
+          globalEventSource.close();
+        } catch (e) {
+          console.warn('[SSE] Error closing old connection on BFCache restore:', e);
+        }
+      }
+      globalEventSource = null;
       reconnect();
     } else {
-      // 일반 페이지 로드된 경우 - 연결 확인 및 재연결 보장
-      console.log('[SSE] 🔄 Page loaded - ensuring SSE connection...');
-      // DOMContentLoaded가 이미 실행되었을 수 있으므로, 연결이 없으면 재연결
-      if (!globalEventSource || globalEventSource.readyState !== 1) {
-        console.log('[SSE] Connection not active - reinitializing...');
+      // ✅ /home 또는 / 페이지에서는 항상 새 연결 생성 (이벤트 리스너 보장)
+      const isHomePage = window.location.pathname === '/home' || window.location.pathname === '/';
+      
+      if (isHomePage) {
+        console.log('[SSE] 🏠 Home page detected - forcing new connection for event listener guarantee...');
         isConnected = false;
         if (globalEventSource) {
           try {
-            globalEventSource.close();
+            console.log('[SSE]   - Closing existing connection (readyState:', globalEventSource.readyState + ')');
+            if (globalEventSource.readyState !== 2 && globalEventSource.abortController && !globalEventSource.abortController.signal.aborted) {
+              globalEventSource.abortController.abort();
+            }
+            if (globalEventSource.readyState !== 2) {
+              globalEventSource.close();
+            }
           } catch (e) {
-            // 이미 닫힌 경우 무시
+            console.warn('[SSE] Error closing connection on home page:', e);
           }
         }
         globalEventSource = null;
-        // 약간의 지연 후 재연결 (다른 스크립트가 로드되기 전에)
+        
         setTimeout(() => {
+          console.log('[SSE] 🔌 Creating new SSE connection for home page...');
           initNotificationSubscription();
-        }, 50);
+        }, 150);
       } else {
-        console.log('[SSE] Connection already active');
+        // 다른 페이지는 기존 로직 유지
+        console.log('[SSE] 🔄 Page loaded - ensuring SSE connection...');
+        
+        // ✅ 더 엄격한 체크: readyState가 1(OPEN)이고 isConnected가 true여야 함
+        if (!globalEventSource || globalEventSource.readyState !== 1 || !isConnected) {
+          console.log('[SSE] Connection not active or invalid - reinitializing...');
+          console.log('[SSE]   - globalEventSource 존재:', !!globalEventSource);
+          console.log('[SSE]   - readyState:', globalEventSource?.readyState);
+          console.log('[SSE]   - isConnected:', isConnected);
+          
+          isConnected = false;
+          if (globalEventSource) {
+            try {
+              if (globalEventSource.readyState !== 2 && globalEventSource.abortController && !globalEventSource.abortController.signal.aborted) {
+                globalEventSource.abortController.abort();
+              }
+              if (globalEventSource.readyState !== 2) {
+                globalEventSource.close();
+              }
+            } catch (e) {
+              console.warn('[SSE] Error closing old connection:', e);
+            }
+          }
+          globalEventSource = null;
+          
+          setTimeout(() => {
+            console.log('[SSE] 🔌 Reinitializing connection...');
+            initNotificationSubscription();
+          }, 100);
+        } else {
+          console.log('[SSE] ✅ Connection already active and valid');
+        }
       }
     }
   });
