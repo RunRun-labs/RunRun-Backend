@@ -761,11 +761,8 @@ function loadNotices() {
       renderNotices();
       updateNoticeCount();
 
-      // 공지사항이 있거나 운영진 이상이면 표시
-      const noticeSection = document.getElementById('notice-section');
-      if (noticesList.length > 0 || isStaffOrAbove()) {
-        noticeSection.style.display = 'block';
-      }
+      // 공지사항 섹션 표시 여부 업데이트
+      updateNoticeSection();
     }
   })
   .catch(error => console.error('공지사항 로드 실패:', error));
@@ -1060,8 +1057,23 @@ function loadCurrentUserRole() {
         if (isStaffOrAbove()) {
           document.getElementById('notice-add-btn').style.display = 'flex';
         }
+        
+        // 역할 로드 완료 후 공지사항 섹션 표시 여부 재확인
+        updateNoticeSection();
       }
     }
   })
   .catch(error => console.error('사용자 역할 조회 실패:', error));
+}
+
+/**
+ * 공지사항 섹션 표시 여부 업데이트
+ */
+function updateNoticeSection() {
+  const noticeSection = document.getElementById('notice-section');
+  if (noticesList.length > 0 || isStaffOrAbove()) {
+    noticeSection.style.display = 'block';
+  } else {
+    noticeSection.style.display = 'none';
+  }
 }
