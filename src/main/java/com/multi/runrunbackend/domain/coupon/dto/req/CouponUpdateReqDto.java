@@ -106,5 +106,30 @@ public class CouponUpdateReqDto {
         return !code.contains(" ");
     }
 
+    @AssertTrue(message = "정률 할인은 1~100%만 가능합니다.")
+    private boolean isValidRateDiscount() {
+        if (benefitType != CouponBenefitType.RATE_DISCOUNT) {
+            return true;
+        }
+        if (benefitValue == null) {
+            return false;
+        }
+        return benefitValue >= 1 && benefitValue <= 100;
+    }
+
+    @AssertTrue(message = "정액 할인은 1000~9900원, 1000원 단위만 가능합니다.")
+    private boolean isValidFixedDiscount() {
+        if (benefitType != CouponBenefitType.FIXED_DISCOUNT) {
+            return true;
+        }
+        if (benefitValue == null) {
+            return false;
+        }
+        if (benefitValue < 1000 || benefitValue > 9900) {
+            return false;
+        }
+        return benefitValue % 1000 == 0;
+    }
+
 
 }
