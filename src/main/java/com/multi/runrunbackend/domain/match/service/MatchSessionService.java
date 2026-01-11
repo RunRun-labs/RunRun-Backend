@@ -412,37 +412,6 @@ public class MatchSessionService {
     return session.getId();
   }
 
-//  public Slice<RunningRecordResDto> getMyRunningRecords(CustomUser principal,
-//      RunningResultFilterType filterType, Pageable pageable) {
-//    User user = getUser(principal);
-//
-//    BigDecimal min = filterType != null ? switch (filterType) {
-//      case UNDER_3 -> BigDecimal.ZERO;
-//      case BETWEEN_3_5 -> BigDecimal.valueOf(3.0);
-//      case BETWEEN_5_10 -> BigDecimal.valueOf(5.0);
-//      case OVER_10 -> BigDecimal.valueOf(10.0);
-//      case ALL -> null;
-//    } : null;
-//
-//    BigDecimal max = filterType != null ? switch (filterType) {
-//      case UNDER_3 -> BigDecimal.valueOf(3.0);
-//      case BETWEEN_3_5 -> BigDecimal.valueOf(5.0);
-//      case BETWEEN_5_10 -> BigDecimal.valueOf(10.0);
-//      case OVER_10 -> null;
-//      case ALL -> null;
-//    } : null;
-//
-//    Slice<RunningResult> resultSlice = runningResultRepository.findMySoloRecordsByDistance(
-//        user.getId(),
-//        RunStatus.COMPLETED,
-//        min,
-//        max,
-//        pageable
-//    );
-//
-//    return resultSlice.map(RunningRecordResDto::from);
-//  }
-
   @Transactional
   public Long createSoloSession(CustomUser principal, SoloRunStartReqDto reqDto) {
 
