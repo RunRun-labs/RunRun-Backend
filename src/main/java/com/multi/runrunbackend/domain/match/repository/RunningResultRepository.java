@@ -156,4 +156,24 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
         ORDER BY r.createdAt DESC
     """)
     List<RunningResult> findTop5ByUserIdForAverage(Long userId, Pageable pageable);
+
+    /* ===================== COUPON ===================== */
+
+    /**
+     * 사용자의 완주 기록 수 조회 (첫 러닝 체크용, isDeleted = false 포함)
+     */
+    long countByUserIdAndRunStatusAndIsDeletedFalse(Long userId, RunStatus runStatus);
+
+    /**
+     * 사용자의 누적 거리 조회 (거리 달성 쿠폰 발급용)
+     * - COMPLETED, TIME_OUT 상태의 모든 러닝 결과 거리 합계 (미터 단위)
+     */
+    @Query("""
+        SELECT COALESCE(SUM(r.totalDistance * 1000), 0)
+        FROM RunningResult r
+        WHERE r.user.id = :userId
+          AND r.runStatus IN ('COMPLETED', 'TIME_OUT')
+          AND r.isDeleted = false
+        """)
+    BigDecimal sumTotalDistanceByUserId(@Param("userId") Long userId);
 }
