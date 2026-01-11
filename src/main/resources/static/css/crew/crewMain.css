@@ -196,7 +196,7 @@ body {
     color: var(--text-strong);
 }
 
-/* Bottom Navigation */
+/* ========== 하단 네비게이션 ========== */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -205,7 +205,7 @@ body {
     max-width: 420px;
     margin: 0 auto;
     height: 76px;
-    border-top: 1px solid var(--primary);
+    border-top: 1px solid #baff29;
     background: #fff;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -224,13 +224,11 @@ body {
     display: grid;
     gap: 6px;
     justify-items: center;
-    align-items: center;
 }
 
-.nav-item svg {
+.nav-item img {
     width: 28px;
     height: 28px;
-    stroke: currentColor;
 }
 
 .nav-item span {
