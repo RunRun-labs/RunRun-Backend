@@ -256,9 +256,6 @@ public class RecruitService {
     User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
-    RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_PARTICIPATED));
-
     if (recruit.getUser().getId().equals(user.getId())) {
       Optional<RecruitUser> nextLeader = recruitUserRepository
           .findFirstByRecruitAndUserNotOrderByCreatedAtAsc(recruit, user);
@@ -283,9 +280,14 @@ public class RecruitService {
               recruitId, newHost.getId(), e);
         }
       } else {
+
         recruitRepository.delete(recruit);
       }
+      return;
     }
+
+    RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_PARTICIPATED));
 
     recruitUserRepository.delete(recruitUser);
     recruit.decreaseParticipants();
