@@ -134,18 +134,20 @@ public class MatchSessionService {
 
 
   @Transactional
-  public void createOfflineSessionBySystem(Long recruitId) {
+  public Long createOfflineSessionBySystem(Long recruitId) {
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
     if (recruit.getCurrentParticipants() < 2) {
       recruitRepository.delete(recruit);
-      return;
+      return null;
     }
 
     Long sessionId = createSessionInternal(recruit);
 
     sendOffMatchConfirmedNotifications(sessionId, recruit.getUser().getId(), true);
+    
+    return sessionId;
   }
 
   private Long createSessionInternal(Recruit recruit) {
