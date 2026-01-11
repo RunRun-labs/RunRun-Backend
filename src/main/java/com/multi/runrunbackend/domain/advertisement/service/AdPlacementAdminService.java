@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.advertisement.service;
 
 import static java.time.LocalDateTime.now;
 
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
@@ -48,6 +49,10 @@ public class AdPlacementAdminService {
 
         Ad ad = adAdminRepository.findById(dto.getAdId())
             .orElseThrow(() -> new NotFoundException(ErrorCode.AD_NOT_FOUND));
+
+        if (adPlacementAdminRepository.existsByAdIdAndSlotId(dto.getAdId(), dto.getSlotId())) {
+            throw new BusinessException(ErrorCode.AD_PLACEMENT_DUPLICATE);
+        }
 
         AdPlacement placement = AdPlacement.create(slot, ad, dto);
         return adPlacementAdminRepository.save(placement).getId();
