@@ -168,50 +168,50 @@ public enum ErrorCode {
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F006", "이미지 파일만 업로드 가능합니다."),
     /*===== 피드 관련=====*/
     FEED_NOT_FOUND(
-            HttpStatus.NOT_FOUND,
-            "FEED_001",
-            "피드를 찾을 수 없습니다."
+        HttpStatus.NOT_FOUND,
+        "FEED_001",
+        "피드를 찾을 수 없습니다."
     ),
     FEED_FORBIDDEN(
-            HttpStatus.FORBIDDEN,
-            "FEED_002",
-            "해당 피드에 대한 권한이 없습니다."
+        HttpStatus.FORBIDDEN,
+        "FEED_002",
+        "해당 피드에 대한 권한이 없습니다."
     ),
     RUNNING_RESULT_NOT_COMPLETED(
-            HttpStatus.BAD_REQUEST,
-            "FEED_003",
-            "완료되지 않은 러닝은 피드에 공유할 수 없습니다."
+        HttpStatus.BAD_REQUEST,
+        "FEED_003",
+        "완료되지 않은 러닝은 피드에 공유할 수 없습니다."
     ),
     FEED_POST_ALREADY_EXISTS(
-            HttpStatus.CONFLICT,
-            "FEED_004",
-            "이미 피드에 공유된 러닝 결과입니다."
+        HttpStatus.CONFLICT,
+        "FEED_004",
+        "이미 피드에 공유된 러닝 결과입니다."
 
     ),
     FEED_ALREADY_DELETED(
-            HttpStatus.BAD_REQUEST,
-            "FEED_005",
-            "이미 삭제된 피드입니다."
+        HttpStatus.BAD_REQUEST,
+        "FEED_005",
+        "이미 삭제된 피드입니다."
     ),
     FEED_ALREADY_LIKED(
-            HttpStatus.CONFLICT,
-            "FEED_006",
-            "이미 좋아요한 피드입니다."
+        HttpStatus.CONFLICT,
+        "FEED_006",
+        "이미 좋아요한 피드입니다."
     ),
     FEED_NOT_LIKED(
-            HttpStatus.NOT_FOUND,
-            "FEED_007",
-            "해당 피드 좋아요 내역을 찾을 수 없습니다."
+        HttpStatus.NOT_FOUND,
+        "FEED_007",
+        "해당 피드 좋아요 내역을 찾을 수 없습니다."
     ),
     FEED_COMMENT_NOT_FOUND(
-            HttpStatus.NOT_FOUND,
-            "FEED_008",
-            "피드 댓글을 찾을 수 없습니다."
+        HttpStatus.NOT_FOUND,
+        "FEED_008",
+        "피드 댓글을 찾을 수 없습니다."
     ),
     FEED_COMMENT_FORBIDDEN(
-            HttpStatus.FORBIDDEN,
-            "FEED_009",
-            "해당 피드 댓글에 대한 권한이 없습니다."
+        HttpStatus.FORBIDDEN,
+        "FEED_009",
+        "해당 피드 댓글에 대한 권한이 없습니다."
     ),
     /* ===== 챌린지 ===== */
     ALREADY_JOINED(
@@ -473,7 +473,7 @@ public enum ErrorCode {
         "광고 저장에 실패했습니다."), AD_LOCKED_BY_PLACEMENT(
         HttpStatus.FORBIDDEN, "AD020", "등록된 광고는 수정할 수 없습니다"),
     AD_SLOT_UPDATE_ONLY_DISABLED(HttpStatus.FORBIDDEN,
-        "AD021", "활성화 중인 슬롯을 수정할 수 없습니다"),
+        "AD021", "비활성화 중인 슬롯을 비활성화 수 없습니다"),
     AD_SLOT_IN_USE(HttpStatus.FORBIDDEN, "AD021",
         "이미 광고가 있는 슬롯은 수정할 수 없습니다"), AD_PLACEMENT_UPDATE_ONLY_DISABLED(
         HttpStatus.FORBIDDEN, "AD022", "활성화 중인 AdPlace를 수정할 수 없습니다"),
@@ -482,7 +482,8 @@ public enum ErrorCode {
     AD_PLACEMENT_UPDATE_NOT_ALLOWED_DURING_PERIOD(HttpStatus.FORBIDDEN
         , "AD024", "집행기간에는 수정 할 수 없습니다"),
     AD_SERVE_NOT_FOUND(HttpStatus.NOT_FOUND, "AD025", "슬롯에 광고가 없습니다"),
-    AD_SLOT_TYPE_ALREADY_EXISTS(HttpStatus.CONFLICT, "AD026", "이미 같은 타입의 광고 슬롯이 존재합니다");
+    AD_SLOT_TYPE_ALREADY_EXISTS(HttpStatus.CONFLICT, "AD026", "이미 같은 타입의 광고 슬롯이 존재합니다"),
+    AD_PLACEMENT_DUPLICATE(HttpStatus.CONFLICT, "AD027", "이미 해당 슬롯과 광고 조합의 배치가 존재합니다");
 
 
     private final HttpStatus httpStatus;
