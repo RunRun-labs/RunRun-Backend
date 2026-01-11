@@ -1,15 +1,15 @@
 package com.multi.runrunbackend.domain.coupon.respository;
 
+import com.multi.runrunbackend.domain.coupon.constant.CouponTriggerEvent;
 import com.multi.runrunbackend.domain.coupon.entity.Coupon;
 import com.multi.runrunbackend.domain.coupon.entity.CouponIssue;
 import com.multi.runrunbackend.domain.user.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * @author : kyungsoo
@@ -18,14 +18,29 @@ import java.util.Optional;
  * @since : 2025. 12. 29. Monday
  */
 public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long>,
-        CouponIssueRepositoryCustom {
+    CouponIssueRepositoryCustom {
 
     boolean existsByCouponIdAndUserId(Long couponId, Long userId);
 
     long countByUserId(Long userId);
 
     Optional<CouponIssue> findByCouponAndUser(Coupon coupon, User user);
-    
+
+    // 거리 달성 쿠폰 중복 발급 방지: 특정 사용자가 특정 조건값(conditionValue)의 쿠폰을 이미 발급받았는지 확인
+    @Query("""
+        select count(ci) > 0
+        from CouponIssue ci
+        join CouponRole cr on ci.coupon.id = cr.coupon.id
+        where ci.user.id = :userId
+          and cr.triggerEvent = :triggerEvent
+          and cr.conditionValue = :conditionValue
+        """)
+    boolean existsByUserIdAndTriggerEventAndConditionValue(
+        @Param("userId") Long userId,
+        @Param("triggerEvent") CouponTriggerEvent triggerEvent,
+        @Param("conditionValue") Integer conditionValue
+    );
+
     // 날짜별 발급/사용/만료 집계 (발급 날짜 기준)
     @Query(value = """
         SELECT 
@@ -46,7 +61,7 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long>,
         @Param("from") LocalDate from,
         @Param("to") LocalDate to
     );
-    
+
     // 상태별 분포 (전체)
     @Query(value = """
         SELECT 
@@ -57,7 +72,7 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long>,
         WHERE coupon_id = :couponId
         """, nativeQuery = true)
     Object[] sumStatusBreakdownByCouponId(@Param("couponId") Long couponId);
-    
+
     // 기간별 총합
     @Query(value = """
         SELECT 
@@ -74,7 +89,7 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long>,
         @Param("from") LocalDate from,
         @Param("to") LocalDate to
     );
-    
+
     // 오늘의 쿠폰 통계 (발급 수, 사용 수)
     @Query(value = """
         SELECT 
@@ -84,7 +99,7 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long>,
         WHERE cast(created_at as date) = :today
         """, nativeQuery = true)
     Object[] sumTodayCouponStats(@Param("today") LocalDate today);
-    
+
     // Top 5 쿠폰 (오늘 발급 수 기준)
     @Query(value = """
         SELECT 
