@@ -927,6 +927,16 @@ let userHasInteracted = false;
 let scrollObserver = null;
 
 /**
+ * 날짜를 API 형식으로 포맷팅 (YYYY-MM-DD)
+ */
+function formatDateForAPI(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+/**
  * 러닝 기록 로드 (API 연동)
  */
 async function loadRunningRecords(userId, page = 0, reset = false) {
@@ -940,7 +950,21 @@ async function loadRunningRecords(userId, page = 0, reset = false) {
             return;
         }
 
-        const res = await fetch(`/api/records/${userId}?page=${page}&size=4&sort=startedAt,desc`, {
+        // 날짜 필터 계산: 기본적으로 최근 7일만 조회 (초기 로드일 때만)
+        let url = `/api/records/${userId}?page=${page}&size=4&sort=startedAt,desc`;
+        
+        if (reset && page === 0) {
+            // 초기 로드일 때만 최근 7일만 조회
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 6); // 7일 전 (오늘 포함)
+            
+            const startDateStr = formatDateForAPI(sevenDaysAgo);
+            const endDateStr = formatDateForAPI(today);
+            url += `&startDate=${startDateStr}&endDate=${endDateStr}`;
+        }
+
+        const res = await fetch(url, {
             headers: {Authorization: `Bearer ${token}`}
         });
 
@@ -981,7 +1005,7 @@ async function loadRunningRecords(userId, page = 0, reset = false) {
             if (reset && page === 0) {
                 const runList = document.querySelector('[data-role="run-list"]');
                 if (runList) runList.innerHTML = "";
-                showEmptyState("사용자의 러닝 기록이 없습니다");
+                showEmptyState("이번 주 러닝 기록이 없어요");
             }
             isLoading = false;
             return;
@@ -1002,7 +1026,7 @@ async function loadRunningRecords(userId, page = 0, reset = false) {
             hideEmptyState();
         } else if (reset && currentPage === 0) {
             // 초기 로드 시 기록이 없으면 빈 상태 표시
-            showEmptyState("사용자의 러닝 기록이 없습니다");
+            showEmptyState("이번 주 러닝 기록이 없어요");
         } else {
             // 추가 페이지 로드 시 기록이 없으면 빈 상태는 유지 (이미 표시되어 있을 수 있음)
             // 빈 상태가 이미 표시되어 있지 않다면 숨김
@@ -1020,7 +1044,7 @@ async function loadRunningRecords(userId, page = 0, reset = false) {
         if (reset && page === 0) {
             const runList = document.querySelector('[data-role="run-list"]');
             if (runList) runList.innerHTML = "";
-            showEmptyState("사용자의 러닝 기록이 없습니다");
+            showEmptyState("이번 주 러닝 기록이 없어요");
         }
     } finally {
         isLoading = false;
@@ -1046,7 +1070,7 @@ function renderRunningRecords(records) {
 /**
  * 빈 상태 표시
  */
-function showEmptyState(message = "사용자의 러닝 기록이 없습니다") {
+function showEmptyState(message = "이번 주 러닝 기록이 없어요") {
     const emptyState = document.getElementById("runListEmpty");
     const runList = document.querySelector('[data-role="run-list"]');
     const weeklyStatsSection = document.querySelector('.weekly-stats-section');
