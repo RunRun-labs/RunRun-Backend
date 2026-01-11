@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.entity.BattleResult;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
@@ -16,7 +17,6 @@ import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,8 @@ public class DistanceRatingService {
 
     // ✅ GIVE_UP만 제외 (COMPLETED + TIME_OUT 포함)
     List<RunningResult> rankedResults = results.stream()
-        .filter(r -> r.getRunStatus() != com.multi.runrunbackend.domain.match.constant.RunStatus.GIVE_UP)
+        .filter(r -> r.getRunStatus()
+            != RunStatus.GIVE_UP)
         .collect(java.util.stream.Collectors.toList());
 
     int n = rankedResults.size();
@@ -62,7 +63,36 @@ public class DistanceRatingService {
     }
 
     if (n < 2) {
-      log.info("✅ 레이팅 계산 2명 미만: sessionId={}, 대상={}명", sessionId, n);
+      if (n == 1) {
+        RunningResult rr = rankedResults.get(0);
+        User user = rr.getUser();
+        DistanceRating rating = distanceRatingRepository
+            .findByUserIdAndDistanceType(user.getId(), distanceType)
+            .orElseGet(() -> createNewRating(user, distanceType));
+
+        int previousRating = rating.getCurrentRating();
+
+        //  완주 보너스 점수 (K-factor 기반, 일반 1등과 동일)
+        int bonusPoints = calculateCompletionBonus(rating, distanceType);
+        rating.updateRating(bonusPoints, 1);
+        distanceRatingRepository.save(rating);
+
+        BattleResult battleResult = BattleResult.builder()
+            .session(session)
+            .user(user)
+            .runningResult(rr)
+            .distanceType(distanceType)
+            .ranking(1)  // 혼자만 있으므로 1등
+            .previousRating(previousRating)
+            .currentRating(rating.getCurrentRating())
+            .build();
+
+        battleResultRepository.save(battleResult);
+
+        log.info(
+            " 1명 완주 - BattleResult 저장 (완주 보너스 +{}점): sessionId={}, userId={}, rating: {} -> {}",
+            bonusPoints, sessionId, user.getId(), previousRating, rating.getCurrentRating());
+      }
       return;
     }
 
@@ -88,12 +118,17 @@ public class DistanceRatingService {
     List<Integer> deltas = new ArrayList<>(Collections.nCopies(n, 0));
     for (int i = 0; i < n; i++) {
       int rank = i + 1;
+      RunningResult rr = resultsToProcess.get(i);
+      boolean isCompleted =
+          rr.getRunStatus() == RunStatus.COMPLETED;
+
       int delta = calculateEloDelta(
           ratings.get(i),
           preRatings,
           i,
           rank,
-          n
+          n,
+          isCompleted
       );
       deltas.set(i, delta);
     }
@@ -109,6 +144,7 @@ public class DistanceRatingService {
       int delta = deltas.get(i);
 
       myRating.updateRating(delta, rank);
+      distanceRatingRepository.save(myRating);
 
       BattleResult battleResult = BattleResult.builder()
           .session(session)
@@ -137,7 +173,8 @@ public class DistanceRatingService {
       List<Integer> preRatings,
       int myIndex,
       int rank,
-      int totalParticipants
+      int totalParticipants,
+      boolean isCompleted
   ) {
     if (totalParticipants <= 1) {
       return 5;
@@ -166,6 +203,19 @@ public class DistanceRatingService {
 
     delta = clamp(delta, -50, 50);
 
+    //  완주자 최소 보너스: 완주자는 최소 +5점 보장
+    if (isCompleted && delta < 5) {
+      delta = 5;
+    }
+
+    //  완주자 보호: 완주자는 포기자 패널티(-10점)보다 항상 유리
+    if (isCompleted) {
+      int giveUpPenalty = 10;  // 포기자 최소 패널티
+      if (delta < -giveUpPenalty + 1) {
+        delta = -giveUpPenalty + 1;  // 포기자보다 1점이라도 유리 (최소 -9점)
+      }
+    }
+
     if (rank == 1 && delta <= 0) {
       delta = 1;
     }
@@ -190,7 +240,7 @@ public class DistanceRatingService {
   /**
    * 판수 기반 K-factor (원하면 거리/티어별로 다르게 가능)
    */
-  private int kFactor(User user, DistanceType distanceType) {
+  public int kFactor(User user, DistanceType distanceType) {
     long games = battleResultRepository.countByUserAndDistanceType(user, distanceType);
     if (games < 10) {
       return 40;
@@ -205,8 +255,17 @@ public class DistanceRatingService {
     return Math.max(min, Math.min(max, value));
   }
 
+  /**
+   * 완주 보너스 점수 계산 (1명만 완주한 경우)
+   */
+  private int calculateCompletionBonus(DistanceRating rating, DistanceType distanceType) {
+    int k = kFactor(rating.getUser(), distanceType);
+
+    return (int) Math.round(k * 0.5);
+  }
+
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  private DistanceRating createNewRating(User user, DistanceType type) {
+  protected DistanceRating createNewRating(User user, DistanceType type) {
     return distanceRatingRepository.save(
         DistanceRating.builder()
             .user(user)

@@ -407,7 +407,7 @@ function formatProgressValue(value, challengeType) {
 
     switch (challengeType) {
         case "DISTANCE":
-            return `${value}km`;
+            return `${parseFloat(value.toFixed(1))}km`;
         case "TIME":
             return formatTime(value);
         case "COUNT":

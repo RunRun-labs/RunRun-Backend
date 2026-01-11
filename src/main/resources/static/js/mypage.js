@@ -4,11 +4,13 @@ document.addEventListener("DOMContentLoaded", () => {
     attachProfileImageClickHandler();
     attachChallengeHandler();
     attachFriendHandler();
+    attachCouponsHandler();
     attachSettingsHandler();
     attachMyCoursesHandler();
     attachMyPostsHandler();
     attachImageModalHandlers();
     attachDeleteRecordModalHandlers();
+    attachCalendarModalHandlers();
     loadMyBodyInfo();
 
     // 초기 로드 시 빈 상태 숨김
@@ -21,6 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
     attachUserScrollGate();
 
     loadRunningRecords(0, true); // 초기 로드 (첫 페이지, 초기화)
+    
+    // 달력 모달 초기화
+    initCalendarModal();
 });
 
 async function loadMyBodyInfo() {
@@ -36,34 +41,55 @@ async function loadMyBodyInfo() {
 
         const payload = await res.json();
         const user = payload?.data ?? null;
-        renderBodyInfo(user);
+        renderTierAndRating(user);
         renderProfileImage(user);
     } catch (e) {
         console.error(e);
     }
 }
 
-function renderBodyInfo(user) {
-    const heightEl = document.getElementById("heightCm");
-    const weightEl = document.getElementById("weightKg");
-    const bmiEl = document.getElementById("bmiValue");
+function renderTierAndRating(user) {
+    const tierImage = document.getElementById("tierImage");
+    const tierText = document.getElementById("tierText");
+    const ratingValue = document.getElementById("ratingValue");
 
-    const height = user?.heightCm;
-    const weight = user?.weightKg;
-
-    heightEl.textContent = height ?? "-";
-    weightEl.textContent = weight ?? "-";
-
-    if (height && weight) {
-        bmiEl.textContent = calculateBMI(height, weight).toFixed(1);
-    } else {
-        bmiEl.textContent = "-";
+    // 티어 정보 (추후 API 연동 예정)
+    const tier = user?.tier || "토끼";
+    const tierImagePath = `/img/tier/${tier.toLowerCase()}.png`;
+    
+    // 티어 이미지 설정
+    if (tierImage) {
+        tierImage.src = tierImagePath;
+        tierImage.alt = tier;
+        // 이미지 로드 실패 시 텍스트 표시
+        tierImage.onerror = function() {
+            this.style.display = "none";
+            if (tierText) {
+                tierText.style.display = "inline";
+            }
+        };
+        // 이미지 로드 성공 시 텍스트 숨김
+        tierImage.onload = function() {
+            if (tierText) {
+                tierText.style.display = "none";
+            }
+        };
     }
-}
+    
+    // 티어 텍스트 설정 (이미지가 없을 경우 대체)
+    if (tierText) {
+        const tierEmojiMap = {
+            "토끼": "🐰",
+            "rabbit": "🐰"
+        };
+        tierText.textContent = tierEmojiMap[tier] || "🐰";
+    }
 
-function calculateBMI(heightCm, weightKg) {
-    const h = heightCm / 100;
-    return weightKg / (h * h);
+    // 레이팅 정보 (추후 API 연동 예정)
+    const rating = user?.rating || null;
+    if (ratingValue) {
+        ratingValue.textContent = rating !== null ? rating : "-";
+    }
 }
 
 
@@ -98,20 +124,76 @@ function attachProfileEditHandler() {
 }
 
 function attachChallengeHandler() {
-    const challengeBtn = document.querySelector('.profile-actions .action-pill:first-child');
-    if (!challengeBtn) return;
+    const challengeBtn = document.querySelector('[data-role="challenge"]');
+    const modal = document.querySelector('[data-role="challenge-modal"]');
+    const modalOverlay = document.querySelector('[data-role="challenge-modal-overlay"]');
+    const modalClose = document.querySelector('[data-role="challenge-modal-close"]');
+    const challengeOptions = document.querySelectorAll('[data-role="challenge-option"]');
 
+    if (!challengeBtn || !modal) return;
+
+    // 모달 열기
     challengeBtn.addEventListener("click", () => {
-        window.location.href = "/challenge";
+        modal.classList.add("active");
+        document.body.style.overflow = "hidden";
+    });
+
+    // 모달 닫기
+    const closeModal = () => {
+        modal.classList.remove("active");
+        document.body.style.overflow = "";
+    };
+
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", closeModal);
+    }
+
+    if (modalClose) {
+        modalClose.addEventListener("click", closeModal);
+    }
+
+    // ESC 키로 모달 닫기
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("active")) {
+            closeModal();
+        }
+    });
+
+    // 챌린지 옵션 클릭 처리
+    challengeOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+            const type = option.getAttribute("data-type");
+            let url = "/challenge";
+
+            switch (type) {
+                case "active":
+                    url = "/challenge";
+                    break;
+                case "ended":
+                    url = "/challenge/end";
+                    break;
+            }
+
+            window.location.href = url;
+        });
     });
 }
 
 function attachFriendHandler() {
-    const friendBtn = document.querySelector('.profile-actions .action-pill:nth-child(2)');
+    const friendBtn = document.querySelector('[data-role="friends"]');
     if (!friendBtn) return;
 
     friendBtn.addEventListener("click", () => {
         window.location.href = "/friends/list";
+    });
+}
+
+function attachCouponsHandler() {
+    const couponsBtn = document.querySelector('[data-role="coupons"]');
+    if (!couponsBtn) return;
+
+    couponsBtn.addEventListener("click", () => {
+        window.location.href = "/coupon/my";
     });
 }
 
@@ -259,12 +341,29 @@ function getRunningTypeLabel(runningType) {
     return typeMap[runningType] || runningType || "-";
 }
 
+/**
+ * 러닝 상태를 한국어로 변환
+ * RunStatus enum 참고: COMPLETED("완료"), TIME_OUT("타임아웃"), GIVE_UP("포기"), IN_PROGRESS("진행중"), CANCELLED("취소")
+ */
+function getRunStatusLabel(runStatus) {
+    const statusMap = {
+        COMPLETED: "완료",
+        TIME_OUT: "타임아웃",
+        GIVE_UP: "포기",
+        IN_PROGRESS: "진행중",
+        CANCELLED: "취소"
+    };
+    return statusMap[runStatus] || runStatus || "-";
+}
+
 // 러닝 기록 무한 스크롤 관련 전역 변수
 let currentPage = 0;
 let hasNext = true;
 let isLoading = false;
 let userHasInteracted = false; // 사용자가 실제로 스크롤을 했는지
 let scrollObserver = null; // IntersectionObserver 인스턴스
+let selectedDate = null; // 선택된 날짜 (YYYY-MM-DD 형식)
+let allRecordsDates = new Set(); // 로드된 모든 기록의 날짜 목록 (YYYY-MM-DD 형식)
 
 /**
  * 러닝 기록 로드 (API 연동)
@@ -280,7 +379,24 @@ async function loadRunningRecords(page = 0, reset = false) {
             return;
         }
 
-        const res = await fetch(`/api/records/me?page=${page}&size=4&sort=startedAt,desc`, {
+        // 날짜 필터 계산: 기본적으로 최근 7일만 조회 (선택된 날짜가 없을 때)
+        let url = `/api/records/me?page=${page}&size=4&sort=startedAt,desc`;
+        
+        if (selectedDate) {
+            // 선택된 날짜가 있으면 해당 날짜만 조회
+            url += `&startDate=${selectedDate}&endDate=${selectedDate}`;
+        } else if (reset && page === 0) {
+            // 초기 로드이고 날짜 선택이 없으면 최근 7일만 조회
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 6); // 7일 전 (오늘 포함)
+            
+            const startDateStr = formatDateForAPI(sevenDaysAgo);
+            const endDateStr = formatDateForAPI(today);
+            url += `&startDate=${startDateStr}&endDate=${endDateStr}`;
+        }
+
+        const res = await fetch(url, {
             headers: {Authorization: `Bearer ${token}`}
         });
 
@@ -295,6 +411,15 @@ async function loadRunningRecords(page = 0, reset = false) {
         }
 
         const records = sliceData.content || [];
+        
+        // 기록의 날짜를 allRecordsDates에 추가 (달력 표시용)
+        records.forEach(record => {
+            if (record.startedAt) {
+                const dateStr = formatDateForAPI(new Date(record.startedAt));
+                allRecordsDates.add(dateStr);
+            }
+        });
+        
         // Page 객체의 last 속성 사용
         hasNext = !(sliceData.last ?? true);
         currentPage = page;
@@ -302,6 +427,10 @@ async function loadRunningRecords(page = 0, reset = false) {
         if (reset) {
             const runList = document.querySelector('[data-role="run-list"]');
             if (runList) runList.innerHTML = "";
+            if (!selectedDate) {
+                // 날짜 필터가 없을 때만 날짜 목록 초기화
+                allRecordsDates.clear();
+            }
         }
 
         // 기록이 있으면 렌더링하고 빈 상태 숨김
@@ -330,6 +459,16 @@ async function loadRunningRecords(page = 0, reset = false) {
 }
 
 /**
+ * 날짜를 API 형식으로 포맷팅 (YYYY-MM-DD)
+ */
+function formatDateForAPI(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+/**
  * 러닝 기록 렌더링
  */
 function renderRunningRecords(records) {
@@ -354,6 +493,21 @@ function showEmptyState() {
     if (emptyState) {
         emptyState.removeAttribute("hidden");
         emptyState.style.display = "flex";
+        
+        // 빈 상태 메시지 설정
+        const emptyTextSmall = emptyState.querySelector(".empty-text-small");
+        if (emptyTextSmall) {
+            if (selectedDate) {
+                // 선택된 날짜가 있으면 해당 날짜 메시지
+                const dateObj = new Date(selectedDate);
+                const month = dateObj.getMonth() + 1;
+                const day = dateObj.getDate();
+                emptyTextSmall.textContent = `${month}월 ${day}일 러닝 기록이 없어요`;
+            } else {
+                // 선택된 날짜가 없으면 기본 메시지
+                emptyTextSmall.textContent = "이번 주 러닝 기록이 없어요";
+            }
+        }
     }
     if (runList) {
         runList.style.display = "none";
@@ -402,6 +556,12 @@ function createRunCard(record) {
     const imageUrl = record.courseThumbnailUrl || null;
     const courseTitle = record.courseTitle || '러닝';
 
+    // 러닝 상태 확인
+    const runStatus = record.runStatus || 'COMPLETED';
+    const statusLabel = getRunStatusLabel(runStatus);
+    const isCompleted = runStatus === 'COMPLETED';
+    const canShare = isCompleted; // COMPLETED 상태만 공유 가능
+
     // 이미지가 있을 때만 img 태그 추가
     const thumbContent = imageUrl
         ? `<img src="${imageUrl}" alt="${courseTitle}" style="display: block; cursor: pointer;" onerror="this.style.display='none'" data-image-url="${imageUrl}" />`
@@ -414,7 +574,10 @@ function createRunCard(record) {
         <div class="run-content">
             <div class="run-header">
                 <span class="run-date">${formattedDate}</span>
-                <span class="run-type">${getRunningTypeLabel(record.runningType)}</span>
+                <div class="run-header-right">
+                    <span class="run-type">${getRunningTypeLabel(record.runningType)}</span>
+                    <span class="run-status-badge run-status-${runStatus.toLowerCase().replace('_', '-')}">${statusLabel}</span>
+                </div>
             </div>
             <p class="run-title">${courseTitle}</p>
             <div class="run-stats">
@@ -432,7 +595,7 @@ function createRunCard(record) {
                 <span class="run-pace-value">${paceStr}</span>
             </div>
             <div class="run-actions">
-                <button class="run-share" type="button">공유</button>
+                <button class="run-share" type="button" ${!canShare ? 'disabled' : ''} ${!canShare ? 'style="opacity: 0.5; cursor: not-allowed;"' : ''}>공유</button>
                 <button class="run-delete" type="button" data-record-id="${record.runningResultId}">삭제</button>
             </div>
         </div>
@@ -460,15 +623,21 @@ function createRunCard(record) {
         });
     }
 
-    // 공유 버튼 클릭 이벤트 추가
+    // 공유 버튼 클릭 이벤트 추가 (COMPLETED 상태만 가능)
     const shareBtn = article.querySelector('.run-share');
-    if (shareBtn) {
+    if (shareBtn && canShare) {
         shareBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const recordId = record.runningResultId;
             if (recordId) {
                 window.location.href = `/feed/post?runningResultId=${recordId}`;
             }
+        });
+    } else if (shareBtn && !canShare) {
+        // 공유 불가능한 상태일 때 클릭 이벤트는 추가하지 않음 (disabled 상태)
+        shareBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
         });
     }
 
@@ -819,6 +988,314 @@ function closeDeleteRecordModal() {
         // 버튼 상태 초기화
         confirmBtn.disabled = false;
         confirmBtn.textContent = "삭제";
+    }
+}
+
+// 달력 모달 관련 전역 변수
+let currentCalendarYear = new Date().getFullYear();
+let currentCalendarMonth = new Date().getMonth(); // 0-11
+let calendarRecordsDates = new Set(); // 달력에 표시할 기록이 있는 날짜 목록
+
+/**
+ * 달력 모달 핸들러
+ */
+function attachCalendarModalHandlers() {
+    const dateSearchButton = document.getElementById("dateSearchButton");
+    const calendarModal = document.getElementById("calendarModal");
+    const closeBtn = document.querySelector('[data-role="close-calendar-modal"]');
+    const modalOverlay = document.querySelector('.calendar-modal-overlay');
+    const resetButton = document.getElementById("calendarResetButton");
+
+    if (!dateSearchButton || !calendarModal) return;
+
+    // 날짜 검색 버튼 클릭 시 달력 모달 열기
+    dateSearchButton.addEventListener("click", () => {
+        openCalendarModal();
+    });
+
+    // 닫기 버튼
+    if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeCalendarModal();
+        });
+    }
+
+    // 초기화 버튼
+    if (resetButton) {
+        resetButton.addEventListener("click", () => {
+            selectedDate = null;
+            updateDateSearchLabel();
+            closeCalendarModal();
+            currentPage = 0;
+            hasNext = true;
+            allRecordsDates.clear();
+            loadRunningRecords(0, true);
+        });
+    }
+
+    // 배경 클릭 시 닫기
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", (e) => {
+            if (e.target === modalOverlay) {
+                closeCalendarModal();
+            }
+        });
+
+        // 모달 콘텐츠 클릭 시 닫히지 않도록
+        const modalContent = modalOverlay.querySelector(".calendar-modal-content");
+        if (modalContent) {
+            modalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+        }
+    }
+
+    // ESC 키로 닫기 (이벤트 리스너는 한 번만 추가되도록)
+    if (!window.calendarModalEscHandler) {
+        window.calendarModalEscHandler = (e) => {
+            const calendarModal = document.getElementById("calendarModal");
+            if (e.key === "Escape" && calendarModal && !calendarModal.hasAttribute("hidden")) {
+                closeCalendarModal();
+            }
+        };
+        document.addEventListener("keydown", window.calendarModalEscHandler);
+    }
+}
+
+/**
+ * 달력 모달 열기
+ */
+async function openCalendarModal() {
+    const modal = document.getElementById("calendarModal");
+    if (!modal) return;
+
+    // 현재 달력 년/월로 초기화
+    const today = new Date();
+    currentCalendarYear = today.getFullYear();
+    currentCalendarMonth = today.getMonth();
+
+    // 달력 렌더링 (내부에서 기록 날짜 로드)
+    await renderCalendar();
+    
+    modal.removeAttribute("hidden");
+    document.body.style.overflow = "hidden";
+}
+
+/**
+ * 달력 모달 닫기
+ */
+function closeCalendarModal() {
+    const modal = document.getElementById("calendarModal");
+    if (!modal) return;
+
+    modal.setAttribute("hidden", "hidden");
+    document.body.style.overflow = "";
+}
+
+/**
+ * 달력 모달 초기화 (월 선택 버튼 등)
+ */
+function initCalendarModal() {
+    const prevButton = document.getElementById("calendarPrevMonth");
+    const nextButton = document.getElementById("calendarNextMonth");
+    const calendarDays = document.getElementById("calendarDays");
+
+    if (!prevButton || !nextButton || !calendarDays) return;
+
+    // 이전 달 버튼
+    prevButton.addEventListener("click", () => {
+        currentCalendarMonth--;
+        if (currentCalendarMonth < 0) {
+            currentCalendarMonth = 11;
+            currentCalendarYear--;
+        }
+        renderCalendar();
+    });
+
+    // 다음 달 버튼
+    nextButton.addEventListener("click", () => {
+        currentCalendarMonth++;
+        if (currentCalendarMonth > 11) {
+            currentCalendarMonth = 0;
+            currentCalendarYear++;
+        }
+        renderCalendar();
+    });
+}
+
+/**
+ * 달력에 표시할 기록이 있는 날짜 목록 로드 (현재 년/월 기준)
+ */
+async function loadCalendarRecordsDates() {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        // 현재 달의 첫 날과 마지막 날 계산
+        const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1);
+        const lastDay = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
+        
+        const startDateStr = formatDateForAPI(firstDay);
+        const endDateStr = formatDateForAPI(lastDay);
+
+        // 해당 월의 모든 기록 조회 (페이지네이션 없이 큰 사이즈로)
+        const res = await fetch(`/api/records/me?page=0&size=1000&sort=startedAt,desc&startDate=${startDateStr}&endDate=${endDateStr}`, {
+            headers: {Authorization: `Bearer ${token}`}
+        });
+
+        if (!res.ok) throw new Error("러닝 기록 조회 실패");
+
+        const payload = await res.json();
+        const sliceData = payload?.data;
+        const records = sliceData?.content || [];
+
+        // 기록이 있는 날짜를 Set에 추가
+        calendarRecordsDates.clear();
+        records.forEach(record => {
+            if (record.startedAt) {
+                const dateStr = formatDateForAPI(new Date(record.startedAt));
+                calendarRecordsDates.add(dateStr);
+                // allRecordsDates에도 추가 (다른 곳에서 사용할 수 있음)
+                allRecordsDates.add(dateStr);
+            }
+        });
+
+    } catch (error) {
+        console.error("달력 기록 날짜 로드 실패:", error);
+        calendarRecordsDates.clear();
+    }
+}
+
+/**
+ * 달력 렌더링
+ */
+async function renderCalendar() {
+    const calendarDays = document.getElementById("calendarDays");
+    const calendarMonthYear = document.getElementById("calendarMonthYear");
+    
+    if (!calendarDays || !calendarMonthYear) return;
+
+    // 년/월 표시 업데이트
+    const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+    calendarMonthYear.textContent = `${currentCalendarYear}년 ${monthNames[currentCalendarMonth]}`;
+
+    // 해당 월의 기록이 있는 날짜 목록 로드
+    await loadCalendarRecordsDates();
+
+    // 달력 그리기
+    const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1);
+    const lastDay = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay(); // 0 = 일요일
+
+    calendarDays.innerHTML = "";
+
+    // 이전 달의 마지막 날들 표시 (첫 주를 채우기 위해)
+    if (startingDayOfWeek > 0) {
+        const prevMonthLastDay = new Date(currentCalendarYear, currentCalendarMonth, 0).getDate();
+        for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+            const day = prevMonthLastDay - i;
+            const dayElement = createCalendarDay(day, true, false);
+            calendarDays.appendChild(dayElement);
+        }
+    }
+
+    // 현재 달의 날짜들 표시
+    const today = new Date();
+    const todayStr = formatDateForAPI(today);
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = formatDateForAPI(new Date(currentCalendarYear, currentCalendarMonth, day));
+        const isToday = dateStr === todayStr;
+        const isSelected = selectedDate === dateStr;
+        const hasRecord = calendarRecordsDates.has(dateStr);
+        const isDisabled = dateStr > todayStr; // 미래 날짜는 비활성화
+        
+        const dayElement = createCalendarDay(day, false, isDisabled, isToday, isSelected, hasRecord, dateStr);
+        calendarDays.appendChild(dayElement);
+    }
+
+    // 다음 달의 첫 날들 표시 (달력을 꽉 채우기 위해, 6주로 고정)
+    const totalCells = startingDayOfWeek + daysInMonth;
+    const remainingCells = 42 - totalCells; // 6주 * 7일 = 42
+    if (remainingCells > 0) {
+        for (let day = 1; day <= remainingCells; day++) {
+            const dayElement = createCalendarDay(day, true, false);
+            calendarDays.appendChild(dayElement);
+        }
+    }
+}
+
+/**
+ * 달력 날짜 요소 생성
+ */
+function createCalendarDay(day, isOtherMonth, isDisabled, isToday = false, isSelected = false, hasRecord = false, dateStr = null) {
+    const dayElement = document.createElement("div");
+    dayElement.className = "calendar-day";
+    dayElement.textContent = day;
+
+    if (isOtherMonth) {
+        dayElement.classList.add("calendar-day-other-month");
+    }
+
+    if (isDisabled) {
+        dayElement.classList.add("calendar-day-disabled");
+    } else if (!isOtherMonth && dateStr) {
+        if (isToday) {
+            dayElement.classList.add("calendar-day-today");
+        }
+        if (isSelected) {
+            dayElement.classList.add("calendar-day-selected");
+        }
+        if (hasRecord) {
+            dayElement.classList.add("calendar-day-has-record");
+        }
+
+        // 날짜 클릭 이벤트
+        dayElement.addEventListener("click", () => {
+            if (!isDisabled && !isOtherMonth) {
+                selectDate(dateStr);
+            }
+        });
+    }
+
+    return dayElement;
+}
+
+/**
+ * 날짜 선택
+ */
+function selectDate(dateStr) {
+    if (!dateStr) return;
+    
+    selectedDate = dateStr;
+    updateDateSearchLabel();
+    closeCalendarModal();
+    
+    // 선택된 날짜의 기록 로드
+    currentPage = 0;
+    hasNext = true;
+    allRecordsDates.clear();
+    userHasInteracted = false; // 날짜 선택 시 스크롤 인터랙션 리셋
+    loadRunningRecords(0, true);
+}
+
+/**
+ * 날짜 검색 버튼 라벨 업데이트
+ */
+function updateDateSearchLabel() {
+    const label = document.getElementById("dateSearchLabel");
+    if (!label) return;
+
+    if (selectedDate) {
+        const dateObj = new Date(selectedDate);
+        const month = dateObj.getMonth() + 1;
+        const day = dateObj.getDate();
+        label.textContent = `${month}/${day}`;
+    } else {
+        label.textContent = "날짜 검색";
     }
 }
 
