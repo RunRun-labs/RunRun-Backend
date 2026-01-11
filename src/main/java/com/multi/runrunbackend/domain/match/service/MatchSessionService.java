@@ -2,7 +2,6 @@ package com.multi.runrunbackend.domain.match.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.multi.runrunbackend.common.constant.DistanceType;
-import com.multi.runrunbackend.common.exception.custom.BadRequestException;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
@@ -146,7 +145,7 @@ public class MatchSessionService {
     Long sessionId = createSessionInternal(recruit);
 
     sendOffMatchConfirmedNotifications(sessionId, recruit.getUser().getId(), true);
-    
+
     return sessionId;
   }
 
@@ -457,7 +456,6 @@ public class MatchSessionService {
 
     Long courseId = reqDto.getCourseId();
 
-    // DTO의 @AssertTrue가 이미 courseId, distance, manualDistance 중 하나는 필수임을 검증함
     Course course = null;
     Double distance = null;
 
@@ -469,8 +467,6 @@ public class MatchSessionService {
       distance = reqDto.getManualDistance();
     } else if (reqDto.getDistance() != null) {
       distance = convertToKilometer(reqDto.getDistance());
-    } else {
-      throw new BadRequestException(ErrorCode.DISTANCE_REQUIRED);
     }
 
     MatchSession session = MatchSession.builder()
