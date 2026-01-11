@@ -17,14 +17,23 @@ import org.springframework.data.repository.query.Param;
  */
 public interface MatchSessionRepository extends JpaRepository<MatchSession, Long> {
 
-  boolean existsByRecruit(Recruit recruit);
+    boolean existsByRecruit(Recruit recruit);
 
-  Optional<MatchSession> findByRecruit(Recruit recruit);
+    Optional<MatchSession> findByRecruit(Recruit recruit);
 
-  @Modifying
-  @Query("UPDATE MatchSession ms SET ms.status = :status WHERE ms.id = :sessionId")
-  int updateStatus(@Param("sessionId") Long sessionId, @Param("status") SessionStatus status);
+    @Modifying
+    @Query("UPDATE MatchSession ms SET ms.status = :status WHERE ms.id = :sessionId")
+    int updateStatus(@Param("sessionId") Long sessionId, @Param("status") SessionStatus status);
 
-  @Query("SELECT ms FROM MatchSession ms LEFT JOIN FETCH ms.runningResult WHERE ms.id = :sessionId")
-  Optional<MatchSession> findByIdWithRunningResult(@Param("sessionId") Long sessionId);
+    @Query("SELECT ms FROM MatchSession ms LEFT JOIN FETCH ms.runningResult WHERE ms.id = :sessionId")
+    Optional<MatchSession> findByIdWithRunningResult(@Param("sessionId") Long sessionId);
+
+    @Query("""
+        SELECT AVG(CAST(ms.duration AS DOUBLE))
+        FROM MatchSession ms
+        WHERE ms.isDeleted = false
+          AND ms.status != 'CANCELLED'
+          AND ms.duration > 0
+        """)
+    Double calculateAvgMatchDuration();
 }
