@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error:", error);
         tableBody.innerHTML = `
           <tr>
-            <td colspan="9" class="empty-message">
+            <td colspan="10" class="empty-message">
               데이터를 불러오는 중 오류가 발생했습니다.
             </td>
           </tr>
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (placements.length === 0) {
       tableBody.innerHTML = `
         <tr>
-          <td colspan="9" class="empty-message">
+          <td colspan="10" class="empty-message">
             조회된 광고 배치가 없습니다.
           </td>
         </tr>
@@ -114,6 +114,25 @@ document.addEventListener("DOMContentLoaded", function () {
             <td>${placement.totalImpressions || 0}</td>
             <td>${placement.totalClicks || 0}</td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td>
+              <div style="display: flex; gap: 8px; justify-content: center;">
+                <button 
+                  type="button" 
+                  class="action-btn edit-btn" 
+                  onclick="window.location.href='/admin/ad-placement/update/${placement.placementId}'"
+                >
+                  수정
+                </button>
+                <label class="toggle-label-wrapper">
+                  <input 
+                    type="checkbox" 
+                    class="toggle-input" 
+                    ${placement.isActive ? "checked" : ""}
+                    onchange="togglePlacementStatus(${placement.placementId}, this.checked)"
+                  />
+                </label>
+              </div>
+            </td>
           </tr>
         `;
       })
@@ -278,6 +297,37 @@ document.addEventListener("DOMContentLoaded", function () {
 
     loadPlacements(0);
   });
+
+  // 상태 토글
+  window.togglePlacementStatus = function(placementId, enabled) {
+    const endpoint = enabled ? "enable" : "disable";
+    const message = enabled ? "활성화" : "비활성화";
+
+    fetch(`/api/admin/ad-placements/${placementId}/${endpoint}`, {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then((err) => Promise.reject(err));
+        }
+        return response.json();
+      })
+      .then((result) => {
+        if (result.success) {
+          alert(`${message} 성공`);
+          loadPlacements(currentPage);
+        } else {
+          throw new Error(result.message || `${message} 실패`);
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert(error.message || `${message} 중 오류가 발생했습니다.`);
+        // 실패 시 목록 다시 로드하여 토글 상태 복원
+        loadPlacements(currentPage);
+      });
+  };
 
   // 초기 로드
   loadPlacements(0);

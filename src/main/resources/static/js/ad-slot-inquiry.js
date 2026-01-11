@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error:", error);
         tableBody.innerHTML = `
           <tr>
-            <td colspan="7" class="empty-message">
+            <td colspan="6" class="empty-message">
               데이터를 불러오는 중 오류가 발생했습니다.
             </td>
           </tr>
@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (slots.length === 0) {
       tableBody.innerHTML = `
         <tr>
-          <td colspan="7" class="empty-message">
+          <td colspan="6" class="empty-message">
             조회된 광고 슬롯이 없습니다.
           </td>
         </tr>
@@ -104,10 +104,6 @@ document.addEventListener("DOMContentLoaded", function () {
     tableBody.innerHTML = slots
       .map((slot, index) => {
         const rowNumber = startIndex + index + 1;
-        const statusClass = slot.status
-          ? slot.status.toLowerCase()
-          : "";
-        const statusText = getStatusText(slot.status);
         const slotTypeText = getSlotTypeText(slot.slotType);
         const dailyLimitText = slot.dailyLimit === 0 || slot.dailyLimit === null ? "무제한" : slot.dailyLimit;
         const allowPremiumText = slot.allowPremium ? "예" : "아니오";
@@ -119,7 +115,6 @@ document.addEventListener("DOMContentLoaded", function () {
             <td>${slotTypeText}</td>
             <td>${dailyLimitText}</td>
             <td>${allowPremiumText}</td>
-            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
             <td>
               <div style="display: flex; gap: 8px; justify-content: center;">
                 <button 
@@ -136,7 +131,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     ${slot.status === "ENABLED" ? "checked" : ""}
                     onchange="toggleStatus(${slot.slotId}, this.checked)"
                   />
-                  <span class="toggle-label">${slot.status === "ENABLED" ? "활성" : "비활성"}</span>
                 </label>
               </div>
             </td>

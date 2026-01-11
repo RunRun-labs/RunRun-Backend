@@ -285,36 +285,6 @@ document.addEventListener("DOMContentLoaded", function () {
     loadDailyStats(0);
   });
 
-  // 광고 배치 삭제 (비활성화)
-  window.deletePlacement = function() {
-    if (!confirm("정말 삭제하시겠습니까?")) {
-      return;
-    }
-
-    fetch(`/api/admin/ad-placements/${placementId}/disable`, {
-      method: "PATCH",
-      headers: getAuthHeaders(),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          return response.json().then((err) => Promise.reject(err));
-        }
-        return response.json();
-      })
-      .then((result) => {
-        if (result.success) {
-          alert("광고 배치가 삭제(비활성화)되었습니다.");
-          window.location.href = "/admin/ad-placement/inquiry";
-        } else {
-          throw new Error(result.message || "삭제 실패");
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        alert(error.message || "삭제 중 오류가 발생했습니다.");
-      });
-  };
-
   // 초기 로드
   loadPlacementDetail();
   loadDailyStats(0);
