@@ -6,6 +6,8 @@ import com.multi.runrunbackend.domain.running.battle.dto.BattleUserDto;
 import com.multi.runrunbackend.domain.running.battle.dto.TimeoutDto;
 import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto.GpsData;
 import com.multi.runrunbackend.domain.running.battle.dto.res.BattleRankingResDto;
+import com.multi.runrunbackend.domain.user.entity.User;  // ✅ 추가
+import com.multi.runrunbackend.domain.user.repository.UserRepository;  // ✅ 추가
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,6 +32,7 @@ public class BattleRedisService {
 
   private final RedisTemplate<String, Object> redisTemplate;
   private final ObjectMapper objectMapper;
+  private final UserRepository userRepository;  // ✅ 추가
 
   private static final String BATTLE_USER_KEY = "battle:%d:user:%d";
   private static final String BATTLE_RANKING_KEY = "battle:%d:ranking";
@@ -254,11 +257,15 @@ public class BattleRedisService {
             status = userData.getIsFinished() ? "FINISHED" : "RUNNING";
           }
 
+          // ✅ 사용자 정보 조회하여 프로필 이미지 가져오기
+          User user = userRepository.findById(userId).orElse(null);
+          String profileImageUrl = (user != null) ? user.getProfileImageUrl() : null;
+          
           rankings.add(BattleRankingResDto.builder()
               .rank(0)  // 임시 순위 (정렬 후 부여)
               .userId(userId)
               .username(userData.getUsername())
-              .profileImage(null)
+              .profileImage(profileImageUrl)  // ✅ 프로필 이미지 설정
               .totalDistance(distance)
               .remainingDistance(Math.max(0, targetDistance - distance))
               .progressPercent((distance / targetDistance) * 100)
