@@ -881,3 +881,100 @@ body {
   background: var(--border-white-30);
 }
 
+/* ✅ 포기한 참가자 스타일 */
+.ranking-item.quit {
+  opacity: 1;
+  border: 2px solid rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ✅ 포기 상태 블러 배경 */
+.ranking-item.quit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(239, 68, 68, 0.1);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 0;
+}
+
+.ranking-item.quit .ranking-item-content {
+  background: transparent !important;
+  position: relative;
+  z-index: 1;
+}
+
+.ranking-item.quit .progress-bar-container {
+  position: relative;
+  z-index: 1;
+}
+
+.ranking-item.quit .progress-bar {
+  background: #ef4444 !important;
+}
+
+.ranking-item.quit .participant-name {
+  color: #fca5a5 !important;
+  text-decoration: line-through;
+}
+
+.ranking-item.quit .participant-pace {
+  color: #fca5a5 !important;
+}
+
+.ranking-item.quit .distance-value {
+  color: #fca5a5 !important;
+}
+
+/* ✅ 포기 뱃지 */
+.quit-badge {
+  display: inline-block;
+  background: #ef4444;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ✅ 포기 상태 표시 */
+.position-indicator.quit-status {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* ✅ 포기 순위 표시 - 크게 강조 */
+.ranking-item.quit .rank-number {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  padding: 8px 16px !important;
+  border-radius: 16px !important;
+  min-width: auto !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  animation: quitPulse 2s infinite;
+}
+
+/* ✅ 포기 애니메이션 */
+@keyframes quitPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.6);
+  }
+}
+

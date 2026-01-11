@@ -1,4 +1,113 @@
 /**
+ * ✅ 상태 확인 및 복원 (새로고침 대응)
+ */
+function checkAndRestoreState() {
+  const token = localStorage.getItem('accessToken');
+  
+  fetch('/api/battle/' + SESSION_ID + '/rankings', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token ? 'Bearer ' + token : ''
+    }
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('API 호출 실패');
+    return response.json();
+  })
+  .then(data => {
+    console.log('✅ 상태 확인:', data);
+    
+    if (!data.data || data.data.length === 0) {
+      console.warn('⚠️ 순위 데이터 없음 - 카운트다운 시작');
+      showCountdown();
+      return;
+    }
+    
+    const myData = data.data.find(r => r.userId === myUserId);
+    
+    if (!myData) {
+      console.warn('⚠️ 내 데이터 없음 - 카운트다운 시작');
+      showCountdown();
+      return;
+    }
+    
+    // ✅ 배틀 시작 여부 확인
+    // sessionStorage로 "카운트다운을 이미 봤는지" 확인
+    const countdownShown = sessionStorage.getItem('battle_countdown_' + SESSION_ID);
+    
+    // 카운트다운을 이미 봤으면 복원 모드
+    const alreadyStarted = countdownShown === 'true';
+    
+    if (alreadyStarted) {
+      console.log('🔄 이미 진행 중 - 상태 복원 모드');
+      
+      // 상태 복원
+      totalDistance = myData.totalDistance || 0;
+      isFinished = myData.isFinished || false;
+      
+      if (myData.finishTime) {
+        elapsedSeconds = Math.floor(myData.finishTime / 1000);
+      }
+      
+      // ✅ 음수 체크 (카운트다운 중)
+      if (elapsedSeconds < 0) {
+        elapsedSeconds = 0;
+        log.info('⚠️ 카운트다운 중 - elapsedSeconds = 0 으로 보정');
+      }
+      
+      if (elapsedSeconds > 0) {
+        startTime = new Date(Date.now() - (elapsedSeconds * 1000));
+      }
+      
+      console.log('✅ 복원 완료:', {
+        totalDistance: totalDistance.toFixed(2) + 'm',
+        elapsedSeconds: elapsedSeconds + 's',
+        isFinished: isFinished
+      });
+      
+      // UI 업데이트
+      updateMyProgress();
+      
+      // 타이머 시작
+      if (!elapsedTimerInterval) {
+        startElapsedTimer();
+      }
+      
+      // GPS 추적 바로 시작
+      startGPSTracking();
+      
+      // 완주 상태 처리
+      if (isFinished) {
+        showFinishMessage();
+        
+        // 완주 후 GPS 타이머
+        if (!finishedGpsInterval) {
+          finishedGpsInterval = setInterval(() => {
+            if (lastPosition && lastPosition.lat && lastPosition.lng) {
+              sendGpsData(lastPosition.lat, lastPosition.lng, 0);
+            }
+          }, 2000);
+        }
+        
+        startResultPolling();
+      }
+      
+    } else {
+      console.log('🎮 처음 시작 - 카운트다운 모드');
+      
+      // ✅ 카운트다운 표시 후 sessionStorage에 표시
+      showCountdown();
+      
+      // 카운트다운 끝나면 sessionStorage에 저장 (아래 showCountdown에서 처리)
+    }
+  })
+  .catch(error => {
+    console.error('❌ 상태 확인 실패:', error);
+    // 에러 시 기본 동작 (카운트다운)
+    showCountdown();
+  });
+}/**
  * Match Battle - 실시간 러닝 대결
  * WebSocket + GPS 추적 + 실시간 순위
  */
@@ -105,8 +214,8 @@ function loadSessionData() {
     // WebSocket 연결
     connectWebSocket();
     
-    // 10초 카운트다운 후 GPS 시작
-    showCountdown();
+    // ✅ 초기 순위를 먼저 로드해서 상태 확인
+    checkAndRestoreState();
   })
   .catch(error => {
     console.error('❌ 세션 데이터 로드 실패:', error);
@@ -189,7 +298,7 @@ function onConnected(frame) {
 }
 
 /**
- * 초기 순위 로드
+ * 초기 순위 로드 및 상태 복원
  */
 function loadInitialRankings() {
   const token = localStorage.getItem('accessToken');
@@ -209,6 +318,9 @@ function loadInitialRankings() {
     console.log('✅ 초기 순위 로드:', data);
     if (data.data && data.data.length > 0) {
       handleRankingUpdate(data.data);
+      
+      // ✅ 새로고침 시 내 데이터로 상태 복원
+      restoreMyState(data.data);
     } else {
       console.warn('⚠️ 초기 순위 데이터가 비어있음');
     }
@@ -216,6 +328,71 @@ function loadInitialRankings() {
   .catch(error => {
     console.error('❌ 초기 순위 로드 실패:', error);
   });
+}
+
+/**
+ * ✅ 내 상태 복원 (새로고침 대응)
+ */
+function restoreMyState(rankings) {
+  const myData = rankings.find(r => r.userId === myUserId);
+  
+  if (!myData) {
+    console.warn('⚠️ 내 데이터를 찾을 수 없음');
+    return;
+  }
+  
+  // 거리 복원 (미터 단위)
+  totalDistance = myData.totalDistance || 0;
+  
+  // 완주 여부 복원
+  isFinished = myData.isFinished || false;
+  
+  // 경과 시간 복원 (finishTime이 밀리초 단위)
+  if (myData.finishTime) {
+    elapsedSeconds = Math.floor(myData.finishTime / 1000);
+  }
+  
+  // ✅ startTime 추정 (현재 시각 - 경과 시간)
+  if (elapsedSeconds > 0) {
+    startTime = new Date(Date.now() - (elapsedSeconds * 1000));
+  } else if (elapsedSeconds < 0) {
+    // ✅ 음수면 카운트다운 중 (startTime이 미래)
+    startTime = new Date(Date.now() - (elapsedSeconds * 1000));
+    elapsedSeconds = 0;  // 0으로 보정
+  }
+  
+  console.log('🔄 상태 복원 완료:', {
+    totalDistance: totalDistance.toFixed(2) + 'm',
+    elapsedSeconds: elapsedSeconds + 's',
+    isFinished: isFinished,
+    startTime: startTime
+  });
+  
+  // UI 업데이트
+  updateMyProgress();
+  
+  // ✅ 타이머 복원
+  if (elapsedSeconds > 0 && !elapsedTimerInterval) {
+    startElapsedTimer();
+  }
+  
+  // ✅ 완주 상태면 메시지 표시
+  if (isFinished) {
+    showFinishMessage();
+    
+    // 완주 후 GPS 타이머 시작
+    if (!finishedGpsInterval && lastPosition) {
+      finishedGpsInterval = setInterval(() => {
+        if (lastPosition && lastPosition.lat && lastPosition.lng) {
+          sendGpsData(lastPosition.lat, lastPosition.lng, 0);
+          console.log('🔄 완주 후 GPS 전송 (복원)');
+        }
+      }, 2000);
+    }
+    
+    // 결과 페이지 폴링 시작
+    startResultPolling();
+  }
 }
 
 /**
@@ -291,6 +468,9 @@ function showCountdown() {
       clearInterval(countdownInterval);
       countdownNumber.textContent = 'START!';
       countdownNumber.style.color = '#ff4444';
+      
+      // ✅ 카운트다운 완료 - sessionStorage에 저장
+      sessionStorage.setItem('battle_countdown_' + SESSION_ID, 'true');
       
       setTimeout(() => {
         document.body.removeChild(overlay);
@@ -544,13 +724,20 @@ function createRankingItem(participant, isMe, allRankings) {
   item.className = `ranking-item rank-${participant.rank}`;
   if (isMe) item.classList.add('my-rank');
   
+  // ✅ 포기한 참가자 스타일 적용 (백엔드는 GIVE_UP 사용)
+  const isQuit = participant.status === 'GIVE_UP' || participant.rank === 0;
+  if (isQuit) {
+    item.classList.add('quit');
+  }
+  
   // 왼쪽: 순위 + 아바타 + 이름
   const leftArea = document.createElement('div');
   leftArea.className = 'ranking-item-left';
   
   const rankNumber = document.createElement('div');
   rankNumber.className = 'rank-number';
-  rankNumber.textContent = participant.rank;
+  // ✅ rank가 0이면 "포기" 표시
+  rankNumber.textContent = participant.rank === 0 ? '포기' : participant.rank;
   
   const avatar = document.createElement('div');
   avatar.className = 'participant-avatar';
@@ -567,14 +754,23 @@ function createRankingItem(participant, isMe, allRankings) {
   name.className = 'participant-name';
   name.textContent = isMe ? '나' : participant.username;
   
-  // 완주 여부 표시
-  if (participant.isFinished) {
+  // ✅ 포기 여부 표시 - 비활성화 (순위 칸에만 표시)
+  if (isQuit) {
+    // name.innerHTML += ' <span class="quit-badge">✕ 포기</span>';  // 제거
+  } else if (participant.isFinished) {
     name.textContent += ' 🏁';
   }
   
   const pace = document.createElement('div');
   pace.className = 'participant-pace';
-  pace.textContent = participant.isFinished ? '완주!' : `페이스 ${participant.currentPace} /km`;
+  // ✅ 포기한 경우 간단하게 표시
+  if (isQuit) {
+    pace.textContent = '포기함';
+    pace.style.color = '#ef4444';
+    pace.style.fontWeight = '600';
+  } else {
+    pace.textContent = participant.isFinished ? '완주!' : `페이스 ${participant.currentPace} /km`;
+  }
   
   participantInfo.appendChild(name);
   participantInfo.appendChild(pace);
@@ -598,7 +794,11 @@ function createRankingItem(participant, isMe, allRankings) {
   const positionIndicator = document.createElement('div');
   positionIndicator.className = 'position-indicator';
   
-  if (isMe && participant.rank > 1) {
+  // ✅ 포기한 경우 위치 표시 안 함
+  if (isQuit) {
+    positionIndicator.textContent = '포기';
+    positionIndicator.classList.add('quit-status');
+  } else if (isMe && participant.rank > 1) {
     // 내가 1등이 아닐 때 - 1등과의 거리차
     const firstPlace = allRankings.find(r => r.rank === 1);
     const gap = firstPlace.totalDistance - participant.totalDistance;
@@ -768,8 +968,11 @@ function startElapsedTimer() {
   elapsedTimerInterval = setInterval(() => {
     elapsedSeconds++;
     
-    const minutes = Math.floor(elapsedSeconds / 60);
-    const seconds = elapsedSeconds % 60;
+    // ✅ 음수면 0으로 표시 (카운트다운 중)
+    const displaySeconds = Math.max(0, elapsedSeconds);
+    
+    const minutes = Math.floor(displaySeconds / 60);
+    const seconds = displaySeconds % 60;
     
     document.getElementById('elapsed-minutes').textContent = String(minutes).padStart(2, '0');
     document.getElementById('elapsed-seconds').textContent = String(seconds).padStart(2, '0');

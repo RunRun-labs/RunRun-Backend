@@ -448,7 +448,7 @@ function setupEventListeners() {
   const homeButton = document.getElementById('home-button');
   if (homeButton) {
     homeButton.addEventListener('click', () => {
-      window.location.href = '/';
+      window.location.href = '/home';
     });
   }
   

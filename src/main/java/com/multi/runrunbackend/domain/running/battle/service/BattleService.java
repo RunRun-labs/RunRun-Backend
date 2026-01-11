@@ -231,6 +231,7 @@ public class BattleService {
                 sessionId, userId, isReady, allReady);
     }
 
+
     /**
      * 순위 업데이트 메시지 전송 (Redis Pub/Sub)
      */
@@ -243,9 +244,20 @@ public class BattleService {
 
         publishToRedis("/sub/battle/" + sessionId + "/ranking", message);
 
+    session.updateStatus(SessionStatus.IN_PROGRESS);
+    matchSessionRepository.save(session);
+    
+    // ✅ 배틀 실제 시작 시간 계산 (현재 + 10초 = 카운트다운 후)
+    LocalDateTime battleStartTime = LocalDateTime.now().plusSeconds(10);
+    
+    // ✅ Redis에 배틀 시작 시간 저장
+    battleRedisService.setBattleStartTime(sessionId, battleStartTime);
+
+
         log.info("📊 순위 메시지 발행: sessionId={}, 참가자={}명",
                 sessionId, rankings.size());
     }
+
 
     /**
      * 에러 메시지 전송 (Redis Pub/Sub)
@@ -262,6 +274,35 @@ public class BattleService {
 
         log.info("📤 에러 메시지 발행: sessionId={}, errorCode={}",
                 sessionId, errorCode.name());
+
+    log.info("🏁 배틀 시작: sessionId={}, 참가자={}명, battleStartTime={}", 
+        sessionId, participants.size(), battleStartTime);
+
+    // ✅ 배틀 시작 메시지 전송
+    sendBattleStartMessage(sessionId);
+  }
+
+  /**
+   * 타임아웃 처리
+   *
+   * @return Map<String, Object> - sessionId, started, alreadyStarted 포함
+   */
+  @Transactional
+  public Map<String, Object> handleTimeout(Long sessionId) {
+    log.info("⏰ 타임아웃 처리 시작: sessionId={}", sessionId);
+
+    MatchSession session = matchSessionRepository.findById(sessionId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+
+    // 이미 시작된 경우 - 자동 시작으로 처리됨
+    if (session.getStatus() == SessionStatus.IN_PROGRESS) {
+      log.info("✅ 이미 배틀 시작됨 (자동 시작): sessionId={}", sessionId);
+      Map<String, Object> result = new HashMap<>();
+      result.put("sessionId", sessionId);
+      result.put("started", true);
+      result.put("alreadyStarted", true);
+      return result;
+
     }
 
     /**
