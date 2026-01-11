@@ -24,6 +24,11 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+
 /**
  *
  * @author : kimyongwon
@@ -42,23 +47,45 @@ public class ProfileRunningHistoryService {
     private final FriendRepository friendRepository;
     private final FileStorage fileStorage;
 
+    private static final List<RunStatus> VISIBLE_STATUSES = List.of(RunStatus.COMPLETED, RunStatus.TIME_OUT);
+
     /**
      * 내 러닝 기록 조회
      */
     @Transactional(readOnly = true)
     public Slice<ProfileRunningHistoryResDto> getMyRunningRecords(
             CustomUser principal,
+            LocalDate startDate,
+            LocalDate endDate,
             Pageable pageable
     ) {
         User me = getUserByPrincipal(principal);
 
-        return runningResultRepository
-                .findByUserAndRunStatusAndIsDeletedFalse(
-                        me,
-                        RunStatus.COMPLETED,
-                        pageable
-                )
-                .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        java.time.LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
+        java.time.LocalDateTime end = (endDate != null) ? endDate.atTime(java.time.LocalTime.MAX) : null;
+
+        // 날짜 필터가 있는 경우 날짜 필터링 쿼리 사용, 없으면 기본 쿼리 사용
+        if (start != null || end != null) {
+            return runningResultRepository
+                    .findMyRecordsByStatuses(
+                            me.getId(),
+                            VISIBLE_STATUSES,
+                            null, // minDistance
+                            null, // maxDistance
+                            start,
+                            end,
+                            pageable
+                    )
+                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        } else {
+            return runningResultRepository
+                    .findByUserAndRunStatusInAndIsDeletedFalse(
+                            me,
+                            VISIBLE_STATUSES,
+                            pageable
+                    )
+                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        }
     }
 
     /**
@@ -68,6 +95,8 @@ public class ProfileRunningHistoryService {
     public Slice<ProfileRunningHistoryResDto> getUserRunningRecords(
             Long userId,
             CustomUser principal,
+            LocalDate startDate,
+            LocalDate endDate,
             Pageable pageable
     ) {
         User me = getUserByPrincipal(principal);
@@ -78,12 +107,30 @@ public class ProfileRunningHistoryService {
 
         validateProfileAccess(me, target);
 
-        return runningResultRepository
-                .findByUserAndRunStatusAndIsDeletedFalse(
-                        target,
-                        RunStatus.COMPLETED,
-                        pageable)
-                .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        java.time.LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
+        java.time.LocalDateTime end = (endDate != null) ? endDate.atTime(java.time.LocalTime.MAX) : null;
+
+        // 날짜 필터가 있는 경우 날짜 필터링 쿼리 사용, 없으면 기본 쿼리 사용
+        if (start != null || end != null) {
+            return runningResultRepository
+                    .findMyRecordsByStatuses(
+                            target.getId(),
+                            VISIBLE_STATUSES,
+                            null, // minDistance
+                            null, // maxDistance
+                            start,
+                            end,
+                            pageable
+                    )
+                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        } else {
+            return runningResultRepository
+                    .findByUserAndRunStatusInAndIsDeletedFalse(
+                            target,
+                            VISIBLE_STATUSES,
+                            pageable)
+                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
+        }
     }
 
     /**

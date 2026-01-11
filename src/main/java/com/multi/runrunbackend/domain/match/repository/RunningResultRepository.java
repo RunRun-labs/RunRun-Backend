@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.match.repository;
 
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
+import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.user.entity.User;
 import java.math.BigDecimal;
@@ -28,9 +29,9 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
 
   Optional<RunningResult> findByIdAndUserIdAndIsDeletedFalse(Long id, Long userId);
 
-  Slice<RunningResult> findByUserAndRunStatusAndIsDeletedFalse(
+  Slice<RunningResult> findByUserAndRunStatusInAndIsDeletedFalse(
       User user,
-      RunStatus runStatus,
+      List<RunStatus> runStatuses,
       Pageable pageable
   );
 
@@ -62,11 +63,16 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
               COALESCE(SUM(r.totalTime), 0)
           FROM RunningResult r
           WHERE r.user.id = :userId
-            AND r.runStatus = 'COMPLETED'
+            AND r.runStatus IN :statuses
             AND r.startedAt >= :start
             AND r.startedAt < :end
       """)
-  List<Object[]> findTodaySummary(Long userId, LocalDateTime start, LocalDateTime end);
+  List<Object[]> findTodaySummary(
+      @Param("userId") Long userId,
+      @Param("statuses") List<RunStatus> statuses,
+      @Param("start") LocalDateTime start,
+      @Param("end") LocalDateTime end
+  );
 
   @Query("""
           SELECT
@@ -75,11 +81,16 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
               SUM(r.totalTime)
           FROM RunningResult r
           WHERE r.user.id = :userId
-            AND r.runStatus = 'COMPLETED'
+            AND r.runStatus IN :statuses
             AND r.startedAt BETWEEN :start AND :end
           GROUP BY FUNCTION('date_part', 'dow', r.startedAt)
       """)
-  List<Object[]> findWeeklySummary(Long userId, LocalDateTime start, LocalDateTime end);
+  List<Object[]> findWeeklySummary(
+      @Param("userId") Long userId,
+      @Param("statuses") List<RunStatus> statuses,
+      @Param("start") LocalDateTime start,
+      @Param("end") LocalDateTime end
+  );
 
   /* ===================== FEED ===================== */
 
@@ -111,4 +122,7 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
           ORDER BY r.createdAt DESC
       """)
   List<RunningResult> findTop5ByUserIdForAverage(@Param("userId") Long userId, Pageable pageable);
+
+  Optional<RunningResult> findByUserIdAndRunningTypeAndStartedAt(Long id, RunningType runningType,
+      LocalDateTime createdAt);
 }

@@ -96,9 +96,37 @@ function initFeedPage() {
     
     attachShareButtonHandler();
     attachSortHandlers();
+    setActiveBottomNavItem();
     initInfiniteScroll();
     hideEmptyState(); // 초기 로드 시 빈 상태 숨김
     loadFeeds(0, true);
+}
+
+/**
+ * 하단 네비게이션 활성 항목 설정
+ */
+function setActiveBottomNavItem() {
+    // bottom-nav가 렌더링될 때까지 대기
+    const checkBottomNav = () => {
+        const navItems = document.querySelectorAll(".bottom-nav .nav-item");
+        if (navItems.length === 0) {
+            // 아직 렌더링되지 않았으면 잠시 후 다시 시도
+            setTimeout(checkBottomNav, 100);
+            return;
+        }
+        
+        navItems.forEach(item => {
+            const href = item.getAttribute("href");
+            // 피드 페이지인 경우 feed 항목 활성화
+            if (href && (href === "/feed" || href === "/feed/" || href.startsWith("/feed"))) {
+                item.classList.add("active");
+            } else {
+                item.classList.remove("active");
+            }
+        });
+    };
+    
+    checkBottomNav();
 }
 
 /**

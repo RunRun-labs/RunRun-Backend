@@ -117,6 +117,15 @@
             </label>
             <p class="field-feedback" data-feedback="weightKg" aria-live="polite"></p>
 
+            <!-- BMI 표시 영역 -->
+            <div class="bmi-display" id="bmiDisplay" hidden>
+                <div class="bmi-info">
+                    <span class="bmi-label">BMI:</span>
+                    <span class="bmi-value" id="bmiValue">-</span>
+                    <span class="bmi-status" id="bmiStatus"></span>
+                </div>
+            </div>
+
             <button class="primary-button" type="submit">변경 사항 저장</button>
             <p class="form-message" data-role="edit-message" aria-live="polite"></p>
         </form>
