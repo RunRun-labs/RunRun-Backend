@@ -208,6 +208,63 @@ body {
   display: none;
 }
 
+/* BMI 표시 영역 */
+.bmi-display {
+  margin: 8px 0 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.bmi-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bmi-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.bmi-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.bmi-status {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 12px;
+  margin-left: auto;
+}
+
+/* BMI 상태별 색상 */
+.bmi-status.underweight {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.bmi-status.normal {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.bmi-status.overweight {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.bmi-status.obese {
+  background: #ffebee;
+  color: #c62828;
+}
+
 .form-message {
   min-height: 18px;
   margin: 6px 0 0;

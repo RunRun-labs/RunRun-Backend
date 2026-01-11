@@ -102,6 +102,9 @@ async function loadUserWeightInfo() {
     }
 }
 
+// 칼로리 툴팁 클릭 이벤트 리스너 추가 여부 플래그
+let caloriesTooltipHandlerAttached = false;
+
 /**
  * 칼로리 툴팁 표시 여부 업데이트
  */
@@ -119,12 +122,16 @@ function updateCaloriesTooltip() {
     // 칼로리가 0이고 몸무게가 없을 때 툴팁 표시
     if (caloriesValue === 0 && (userWeightKg === null || userWeightKg === undefined || userWeightKg === 0)) {
         caloriesStatItem.classList.add('calories-tooltip');
-        caloriesStatItem.setAttribute('data-tooltip', '프로필에서 몸무게를 설정하면 칼로리를 계산할 수 있습니다');
-        // 클릭 이벤트 리스너 추가
-        attachCaloriesTooltipClickHandler();
+        caloriesStatItem.setAttribute('data-tooltip', '키/몸무게 정보를 저장해보세요');
+        // 클릭 이벤트 리스너 추가 (한 번만)
+        if (!caloriesTooltipHandlerAttached) {
+            attachCaloriesTooltipClickHandler();
+            caloriesTooltipHandlerAttached = true;
+        }
     } else {
         caloriesStatItem.classList.remove('calories-tooltip');
         caloriesStatItem.removeAttribute('data-tooltip');
+        caloriesTooltipHandlerAttached = false;
     }
 }
 
@@ -153,11 +160,20 @@ function renderTodayStats(stats) {
  * 칼로리 툴팁 클릭 이벤트 처리 (프로필 편집 페이지로 이동)
  */
 function attachCaloriesTooltipClickHandler() {
-    const caloriesStatItem = document.querySelector('.calories-tooltip');
+    const caloriesStatItem = document.querySelector('[data-role="today-calories"]')?.closest('.stat-item');
     if (!caloriesStatItem) return;
 
     caloriesStatItem.addEventListener('click', () => {
-        window.location.href = '/myPage/edit';
+        // 칼로리가 0이고 몸무게가 없을 때만 이동
+        const caloriesEl = document.querySelector('[data-role="today-calories"]');
+        if (!caloriesEl) return;
+        
+        const caloriesText = caloriesEl.textContent.trim();
+        const caloriesValue = parseFloat(caloriesText.replace(/[^0-9.]/g, '')) || 0;
+        
+        if (caloriesValue === 0 && (userWeightKg === null || userWeightKg === undefined || userWeightKg === 0)) {
+            window.location.href = '/myPage/edit';
+        }
     });
 }
 
@@ -174,6 +190,8 @@ function formatDuration(seconds) {
 
 // 주 선택 관련 전역 변수
 let currentWeekOffset = 0; // 0 = 이번 주, -1 = 지난 주, 1 = 다음 주 등
+let currentWeeklyDistances = []; // 현재 주간 거리 데이터 저장
+let selectedDayIndex = null; // 선택된 날짜 인덱스
 
 /**
  * 주 선택 기능 초기화
@@ -269,7 +287,10 @@ async function loadWeeklyStats() {
         const payload = await res.json();
         const data = payload.data;
 
-        renderWeeklyChart(data.dailyDistances);
+        // 현재 주간 거리 데이터 저장
+        currentWeeklyDistances = data.dailyDistances || [];
+        
+        renderWeeklyChart(currentWeeklyDistances);
         updateWeeklyTotals(
             data.totalDistanceKm,
             data.totalDurationSec
@@ -313,14 +334,120 @@ function getStartOfWeek(date) {
     return new Date(d.setDate(diff));
 }
 
+/**
+ * 현재 주의 시작 날짜 (월요일) 계산
+ */
+function getCurrentWeekStart() {
+    const today = new Date();
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + (currentWeekOffset * 7));
+    return getStartOfWeek(targetDate);
+}
+
+/**
+ * 그래프 날짜 클릭 핸들러
+ */
+function handleChartDayClick(dayIndex, distance) {
+    // 이미 선택된 날짜를 다시 클릭하면 숨김
+    if (selectedDayIndex === dayIndex) {
+        hideDistanceTooltip();
+        selectedDayIndex = null;
+        return;
+    }
+    
+    selectedDayIndex = dayIndex;
+    
+    // 현재 주의 시작 날짜 계산
+    const weekStart = getCurrentWeekStart();
+    const selectedDate = new Date(weekStart);
+    selectedDate.setDate(weekStart.getDate() + dayIndex);
+    
+    // 거리 정보 표시
+    showDistanceTooltip(dayIndex, distance, selectedDate);
+}
+
+/**
+ * 거리 정보 툴팁 표시
+ */
+function showDistanceTooltip(dayIndex, distance, date) {
+    // 기존 툴팁 제거
+    hideDistanceTooltip();
+    
+    const chartBars = document.querySelector('[data-role="chart-bars"]');
+    if (!chartBars) return;
+    
+    // 날짜 포맷팅 (월/일)
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const formattedDate = `${month}/${day}`;
+    
+    // 거리 포맷팅
+    const distanceValue = distance ? parseFloat(distance) : 0;
+    const distanceText = distanceValue > 0 ? `${distanceValue.toFixed(1)}km` : "0km";
+    
+    // 툴팁 요소 생성
+    const tooltip = document.createElement("div");
+    tooltip.className = "chart-distance-tooltip";
+    tooltip.id = "chartDistanceTooltip";
+    tooltip.innerHTML = `
+        <div class="tooltip-date">${formattedDate}</div>
+        <div class="tooltip-distance">${distanceText}</div>
+    `;
+    
+    // 막대/원 요소 찾기
+    const chartElement = chartBars.querySelector(`[data-day-index="${dayIndex}"]`);
+    if (!chartElement) return;
+    
+    // 컨테이너에 relative position 설정
+    if (getComputedStyle(chartBars).position === 'static') {
+        chartBars.style.position = "relative";
+    }
+    
+    // 툴팁을 컨테이너에 추가
+    chartBars.appendChild(tooltip);
+    
+    // 위치 계산
+    const rect = chartElement.getBoundingClientRect();
+    const containerRect = chartBars.getBoundingClientRect();
+    
+    // 막대/원의 중심 X 좌표 계산
+    const leftOffset = rect.left - containerRect.left + rect.width / 2;
+    
+    // 막대/원의 상단 Y 좌표 계산 (컨테이너 기준)
+    const topOffset = rect.top - containerRect.top;
+    
+    // 툴팁 위치 설정 (막대/원 위에 8px 간격)
+    tooltip.style.left = `${leftOffset}px`;
+    tooltip.style.top = `${topOffset - 8}px`;
+    
+    // 툴팁을 중앙 정렬하기 위해 transform 사용 (X축만)
+    tooltip.style.transform = "translate(-50%, -100%)";
+}
+
+/**
+ * 거리 정보 툴팁 숨김
+ */
+function hideDistanceTooltip() {
+    const tooltip = document.getElementById("chartDistanceTooltip");
+    if (tooltip) {
+        tooltip.remove();
+    }
+}
+
 function renderWeeklyChart(distances) {
     const chartBars = document.querySelector('[data-role="chart-bars"]');
     if (!chartBars) return;
     chartBars.innerHTML = "";
+    
+    // 기존 거리 정보 표시 제거
+    hideDistanceTooltip();
+    selectedDayIndex = null;
+    
     if (!Array.isArray(distances) || distances.length === 0) {
         for (let i = 0; i < 7; i++) {
             const circle = document.createElement("div");
             circle.className = "chart-circle";
+            circle.setAttribute("data-day-index", i);
             chartBars.appendChild(circle);
         }
         return;
@@ -331,19 +458,24 @@ function renderWeeklyChart(distances) {
         if (distance === 0 || distance < 0.01) {
             // 거리가 0일 때는 동그란 원 생성
             const circle = document.createElement("div");
-            circle.className = "chart-circle";
+            circle.className = "chart-circle chart-clickable";
             circle.setAttribute("data-day-index", index);
+            circle.setAttribute("data-distance", distance || 0);
+            circle.addEventListener("click", () => handleChartDayClick(index, distance || 0));
             chartBars.appendChild(circle);
         } else {
             // 거리가 있을 때는 막대 그래프 생성
             const bar = document.createElement("div");
-            bar.className = "chart-bar";
+            bar.className = "chart-bar chart-clickable";
+            bar.setAttribute("data-day-index", index);
+            bar.setAttribute("data-distance", distance);
             const heightRatio = distance / maxDistance;
             // 최소 높이: 약 24.631px, 최대 높이: 약 98.539px (Figma 디자인 기준)
             const minHeight = 24.631;
             const maxHeight = 98.539;
             const height = Math.max(minHeight, minHeight + (maxHeight - minHeight) * heightRatio);
             bar.style.height = `${height}px`;
+            bar.addEventListener("click", () => handleChartDayClick(index, distance));
             chartBars.appendChild(bar);
         }
     });

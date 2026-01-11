@@ -233,7 +233,7 @@ body {
 /* 칼로리 툴팁 스타일 */
 .calories-tooltip {
     position: relative;
-    cursor: help;
+    cursor: pointer;
 }
 
 .calories-tooltip::after {
@@ -459,6 +459,51 @@ body {
     justify-self: center;
     align-self: flex-end;
     /* 막대 그래프의 시작점(하단)과 동일한 위치에 정렬 */
+}
+
+.chart-clickable {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.chart-clickable:hover {
+    opacity: 0.8;
+}
+
+/* 거리 정보 툴팁 */
+.chart-distance-tooltip {
+    position: absolute;
+    background: #1f2937;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+.chart-distance-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1f2937;
+}
+
+.tooltip-date {
+    font-size: 11px;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+.tooltip-distance {
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .chart-days {

@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Controller
 public class PathController {
 
+    /* ===================== AUTH / HOME ===================== */
+
     @GetMapping("/login")
     public String loginView() {
         return "auth/login";
@@ -240,6 +242,16 @@ public class PathController {
 
     /* ===================== COURSE ===================== */
 
+    @GetMapping("/course_auto")
+    public String courseAutoView() {
+        return "courseAuto";
+    }
+
+    @GetMapping("/course_manual")
+    public String courseManualView() {
+        return "courseManual";
+    }
+
     @GetMapping("/course")
     public String courseView() {
         return "course/courseList";
@@ -263,6 +275,11 @@ public class PathController {
     }
 
     /* ===================== PAYMENT / POINT ===================== */
+
+    @GetMapping("/membership")
+    public String membership() {
+        return "membership/membership";
+    }
 
     @GetMapping("/payment/pay")
     public String paymentPayView() {
@@ -309,6 +326,102 @@ public class PathController {
         return "point/pointShop";
     }
 
+    @GetMapping("/admin/points/products")
+    public String pointProductAdminView() {
+        return "point/pointAdmin";
+    }
+
+    /* ===================== ETC ===================== */
+
+    @GetMapping("/test/gps")
+    public String gpsTestView() {
+        return "test/gps-test";
+    }
+
+    @GetMapping("/tts-test")
+    public String ttsTestView() {
+        return "tts-test";
+    }
+
+    @GetMapping("/setting")
+    public String settingView() {
+        return "setting/setting";
+    }
+
+    @GetMapping("/setting/blocked-users")
+    public String blockedUsersView() {
+        return "setting/blocked-users";
+    }
+
+    @GetMapping("/terms/view")
+    public String termsView() {
+        return "terms/terms-detail";
+    }
+
+    @GetMapping("/profile/{userId}")
+    public String userProfileView(@PathVariable Long userId, Model model) {
+        model.addAttribute("userId", userId);
+        return "user/user-profile";
+    }
+
+    @GetMapping("/friends/list")
+    public String friendListView() {
+        return "friend/friend-list";
+    }
+    
+
+    /* ===================== ADMIN COUPON ===================== */
+
+    @GetMapping("/admin/coupon/inquiry")
+    public String adminCouponInquiryView() {
+        return "admin/coupon-inquiry";
+    }
+
+    @GetMapping("/admin/coupon/create")
+    public String adminCouponCreateView() {
+        return "admin/coupon-create";
+    }
+
+    @GetMapping("/admin/coupon/update/{coupon_id}")
+    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId, Model model) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-update";
+    }
+
+    @GetMapping("/admin/coupon-role/inquiry")
+    public String adminCouponRoleInquiryView() {
+        return "admin/coupon-role-inquiry";
+    }
+
+    @GetMapping("/admin/coupon-role/create")
+    public String adminCouponRoleCreateView() {
+        return "admin/coupon-role-create";
+    }
+
+    @GetMapping("/admin/coupon-role/update/{coupon_role_id}")
+    public String adminCouponRoleUpdateView(
+            @PathVariable(name = "coupon_role_id") Long couponRoleId,
+            Model model
+    ) {
+        model.addAttribute("couponRoleId", couponRoleId);
+        return "admin/coupon-role-update";
+    }
+
+    @GetMapping("/admin/coupon/select")
+    public String adminCouponSelectView() {
+        return "admin/coupon-select";
+    }
+
+    @GetMapping("/coupon/my")
+    public String myCouponsView() {
+        return "coupon/my-coupons";
+    }
+
+    @GetMapping("/coupon/event")
+    public String couponEventView() {
+        return "coupon/coupon-event";
+    }
+
     /* ===================== RUNNING ===================== */
 
     @GetMapping("/running/{sessionId}")
@@ -317,4 +430,3 @@ public class PathController {
         return "running/running";
     }
 }
-
