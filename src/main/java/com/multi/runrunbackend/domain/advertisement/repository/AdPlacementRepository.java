@@ -31,6 +31,8 @@ public interface AdPlacementRepository extends JpaRepository<AdPlacement, Long>,
 
     boolean existsBySlotId(Long slotId);
 
+    boolean existsByAdIdAndSlotId(Long adId, Long slotId);
+
     // =========================
     // Admin List (Projection)
     // =========================
