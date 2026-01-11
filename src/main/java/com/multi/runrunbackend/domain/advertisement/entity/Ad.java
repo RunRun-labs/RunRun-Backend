@@ -8,7 +8,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -19,10 +18,7 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
-    name = "ad",
-    indexes = {
-        @Index(name = "idx_ad_status", columnList = "status")
-    }
+    name = "ad"
 )
 @SQLRestriction("is_deleted = false")
 public class Ad extends BaseEntity {
