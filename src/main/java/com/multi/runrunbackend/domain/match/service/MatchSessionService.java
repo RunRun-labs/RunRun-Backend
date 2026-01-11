@@ -155,7 +155,7 @@ public class MatchSessionService {
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime recruitCreatedAt = recruit.getCreatedAt();
 
-    long waitingTime = ChronoUnit.MINUTES.between(recruitCreatedAt, now);
+    long waitingTime = ChronoUnit.SECONDS.between(recruitCreatedAt, now);
 
     MatchSession matchSession = MatchSession.builder()
         .recruit(recruit)
