@@ -65,6 +65,9 @@ public class ChatService {
 
 
     public void sendMessage(ChatMessageDto messageDto) {
+        // 현재 시간 설정
+        LocalDateTime now = LocalDateTime.now();
+        
         // MongoDB에 저장
         OfflineChatMessage chatMessage = OfflineChatMessage.builder()
             .sessionId(messageDto.getSessionId())
@@ -72,17 +75,18 @@ public class ChatService {
             .senderName(messageDto.getSenderName())
             .content(messageDto.getContent())
             .messageType(messageDto.getMessageType())
-            .createdAt(LocalDateTime.now())
+            .createdAt(now)
             .build();
 
         chatMessageRepository.save(chatMessage);
 
-        // Redis Pub/Sub으로 발행
+        // DTO에 시간 설정 후 Redis Pub/Sub으로 발행
+        messageDto.setCreatedAt(now);
         String channel = "chat:" + messageDto.getSessionId();
         redisPublisher.publish(channel, messageDto);
 
-        log.info("메시지 전송: sessionId={}, sender={}", messageDto.getSessionId(),
-            messageDto.getSenderName());
+        log.info("메시지 전송: sessionId={}, sender={}, createdAt={}", 
+            messageDto.getSessionId(), messageDto.getSenderName(), now);
     }
 
     public void sendEnterMessage(Long sessionId, String userName) {

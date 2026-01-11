@@ -524,6 +524,18 @@ public class CrewJoinService {
     // 권한 변경
     targetCrewUser.changeRole(newRole);
 
+    // ✅ 채팅 시스템 메시지 전송 (모든 역할 변경에 대해)
+    try {
+      String roleName = getRoleNameInKorean(newRole);
+      crewChatService.sendRoleChangeMessageByCrewId(crewId, targetUser.getName(), roleName);
+      log.info("✅ 역할 변경 채팅 시스템 메시지 전송: crewId={}, userId={}, role={}",
+          crewId, userId, roleName);
+    } catch (Exception e) {
+      log.error("❌ 역할 변경 채팅 메시지 전송 실패: crewId={}, userId={}", crewId, userId, e);
+    }
+
+    // ❌ 임시 주석 처리 - 알림 전송 비활성화
+    /*
     if (newRole == CrewRole.SUB_LEADER || newRole == CrewRole.STAFF) {
       try {
         List<CrewUser> allMembers = crewUserRepository
@@ -564,6 +576,7 @@ public class CrewJoinService {
             crewId, userId, newRole, e);
       }
     }
+    */  // ❌ 임시 주석 처리 끝
 
     log.info("크루원 권한 변경 완료 - crewId: {}, userId: {}, oldRole: {}, newRole: {}",
         crewId, userId, oldRole, newRole);
@@ -661,6 +674,24 @@ public class CrewJoinService {
 
     if (!isCrewUser) {
       throw new ForbiddenException(ErrorCode.NOT_CREW_USER);
+    }
+  }
+
+  /**
+   * ✅ 역할을 한글로 변환
+   */
+  private String getRoleNameInKorean(CrewRole role) {
+    switch (role) {
+      case LEADER:
+        return "크루장";
+      case SUB_LEADER:
+        return "부크루장";
+      case STAFF:
+        return "운영진";
+      case MEMBER:
+        return "일반 멤버";
+      default:
+        return role.name();
     }
   }
 }
