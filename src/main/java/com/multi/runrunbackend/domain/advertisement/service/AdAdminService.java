@@ -48,9 +48,8 @@ public class AdAdminService {
         String uploadedKey = null;
         try {
             uploadedKey = fileStorage.upload(imageFile, FileDomainType.AD_IMAGE, null);
-            String httpsUrl = fileStorage.toHttpsUrl(uploadedKey);
 
-            Ad ad = Ad.create(dto, httpsUrl);
+            Ad ad = Ad.create(dto, uploadedKey);
             Ad saved = adRepository.save(ad);
             return AdAdminCreateResDto.of(saved.getId());
 
@@ -100,6 +99,7 @@ public class AdAdminService {
             placementTotals != null && placementTotals.length > 1 ? toLong(placementTotals[1]) : 0L;
         long placementTotalClk =
             placementTotals != null && placementTotals.length > 2 ? toLong(placementTotals[2]) : 0L;
+        // imageUrl은 key로 저장되어 있으므로 toHttpsUrl로 변환
         String imageUrl = fileStorage.toHttpsUrl(ad.getImageUrl());
         return AdAdminDetailResDto.of(
             ad.getId(),
@@ -121,14 +121,13 @@ public class AdAdminService {
             throw new ForbiddenException(ErrorCode.AD_LOCKED_BY_PLACEMENT);
         }
 
-        String finalUrl = ad.getImageUrl();
+        String finalKey = ad.getImageUrl();
         if (imageFile != null && !imageFile.isEmpty()) {
-            String newKeyOrUrl = fileStorage.uploadIfChanged(imageFile, FileDomainType.AD_IMAGE,
+            finalKey = fileStorage.uploadIfChanged(imageFile, FileDomainType.AD_IMAGE,
                 adId, ad.getImageUrl());
-            finalUrl = fileStorage.toHttpsUrl(newKeyOrUrl);
         }
 
-        ad.update(dto, finalUrl);
+        ad.update(dto, finalKey);
         return AdAdminUpdateResDto.of(ad.getId());
     }
 
