@@ -40,7 +40,7 @@ public class AdSlotAdminService {
         if (adSlotAdminRepository.findBySlotType(dto.getSlotType()).isPresent()) {
             throw new ForbiddenException(ErrorCode.AD_SLOT_TYPE_ALREADY_EXISTS);
         }
-        
+
         AdSlot slot = AdSlot.create(dto);
         return adSlotAdminRepository.save(slot).getId();
     }
@@ -89,7 +89,7 @@ public class AdSlotAdminService {
     public void disable(Long slotId) {
         AdSlot slot = adSlotAdminRepository.findById(slotId)
             .orElseThrow(() -> new NotFoundException(ErrorCode.AD_SLOT_NOT_FOUND));
-        if (slot.isEnabled()) {
+        if (!slot.isEnabled()) {
             throw new ForbiddenException(ErrorCode.AD_SLOT_UPDATE_ONLY_DISABLED);
         }
         slot.disable();
