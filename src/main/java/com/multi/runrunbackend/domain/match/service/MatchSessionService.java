@@ -455,10 +455,7 @@ public class MatchSessionService {
 
     Long courseId = reqDto.getCourseId();
 
-    if (courseId == null && reqDto.getDistance() == null) {
-      throw new BadRequestException(ErrorCode.DISTANCE_REQUIRED);
-    }
-
+    // DTO의 @AssertTrue가 이미 courseId, distance, manualDistance 중 하나는 필수임을 검증함
     Course course = null;
     Double distance = null;
 
@@ -824,8 +821,12 @@ public class MatchSessionService {
         redirectUrl = "/match/waiting?sessionId=" + sessionId;
       } else if (type == SessionType.OFFLINE) {
         redirectUrl = "/chat/chat1?sessionId=" + sessionId;
+      } else if (type == SessionType.GHOST) {
+        redirectUrl = "/match/ghost-run?sessionId=" + sessionId;
+      } else if (type == SessionType.SOLO) {
+        redirectUrl = "/running/" + sessionId;
       } else {
-        redirectUrl = "/match/waiting?sessionId=" + sessionId;
+        redirectUrl = "/running/" + sessionId;
       }
     } else if (status == SessionStatus.IN_PROGRESS) {
       if (type == SessionType.ONLINE) {
