@@ -10,6 +10,11 @@ let SESSION_ID = null;
 let ghostData = null;
 let myUserId = null;  // 추가!
 
+// ✅ 재연결 관리
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+let reconnectTimeout = null;
+
 // 마지막 비교 결과 (종료 시 사용)
 let lastComparison = {
   status: 'EVEN',
@@ -182,6 +187,20 @@ function onConnected() {
   console.log('✅ WebSocket 연결 성공');
   isConnected = true;
   
+  // ✅ 재연결 성공 메시지 (초기화 전에 체크)
+  const wasReconnecting = reconnectAttempts > 0;
+  
+  // ✅ 재연결 카운터 초기화
+  reconnectAttempts = 0;
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+  
+  if (wasReconnecting) {
+    showToast('✅ 연결 복구 성공!', 'success');
+  }
+  
   // 고스트런 비교 결과 구독
   stompClient.subscribe(`/sub/ghost-run/${SESSION_ID}`, onGhostComparison);
   console.log(`✅ 구독: /sub/ghost-run/${SESSION_ID}`);
@@ -208,6 +227,9 @@ function onError(error) {
     const errorData = JSON.parse(error.body);
     console.error('에러 메시지:', errorData.error);
   }
+  
+  // ✅ 재연결 시도
+  attemptReconnect();
 }
 
 /**
@@ -717,4 +739,120 @@ function formatDate(dateString) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}.${month}.${day}`;
+}
+
+/**
+ * ✅ WebSocket 재연결 시도
+ */
+function attemptReconnect() {
+  // 이미 재연결 중이면 중복 방지
+  if (reconnectTimeout) {
+    console.log('⚠️ 이미 재연결 중...');
+    return;
+  }
+  
+  reconnectAttempts++;
+  
+  if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
+    console.error('❌ 최대 재연결 시도 초과 (5회)');
+    showToast('❌ 연결 실패. 페이지를 새로고침 해주세요.', 'error');
+    return;
+  }
+  
+  console.log(`🔄 WebSocket 재연결 시도 (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+  showToast(`🔄 연결 회복 중... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`, 'info');
+  
+  // ✅ 1초 후 재연결 (즉시 재연결하면 서버 부하 가능)
+  reconnectTimeout = setTimeout(() => {
+    reconnectTimeout = null;
+    
+    // WebSocket 연결
+    try {
+      connectWebSocket();
+    } catch (error) {
+      console.error('❌ 재연결 실패:', error);
+      // 다음 재연결 시도
+      attemptReconnect();
+    }
+  }, 1000);  // 1초 후
+}
+
+/**
+ * ✅ 토스트 메시지 표시
+ */
+function showToast(message, type = 'info') {
+  // 기존 토스트 제거
+  const existingToast = document.getElementById('toast-message');
+  if (existingToast) {
+    document.body.removeChild(existingToast);
+  }
+  
+  const toast = document.createElement('div');
+  toast.id = 'toast-message';
+  
+  // 타입별 색상
+  let bgColor;
+  switch(type) {
+    case 'success':
+      bgColor = 'rgba(34, 197, 94, 0.95)';  // 초록
+      break;
+    case 'error':
+      bgColor = 'rgba(239, 68, 68, 0.95)';  // 빨강
+      break;
+    case 'info':
+    default:
+      bgColor = 'rgba(59, 130, 246, 0.95)';  // 파랑
+      break;
+  }
+  
+  toast.style.cssText = `
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${bgColor};
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.3s ease-out;
+    max-width: 90%;
+    text-align: center;
+  `;
+  toast.textContent = message;
+  
+  // 애니메이션 정의
+  if (!document.getElementById('toast-animation-style')) {
+    const style = document.createElement('style');
+    style.id = 'toast-animation-style';
+    style.textContent = `
+      @keyframes slideDown {
+        from {
+          transform: translateX(-50%) translateY(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(-50%) translateY(0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(toast);
+  
+  // 3초 후 제거
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 3000);
 }

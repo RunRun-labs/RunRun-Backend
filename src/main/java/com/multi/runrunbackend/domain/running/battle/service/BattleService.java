@@ -136,6 +136,12 @@ public class BattleService {
 
     session.updateStatus(SessionStatus.IN_PROGRESS);
     matchSessionRepository.save(session);
+    
+    // ✅ 배틀 실제 시작 시간 계산 (현재 + 10초 = 카운트다운 후)
+    LocalDateTime battleStartTime = LocalDateTime.now().plusSeconds(10);
+    
+    // ✅ Redis에 배틀 시작 시간 저장
+    battleRedisService.setBattleStartTime(sessionId, battleStartTime);
 
     for (SessionUser participant : participants) {
       User user = participant.getUser();
@@ -144,7 +150,8 @@ public class BattleService {
           sessionId, user.getId(), user.getName());
     }
 
-    log.info("🏁 배틀 시작: sessionId={}, 참가자={}명", sessionId, participants.size());
+    log.info("🏁 배틀 시작: sessionId={}, 참가자={}명, battleStartTime={}", 
+        sessionId, participants.size(), battleStartTime);
 
     // ✅ 배틀 시작 메시지 전송
     sendBattleStartMessage(sessionId);

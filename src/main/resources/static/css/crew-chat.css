@@ -185,7 +185,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 8px;
+  padding-bottom: 20px; /* 공백 최소화 */
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -346,12 +346,12 @@ body {
 }
 
 .attach-button {
+  display: none; /* + 버튼 숨김 */
   background: none;
   border: none;
   padding: 8px;
   border-radius: 20px;
   cursor: pointer;
-  display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -388,11 +388,11 @@ body {
 }
 
 .emoji-button {
+  display: none; /* 이모티콘 버튼 숨김 */
   background: none;
   border: none;
   padding: 4px;
   cursor: pointer;
-  display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
