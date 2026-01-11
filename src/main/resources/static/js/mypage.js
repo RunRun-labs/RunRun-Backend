@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
     attachSettingsHandler();
     attachMyCoursesHandler();
     attachMyPostsHandler();
+    attachImageModalHandlers();
+    attachDeleteRecordModalHandlers();
     loadMyBodyInfo();
 
     // 초기 로드 시 빈 상태 숨김
@@ -231,9 +233,15 @@ function attachMyPostsHandler() {
     const myPostsBtn = document.querySelector('[data-role="my-posts"]');
     if (!myPostsBtn) return;
 
+    // 버튼 활성화 (disabled 속성 제거)
+    myPostsBtn.disabled = false;
+    myPostsBtn.style.cursor = "pointer";
+    myPostsBtn.style.opacity = "1";
+
     myPostsBtn.addEventListener("click", () => {
-        // 피드 기능 구현 후 연동 예정
-        alert("피드 기능 구현 후 연동 예정입니다.");
+        // localStorage에 "내 글" 탭 활성화 플래그 설정
+        localStorage.setItem("feedSortToMy", "true");
+        window.location.href = "/feed";
     });
 }
 
@@ -396,7 +404,7 @@ function createRunCard(record) {
 
     // 이미지가 있을 때만 img 태그 추가
     const thumbContent = imageUrl
-        ? `<img src="${imageUrl}" alt="${courseTitle}" onerror="this.style.display='none'" />`
+        ? `<img src="${imageUrl}" alt="${courseTitle}" style="display: block; cursor: pointer;" onerror="this.style.display='none'" data-image-url="${imageUrl}" />`
         : '';
 
     article.innerHTML = `
@@ -423,9 +431,46 @@ function createRunCard(record) {
                 <span class="run-pace-label">평균 페이스</span>
                 <span class="run-pace-value">${paceStr}</span>
             </div>
-            <button class="run-share" type="button">피드에 공유</button>
+            <div class="run-actions">
+                <button class="run-share" type="button">공유</button>
+                <button class="run-delete" type="button" data-record-id="${record.runningResultId}">삭제</button>
+            </div>
         </div>
     `;
+
+    // 썸네일 클릭 이벤트 추가
+    if (imageUrl) {
+        const thumbContainer = article.querySelector('.run-thumb');
+        if (thumbContainer) {
+            thumbContainer.addEventListener('click', () => {
+                openImageModal(imageUrl);
+            });
+        }
+    }
+
+    // 삭제 버튼 클릭 이벤트 추가
+    const deleteBtn = article.querySelector('.run-delete');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const recordId = deleteBtn.getAttribute('data-record-id');
+            if (recordId) {
+                openDeleteRecordModal(Number(recordId), article);
+            }
+        });
+    }
+
+    // 공유 버튼 클릭 이벤트 추가
+    const shareBtn = article.querySelector('.run-share');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const recordId = record.runningResultId;
+            if (recordId) {
+                window.location.href = `/feed/post?runningResultId=${recordId}`;
+            }
+        });
+    }
 
     return article;
 }
@@ -583,5 +628,262 @@ function attachUserScrollGate() {
         page.addEventListener('scroll', markInteracted, {passive: true});
         page.addEventListener('wheel', markInteracted, {passive: true});
         page.addEventListener('touchmove', markInteracted, {passive: true});
+    }
+}
+
+/**
+ * 이미지 모달 핸들러
+ */
+function attachImageModalHandlers() {
+    const modal = document.getElementById("imageModal");
+    const closeBtn = document.querySelector('[data-role="close-image-modal"]');
+    const modalOverlay = document.querySelector('.image-modal-overlay');
+
+    if (!modal) return;
+
+    // 닫기 버튼
+    if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeImageModal();
+        });
+    }
+
+    // 배경 클릭 시 닫기
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", (e) => {
+            if (e.target === modalOverlay) {
+                closeImageModal();
+            }
+        });
+
+        // 모달 콘텐츠 클릭 시 닫히지 않도록
+        const modalContent = modalOverlay.querySelector(".image-modal-content");
+        if (modalContent) {
+            modalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+        }
+    }
+
+    // ESC 키로 닫기
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !modal.hasAttribute("hidden")) {
+            closeImageModal();
+        }
+        
+        // 삭제 모달 ESC 키로 닫기
+        const deleteModal = document.getElementById("deleteRecordModal");
+        if (e.key === "Escape" && deleteModal && !deleteModal.hasAttribute("hidden")) {
+            closeDeleteRecordModal();
+        }
+    });
+}
+
+/**
+ * 이미지 모달 열기
+ */
+function openImageModal(imageUrl) {
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("imageModalImg");
+
+    if (!modal || !modalImg) return;
+
+    modalImg.src = imageUrl;
+    modal.removeAttribute("hidden");
+    document.body.style.overflow = "hidden";
+}
+
+/**
+ * 이미지 모달 닫기
+ */
+function closeImageModal() {
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("imageModalImg");
+    
+    if (!modal) return;
+
+    modal.setAttribute("hidden", "hidden");
+    document.body.style.overflow = "";
+    
+    // 이미지 소스 제거 (메모리 절약)
+    if (modalImg) {
+        modalImg.src = "";
+    }
+}
+
+/**
+ * 삭제 확인 모달 핸들러
+ */
+function attachDeleteRecordModalHandlers() {
+    const modal = document.getElementById("deleteRecordModal");
+    const closeBtn = document.querySelector('[data-role="close-delete-modal"]');
+    const cancelBtn = document.querySelector('[data-role="cancel-delete-record"]');
+    const confirmBtn = document.querySelector('[data-role="confirm-delete-record"]');
+    const modalOverlay = document.querySelector('#deleteRecordModal');
+
+    if (!modal) return;
+
+    // 닫기 버튼
+    if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeDeleteRecordModal();
+        });
+    }
+
+    // 취소 버튼
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => {
+            closeDeleteRecordModal();
+        });
+    }
+
+    // 확인 버튼
+    if (confirmBtn) {
+        confirmBtn.addEventListener("click", async () => {
+            const recordId = confirmBtn.getAttribute('data-record-id');
+            
+            if (recordId) {
+                // recordId로 카드 찾기
+                const recordElement = document.querySelector(`[data-record-id="${recordId}"]`)?.closest('.run-card');
+                await deleteRunningRecord(Number(recordId), recordElement);
+            }
+        });
+    }
+
+    // 배경 클릭 시 닫기
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", (e) => {
+            if (e.target === modalOverlay) {
+                closeDeleteRecordModal();
+            }
+        });
+
+        // 모달 콘텐츠 클릭 시 닫히지 않도록
+        const modalContent = modalOverlay.querySelector(".modal-content");
+        if (modalContent) {
+            modalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+        }
+    }
+}
+
+/**
+ * 삭제 확인 모달 열기
+ */
+function openDeleteRecordModal(recordId, recordElement) {
+    const modal = document.getElementById("deleteRecordModal");
+    const confirmBtn = document.querySelector('[data-role="confirm-delete-record"]');
+    
+    if (!modal) return;
+
+    // 확인 버튼에 recordId와 element 정보 저장
+    if (confirmBtn) {
+        confirmBtn.setAttribute('data-record-id', recordId);
+        // recordElement를 직접 저장할 수 없으므로, recordId로 나중에 찾을 수 있도록 함
+        if (recordElement) {
+            recordElement.setAttribute('data-delete-target', 'true');
+        }
+    }
+
+    modal.removeAttribute("hidden");
+    document.body.style.overflow = "hidden";
+}
+
+/**
+ * 삭제 확인 모달 닫기
+ */
+function closeDeleteRecordModal() {
+    const modal = document.getElementById("deleteRecordModal");
+    const confirmBtn = document.querySelector('[data-role="confirm-delete-record"]');
+    
+    if (!modal) return;
+
+    modal.setAttribute("hidden", "hidden");
+    document.body.style.overflow = "";
+
+    // 저장된 데이터 제거 및 버튼 상태 초기화
+    if (confirmBtn) {
+        const recordId = confirmBtn.getAttribute('data-record-id');
+        if (recordId) {
+            const recordElement = document.querySelector(`[data-record-id="${recordId}"]`)?.closest('.run-card');
+            if (recordElement) {
+                recordElement.removeAttribute('data-delete-target');
+            }
+        }
+        confirmBtn.removeAttribute('data-record-id');
+        // 버튼 상태 초기화
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "삭제";
+    }
+}
+
+/**
+ * 러닝 기록 삭제
+ */
+async function deleteRunningRecord(recordId, recordElement) {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            window.location.href = "/login";
+            return;
+        }
+
+        const confirmBtn = document.querySelector('[data-role="confirm-delete-record"]');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = "삭제 중...";
+        }
+
+        const response = await fetch(`/api/records/${recordId}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                alert("로그인이 필요합니다.");
+                window.location.href = "/login";
+                return;
+            }
+            const error = await response.json();
+            throw new Error(error?.message || "러닝 기록 삭제 실패");
+        }
+
+        // 성공 시 카드 제거
+        if (recordElement) {
+            recordElement.remove();
+            
+            // 기록이 없으면 빈 상태 표시
+            const runList = document.querySelector('[data-role="run-list"]');
+            if (runList && runList.children.length === 0) {
+                showEmptyState();
+            }
+        }
+
+        // 버튼 상태 초기화 후 모달 닫기
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "삭제";
+        }
+        
+        closeDeleteRecordModal();
+        alert("러닝 기록이 삭제되었습니다.");
+    } catch (error) {
+        console.error("Failed to delete running record:", error);
+        alert(error.message || "러닝 기록 삭제 중 오류가 발생했습니다.");
+        
+        const confirmBtn = document.querySelector('[data-role="confirm-delete-record"]');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "삭제";
+        }
     }
 }

@@ -11,22 +11,23 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.chat.repository.OfflineChatMessageRepository;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.course.repository.CourseRepository;
-import com.multi.runrunbackend.domain.match.constant.RunStatus;
-import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.constant.Tier;
 import com.multi.runrunbackend.domain.match.dto.req.SoloRunStartReqDto;
+import com.multi.runrunbackend.domain.match.dto.res.ActiveSessionResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingParticipantDto;
-import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
+import com.multi.runrunbackend.domain.notification.constant.NotificationType;
+import com.multi.runrunbackend.domain.notification.constant.RelatedType;
+import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.rating.entity.DistanceRating;
 import com.multi.runrunbackend.domain.rating.repository.DistanceRatingRepository;
 import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
@@ -44,12 +45,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -81,6 +81,7 @@ public class MatchSessionService {
   private final ObjectMapper objectMapper;  // ✅ JSON 변환용
   private final DistanceRatingRepository distanceRatingRepository;
   private final MatchingQueueService matchingQueueService;  // ✅ 매칭 큐 서비스
+  private final NotificationService notificationService;
 
 
   @Transactional
@@ -103,7 +104,11 @@ public class MatchSessionService {
       throw new ValidationException(ErrorCode.TOO_EARLY_TO_START);
     }
 
-    return createSessionInternal(recruit);
+    Long sessionId = createSessionInternal(recruit);
+
+    sendOffMatchConfirmedNotifications(sessionId, recruit.getUser().getId(), false);
+
+    return sessionId;
   }
 
   public MatchSessionDetailResDto getSessionDetail(Long sessionId, Long userId) {
@@ -133,7 +138,9 @@ public class MatchSessionService {
       return;
     }
 
-    createSessionInternal(recruit);
+    Long sessionId = createSessionInternal(recruit);
+
+    sendOffMatchConfirmedNotifications(sessionId, recruit.getUser().getId(), true);
   }
 
   private Long createSessionInternal(Recruit recruit) {
@@ -193,6 +200,37 @@ public class MatchSessionService {
     recruit.updateStatus(RecruitStatus.MATCHED);
 
     return matchSession.getId();
+  }
+
+  private void sendOffMatchConfirmedNotifications(Long sessionId, Long hostId,
+      boolean includeHost) {
+    try {
+      List<SessionUser> sessionUsers = sessionUserRepository.findActiveUsersBySessionId(sessionId);
+
+      for (SessionUser sessionUser : sessionUsers) {
+        if (!includeHost && sessionUser.getUser().getId().equals(hostId)) {
+          continue;
+        }
+
+        try {
+          notificationService.create(
+              sessionUser.getUser(),
+              "오프라인 매칭 확정",
+              "매칭이 확정되었습니다. 채팅방으로 이동하세요.",
+              NotificationType.MATCH,
+              RelatedType.OFF_CHAT_ROOM,
+              sessionId
+          );
+          log.info("오프라인 매칭 확정 알림 발송 완료 - sessionId: {}, receiverId: {}",
+              sessionId, sessionUser.getUser().getId());
+        } catch (Exception e) {
+          log.error("오프라인 매칭 확정 알림 생성 실패 - sessionId: {}, receiverId: {}",
+              sessionId, sessionUser.getUser().getId(), e);
+        }
+      }
+    } catch (Exception e) {
+      log.error("오프라인 매칭 확정 알림 발송 중 오류 발생 - sessionId: {}", sessionId, e);
+    }
   }
 
   @Transactional
@@ -278,28 +316,28 @@ public class MatchSessionService {
     DistanceType distanceType = determineDistanceType(session.getTargetDistance());
 
     // 참가자 DTO 변환
-        List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
-            .map(su -> {
-                User user = su.getUser();
+    List<MatchWaitingParticipantDto> participants = sessionUsers.stream()
+        .map(su -> {
+          User user = su.getUser();
 
-              // 티어 정보 조회
-              Tier tier =
-                  distanceRatingRepository.findByUserIdAndDistanceType(user.getId(),
-                          distanceType)
-                      .map(DistanceRating::getCurrentTier)
-                      .orElse(Tier.거북이);
+          // 티어 정보 조회
+          Tier tier =
+              distanceRatingRepository.findByUserIdAndDistanceType(user.getId(),
+                      distanceType)
+                  .map(DistanceRating::getCurrentTier)
+                  .orElse(Tier.거북이);
 
-                return MatchWaitingParticipantDto.builder()
-                    .userId(user.getId())
-                    .name(user.getName())
-                    .profileImage(user.getProfileImageUrl())
-                    .isReady(su.isReady())
-                    .isHost(user.getId().equals(hostUserId))
-                    .avgPace(formatAveragePace(user.getAveragePace()))  // ✅ User의 averagePace 사용
-                    .tier(tier)
-                    .build();
-            })
-            .collect(Collectors.toList());
+          return MatchWaitingParticipantDto.builder()
+              .userId(user.getId())
+              .name(user.getName())
+              .profileImage(user.getProfileImageUrl())
+              .isReady(su.isReady())
+              .isHost(user.getId().equals(hostUserId))
+              .avgPace(formatAveragePace(user.getAveragePace()))  // ✅ User의 averagePace 사용
+              .tier(tier)
+              .build();
+        })
+        .collect(Collectors.toList());
 
     // Ready 카운트
     long readyCount = sessionUsers.stream().filter(SessionUser::isReady).count();
@@ -372,37 +410,6 @@ public class MatchSessionService {
     log.info("고스트 세션 생성 - SessionID: {}, GhostResultID: {}", session.getId(), runningResultId);
 
     return session.getId();
-  }
-
-  public Slice<RunningRecordResDto> getMyRunningRecords(CustomUser principal,
-      RunningResultFilterType filterType, Pageable pageable) {
-    User user = getUser(principal);
-
-    BigDecimal min = filterType != null ? switch (filterType) {
-      case UNDER_3 -> BigDecimal.ZERO;
-      case BETWEEN_3_5 -> BigDecimal.valueOf(3.0);
-      case BETWEEN_5_10 -> BigDecimal.valueOf(5.0);
-      case OVER_10 -> BigDecimal.valueOf(10.0);
-      case ALL -> null;
-    } : null;
-
-    BigDecimal max = filterType != null ? switch (filterType) {
-      case UNDER_3 -> BigDecimal.valueOf(3.0);
-      case BETWEEN_3_5 -> BigDecimal.valueOf(5.0);
-      case BETWEEN_5_10 -> BigDecimal.valueOf(10.0);
-      case OVER_10 -> null;
-      case ALL -> null;
-    } : null;
-
-    Slice<RunningResult> resultSlice = runningResultRepository.findMySoloRecordsByDistance(
-        user.getId(),
-        RunStatus.COMPLETED,
-        min,
-        max,
-        pageable
-    );
-
-    return resultSlice.map(RunningRecordResDto::from);
   }
 
   @Transactional
@@ -507,6 +514,7 @@ public class MatchSessionService {
 
   /**
    * 평균 페이스를 MM:SS 형식으로 변환
+   *
    * @param averagePace 평균 페이스 (BigDecimal, 분/km)
    * @return "MM:SS" 형식의 문자열 (null이면 "-")
    */
@@ -722,6 +730,82 @@ public class MatchSessionService {
       log.error("❌ Redis Pub 실패: destination={}", destination, e);
       log.error("❌ 에러 상세: {}", e.getMessage());
     }
+  }
+
+
+  public ActiveSessionResDto getActiveSession(Long userId) {
+
+    Optional<SessionUser> activeSessionOpt = sessionUserRepository.findActiveSession(userId);
+    if (activeSessionOpt.isEmpty()) {
+      try {
+        List<SessionUser> allSessionUsers = sessionUserRepository.findAll()
+            .stream()
+            .filter(su -> {
+              try {
+                return su.getUser().getId().equals(userId);
+              } catch (Exception e) {
+                return false;
+              }
+            })
+            .limit(10)
+            .collect(Collectors.toList());
+
+        for (SessionUser su : allSessionUsers) {
+          try {
+            MatchSession ms = su.getMatchSession();
+            String logMsg = String.format(
+                "  - sessionId: %d, status: %s, type: %s, su.isDeleted: %s",
+                ms.getId(), ms.getStatus(), ms.getType(), su.getIsDeleted());
+            log.info("  - sessionId: {}, status: {}, type: {}, su.isDeleted: {}",
+                ms.getId(),
+                ms.getStatus(),
+                ms.getType(),
+                su.getIsDeleted());
+          } catch (Exception e) {
+            log.warn("  - SessionUser 정보 조회 실패: {}", e.getMessage());
+          }
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        log.warn("디버깅 정보 조회 실패:", e);
+      }
+
+      return null;
+    }
+
+    SessionUser sessionUser = activeSessionOpt.get();
+    MatchSession session = sessionUser.getMatchSession();
+    SessionStatus status = session.getStatus();
+    SessionType type = session.getType();
+    Long sessionId = session.getId();
+
+    log.info(" 활성 세션 발견 - sessionId: {}, status: {}, type: {}",
+        sessionId, status, type);
+
+    String redirectUrl;
+    if (status == SessionStatus.STANDBY) {
+      redirectUrl = "/match/waiting?sessionId=" + sessionId;
+    } else if (status == SessionStatus.IN_PROGRESS) {
+      if (type == SessionType.ONLINE) {
+        redirectUrl = "/match/battle?sessionId=" + sessionId;
+      } else {
+        redirectUrl = "/running/" + sessionId;
+      }
+    } else {
+      log.warn(" 예상치 못한 세션 상태 - sessionId: {}, status: {}", sessionId, status);
+      return null; // 예상치 못한 상태
+    }
+
+    log.info(" 활성 세션 조회 성공 - userId: {}, sessionId: {}, status: {}, redirectUrl: {}",
+        userId, sessionId, status, redirectUrl);
+
+    ActiveSessionResDto result = ActiveSessionResDto.builder()
+        .sessionId(sessionId)
+        .status(status.name())
+        .redirectUrl(redirectUrl)
+        .build();
+
+    return result;
   }
 }
 

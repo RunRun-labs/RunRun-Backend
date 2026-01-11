@@ -2,25 +2,21 @@ package com.multi.runrunbackend.domain.match.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
-import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.dto.req.OfflineMatchConfirmReqDto;
 import com.multi.runrunbackend.domain.match.dto.req.OnlineMatchJoinReqDto;
 import com.multi.runrunbackend.domain.match.dto.req.SoloRunStartReqDto;
+import com.multi.runrunbackend.domain.match.dto.res.ActiveSessionResDto;
+import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.OfflineMatchConfirmResDto;
 import com.multi.runrunbackend.domain.match.dto.res.OnlineMatchStatusResDto;
-import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
 import com.multi.runrunbackend.domain.match.service.MatchSessionService;
 import com.multi.runrunbackend.domain.match.service.MatchingQueueService;
 import com.multi.runrunbackend.domain.running.battle.service.BattleService;
 import jakarta.validation.Valid;
 import java.util.Map;
-import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,7 +25,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -41,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/match")
+@Slf4j
 public class MatchSessionController {
 
   private final MatchSessionService matchSessionService;
@@ -48,16 +44,16 @@ public class MatchSessionController {
   private final BattleService battleService;
 
 
-    @GetMapping("/sessions/{sessionId}")
-    public ResponseEntity<ApiResponse<MatchSessionDetailResDto>> getSessionDetail(
-        @PathVariable Long sessionId,
-        @AuthenticationPrincipal CustomUser principal
-    ) {
+  @GetMapping("/sessions/{sessionId}")
+  public ResponseEntity<ApiResponse<MatchSessionDetailResDto>> getSessionDetail(
+      @PathVariable Long sessionId,
+      @AuthenticationPrincipal CustomUser principal
+  ) {
 
-        MatchSessionDetailResDto res = matchSessionService.getSessionDetail(sessionId,
-            principal.getUserId());
-        return ResponseEntity.ok(ApiResponse.success("세션 상세 조회 성공", res));
-    }
+    MatchSessionDetailResDto res = matchSessionService.getSessionDetail(sessionId,
+        principal.getUserId());
+    return ResponseEntity.ok(ApiResponse.success("세션 상세 조회 성공", res));
+  }
 
   @PostMapping("/offline/confirm")
   public ResponseEntity<ApiResponse<OfflineMatchConfirmResDto>> confirmMatch(
@@ -130,6 +126,28 @@ public class MatchSessionController {
     return ResponseEntity.ok(ApiResponse.success(info));
   }
 
+
+  @GetMapping("/active-session")
+  public ResponseEntity<ApiResponse<ActiveSessionResDto>> getActiveSession(
+      @AuthenticationPrincipal CustomUser principal
+  ) {
+    Long userId = principal.getUserId();
+
+    try {
+      ActiveSessionResDto activeSession = matchSessionService.getActiveSession(userId);
+
+      if (activeSession == null) {
+        return ResponseEntity.ok(ApiResponse.success("활성 세션이 없습니다.", null));
+      }
+
+      return ResponseEntity.ok(ApiResponse.success("활성 세션 조회 성공", activeSession));
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
   /**
    * 타임아웃 처리 (5분 경과)
    */
@@ -157,16 +175,6 @@ public class MatchSessionController {
 
   }
 
-  @GetMapping("/ghost")
-  public ResponseEntity<ApiResponse<Slice<RunningRecordResDto>>> getMyRunningRecords(
-      @AuthenticationPrincipal CustomUser principal,
-      @RequestParam(required = false, defaultValue = "ALL") RunningResultFilterType filter,
-      @PageableDefault(size = 10, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable
-  ) {
-    Slice<RunningRecordResDto> records = matchSessionService.getMyRunningRecords(principal, filter,
-        pageable);
-    return ResponseEntity.ok(ApiResponse.success("내 러닝 결과 조회 성공", records));
-  }
   /**
    * 고스트런 세션 정보 조회
    */
@@ -178,6 +186,7 @@ public class MatchSessionController {
     Map<String, Object> info = matchSessionService.getGhostSessionInfo(sessionId);
     return ResponseEntity.ok(ApiResponse.success("고스트런 세션 정보 조회 성공", info));
   }
+
   @PostMapping("/solorun/start")
   public ResponseEntity<ApiResponse<Long>> startSoloRun(
       @AuthenticationPrincipal CustomUser principal,

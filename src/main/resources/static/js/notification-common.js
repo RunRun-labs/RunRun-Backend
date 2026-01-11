@@ -166,6 +166,13 @@
 
   // ============== 토스트 알림 ==============
   function showToastNotification(notification) {
+    // ✅ /match/online 페이지에서는 토스트 표시하지 않음
+    const isOnlineMatchPage = window.location.pathname === '/match/online';
+    if (isOnlineMatchPage) {
+      console.log('[SSE] 온라인 매칭 페이지에서는 토스트 표시 안함');
+      return;
+    }
+
     const existingToast = document.getElementById('notification-toast');
     if (existingToast) {
       existingToast.remove();
@@ -249,14 +256,37 @@
       return null;
     }
 
-    // 기존 연결이 있으면 재사용
-    if (globalEventSource && isConnected) {
-      console.log('[SSE] Reusing existing connection');
+    // ✅ /home 페이지에서는 기존 연결 재사용하지 않음 (항상 새로 생성하여 이벤트 리스너 보장)
+    const isHomePage = window.location.pathname === '/home' || window.location.pathname === '/';
+    
+    if (!isHomePage && globalEventSource && globalEventSource.readyState === 1 && isConnected) {
+      console.log('[SSE] ✅ Reusing existing valid connection');
       return globalEventSource;
+    }
+    
+    // ✅ 기존 연결이 있지만 유효하지 않거나 /home 페이지면 정리
+    if (globalEventSource) {
+      console.log('[SSE] ⚠️ Existing connection is invalid or home page - closing...');
+      console.log('[SSE]   - readyState:', globalEventSource.readyState);
+      console.log('[SSE]   - isConnected:', isConnected);
+      console.log('[SSE]   - isHomePage:', isHomePage);
+      try {
+        if (globalEventSource.readyState !== 2 && globalEventSource.abortController && !globalEventSource.abortController.signal.aborted) {
+          globalEventSource.abortController.abort();
+        }
+        if (globalEventSource.readyState !== 2) {
+          globalEventSource.close();
+        }
+      } catch (e) {
+        console.warn('[SSE] Error closing invalid connection:', e);
+      }
+      globalEventSource = null;
+      isConnected = false;
     }
 
     try {
-      console.log('[SSE] Initializing new connection...');
+      console.log('[SSE] 🔌 Initializing new SSE connection...');
+      console.log('[SSE]   - Current pathname:', window.location.pathname);
       
       globalEventSource = new EventSourcePolyfill('/api/notifications/subscribe', {
         headers: {
@@ -285,6 +315,7 @@
       globalEventSource.addEventListener('message', (event) => {
         try {
           console.log('[SSE] 📩 Message received:', event.data);
+          console.log('[SSE]   - Current pathname:', window.location.pathname);
           
           // ✅ "ping" (heartbeat) 데이터는 무시
           if (event.data === 'ping' || event.data.trim() === 'ping') {
@@ -305,7 +336,35 @@
           // ✅ 메시지 수신 시에도 타임아웃 리셋 (연결이 살아있음을 확인)
           resetHeartbeatTimeout();
           
-          // 토스트 표시
+          // ✅ MATCH_FOUND + ONLINE 알림 처리
+          const isOnlineMatchPage = window.location.pathname === '/match/online';
+          const isMatchFoundOnline = notification.notificationType === 'MATCH_FOUND' && 
+                                     notification.relatedType === 'ONLINE' && 
+                                     notification.relatedId;
+          
+          if (isMatchFoundOnline) {
+            if (!isOnlineMatchPage) {
+              // 다른 페이지에서 받은 경우: 온라인 매칭 페이지로 이동
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (다른 페이지)');
+              console.log('[SSE]   - Current pathname:', window.location.pathname);
+              console.log('[SSE]   - SessionId:', notification.relatedId);
+              console.log('[SSE] 🚀 리다이렉트: /match/online?autoMatch=' + notification.relatedId);
+              
+              // ✅ 즉시 리다이렉트 (비동기 작업 방해 방지)
+              window.location.href = `/match/online?autoMatch=${notification.relatedId}`;
+              return; // 토스트 표시하지 않고 바로 리턴
+            } else {
+              // 온라인 매칭 페이지에서 직접 받은 경우: 토스트 표시 안 함 (레이더 애니메이션 실행 중)
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (온라인 매칭 페이지) - 토스트 표시 안 함, 레이더 애니메이션 사용');
+              // CustomEvent는 발생시켜서 online-match.js에서 처리할 수 있도록 함
+              window.dispatchEvent(new CustomEvent('notification-received', { 
+                detail: notification 
+              }));
+              return; // 토스트 표시하지 않고 리턴
+            }
+          }
+          
+          // 다른 알림은 기존 로직대로 처리 (토스트 표시)
           showToastNotification(notification);
           
           // CustomEvent 발생 (다른 스크립트에서 감지 가능)
@@ -323,11 +382,42 @@
       globalEventSource.addEventListener('notification', (event) => {
         try {
           console.log('[SSE] 🔔 Notification event received:', event.data);
+          console.log('[SSE]   - Current pathname:', window.location.pathname);
+          
           const notification = JSON.parse(event.data);
           
           // ✅ 알림 수신 시에도 타임아웃 리셋 (연결이 살아있음을 확인)
           resetHeartbeatTimeout();
           
+          // ✅ MATCH_FOUND + ONLINE 알림 처리
+          const isOnlineMatchPage = window.location.pathname === '/match/online';
+          const isMatchFoundOnline = notification.notificationType === 'MATCH_FOUND' && 
+                                     notification.relatedType === 'ONLINE' && 
+                                     notification.relatedId;
+          
+          if (isMatchFoundOnline) {
+            if (!isOnlineMatchPage) {
+              // 다른 페이지에서 받은 경우: 온라인 매칭 페이지로 이동
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (다른 페이지)');
+              console.log('[SSE]   - Current pathname:', window.location.pathname);
+              console.log('[SSE]   - SessionId:', notification.relatedId);
+              console.log('[SSE] 🚀 리다이렉트: /match/online?autoMatch=' + notification.relatedId);
+              
+              // ✅ 즉시 리다이렉트 (비동기 작업 방해 방지)
+              window.location.href = `/match/online?autoMatch=${notification.relatedId}`;
+              return; // 토스트 표시하지 않고 바로 리턴
+            } else {
+              // 온라인 매칭 페이지에서 직접 받은 경우: 토스트 표시 안 함 (레이더 애니메이션 실행 중)
+              console.log('[SSE] 🔔 MATCH_FOUND + ONLINE 알림 감지 (온라인 매칭 페이지) - 토스트 표시 안 함, 레이더 애니메이션 사용');
+              // CustomEvent는 발생시켜서 online-match.js에서 처리할 수 있도록 함
+              window.dispatchEvent(new CustomEvent('notification-received', { 
+                detail: notification 
+              }));
+              return; // 토스트 표시하지 않고 리턴
+            }
+          }
+          
+          // 다른 알림은 기존 로직대로 처리 (토스트 표시)
           showToastNotification(notification);
           
           window.dispatchEvent(new CustomEvent('notification-received', { 
@@ -390,10 +480,84 @@
 
   // ============== BFCache 대응 ==============
   window.addEventListener('pageshow', (event) => {
+    console.log('[SSE] 🔄 pageshow 이벤트 발생 - persisted:', event.persisted, ', pathname:', window.location.pathname);
+    
     if (event.persisted) {
+      // BFCache에서 복원된 경우
       console.log('[SSE] 🔄 Page restored from BFCache - reconnecting...');
       isConnected = false;
+      if (globalEventSource) {
+        try {
+          if (globalEventSource.readyState !== 2 && globalEventSource.abortController) {
+            globalEventSource.abortController.abort();
+          }
+          globalEventSource.close();
+        } catch (e) {
+          console.warn('[SSE] Error closing old connection on BFCache restore:', e);
+        }
+      }
+      globalEventSource = null;
       reconnect();
+    } else {
+      // ✅ /home 또는 / 페이지에서는 항상 새 연결 생성 (이벤트 리스너 보장)
+      const isHomePage = window.location.pathname === '/home' || window.location.pathname === '/';
+      
+      if (isHomePage) {
+        console.log('[SSE] 🏠 Home page detected - forcing new connection for event listener guarantee...');
+        isConnected = false;
+        if (globalEventSource) {
+          try {
+            console.log('[SSE]   - Closing existing connection (readyState:', globalEventSource.readyState + ')');
+            if (globalEventSource.readyState !== 2 && globalEventSource.abortController && !globalEventSource.abortController.signal.aborted) {
+              globalEventSource.abortController.abort();
+            }
+            if (globalEventSource.readyState !== 2) {
+              globalEventSource.close();
+            }
+          } catch (e) {
+            console.warn('[SSE] Error closing connection on home page:', e);
+          }
+        }
+        globalEventSource = null;
+        
+        setTimeout(() => {
+          console.log('[SSE] 🔌 Creating new SSE connection for home page...');
+          initNotificationSubscription();
+        }, 150);
+      } else {
+        // 다른 페이지는 기존 로직 유지
+        console.log('[SSE] 🔄 Page loaded - ensuring SSE connection...');
+        
+        // ✅ 더 엄격한 체크: readyState가 1(OPEN)이고 isConnected가 true여야 함
+        if (!globalEventSource || globalEventSource.readyState !== 1 || !isConnected) {
+          console.log('[SSE] Connection not active or invalid - reinitializing...');
+          console.log('[SSE]   - globalEventSource 존재:', !!globalEventSource);
+          console.log('[SSE]   - readyState:', globalEventSource?.readyState);
+          console.log('[SSE]   - isConnected:', isConnected);
+          
+          isConnected = false;
+          if (globalEventSource) {
+            try {
+              if (globalEventSource.readyState !== 2 && globalEventSource.abortController && !globalEventSource.abortController.signal.aborted) {
+                globalEventSource.abortController.abort();
+              }
+              if (globalEventSource.readyState !== 2) {
+                globalEventSource.close();
+              }
+            } catch (e) {
+              console.warn('[SSE] Error closing old connection:', e);
+            }
+          }
+          globalEventSource = null;
+          
+          setTimeout(() => {
+            console.log('[SSE] 🔌 Reinitializing connection...');
+            initNotificationSubscription();
+          }, 100);
+        } else {
+          console.log('[SSE] ✅ Connection already active and valid');
+        }
+      }
     }
   });
 
@@ -408,10 +572,20 @@
 
   // ============== 페이지 언로드 시 정리 ==============
   window.addEventListener('beforeunload', () => {
-    if (globalEventSource) {
-      console.log('[SSE] 🚪 Page unloading - closing connection');
-      globalEventSource.close();
+    // ✅ 연결을 닫지 않고 플래그만 설정
+    // 새 페이지에서 자동으로 재연결되므로 알림 누락 방지
+    console.log('[SSE] 🚪 Page unloading - marking as disconnected (will reconnect on new page)');
+    isConnected = false;
+    
+    // heartbeat 타임아웃 정리
+    if (heartbeatTimeoutId) {
+      clearTimeout(heartbeatTimeoutId);
+      heartbeatTimeoutId = null;
     }
+    
+    // 연결은 닫지 않음 (브라우저가 자동으로 닫음)
+    // 새 페이지에서 자동으로 재연결되므로 알림 누락 방지
+    // globalEventSource.close(); // 제거 - 새 페이지에서 재연결 보장
   });
 
   // ============== 초기 연결 ==============
@@ -420,5 +594,110 @@
   } else {
     initNotificationSubscription();
   }
+
+  // ============== 하단 내비게이션 바 매치 버튼 클릭 처리 ==============
+  function initBottomNavHandler() {
+    const bottomNav = document.querySelector(".bottom-nav");
+    
+    if (!bottomNav) {
+      console.warn('[BottomNav] ⚠️ .bottom-nav 요소를 찾을 수 없습니다.');
+      return false;
+    }
+
+    // 매치 버튼 찾기
+    const matchLink = bottomNav.querySelector('a[href*="/match"]');
+    
+    if (!matchLink) {
+      console.warn('[BottomNav] ⚠️ 매치 링크를 찾을 수 없습니다.');
+      return false;
+    }
+
+    // 이미 이벤트가 등록되어 있는지 확인 (data 속성 사용)
+    if (matchLink.dataset.handlerAttached === 'true') {
+      console.log('[BottomNav] ℹ️ 이미 이벤트 리스너가 등록되어 있습니다.');
+      return true;
+    }
+
+    // 클릭 이벤트 가로채기
+    matchLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('[BottomNav] 🖱️ 매치 버튼 클릭됨');
+
+      const token = getToken();
+      
+      if (!token) {
+        console.log('[BottomNav] ℹ️ 토큰이 없음, 매치 선택 페이지로 이동');
+        window.location.href = "/match/select";
+        return;
+      }
+
+      try {
+        console.log('[BottomNav] 📡 API 호출: /api/match/active-session');
+        const response = await fetch("/api/match/active-session", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        console.log('[BottomNav] 📡 API 응답 상태:', response.status);
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('[BottomNav] 📡 API 응답:', result);
+
+          if (result.success && result.data) {
+            console.log('[BottomNav] ✅ 활성 세션 발견:', result.data);
+            console.log('[BottomNav] 🚀 리다이렉트:', result.data.redirectUrl);
+            window.location.href = result.data.redirectUrl;
+            return;
+          }
+        }
+
+        // 활성 세션이 없으면 매치 선택 페이지로 이동
+        console.log('[BottomNav] ℹ️ 활성 세션 없음, 매치 선택 페이지로 이동');
+        window.location.href = "/match/select";
+      } catch (error) {
+        console.error('[BottomNav] ❌ 활성 세션 확인 실패:', error);
+        window.location.href = "/match/select";
+      }
+    });
+
+    // 이벤트 등록 완료 표시
+    matchLink.dataset.handlerAttached = 'true';
+    console.log('[BottomNav] ✅ 매치 버튼 이벤트 리스너 등록 완료');
+    return true;
+  }
+
+  // 하단 내비게이션 바 초기화
+  function initBottomNav() {
+    // DOM이 로드되었는지 확인
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        initBottomNavHandler();
+      });
+    } else {
+      // DOM이 이미 로드된 경우
+      initBottomNavHandler();
+    }
+
+    // 추가 안전장치: MutationObserver로 동적 추가된 bottom-nav 감지
+    const observer = new MutationObserver(() => {
+      if (document.querySelector(".bottom-nav") && 
+          !document.querySelector('.bottom-nav a[href*="/match"][data-handler-attached="true"]')) {
+        initBottomNavHandler();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  // 하단 내비게이션 바 초기화 실행
+  initBottomNav();
 
 })();
