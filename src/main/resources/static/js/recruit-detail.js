@@ -466,10 +466,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Step 3: API 에러 핸들링 (토스트로 처리)
           if (response.ok && result.success) {
-            showToast("참여가 완료되었습니다.", "success");
-            setTimeout(() => {
-              location.reload();
-            }, 1500);
+            const sessionId = result.data;
+            if (sessionId) {
+              // 인원이 꽉 차서 매칭이 확정된 경우 채팅방으로 이동
+              showToast("참여가 완료되었습니다. 매칭이 확정되었습니다.", "success");
+              setTimeout(() => {
+                window.location.href = `/chat/chat1?sessionId=${sessionId}`;
+              }, 1500);
+            } else {
+              // 인원이 아직 안 찬 경우 현재 페이지 새로고침
+              showToast("참여가 완료되었습니다.", "success");
+              setTimeout(() => {
+                location.reload();
+              }, 1500);
+            }
           } else {
             const errorMessage = result.message || "참여 처리 중 오류가 발생했습니다.";
             showToast(errorMessage, "error");
@@ -592,10 +602,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        showToast("매칭이 확정되었습니다", "success");
-        setTimeout(() => {
-          window.location.href = "/recruit";
-        }, 1500);
+        const sessionId = result.data?.sessionId || result.data;
+        if (sessionId) {
+          showToast("매칭이 확정되었습니다", "success");
+          setTimeout(() => {
+            window.location.href = `/chat/chat1?sessionId=${sessionId}`;
+          }, 1500);
+        } else {
+          showToast("매칭이 확정되었습니다", "success");
+          setTimeout(() => {
+            window.location.href = "/recruit";
+          }, 1500);
+        }
       } else {
         showToast(result.message || "매칭 확정 처리 중 오류가 발생했습니다.", "error");
       }
