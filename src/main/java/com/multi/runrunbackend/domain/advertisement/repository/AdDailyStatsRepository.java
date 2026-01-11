@@ -96,4 +96,34 @@ public interface AdDailyStatsRepository extends JpaRepository<AdDailyStats, Long
         @Param("statDate") LocalDate statDate,
         @Param("isImpression") int isImpression,
         @Param("isClick") int isClick);
+    
+    // 오늘의 광고 통계 (노출 수, 클릭 수)
+    @Query(value = """
+        SELECT 
+            COALESCE(SUM(impressions), 0) as total_impressions,
+            COALESCE(SUM(clicks), 0) as total_clicks
+        FROM ad_daily_stats ds
+        JOIN ad_placement p ON ds.placement_id = p.id
+        JOIN ad a ON p.ad_id = a.id
+        WHERE ds.stat_date = :today
+          AND a.is_deleted = false
+        """, nativeQuery = true)
+    Object[] sumTodayAdStats(@Param("today") LocalDate today);
+    
+    // Top 5 광고 (오늘 클릭수 기준)
+    @Query(value = """
+        SELECT 
+            a.id as ad_id,
+            a.name as ad_name,
+            COALESCE(SUM(ds.clicks), 0) as total_clicks
+        FROM ad_daily_stats ds
+        JOIN ad_placement p ON ds.placement_id = p.id
+        JOIN ad a ON p.ad_id = a.id
+        WHERE ds.stat_date = :today
+          AND a.is_deleted = false
+        GROUP BY a.id, a.name
+        ORDER BY total_clicks DESC
+        LIMIT 5
+        """, nativeQuery = true)
+    List<Object[]> findTop5AdsByClicks(@Param("today") LocalDate today);
 }

@@ -334,6 +334,11 @@ public class PathController {
     return "notification/notification-list";
   }
 
+    @GetMapping("/admin/dashboard")
+    public String adminDashboardView() {
+        return "admin/dashboard";
+    }
+
     @GetMapping("/admin/coupon/inquiry")
     public String adminCouponInquiryView() {
         return "admin/coupon-inquiry";
@@ -351,6 +356,15 @@ public class PathController {
     ) {
         model.addAttribute("couponId", couponId);
         return "admin/coupon-update";
+    }
+
+    @GetMapping("/admin/coupon/detail/{coupon_id}")
+    public String adminCouponDetailView(
+        @PathVariable(name = "coupon_id") Long couponId,
+        Model model
+    ) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-detail";
     }
 
     @GetMapping("/admin/coupon-role/inquiry")
@@ -391,6 +405,84 @@ public class PathController {
     public String runningView(@PathVariable(name = "sessionId") Long sessionId, Model model) {
         model.addAttribute("sessionId", sessionId);
         return "running/running";
+    }
+
+    // 광고 슬롯 관리
+    @GetMapping("/admin/ad-slot/inquiry")
+    public String adminAdSlotInquiryView() {
+        return "admin/ad-slot-inquiry";
+    }
+
+    @GetMapping("/admin/ad-slot/create")
+    public String adminAdSlotCreateView() {
+        return "admin/ad-slot-create";
+    }
+
+    @GetMapping("/admin/ad-slot/update/{slot_id}")
+    public String adminAdSlotUpdateView(
+        @PathVariable(name = "slot_id") Long slotId,
+        Model model
+    ) {
+        model.addAttribute("slotId", slotId);
+        return "admin/ad-slot-update";
+    }
+
+    // 광고 관리
+    @GetMapping("/admin/ad/inquiry")
+    public String adminAdInquiryView() {
+        return "admin/ad-inquiry";
+    }
+
+    @GetMapping("/admin/ad/create")
+    public String adminAdCreateView() {
+        return "admin/ad-create";
+    }
+
+    @GetMapping("/admin/ad/update/{ad_id}")
+    public String adminAdUpdateView(
+        @PathVariable(name = "ad_id") Long adId,
+        Model model
+    ) {
+        model.addAttribute("adId", adId);
+        return "admin/ad-update";
+    }
+
+    @GetMapping("/admin/ad/detail/{ad_id}")
+    public String adminAdDetailView(
+        @PathVariable(name = "ad_id") Long adId,
+        Model model
+    ) {
+        model.addAttribute("adId", adId);
+        return "admin/ad-detail";
+    }
+
+    // 광고 배치 관리
+    @GetMapping("/admin/ad-placement/inquiry")
+    public String adminAdPlacementInquiryView() {
+        return "admin/ad-placement-inquiry";
+    }
+
+    @GetMapping("/admin/ad-placement/create")
+    public String adminAdPlacementCreateView() {
+        return "admin/ad-placement-create";
+    }
+
+    @GetMapping("/admin/ad-placement/update/{placement_id}")
+    public String adminAdPlacementUpdateView(
+        @PathVariable(name = "placement_id") Long placementId,
+        Model model
+    ) {
+        model.addAttribute("placementId", placementId);
+        return "admin/ad-placement-update";
+    }
+
+    @GetMapping("/admin/ad-placement/detail/{placement_id}")
+    public String adminAdPlacementDetailView(
+        @PathVariable(name = "placement_id") Long placementId,
+        Model model
+    ) {
+        model.addAttribute("placementId", placementId);
+        return "admin/ad-placement-detail";
     }
 
 }

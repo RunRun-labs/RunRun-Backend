@@ -42,6 +42,8 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
             LocalDateTime start,
             LocalDateTime end
     );
-
+    
+    // 오늘 생성된 멤버십 카운트
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
 }

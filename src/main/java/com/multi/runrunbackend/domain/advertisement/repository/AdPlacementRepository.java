@@ -108,6 +108,17 @@ public interface AdPlacementRepository extends JpaRepository<AdPlacement, Long>,
             where p.isActive = true and p.endAt < :now
         """)
     int disableExpired(LocalDateTime now);
+    
+    // 활성화/비활성화 광고 배치 카운트
+    @Query(value = """
+        SELECT 
+            COUNT(CASE WHEN is_active = true THEN 1 END) as active_count,
+            COUNT(*) as total_count
+        FROM ad_placement p
+        JOIN ad a ON p.ad_id = a.id
+        WHERE a.is_deleted = false
+        """, nativeQuery = true)
+    Object[] countActivePlacements();
 
     @Query("""
             select p
