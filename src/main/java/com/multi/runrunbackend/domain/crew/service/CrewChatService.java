@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -135,6 +136,35 @@ public class CrewChatService {
 
     sendMessage(systemMessage);
     log.info("크루 탈퇴 시스템 메시지 전송: roomId={}, userName={}", roomId, userName);
+  }
+
+  /**
+   * ✅ 크루 역할 변경 시스템 메시지 전송
+   */
+  public void sendRoleChangeMessage(Long roomId, String userName, String roleName) {
+    CrewChatMessageDto systemMessage = CrewChatMessageDto.builder()
+        .roomId(roomId)
+        .senderName("SYSTEM")
+        .content(userName + "님이 " + roleName + "으로 임명되었습니다.")
+        .messageType("SYSTEM")
+        .build();
+
+    sendMessage(systemMessage);
+    log.info("크루 역할 변경 시스템 메시지 전송: roomId={}, userName={}, roleName={}", 
+        roomId, userName, roleName);
+  }
+
+  /**
+   * ✅ crewId로 역할 변경 시스템 메시지 전송
+   * 별도 트랜잭션으로 실행하여 메시지 전송 실패 시에도 역할 변경은 정상 처리
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void sendRoleChangeMessageByCrewId(Long crewId, String userName, String roleName) {
+    // 크루의 채팅방 조회
+    CrewChatRoom chatRoom = chatRoomRepository.findByCrewId(crewId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+    
+    sendRoleChangeMessage(chatRoom.getId(), userName, roleName);
   }
 
   /**
