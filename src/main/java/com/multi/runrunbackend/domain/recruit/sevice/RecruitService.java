@@ -210,7 +210,7 @@ public class RecruitService {
   }
 
   @Transactional
-  public void joinRecruit(Long recruitId, CustomUser principal) {
+  public Long joinRecruit(Long recruitId, CustomUser principal) {
     User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
@@ -247,8 +247,11 @@ public class RecruitService {
     recruit.increaseParticipants();
 
     if (recruit.getCurrentParticipants().equals(recruit.getMaxParticipants())) {
-      matchSessionService.createOfflineSessionBySystem(recruit.getId());
+      Long sessionId = matchSessionService.createOfflineSessionBySystem(recruit.getId());
+      return sessionId;
     }
+
+    return null;
   }
 
   @Transactional
