@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>크루 활동 등록 - 런런</title>
+    <link rel="stylesheet" th:href="@{/css/crew/crewActivityCreate.css}">
+</head>
+<body>
+
+<div class="page">
+    <header class="activity-header">
+        <button class="btn-back" onclick="history.back()" aria-label="뒤로가기">
+            <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기 아이콘">
+        </button>
+        <h1 class="header-title">활동 등록</h1>
+    </header>
+
+    <main class="activity-main">
+        <form id="activityForm" class="activity-form">
+            <div class="form-group">
+                <label for="region" class="form-label">활동 지역 <span class="required">*</span></label>
+                <input
+                        type="text"
+                        id="region"
+                        name="region"
+                        class="form-input"
+                        placeholder="예: 서울 강남구"
+                        required
+                        maxlength="100"
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="distance" class="form-label">활동 거리 (km) <span class="required">*</span></label>
+                <input
+                        type="number"
+                        id="distance"
+                        name="distance"
+                        class="form-input"
+                        placeholder="예: 5"
+                        required
+                        min="1"
+                        max="100"
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="participants" class="form-label">참여 크루원 선택 <span class="required">*</span></label>
+                <div class="dropdown-wrapper">
+                    <button type="button" class="dropdown-button" id="dropdownButton">
+                        <span id="selectedCount">0명 선택됨</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <div class="dropdown-search">
+                            <input type="text" id="searchInput" placeholder="크루원 검색..."/>
+                        </div>
+                        <div class="dropdown-list" id="participantList">
+                            <!-- 크루원 목록이 여기에 동적으로 추가됩니다 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">등록하기</button>
+        </form>
+    </main>
+
+    <input type="hidden" id="crewId" th:value="${crewId}">
+</div>
+
+<script th:src="@{/js/crew/crewActivityCreate.js}"></script>
+</body>
+</html>
