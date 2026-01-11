@@ -99,7 +99,7 @@ function updateNextRunning(chatRooms) {
   const upcomingRooms = chatRooms.filter(room => {
     if (!room.meetingAt) return false;
     const meetingTime = new Date(room.meetingAt);
-    return meetingTime > now && room.sessionStatus === 'WAITING';
+    return meetingTime > now && room.sessionStatus === 'STANDBY';
   });
 
   if (upcomingRooms.length === 0) {
@@ -301,15 +301,20 @@ function renderOfflineChatItem(container, room) {
     titleRow.appendChild(title);
 
     // 상태 뱃지
-    if (room.sessionStatus === 'WAITING') {
+    if (room.sessionStatus === 'STANDBY') {
       const statusBadge = document.createElement('span');
       statusBadge.className = 'chat-status-badge scheduled';
-      statusBadge.textContent = '예정';
+      statusBadge.textContent = '대기중';
       titleRow.appendChild(statusBadge);
     } else if (room.sessionStatus === 'IN_PROGRESS') {
       const statusBadge = document.createElement('span');
       statusBadge.className = 'chat-status-badge scheduled';
-      statusBadge.textContent = '진행중';
+      statusBadge.textContent = '러닝 중';
+      titleRow.appendChild(statusBadge);
+    } else if (room.sessionStatus === 'COMPLETED') {
+      const statusBadge = document.createElement('span');
+      statusBadge.className = 'chat-status-badge scheduled';
+      statusBadge.textContent = '러닝 종료';
       titleRow.appendChild(statusBadge);
     }
 
