@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.match.repository;
 
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
+import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.user.entity.User;
 import java.math.BigDecimal;
