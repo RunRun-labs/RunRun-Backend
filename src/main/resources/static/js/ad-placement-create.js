@@ -57,26 +57,35 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // 날짜 제한 설정
-  const now = new Date();
-  const nowStr = now.toISOString().slice(0, 16);
+  // 날짜 제한 설정 (type="date" 사용)
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
 
   if (fields.startAt) {
-    fields.startAt.setAttribute("min", nowStr);
+    fields.startAt.setAttribute("min", todayStr);
   }
 
   if (fields.startAt && fields.endAt) {
     fields.startAt.addEventListener("change", function () {
-      const startValue = fields.startAt.value;
-      if (startValue) {
-        fields.endAt.setAttribute("min", startValue);
-        if (fields.endAt.value && fields.endAt.value <= startValue) {
+      const startDate = fields.startAt.value;
+      if (startDate) {
+        // 시작일 다음 날을 min으로 설정
+        const start = new Date(startDate);
+        start.setDate(start.getDate() + 1);
+        const nextDayStr = start.toISOString().split("T")[0];
+        fields.endAt.setAttribute("min", nextDayStr);
+
+        // 종료일이 시작일 이전이면 초기화
+        if (fields.endAt.value && fields.endAt.value <= startDate) {
           fields.endAt.value = "";
         }
+      } else {
+        fields.endAt.setAttribute("min", todayStr);
       }
+      validateField("endAt", true);
     });
 
-    fields.endAt.setAttribute("min", nowStr);
+    fields.endAt.setAttribute("min", todayStr);
   }
 
   // 벨리데이션 규칙
@@ -189,12 +198,12 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    // datetime-local을 LocalDateTime 형식으로 변환
+    // date를 LocalDateTime 형식으로 변환 (00:00:00으로 설정)
     const startAtValue = fields.startAt.value;
     const endAtValue = fields.endAt.value;
 
-    const startAt = startAtValue ? new Date(startAtValue).toISOString() : null;
-    const endAt = endAtValue ? new Date(endAtValue).toISOString() : null;
+    const startAt = startAtValue ? `${startAtValue}T00:00:00` : null;
+    const endAt = endAtValue ? `${endAtValue}T00:00:00` : null;
 
     const data = {
       slotId: parseInt(fields.slotId.value),

@@ -79,12 +79,13 @@
                   >시작일 <span class="required">*</span></label
                 >
                 <input
-                  type="datetime-local"
+                  type="date"
                   id="startAt"
                   name="startAt"
                   class="form-input"
                 />
                 <span class="error-message" id="startAt-error"></span>
+                <span class="help-text">시간은 자동으로 00:00:00으로 설정됩니다</span>
               </div>
 
               <div class="form-field">
@@ -92,12 +93,13 @@
                   >종료일 <span class="required">*</span></label
                 >
                 <input
-                  type="datetime-local"
+                  type="date"
                   id="endAt"
                   name="endAt"
                   class="form-input"
                 />
                 <span class="error-message" id="endAt-error"></span>
+                <span class="help-text">시작일 이후만 선택 가능합니다</span>
               </div>
             </div>
           </form>

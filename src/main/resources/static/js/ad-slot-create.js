@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
     name: document.getElementById("name"),
     slotType: document.getElementById("slotType"),
     dailyLimit: document.getElementById("dailyLimit"),
-    allowPremium: document.querySelector('input[name="allowPremium"]:checked'),
+    allowPremium: document.querySelector('input[name="allowPremium"]'),
   };
 
   // 벨리데이션 규칙
@@ -41,9 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
     },
 
     allowPremium: (value) => {
-      if (value === null || value === undefined) {
-        return "프리미엄 허용 여부는 필수입니다.";
-      }
+      // 체크박스는 항상 boolean 값이므로 항상 유효
       return null;
     },
   };
@@ -55,8 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let value;
     if (fieldName === "allowPremium") {
-      const checked = document.querySelector('input[name="allowPremium"]:checked');
-      value = checked ? checked.value === "true" : null;
+      value = field.checked;
     } else {
       value = field.value;
     }
@@ -103,11 +100,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const field = fields[fieldName];
     if (field) {
       if (fieldName === "allowPremium") {
-        document.querySelectorAll('input[name="allowPremium"]').forEach((radio) => {
-          radio.addEventListener("change", () => {
-            fields.allowPremium = document.querySelector('input[name="allowPremium"]:checked');
-            validateField("allowPremium");
-          });
+        field.addEventListener("change", () => {
+          validateField("allowPremium");
         });
       } else {
         field.addEventListener("blur", () => validateField(fieldName));
@@ -127,8 +121,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    const allowPremiumChecked = document.querySelector('input[name="allowPremium"]:checked');
-    const allowPremium = allowPremiumChecked ? allowPremiumChecked.value === "true" : false;
+    const allowPremium = fields.allowPremium.checked;
 
     const data = {
       name: fields.name.value.trim(),

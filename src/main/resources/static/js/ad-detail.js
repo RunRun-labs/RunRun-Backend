@@ -1,5 +1,7 @@
+// 전역 변수로 adId 선언 (HTML의 onclick에서 접근 가능하도록)
+let adId = null;
+
 document.addEventListener("DOMContentLoaded", function () {
-  let adId = null;
   let dailyChart = null;
   let slotChart = null;
 

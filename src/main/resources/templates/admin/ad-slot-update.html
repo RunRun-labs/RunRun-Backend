@@ -88,24 +88,15 @@
               <label class="form-label"
                 >프리미엄 허용 <span class="required">*</span></label
               >
-              <div style="display: flex; gap: 16px; align-items: center; margin-top: 8px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <div class="premium-toggle-wrapper">
+                <label class="premium-toggle">
                   <input
-                    type="radio"
+                    type="checkbox"
                     name="allowPremium"
-                    value="true"
-                    class="form-radio"
+                    class="premium-toggle-input"
                   />
-                  <span>예</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input
-                    type="radio"
-                    name="allowPremium"
-                    value="false"
-                    class="form-radio"
-                  />
-                  <span>아니오</span>
+                  <span class="premium-toggle-slider"></span>
+                  <span class="premium-toggle-label">프리미엄 허용</span>
                 </label>
               </div>
               <span class="error-message" id="allowPremium-error"></span>

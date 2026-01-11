@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return `
           <tr>
             <td><a href="/admin/ad/detail/${ad.id}" class="table-link">${rowNumber}</a></td>
-            <td><a href="/admin/ad/detail/${ad.id}" class="table-link">${escapeHtml(ad.name || "-")}</a></td>
+            <td>${escapeHtml(ad.name || "-")}</td>
             <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(redirectUrl)}">${escapeHtml(redirectUrl)}</td>
           </tr>
         `;

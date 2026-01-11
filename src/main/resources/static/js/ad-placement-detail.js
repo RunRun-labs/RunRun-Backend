@@ -1,5 +1,7 @@
+// 전역 변수로 placementId 선언
+let placementId = null;
+
 document.addEventListener("DOMContentLoaded", function () {
-  let placementId = null;
   let currentPage = 0;
   let totalPages = 1;
   const pageSize = 30;
@@ -29,33 +31,55 @@ document.addEventListener("DOMContentLoaded", function () {
   // 배치 기본 정보 로드
   async function loadPlacementDetail() {
     try {
-      const response = await fetch(`/api/admin/ad-placements?page=0&size=1000`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
-      const result = await response.json();
-      if (result.success && result.data && result.data.content) {
-        const placement = result.data.content.find(
-          (p) => p.placementId === parseInt(placementId)
-        );
+      // 페이지네이션을 고려하여 충분한 크기로 요청
+      let page = 0;
+      let size = 100; // 한 번에 충분히 많은 데이터를 가져옴
+      let placement = null;
+      let hasMore = true;
 
-        if (!placement) {
-          throw new Error("배치를 찾을 수 없습니다.");
+      // 배치를 찾을 때까지 여러 페이지를 검색
+      while (hasMore && !placement) {
+        const response = await fetch(`/api/admin/ad-placements?page=${page}&size=${size}`, {
+          method: "GET",
+          headers: getAuthHeaders(),
+        });
+        const result = await response.json();
+        if (result.success && result.data && result.data.content) {
+          placement = result.data.content.find(
+            (p) => p.placementId === parseInt(placementId)
+          );
+
+          // 다음 페이지가 있는지 확인
+          hasMore = (result.data.totalPages || 0) > page + 1;
+          
+          // 찾았으면 반복 중단
+          if (placement) {
+            break;
+          }
+
+          // 다음 페이지로 이동
+          if (hasMore) {
+            page++;
+          }
+        } else {
+          throw new Error(result.message || "배치 데이터를 불러올 수 없습니다.");
         }
-
-        // 기본 정보 표시
-        document.getElementById("slotName").textContent = placement.slotName || "-";
-        document.getElementById("slotType").textContent = getSlotTypeText(placement.slotType);
-        document.getElementById("adName").textContent = placement.adName || "-";
-        document.getElementById("weight").textContent = placement.weight || 0;
-        document.getElementById("startAt").textContent = formatDateTime(placement.startAt);
-        document.getElementById("endAt").textContent = formatDateTime(placement.endAt);
-        document.getElementById("totalImpressions").textContent = placement.totalImpressions || 0;
-        document.getElementById("totalClicks").textContent = placement.totalClicks || 0;
-        document.getElementById("isActive").textContent = placement.isActive ? "활성" : "비활성";
-      } else {
-        throw new Error(result.message || "배치 데이터를 불러올 수 없습니다.");
       }
+
+      if (!placement) {
+        throw new Error("배치를 찾을 수 없습니다.");
+      }
+
+      // 기본 정보 표시
+      document.getElementById("slotName").textContent = placement.slotName || "-";
+      document.getElementById("slotType").textContent = getSlotTypeText(placement.slotType);
+      document.getElementById("adName").textContent = placement.adName || "-";
+      document.getElementById("weight").textContent = placement.weight || 0;
+      document.getElementById("startAt").textContent = formatDateTime(placement.startAt);
+      document.getElementById("endAt").textContent = formatDateTime(placement.endAt);
+      document.getElementById("totalImpressions").textContent = placement.totalImpressions || 0;
+      document.getElementById("totalClicks").textContent = placement.totalClicks || 0;
+      document.getElementById("isActive").textContent = placement.isActive ? "활성" : "비활성";
     } catch (error) {
       console.error("Error:", error);
       alert("배치 데이터를 불러오는 중 오류가 발생했습니다.");

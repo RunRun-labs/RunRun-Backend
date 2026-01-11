@@ -2,8 +2,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("adForm");
   const createBtn = document.getElementById("createBtn");
   const imageFileInput = document.getElementById("imageFile");
-  const imagePreview = document.getElementById("imagePreview");
-  const previewImg = document.getElementById("previewImg");
 
   // 필드 요소들
   const fields = {
@@ -13,17 +11,22 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   // 이미지 미리보기
+  const imageUploadArea = document.getElementById("imageUploadArea");
+  const uploadPlaceholder = document.getElementById("uploadPlaceholder");
+  const imagePreview = document.getElementById("imagePreview");
+  
   imageFileInput.addEventListener("change", function (e) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = function (e) {
-        previewImg.src = e.target.result;
-        imagePreview.style.display = "block";
+        imagePreview.innerHTML = `<img src="${e.target.result}" alt="미리보기" />`;
+        imageUploadArea.classList.add("has-preview");
       };
       reader.readAsDataURL(file);
     } else {
-      imagePreview.style.display = "none";
+      imagePreview.innerHTML = "";
+      imageUploadArea.classList.remove("has-preview");
     }
   });
 
