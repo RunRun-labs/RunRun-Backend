@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RunRun Admin | 광고 수정</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/admin-layout.css"
+      th:href="@{/css/admin-layout.css}"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/ad-create.css"
+      th:href="@{/css/ad-create.css}"
+    />
+  </head>
+  <body>
+    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+    <!-- 레이아웃 적용 -->
+    <div th:replace="~{admin/layout :: adminLayout(~{::.ad-content})}">
+      <!-- 컨텐츠 영역 -->
+      <div class="ad-content ad-create-container">
+        <div class="ad-create-card">
+          <h1 class="page-title">광고 수정</h1>
+
+          <form class="ad-form" id="adForm" novalidate enctype="multipart/form-data">
+            <!-- 광고명 -->
+            <div class="form-field">
+              <label for="name" class="form-label"
+                >광고명 <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="form-input"
+                placeholder="광고명을 입력하세요 (3~50자)"
+                maxlength="50"
+              />
+              <span class="error-message" id="name-error"></span>
+            </div>
+
+            <!-- 이미지 파일 -->
+            <div class="form-field">
+              <label for="imageFile" class="form-label">이미지 파일</label>
+              <input
+                type="file"
+                id="imageFile"
+                name="imageFile"
+                class="form-input"
+                accept="image/*"
+              />
+              <span class="error-message" id="imageFile-error"></span>
+              <span class="help-text">이미지를 변경하지 않으려면 비워두세요</span>
+              <div id="imagePreview" style="margin-top: 12px;">
+                <div id="currentImage" style="margin-bottom: 12px;">
+                  <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">현재 이미지:</p>
+                  <img id="currentImg" src="" alt="현재 이미지" style="max-width: 300px; max-height: 200px; border-radius: 8px;" />
+                </div>
+                <div id="newImagePreview" style="display: none;">
+                  <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">새 이미지:</p>
+                  <img id="previewImg" src="" alt="미리보기" style="max-width: 300px; max-height: 200px; border-radius: 8px;" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 리다이렉트 URL -->
+            <div class="form-field">
+              <label for="redirectUrl" class="form-label"
+                >리다이렉트 URL <span class="required">*</span></label
+              >
+              <input
+                type="url"
+                id="redirectUrl"
+                name="redirectUrl"
+                class="form-input"
+                placeholder="https://example.com"
+              />
+              <span class="error-message" id="redirectUrl-error"></span>
+            </div>
+          </form>
+
+          <!-- 수정하기 버튼 -->
+          <button type="button" class="create-button" id="updateBtn">
+            수정하기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="/js/ad-update.js"
+      th:src="@{/js/ad-update.js}"
+    ></script>
+  </body>
+</html>

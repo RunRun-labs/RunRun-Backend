@@ -1,0 +1,460 @@
+.ad-slot-inquiry-container {
+  width: 100%;
+  max-width: 1200px;
+  position: relative;
+}
+
+.ad-slot-inquiry-card {
+  background: var(--bg-secondary);
+  border-radius: 24px;
+  box-shadow: 0px 30px 60px 0px rgba(0, 0, 0, 0.2);
+  padding: 38px 23px;
+  position: relative;
+  min-height: 665px;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-top: 20px;
+}
+
+.page-title {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.create-button-link {
+  text-decoration: none;
+}
+
+.create-button {
+  padding: 10px 24px;
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  color: var(--bg-primary);
+  font-family: "Fugaz One", "Noto Sans KR", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0px 2px 8px 0px rgba(186, 255, 41, 0.6);
+}
+
+.create-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 4px 12px 0px rgba(186, 255, 41, 0.8);
+}
+
+.create-button:active {
+  transform: translateY(0);
+}
+
+/* 필터 영역 */
+.filter-section {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-group-full {
+  grid-column: 1 / -1;
+}
+
+.filter-label {
+  font-family: "Nunito Sans", "Noto Sans KR", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.filter-select,
+.filter-input {
+  width: 100%;
+  height: 36px;
+  background: var(--text-primary);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--bg-primary);
+  outline: none;
+  font-family: "Inter", sans-serif;
+}
+
+.filter-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23171821' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+/* 체크박스 필터 스타일 */
+.filter-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px;
+  background: var(--text-primary);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  min-height: 36px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.filter-checkbox-item {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filter-checkbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  margin-right: 6px;
+  cursor: pointer;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.checkbox-label {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  color: var(--bg-primary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.filter-checkbox-item:hover .checkbox-label {
+  color: var(--bg-primary);
+  font-weight: 600;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.filter-btn {
+  padding: 8px 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: var(--bg-primary);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 4px 12px 0px rgba(186, 255, 41, 0.4);
+}
+
+.filter-btn-reset {
+  background: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+/* 테이블 영역 */
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.ad-slot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Inter", sans-serif;
+}
+
+.ad-slot-table thead {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ad-slot-table th {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #87888c;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.ad-slot-table td {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #87888c;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ad-slot-table tbody tr:hover {
+  background: rgba(186, 255, 41, 0.05);
+}
+
+.ad-slot-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.loading-row {
+  text-align: center;
+}
+
+.loading-message {
+  padding: 40px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.empty-message {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* 상태 배지 */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.active {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.status-badge.expired {
+  background: rgba(158, 158, 158, 0.2);
+  color: #9e9e9e;
+}
+
+.status-badge.sold_out {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+.status-badge.draft {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+}
+
+/* 페이지네이션 */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  padding: 20px 0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(186, 255, 41, 0.1);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-numbers {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pagination-number {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  background: var(--bg-secondary);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-number:hover {
+  background: rgba(186, 255, 41, 0.1);
+  border-color: var(--accent);
+}
+
+.pagination-number.active {
+  background: var(--accent);
+  color: var(--bg-primary);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.pagination-ellipsis {
+  padding: 0 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* 액션 버튼 스타일 */
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.edit-btn:hover:not(:disabled) {
+  background: rgba(186, 255, 41, 0.8);
+}
+
+.delete-btn {
+  background: #ff4444;
+  color: #fff;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: #ff6666;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 토글 스위치 스타일 */
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-label-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-input {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #ccc;
+  border-radius: 24px;
+  outline: none;
+  transition: background-color 0.3s;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.toggle-input::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-input:checked {
+  background-color: var(--accent);
+}
+
+.toggle-input:checked::before {
+  transform: translateX(20px);
+}
+
+.toggle-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-label {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 40px;
+  pointer-events: none;
+}
