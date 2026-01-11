@@ -14,6 +14,8 @@
       rel="stylesheet"
   />
   <link rel="stylesheet" href="/css/recruit-create.css" th:href="@{/css/recruit-create.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
   <script
       type="text/javascript"
       src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services,clusterer">
@@ -307,6 +309,7 @@
     th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/recruit-create.js" th:src="@{/js/recruit-create.js}"></script>
 </body>
 </html>

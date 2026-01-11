@@ -9,6 +9,8 @@
       th:href="@{/css/running.css}"
       href="/css/running.css"
     />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
     <script
       type="application/javascript"
       src="//dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&autoload=false"
@@ -275,6 +277,7 @@
     <!-- TTS Manager -->
     <script th:src="@{/js/tts-manager.js}" src="/js/tts-manager.js"></script>
     <!-- type="module" 제거하여 전역 스코프에서 실행 -->
+    <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
     <script th:src="@{/js/running.js}" src="/js/running.js"></script>
   </body>
 </html>

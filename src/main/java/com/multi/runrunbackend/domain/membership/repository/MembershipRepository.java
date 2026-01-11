@@ -3,12 +3,11 @@ package com.multi.runrunbackend.domain.membership.repository;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.entity.Membership;
 import com.multi.runrunbackend.domain.user.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author : BoKyung
@@ -30,20 +29,27 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
 
     // 해지 신청 상태 + 만료일이 지난 멤버십 찾기 (자동 처리용)
     List<Membership> findByMembershipStatusAndEndDateBefore(
-            MembershipStatus status,
-            LocalDateTime dateTime
+        MembershipStatus status,
+        LocalDateTime dateTime
     );
 
     /**
      * @description : 자동결제 대상 조회 (스케줄러용)
      */
     List<Membership> findByMembershipStatusAndNextBillingDateBetween(
-            MembershipStatus status,
-            LocalDateTime start,
-            LocalDateTime end
+        MembershipStatus status,
+        LocalDateTime start,
+        LocalDateTime end
     );
-    
-    // 오늘 생성된 멤버십 카운트
-    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
+    /**
+     * @description : 해지 신청 상태 + 만료일이 하루 후인 멤버십 찾기 (만료 전 알림용)
+     */
+    List<Membership> findByMembershipStatusAndEndDateBetween(
+        MembershipStatus status,
+        LocalDateTime startDateTime,
+        LocalDateTime endDateTime
+    );
+
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

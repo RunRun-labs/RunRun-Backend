@@ -16,6 +16,7 @@ import com.multi.runrunbackend.domain.match.repository.BattleResultRepository;
 import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
+import com.multi.runrunbackend.domain.match.service.RunningResultService;
 import com.multi.runrunbackend.domain.rating.service.DistanceRatingService;
 import com.multi.runrunbackend.domain.running.battle.dto.TimeoutDto;
 import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto.GpsData;
@@ -54,6 +55,7 @@ public class BattleService {
   private final SessionUserRepository sessionUserRepository;
   private final UserRepository userRepository;
   private final RunningResultRepository runningResultRepository;
+  private final RunningResultService runningResultService;
   private final BattleResultRepository battleResultRepository;
   private final SimpMessagingTemplate messagingTemplate;
   private final RedisTemplate<String, Object> redisPubSubTemplate;
@@ -559,8 +561,8 @@ public class BattleService {
           .runningType(RunningType.ONLINEBATTLE)
           .build();
 
-      runningResultRepository.save(runningResult);
-      runningResults.add(runningResult);
+      RunningResult saved = runningResultService.saveAndUpdateAverage(runningResult);
+      runningResults.add(saved);
 
       savedCount++;
       log.info("✅ RunningResult 저장 완료: userId={}, username={}, rank={}, status={}, runStatus={}, distance={}km",

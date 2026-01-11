@@ -18,6 +18,8 @@
             href="/css/challenge-detail.css"
             th:href="@{/css/challenge-detail.css}"
     />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
 </head>
 <body class="challenge-detail-body">
 <main class="page challenge-detail-page">
@@ -177,6 +179,7 @@
         th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/challenge-detail.js" th:src="@{/js/challenge-detail.js}"></script>
 </body>
 </html>

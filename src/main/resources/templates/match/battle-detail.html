@@ -14,6 +14,8 @@
       rel="stylesheet"
   />
   <link rel="stylesheet" href="/css/battle-detail.css" th:href="@{/css/battle-detail.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
 </head>
 <body>
 <div class="container">
@@ -51,6 +53,7 @@
   // 세션 ID (Thymeleaf에서 안전하게 전달)
   const sessionId = /*[[${sessionId}]]*/ null;
 </script>
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/battle-detail.js" th:src="@{/js/battle-detail.js}"></script>
 </body>
 </html>
