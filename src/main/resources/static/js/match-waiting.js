@@ -625,22 +625,10 @@ function createParticipantCard(participant) {
       ` : ''}
     </div>
     <div class="card-avatar speed-icon">
-      ${participant.profileImage ? `
-        <img src="${participant.profileImage}" alt="${participant.name}" 
-             style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
-             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-        <svg width="28" height="34" viewBox="0 0 28 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-          <path d="M2 2L14 14L26 2" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 12L14 24L26 12" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 22L14 34L26 22" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      ` : `
-        <svg width="28" height="34" viewBox="0 0 28 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 2L14 14L26 2" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 12L14 24L26 12" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 22L14 34L26 22" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `}
+      <img src="${participant.profileImage || '/img/default-profile.svg'}" 
+           alt="${participant.name}" 
+           style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
+           onerror="this.src='/img/default-profile.svg'">
     </div>
     <div class="card-name">${myUserId && participant.userId === myUserId ? '나' : participant.name}</div>
     ${myUserId && participant.userId === myUserId ? '<div class="card-badge me-badge">ME</div>' : ''}
