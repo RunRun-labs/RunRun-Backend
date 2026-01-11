@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         return `
           <tr>
-            <td>${rowNumber}</td>
+            <td><a href="/admin/coupon/detail/${coupon.couponId}" class="table-link">${rowNumber}</a></td>
             <td>${escapeHtml(coupon.name || "-")}</td>
             <td>${coupon.quantity ?? "-"}</td>
             <td>${coupon.issuedCount ?? 0}</td>

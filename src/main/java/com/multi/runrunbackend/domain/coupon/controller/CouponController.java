@@ -9,8 +9,11 @@ import com.multi.runrunbackend.domain.coupon.dto.req.CouponUpdateReqDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponCreateResDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponDetailResDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponPageResDto;
+import com.multi.runrunbackend.domain.coupon.dto.res.CouponStatsResDto;
 import com.multi.runrunbackend.domain.coupon.dto.res.CouponUpdateResDto;
 import com.multi.runrunbackend.domain.coupon.service.CouponService;
+import com.multi.runrunbackend.domain.coupon.service.CouponStatsService;
+import com.multi.runrunbackend.domain.advertisement.constant.StatsRange;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CouponController {
 
     private final CouponService couponService;
+    private final CouponStatsService couponStatsService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{coupon_id}")
@@ -51,6 +55,17 @@ public class CouponController {
 
         CouponDetailResDto res = couponService.getCoupon(couponId);
         return ResponseEntity.ok(ApiResponse.success("쿠폰 상세 조회 성공", res));
+    }
+    
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{coupon_id}/stats")
+    public ResponseEntity<ApiResponse<CouponStatsResDto>> getCouponStats(
+        @PathVariable(name = "coupon_id") Long couponId,
+        @RequestParam(required = false) StatsRange range
+    ) {
+        return ResponseEntity.ok(
+            ApiResponse.success("쿠폰 통계 조회 성공", couponStatsService.getCouponStats(couponId, range))
+        );
     }
 
     @GetMapping("/public/{coupon_id}")
