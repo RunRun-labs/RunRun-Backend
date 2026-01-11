@@ -820,10 +820,22 @@ public class MatchSessionService {
 
     String redirectUrl;
     if (status == SessionStatus.STANDBY) {
-      redirectUrl = "/match/waiting?sessionId=" + sessionId;
+      if (type == SessionType.ONLINE) {
+        redirectUrl = "/match/waiting?sessionId=" + sessionId;
+      } else if (type == SessionType.OFFLINE) {
+        redirectUrl = "/chat/chat1?sessionId=" + sessionId;
+      } else {
+        redirectUrl = "/match/waiting?sessionId=" + sessionId;
+      }
     } else if (status == SessionStatus.IN_PROGRESS) {
       if (type == SessionType.ONLINE) {
         redirectUrl = "/match/battle?sessionId=" + sessionId;
+      } else if (type == SessionType.OFFLINE) {
+        redirectUrl = "/chat/chat1?sessionId=" + sessionId;
+      } else if (type == SessionType.GHOST) {
+        redirectUrl = "/match/ghost-run?sessionId=" + sessionId;
+      } else if (type == SessionType.SOLO) {
+        redirectUrl = "/running/" + sessionId;
       } else {
         redirectUrl = "/running/" + sessionId;
       }
