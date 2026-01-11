@@ -7,6 +7,7 @@ import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.friend.entity.Friend;
 import com.multi.runrunbackend.domain.friend.repository.FriendRepository;
+import com.multi.runrunbackend.domain.match.constant.RunStatus;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -43,6 +44,8 @@ public class RunningSummaryService {
     private final FriendRepository friendRepository;
     private final UserSettingRepository userSettingRepository;
 
+    private static final List<RunStatus> VISIBLE_STATUSES = List.of(RunStatus.COMPLETED, RunStatus.TIME_OUT);
+
     /**
      * 오늘 러닝 요약
      */
@@ -56,7 +59,7 @@ public class RunningSummaryService {
 
         List<Object[]> rows =
                 runningResultRepository.findTodaySummary(
-                        user.getId(), start, end
+                        user.getId(), VISIBLE_STATUSES, start, end
                 );
 
         BigDecimal distance = BigDecimal.ZERO;
@@ -123,6 +126,7 @@ public class RunningSummaryService {
         List<Object[]> rows =
                 runningResultRepository.findWeeklySummary(
                         user.getId(),
+                        VISIBLE_STATUSES,
                         start,
                         end
                 );

@@ -119,14 +119,15 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
                     COALESCE(SUM(r.totalTime), 0)
                 FROM RunningResult r
                 WHERE r.user.id = :userId
-                  AND r.runStatus = 'COMPLETED'
+                  AND r.runStatus IN :statuses
                   AND r.startedAt >= :start
                   AND r.startedAt < :end
             """)
     List<Object[]> findTodaySummary(
-            Long userId,
-            LocalDateTime start,
-            LocalDateTime end
+            @Param("userId") Long userId,
+            @Param("statuses") List<RunStatus> statuses,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
     );
 
     @Query("""
@@ -136,14 +137,15 @@ public interface RunningResultRepository extends JpaRepository<RunningResult, Lo
                     SUM(r.totalTime)
                 FROM RunningResult r
                 WHERE r.user.id = :userId
-                  AND r.runStatus = 'COMPLETED'
+                  AND r.runStatus IN :statuses
                   AND r.startedAt BETWEEN :start AND :end
                 GROUP BY FUNCTION('date_part', 'dow', r.startedAt)
             """)
     List<Object[]> findWeeklySummary(
-            Long userId,
-            LocalDateTime start,
-            LocalDateTime end
+            @Param("userId") Long userId,
+            @Param("statuses") List<RunStatus> statuses,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
     );
 
     /* ===================== FEED ===================== */
