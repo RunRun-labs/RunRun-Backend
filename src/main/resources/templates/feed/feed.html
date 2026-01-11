@@ -18,6 +18,8 @@
             href="/css/feed.css"
             th:href="@{/css/feed.css}"
     />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
 </head>
 <body class="feed-body">
 <main class="page feed-page">
@@ -65,6 +67,7 @@
         th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/feed.js" th:src="@{/js/feed.js}"></script>
 </body>
 </html>

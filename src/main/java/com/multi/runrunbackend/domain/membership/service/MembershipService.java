@@ -16,6 +16,9 @@ import com.multi.runrunbackend.domain.membership.entity.Membership;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import com.multi.runrunbackend.domain.notification.service.NotificationService;
+import com.multi.runrunbackend.domain.notification.constant.NotificationType;
+import com.multi.runrunbackend.domain.notification.constant.RelatedType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +44,7 @@ public class MembershipService {
     private final UserRepository userRepository;
     private final CrewUserRepository crewUserRepository;
     private final CrewService crewService;
+    private final NotificationService notificationService;
 
     /**
      * @description : 멤버십 메인 조회
@@ -226,6 +230,51 @@ public class MembershipService {
 
         log.info("총 {}건의 멤버십 만료 처리 완료", processedCount);
         log.info("=== 멤버십 만료 처리 스케줄러 종료 ===");
+    }
+
+    /**
+     * @description : 멤버십 만료 하루 전 알림 발송
+     */
+    @Transactional
+    public void sendMembershipExpiryNotifications() {
+        log.info("=== 멤버십 만료 전 알림 발송 시작 ===");
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tomorrowStart = now.plusDays(1).withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime tomorrowEnd = now.plusDays(1).withHour(23).withMinute(59).withSecond(59);
+
+        // CANCELED 상태이고 만료일이 하루 후인 멤버십 조회
+        List<Membership> membershipsToExpire = membershipRepository
+                .findByMembershipStatusAndEndDateBetween(
+                        MembershipStatus.CANCELED,
+                        tomorrowStart,
+                        tomorrowEnd
+                );
+
+        log.info("만료 전 알림 대상 멤버십: {}건", membershipsToExpire.size());
+
+        int sentCount = 0;
+
+        for (Membership membership : membershipsToExpire) {
+            try {
+                notificationService.create(
+                        membership.getUser(),
+                        "멤버십 만료 안내",
+                        "멤버십이 내일 해지됩니다.",
+                        NotificationType.MEMBERSHIP,
+                        RelatedType.MEMBERSHIP,
+                        membership.getId()
+                );
+                sentCount++;
+                log.debug("멤버십 만료 전 알림 발송 완료 - membershipId: {}, userId: {}",
+                        membership.getId(), membership.getUser().getId());
+            } catch (Exception e) {
+                log.error("멤버십 만료 전 알림 발송 실패 - membershipId: {}, userId: {}",
+                        membership.getId(), membership.getUser().getId(), e);
+            }
+        }
+
+        log.info("=== 멤버십 만료 전 알림 발송 완료 - 총 {}건 발송 ===", sentCount);
     }
 
     /**

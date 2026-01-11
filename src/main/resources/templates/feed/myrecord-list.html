@@ -18,6 +18,8 @@
             href="/css/myrun-list.css"
             th:href="@{/css/myrun-list.css}"
     />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
 </head>
 <body class="myrun-list-body">
 <main class="page myrun-list-page">
@@ -47,6 +49,7 @@
         th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/myrecord-list.js" th:src="@{/js/myrecord-list.js}"></script>
 </body>
 </html>

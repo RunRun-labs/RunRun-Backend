@@ -14,6 +14,8 @@
       rel="stylesheet"
   />
   <link rel="stylesheet" href="/css/ghost.css" th:href="@{/css/ghost.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
 </head>
 <body>
 <div class="container">
@@ -108,6 +110,7 @@
     th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/ghost.js" th:src="@{/js/ghost.js}"></script>
 </body>
 </html>

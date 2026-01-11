@@ -8,19 +8,11 @@ package com.multi.runrunbackend.domain.notification.constant;
  */
 public enum NotificationType {
   MATCH_FOUND,
-
-  
   MATCH,
-  RECRUIT,
-  RUNNING,
-  CHALLENGE,
-
   CREW,
-  CHAT,
-  FRIEND,
-  FEED,
-
+  MEMBERSHIP,
   POINT,
-  PAYMENT,
-  SYSTEM;
+  CHALLENGE,
+  FEED,
+  FRIEND
 }

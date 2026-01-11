@@ -5,11 +5,19 @@ import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
-import com.multi.runrunbackend.domain.crew.constant.*;
+import com.multi.runrunbackend.domain.crew.constant.CrewJoinState;
+import com.multi.runrunbackend.domain.crew.constant.CrewRecruitStatus;
+import com.multi.runrunbackend.domain.crew.constant.CrewRole;
+import com.multi.runrunbackend.domain.crew.constant.CrewStatus;
+import com.multi.runrunbackend.domain.crew.constant.JoinStatus;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewStatusChangeReqDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
-import com.multi.runrunbackend.domain.crew.dto.res.*;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewActivityResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewAppliedResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewListResDto;
 import com.multi.runrunbackend.domain.crew.entity.Crew;
 import com.multi.runrunbackend.domain.crew.entity.CrewActivity;
 import com.multi.runrunbackend.domain.crew.entity.CrewJoinRequest;
@@ -20,8 +28,14 @@ import com.multi.runrunbackend.domain.crew.repository.CrewRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewUserRepository;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
+import com.multi.runrunbackend.domain.notification.constant.NotificationType;
+import com.multi.runrunbackend.domain.notification.constant.RelatedType;
+import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -29,10 +43,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * @author : BoKyung
@@ -46,500 +56,535 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CrewService {
 
-    private final CrewRepository crewRepository;
-    private final CrewUserRepository crewUserRepository;
-    private final CrewActivityRepository crewActivityRepository;
-    private final CrewJoinRequestRepository crewJoinRequestRepository;
-    private final UserRepository userRepository;
-    private final FileStorage s3FileStorage;
-    private final MembershipRepository membershipRepository;
-    private final CrewChatService crewChatService;
+  private final CrewRepository crewRepository;
+  private final CrewUserRepository crewUserRepository;
+  private final CrewActivityRepository crewActivityRepository;
+  private final CrewJoinRequestRepository crewJoinRequestRepository;
+  private final UserRepository userRepository;
+  private final FileStorage s3FileStorage;
+  private final MembershipRepository membershipRepository;
+  private final CrewChatService crewChatService;
+  private final NotificationService notificationService;
 
-    /**
-     * @param reqDto 크루 생성 요청 DTO
-     * @description : 크루 생성
-     */
-    @Transactional
-    public Long createCrew(CustomUser principal, CrewCreateReqDto reqDto, MultipartFile crewImageFile) {
+  /**
+   * @param reqDto 크루 생성 요청 DTO
+   * @description : 크루 생성
+   */
+  @Transactional
+  public Long createCrew(CustomUser principal, CrewCreateReqDto reqDto,
+      MultipartFile crewImageFile) {
 
-        // 사용자 조회
-        User user = getUserOrThrow(principal);
+    // 사용자 조회
+    User user = getUserOrThrow(principal);
 
-        // 프리미엄 멤버십인지 검증
-        validatePremiumMembership(user);
+    // 프리미엄 멤버십인지 검증
+    validatePremiumMembership(user);
 
-        // 1인 1크루 생성 제한 검증
-        validateNotAlreadyLeader(user.getId());
+    // 1인 1크루 생성 제한 검증
+    validateNotAlreadyLeader(user.getId());
 
-        // 크루명 중복 확인
-        validateCrewNameNotDuplicate(reqDto.getCrewName());
+    // 크루명 중복 확인
+    validateCrewNameNotDuplicate(reqDto.getCrewName());
 
-        // 크루 이미지 업로드
-        String imageUrl = resolveImageUrl(crewImageFile, FileDomainType.CREW_IMAGE, user.getId());
+    // 크루 이미지 업로드
+    String imageUrl = resolveImageUrl(crewImageFile, FileDomainType.CREW_IMAGE, user.getId());
 
-        // DTO에 이미지 URL 설정
-        reqDto.setCrewImageUrl(imageUrl);
+    // DTO에 이미지 URL 설정
+    reqDto.setCrewImageUrl(imageUrl);
 
-        // Course처럼 create() 사용!
-        Crew crew = Crew.create(user, reqDto);
-        crewRepository.save(crew);
+    // Course처럼 create() 사용!
+    Crew crew = Crew.create(user, reqDto);
+    crewRepository.save(crew);
 
-        // 크루장 자동 등록
-        CrewUser crewLeader = CrewUser.create(crew, user, CrewRole.LEADER);
-        crewUserRepository.save(crewLeader);
+    // 크루장 자동 등록
+    CrewUser crewLeader = CrewUser.create(crew, user, CrewRole.LEADER);
+    crewUserRepository.save(crewLeader);
 
-        // 채팅방 자동 생성
-        crewChatService.createChatRoomForCrew(crew, user);
+    // 채팅방 자동 생성
+    crewChatService.createChatRoomForCrew(crew, user);
 
-        cancelOtherPendingRequestsForUser(user.getId(), crew.getId());
+    cancelOtherPendingRequestsForUser(user.getId(), crew.getId());
 
-        return crew.getId();
-    }
+    return crew.getId();
+  }
 
-    /**
-     * @param crewId    크루 ID
-     * @param principal 사용자 ID
-     * @param reqDto    크루 수정 요청 DTO
-     * @description : 크루 수정
-     */
-    @Transactional
-    public void updateCrew(Long crewId, CustomUser principal, CrewUpdateReqDto reqDto, MultipartFile crewImageFile) {
-        // 사용자 조회
-        User user = getUserOrThrow(principal);
+  /**
+   * @param crewId    크루 ID
+   * @param principal 사용자 ID
+   * @param reqDto    크루 수정 요청 DTO
+   * @description : 크루 수정
+   */
+  @Transactional
+  public void updateCrew(Long crewId, CustomUser principal, CrewUpdateReqDto reqDto,
+      MultipartFile crewImageFile) {
+    // 사용자 조회
+    User user = getUserOrThrow(principal);
 
-        // 크루 조회
-        Crew crew = findCrewById(crewId);
+    // 크루 조회
+    Crew crew = findCrewById(crewId);
 
-        // 크루장 권한 검증
-        validateCrewLeader(crewId, user.getId());
+    // 크루장 권한 검증
+    validateCrewLeader(crewId, user.getId());
 
-        // 해체되지 않은 크루인지 검증
-        crew.validateNotDisbanded();
+    // 해체되지 않은 크루인지 검증
+    crew.validateNotDisbanded();
 
-        // 변경된 이미지가 있으면 업로드
-        String imageUrl = resolveChangedImageUrl(crewImageFile, FileDomainType.CREW_IMAGE,
-                user.getId(), crew);
+    // 변경된 이미지가 있으면 업로드
+    String imageUrl = resolveChangedImageUrl(crewImageFile, FileDomainType.CREW_IMAGE,
+        user.getId(), crew);
 
-        // 크루 정보 수정
-        crew.updateCrew(
-                reqDto.getCrewDescription(),
-                imageUrl,
-                reqDto.getRegion(),
-                reqDto.getDistance(),
-                reqDto.getAveragePace(),
-                reqDto.getActivityTime()
-        );
-    }
+    // 크루 정보 수정
+    crew.updateCrew(
+        reqDto.getCrewDescription(),
+        imageUrl,
+        reqDto.getRegion(),
+        reqDto.getDistance(),
+        reqDto.getAveragePace(),
+        reqDto.getActivityTime()
+    );
+  }
 
-    /**
-     * @param crewId    크루 ID
-     * @param principal 사용자 로그인 ID
-     * @description : 크루 삭제 (해체)
-     */
-    @Transactional
-    public void deleteCrew(Long crewId, CustomUser principal) {
-        // 사용자 조회
-        User user = getUserOrThrow(principal);
+  /**
+   * @param crewId    크루 ID
+   * @param principal 사용자 로그인 ID
+   * @description : 크루 삭제 (해체)
+   */
+  @Transactional
+  public void deleteCrew(Long crewId, CustomUser principal) {
+    // 사용자 조회
+    User user = getUserOrThrow(principal);
 
-        // 크루 조회
-        Crew crew = findCrewById(crewId);
+    // 크루 조회
+    Crew crew = findCrewById(crewId);
 
-        // 크루장 권한 검증
-        validateCrewLeader(crewId, user.getId());
+    // 크루장 권한 검증
+    validateCrewLeader(crewId, user.getId());
 
-        // 크루 해체 (soft delete)
-        crew.softDelete();
+    try {
+      List<CrewUser> allMembers = crewUserRepository
+          .findAllByCrewIdAndIsDeletedFalse(crewId);
 
-        // 모든 크루원 soft delete
-        List<CrewUser> crewUsers = crewUserRepository.findAllByCrewIdAndIsDeletedFalse(crewId);
-        crewUsers.forEach(CrewUser::delete);
+      String message = crew.getCrewName() + " 크루가 해체되었습니다.";
 
-        // 채팅방 삭제
-        crewChatService.deleteChatRoom(crewId);
-    }
-
-    /**
-     * @param cursor      마지막 조회 크루 ID
-     * @param size        페이지 크기 -> 5
-     * @param distance    거리 필터
-     * @param averagePace 평균 페이스 필터
-     * @param recruiting  모집중 우선 정렬
-     * @param keyword     크루명 검색
-     * @description : 크루 목록 조회 (커서 기반 페이징)
-     */
-    public CrewListPageResDto getCrewList(Long cursor, int size,
-                                          String distance, String averagePace, Boolean recruiting, String keyword) {
-        Pageable pageable = PageRequest.of(0, size);
-        List<Crew> crews;
-
-        boolean hasFilters = (keyword != null && !keyword.isBlank())
-                || (distance != null && !distance.isBlank())
-                || (averagePace != null && !averagePace.isBlank())
-                || (recruiting != null);
-
-        if (hasFilters) {
-
-            crews = crewRepository.findAllWithFilters(
-                    cursor, keyword, distance, averagePace, recruiting, CrewStatus.ACTIVE,
-                    CrewRecruitStatus.RECRUITING,
-                    CrewRecruitStatus.CLOSED, pageable);
-        } else {
-            // 필터가 없는 경우
-            crews = crewRepository.findAllByIdLessThanOrderByIdDesc(cursor, CrewStatus.ACTIVE, pageable);
+      for (CrewUser member : allMembers) {
+        try {
+          notificationService.create(
+              member.getUser(),
+              "크루 해체",
+              message,
+              NotificationType.CREW,
+              RelatedType.CREW_MAIN,
+              crewId
+          );
+          log.debug("크루 해체 알림 발송 완료 - crewId: {}, receiverId: {}",
+              crewId, member.getUser().getId());
+        } catch (Exception e) {
+          log.error("크루 해체 알림 생성 실패 - crewId: {}, receiverId: {}",
+              crewId, member.getUser().getId(), e);
         }
-
-        List<CrewListResDto> crewListResDtos = crews.stream()
-                .map(crew -> {
-                    Long memberCount = crewUserRepository.countByCrewIdAndIsDeletedFalse(crew.getId());
-                    // 이미지 url이 있을 때만 S3 key를 HTTPS로 변환
-                    String httpsImageUrl = (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
-                            ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
-                            : "";
-                    return CrewListResDto.fromEntity(crew, memberCount, httpsImageUrl);
-                })
-                .collect(Collectors.toList());
-
-        return CrewListPageResDto.toDtoPage(crewListResDtos, size);
+      }
+      log.info("크루원 전체에게 해체 알림 발송 완료 - crewId: {}, crewName: {}, totalMembers: {}",
+          crewId, crew.getCrewName(), allMembers.size());
+    } catch (Exception e) {
+      log.error("크루원 전체 알림 발송 중 오류 발생 - crewId: {}",
+          crewId, e);
     }
 
-    /**
-     * @param crewId 크루 ID
-     * @description : 크루 상세 조회
-     */
-    public CrewDetailResDto getCrewDetail(Long crewId) {
-        // 크루 조회
-        Crew crew = findCrewById(crewId);
+    // 크루 해체 (soft delete)
+    crew.softDelete();
 
-        // 크루원 수 조회
-        Long memberCount = crewUserRepository.countByCrewIdAndIsDeletedFalse(crewId);
+    // 모든 크루원 soft delete
+    List<CrewUser> crewUsers = crewUserRepository.findAllByCrewIdAndIsDeletedFalse(crewId);
+    crewUsers.forEach(CrewUser::delete);
 
-        // 최근 활동 내역 조회 (최대 5개)
-        Pageable pageable = PageRequest.of(0, 5);
-        List<CrewActivity> recentActivities = crewActivityRepository
-                .findTop5ByCrewIdOrderByCreatedAtDesc(crewId, pageable);
+    // 채팅방 삭제
+    crewChatService.deleteChatRoom(crewId);
+  }
 
-        List<CrewActivityResDto> activityResDtos = recentActivities.stream()
-                .map(CrewActivityResDto::fromEntity)
-                .collect(Collectors.toList());
+  /**
+   * @param cursor      마지막 조회 크루 ID
+   * @param size        페이지 크기 -> 5
+   * @param distance    거리 필터
+   * @param averagePace 평균 페이스 필터
+   * @param recruiting  모집중 우선 정렬
+   * @param keyword     크루명 검색
+   * @description : 크루 목록 조회 (커서 기반 페이징)
+   */
+  public CrewListPageResDto getCrewList(Long cursor, int size,
+      String distance, String averagePace, Boolean recruiting, String keyword) {
+    Pageable pageable = PageRequest.of(0, size);
+    List<Crew> crews;
 
-        // 이미지 url을 HTTPS로 변환
-        String httpsImageUrl = (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
-                ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
-                : "";
+    boolean hasFilters = (keyword != null && !keyword.isBlank())
+        || (distance != null && !distance.isBlank())
+        || (averagePace != null && !averagePace.isBlank())
+        || (recruiting != null);
 
-        return CrewDetailResDto.fromEntity(crew, memberCount, activityResDtos, httpsImageUrl);
+    if (hasFilters) {
+
+      crews = crewRepository.findAllWithFilters(
+          cursor, keyword, distance, averagePace, recruiting, CrewStatus.ACTIVE,
+          CrewRecruitStatus.RECRUITING,
+          CrewRecruitStatus.CLOSED, pageable);
+    } else {
+      // 필터가 없는 경우
+      crews = crewRepository.findAllByIdLessThanOrderByIdDesc(cursor, CrewStatus.ACTIVE, pageable);
     }
 
-    /**
-     * @param principal 사용자 로그인 ID
-     * @param crewId    크루 ID
-     * @param reqDto    모집 상태 변경 요청 DTO
-     * @description : 크루 모집 상태 변경
-     */
-    @Transactional
-    public void updateRecruitStatus(CustomUser principal, Long crewId, CrewStatusChangeReqDto reqDto) {
-        // 사용자 조회
-        User user = getUserOrThrow(principal);
+    List<CrewListResDto> crewListResDtos = crews.stream()
+        .map(crew -> {
+          Long memberCount = crewUserRepository.countByCrewIdAndIsDeletedFalse(crew.getId());
+          // 이미지 url이 있을 때만 S3 key를 HTTPS로 변환
+          String httpsImageUrl =
+              (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
+                  ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
+                  : "";
+          return CrewListResDto.fromEntity(crew, memberCount, httpsImageUrl);
+        })
+        .collect(Collectors.toList());
 
-        // 크루 조회
-        Crew crew = findCrewById(crewId);
+    return CrewListPageResDto.toDtoPage(crewListResDtos, size);
+  }
 
-        // 크루장 권한 검증
-        validateCrewLeader(crewId, user.getId());
+  /**
+   * @param crewId 크루 ID
+   * @description : 크루 상세 조회
+   */
+  public CrewDetailResDto getCrewDetail(Long crewId) {
+    // 크루 조회
+    Crew crew = findCrewById(crewId);
 
-        // 모집 상태 변경 (해체 여부 검증 포함)
-        crew.updateRecruitStatus(reqDto.getRecruitStatus());
-    }
+    // 크루원 수 조회
+    Long memberCount = crewUserRepository.countByCrewIdAndIsDeletedFalse(crewId);
+
+    // 최근 활동 내역 조회 (최대 5개)
+    Pageable pageable = PageRequest.of(0, 5);
+    List<CrewActivity> recentActivities = crewActivityRepository
+        .findTop5ByCrewIdOrderByCreatedAtDesc(crewId, pageable);
+
+    List<CrewActivityResDto> activityResDtos = recentActivities.stream()
+        .map(CrewActivityResDto::fromEntity)
+        .collect(Collectors.toList());
+
+    // 이미지 url을 HTTPS로 변환
+    String httpsImageUrl = (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
+        ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
+        : "";
+
+    return CrewDetailResDto.fromEntity(crew, memberCount, activityResDtos, httpsImageUrl);
+  }
+
+  /**
+   * @param principal 사용자 로그인 ID
+   * @param crewId    크루 ID
+   * @param reqDto    모집 상태 변경 요청 DTO
+   * @description : 크루 모집 상태 변경
+   */
+  @Transactional
+  public void updateRecruitStatus(CustomUser principal, Long crewId,
+      CrewStatusChangeReqDto reqDto) {
+    // 사용자 조회
+    User user = getUserOrThrow(principal);
+
+    // 크루 조회
+    Crew crew = findCrewById(crewId);
+
+    // 크루장 권한 검증
+    validateCrewLeader(crewId, user.getId());
+
+    // 모집 상태 변경 (해체 여부 검증 포함)
+    crew.updateRecruitStatus(reqDto.getRecruitStatus());
+  }
 
 /**
  * @description : 메서드 모음
  */
 
-    /**
-     * @param customUser 인증된 사용자 정보
-     * @description : CustomUser에서 User 엔티티 조회
-     */
-    private User getUserOrThrow(CustomUser customUser) {
-        if (customUser == null || customUser.getUsername() == null) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-        }
-
-        return userRepository.findByLoginId(customUser.getUsername())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  /**
+   * @param customUser 인증된 사용자 정보
+   * @description : CustomUser에서 User 엔티티 조회
+   */
+  private User getUserOrThrow(CustomUser customUser) {
+    if (customUser == null || customUser.getUsername() == null) {
+      throw new BusinessException(ErrorCode.USER_NOT_FOUND);
     }
 
-    /**
-     * @description : 크루 조회
-     */
-    private Crew findCrewById(Long crewId) {
-        return crewRepository.findById(crewId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CREW_NOT_FOUND));
+    return userRepository.findByLoginId(customUser.getUsername())
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  /**
+   * @description : 크루 조회
+   */
+  private Crew findCrewById(Long crewId) {
+    return crewRepository.findById(crewId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.CREW_NOT_FOUND));
+  }
+
+  /**
+   * @description : 1인 1크루 생성 제한 검증
+   */
+  private void validateNotAlreadyLeader(Long userId) {
+    boolean isAlreadyLeader = crewUserRepository
+        .existsByUserIdAndRoleAndIsDeletedFalse(userId, CrewRole.LEADER);
+
+    if (isAlreadyLeader) {
+      throw new BusinessException(ErrorCode.ALREADY_CREW_LEADER);
+    }
+  }
+
+  /**
+   * @description : 크루명 중복 확인
+   */
+  private void validateCrewNameNotDuplicate(String crewName) {
+    if (crewRepository.existsByCrewName(crewName)) {
+      throw new BusinessException(ErrorCode.CREW_ALREADY_EXISTS);
+    }
+  }
+
+  /**
+   * @description : 크루장 권한 검증
+   */
+  private void validateCrewLeader(Long crewId, Long userId) {
+    boolean isLeader = crewUserRepository
+        .existsByCrewIdAndUserIdAndRoleAndIsDeletedFalse(crewId, userId, CrewRole.LEADER);
+
+    if (!isLeader) {
+      throw new BusinessException(ErrorCode.NOT_CREW_LEADER);
+    }
+  }
+
+  /**
+   * @param crewId    크루 ID
+   * @param principal 사용자 로그인
+   * @description : 특정 사용자가 특정 크루에 가입 신청한 상태를 조회 <- 프론트 UI 분기를 위한 상태 값으로 반환
+   */
+  @Transactional(readOnly = true)
+  public CrewAppliedResDto getAppliedStatus(Long crewId, CustomUser principal) {
+    // 크루 조회
+    Crew crew = findCrewById(crewId);
+
+    // 사용자 조회
+    User user = getUserOrThrow(principal);
+
+    // 크루원인지 먼저 확인
+    Optional<CrewUser> crewUserOpt = crewUserRepository
+        .findByCrewAndUserAndIsDeletedFalse(crew, user);
+
+    if (crewUserOpt.isPresent()) {
+      // 크루원이면 무조건 APPROVED!
+      return CrewAppliedResDto.builder()
+          .crewJoinState(CrewJoinState.APPROVED)
+          .build();
     }
 
-    /**
-     * @description : 1인 1크루 생성 제한 검증
-     */
-    private void validateNotAlreadyLeader(Long userId) {
-        boolean isAlreadyLeader = crewUserRepository
-                .existsByUserIdAndRoleAndIsDeletedFalse(userId, CrewRole.LEADER);
+    // 가입 신청 기록 조회
+    Optional<CrewJoinRequest> joinRequestOpt = crewJoinRequestRepository
+        .findByCrewIdAndUserId(crewId, user.getId());
 
-        if (isAlreadyLeader) {
-            throw new BusinessException(ErrorCode.ALREADY_CREW_LEADER);
-        }
+    // 신청 기록 없음 → NOT_APPLIED
+    if (joinRequestOpt.isEmpty()) {
+      return CrewAppliedResDto.builder()
+          .crewJoinState(CrewJoinState.NOT_APPLIED)
+          .build();
     }
 
-    /**
-     * @description : 크루명 중복 확인
-     */
-    private void validateCrewNameNotDuplicate(String crewName) {
-        if (crewRepository.existsByCrewName(crewName)) {
-            throw new BusinessException(ErrorCode.CREW_ALREADY_EXISTS);
-        }
+    // 신청 기록 있음 → 상태 확인
+    JoinStatus status = joinRequestOpt.get().getJoinStatus();
+
+    // PENDING만 대기 상태
+    if (status == JoinStatus.PENDING) {
+      return CrewAppliedResDto.builder()
+          .crewJoinState(CrewJoinState.PENDING)
+          .build();
     }
 
-    /**
-     * @description : 크루장 권한 검증
-     */
-    private void validateCrewLeader(Long crewId, Long userId) {
-        boolean isLeader = crewUserRepository
-                .existsByCrewIdAndUserIdAndRoleAndIsDeletedFalse(crewId, userId, CrewRole.LEADER);
+    // 나머지 (REJECTED, CANCELED) → 재신청 가능
+    return CrewAppliedResDto.builder()
+        .crewJoinState(CrewJoinState.CAN_REAPPLY)
+        .build();
+  }
 
-        if (!isLeader) {
-            throw new BusinessException(ErrorCode.NOT_CREW_LEADER);
-        }
+  /**
+   * @param userId        사용자 ID
+   * @param currentCrewId 현재 크루 ID (제외할 크루)
+   * @description : 해당 사용자의 다른 크루 대기 중인 신청 모두 자동 취소 (크루 생성 시 호출)
+   */
+  private void cancelOtherPendingRequestsForUser(Long userId, Long currentCrewId) {
+    // 해당 사용자의 대기 중인 신청 조회
+    List<CrewJoinRequest> otherPendingRequests = crewJoinRequestRepository
+        .findAllByUserIdAndJoinStatusAndIsDeletedFalse(userId, JoinStatus.PENDING);
+
+    // 현재 크루 제외하고 모두 취소 처리
+    otherPendingRequests.stream()
+        .filter(request -> !request.getCrew().getId().equals(currentCrewId))
+        .forEach(CrewJoinRequest::cancel);
+  }
+
+  /**
+   * @description : 이미지 파일 업로드
+   */
+  private String resolveImageUrl(MultipartFile file, FileDomainType domainType, Long refId) {
+    // 파일이 없으면 빈 문자열 반
+    if (file == null || file.isEmpty()) {
+      return "";
+    }
+    // 파일이 있으면 업로드
+    return s3FileStorage.upload(file, domainType, refId);
+  }
+
+  /**
+   * @description : 변경된 이미지 파일 업로드
+   */
+  private String resolveChangedImageUrl(MultipartFile file, FileDomainType domainType,
+      Long refId, Crew crew) {
+
+    try {
+      // 파일이 없으면 기존 URL 유지
+      if (file == null || file.isEmpty()) {
+        return crew.getCrewImageUrl();
+      }
+      // 파일이 있으면 변경된 파일만 업로드
+
+      return s3FileStorage.uploadIfChanged(file, domainType, refId, crew.getCrewImageUrl());
+    } catch (Exception e) {
+
+      // 업로드 실패 시 기존 URL 유지
+      return crew.getCrewImageUrl();
     }
 
-    /**
-     * @param crewId    크루 ID
-     * @param principal 사용자 로그인
-     * @description : 특정 사용자가 특정 크루에 가입 신청한 상태를 조회 <- 프론트 UI 분기를 위한 상태 값으로 반환
-     */
-    @Transactional(readOnly = true)
-    public CrewAppliedResDto getAppliedStatus(Long crewId, CustomUser principal) {
-        // 크루 조회
-        Crew crew = findCrewById(crewId);
+  }
 
-        // 사용자 조회
-        User user = getUserOrThrow(principal);
+  /**
+   * @description : 멤버십 여부
+   */
+  private void validatePremiumMembership(User user) {
+    // ACTIVE 또는 CANCELED 상태의 멤버십만 확인
+    boolean hasValidMembership = membershipRepository
+        .existsByUser_IdAndMembershipStatusIn(
+            user.getId(),
+            List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
+        );
 
-        // 크루원인지 먼저 확인
-        Optional<CrewUser> crewUserOpt = crewUserRepository
-                .findByCrewAndUserAndIsDeletedFalse(crew, user);
+    if (!hasValidMembership) {
+      throw new BusinessException(ErrorCode.MEMBERSHIP_REQUIRED);
+    }
+  }
 
-        if (crewUserOpt.isPresent()) {
-            // 크루원이면 무조건 APPROVED!
-            return CrewAppliedResDto.builder()
-                    .crewJoinState(CrewJoinState.APPROVED)
-                    .build();
-        }
+  /**
+   * @description : 크루 해체 (시스템 호출용 - 권한 체크 없음)
+   */
+  @Transactional
+  public void disbandCrew(Long crewId) {
+    Crew crew = findCrewById(crewId);
 
-        // 가입 신청 기록 조회
-        Optional<CrewJoinRequest> joinRequestOpt = crewJoinRequestRepository
-                .findByCrewIdAndUserId(crewId, user.getId());
+    // 모든 크루원 soft delete
+    List<CrewUser> allMembers = crewUserRepository
+        .findByCrewAndIsDeletedFalse(crew);
 
-        // 신청 기록 없음 → NOT_APPLIED
-        if (joinRequestOpt.isEmpty()) {
-            return CrewAppliedResDto.builder()
-                    .crewJoinState(CrewJoinState.NOT_APPLIED)
-                    .build();
-        }
-
-        // 신청 기록 있음 → 상태 확인
-        JoinStatus status = joinRequestOpt.get().getJoinStatus();
-
-        // PENDING만 대기 상태
-        if (status == JoinStatus.PENDING) {
-            return CrewAppliedResDto.builder()
-                    .crewJoinState(CrewJoinState.PENDING)
-                    .build();
-        }
-
-        // 나머지 (REJECTED, CANCELED) → 재신청 가능
-        return CrewAppliedResDto.builder()
-                .crewJoinState(CrewJoinState.CAN_REAPPLY)
-                .build();
+    for (CrewUser member : allMembers) {
+      member.delete();
     }
 
-    /**
-     * @param userId        사용자 ID
-     * @param currentCrewId 현재 크루 ID (제외할 크루)
-     * @description : 해당 사용자의 다른 크루 대기 중인 신청 모두 자동 취소 (크루 생성 시 호출)
-     */
-    private void cancelOtherPendingRequestsForUser(Long userId, Long currentCrewId) {
-        // 해당 사용자의 대기 중인 신청 조회
-        List<CrewJoinRequest> otherPendingRequests = crewJoinRequestRepository
-                .findAllByUserIdAndJoinStatusAndIsDeletedFalse(userId, JoinStatus.PENDING);
+    // 크루 soft delete
+    crew.softDelete();
 
-        // 현재 크루 제외하고 모두 취소 처리
-        otherPendingRequests.stream()
-                .filter(request -> !request.getCrew().getId().equals(currentCrewId))
-                .forEach(CrewJoinRequest::cancel);
+    log.info("크루 해체 완료 - crewId: {}, 멤버 수: {}",
+        crewId, allMembers.size());
+  }
+
+  /**
+   * 크루장 멤버십 만료 처리
+   */
+  @Transactional
+  public void handleLeaderMembershipExpiry(Long crewId, Long leaderId) {
+    Crew crew = findCrewById(crewId);
+
+    // 이미 위임 대기 중이면 무시
+    if (crew.requiresDelegation()) {
+      log.info("이미 위임 대기 중인 크루입니다. crewId: {}", crewId);
+      return;
     }
 
-    /**
-     * @description : 이미지 파일 업로드
-     */
-    private String resolveImageUrl(MultipartFile file, FileDomainType domainType, Long refId) {
-        // 파일이 없으면 빈 문자열 반
-        if (file == null || file.isEmpty()) {
-            return "";
-        }
-        // 파일이 있으면 업로드
-        return s3FileStorage.upload(file, domainType, refId);
+    // 3일 유예 기간 설정
+    crew.requireLeaderDelegation();
+
+    // 크루 모집 자동 중단
+    if (crew.getCrewRecruitStatus() == CrewRecruitStatus.RECRUITING) {
+      crew.updateRecruitStatus(CrewRecruitStatus.CLOSED);
     }
 
-    /**
-     * @description : 변경된 이미지 파일 업로드
-     */
-    private String resolveChangedImageUrl(MultipartFile file, FileDomainType domainType,
-                                          Long refId, Crew crew) {
+    log.info("크루장 멤버십 만료 - 3일 유예 시작. crewId: {}, leaderId: {}, 기한: {}",
+        crewId, leaderId, crew.getDelegationDeadline());
+  }
 
-        try {
-            // 파일이 없으면 기존 URL 유지
-            if (file == null || file.isEmpty()) {
-                return crew.getCrewImageUrl();
-            }
-            // 파일이 있으면 변경된 파일만 업로드
+  /**
+   * 크루장 수동 위임
+   */
+  @Transactional
+  public void delegateLeaderManually(Long crewId, Long newLeaderId, CustomUser principal) {
+    User currentLeader = getUserOrThrow(principal);
+    Crew crew = findCrewById(crewId);
 
-            return s3FileStorage.uploadIfChanged(file, domainType, refId, crew.getCrewImageUrl());
-        } catch (Exception e) {
+    // 크루장 권한 확인
+    validateCrewLeader(crewId, currentLeader.getId());
 
-            // 업로드 실패 시 기존 URL 유지
-            return crew.getCrewImageUrl();
-        }
+    // 새 크루장 검증
+    CrewUser newLeaderCrewUser = crewUserRepository
+        .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, newLeaderId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
 
+    // 부크루장 또는 운영진만 위임 가능
+    if (newLeaderCrewUser.getRole() != CrewRole.SUB_LEADER
+        && newLeaderCrewUser.getRole() != CrewRole.STAFF) {
+      throw new BusinessException(ErrorCode.ONLY_SUB_LEADER_OR_STAFF_CAN_BE_LEADER);
     }
 
-    /**
-     * @description : 멤버십 여부
-     */
-    private void validatePremiumMembership(User user) {
-        // ACTIVE 또는 CANCELED 상태의 멤버십만 확인
-        boolean hasValidMembership = membershipRepository
-                .existsByUser_IdAndMembershipStatusIn(
-                        user.getId(),
-                        List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
-                );
+    // 멤버십 확인
+    boolean hasValidMembership = membershipRepository
+        .existsByUser_IdAndMembershipStatusIn(
+            newLeaderId,
+            List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
+        );
 
-        if (!hasValidMembership) {
-            throw new BusinessException(ErrorCode.MEMBERSHIP_REQUIRED);
-        }
+    if (!hasValidMembership) {
+      throw new BusinessException(ErrorCode.MEMBERSHIP_REQUIRED_FOR_LEADER);
     }
 
-    /**
-     * @description : 크루 해체 (시스템 호출용 - 권한 체크 없음)
-     */
-    @Transactional
-    public void disbandCrew(Long crewId) {
-        Crew crew = findCrewById(crewId);
+    // 권한 위임 실행
+    executeLeaderDelegation(crewId, currentLeader.getId(), newLeaderId);
 
-        // 모든 크루원 soft delete
-        List<CrewUser> allMembers = crewUserRepository
-                .findByCrewAndIsDeletedFalse(crew);
-
-        for (CrewUser member : allMembers) {
-            member.delete();
-        }
-
-        // 크루 soft delete
-        crew.softDelete();
-
-        log.info("크루 해체 완료 - crewId: {}, 멤버 수: {}",
-                crewId, allMembers.size());
+    // 위임 필요 상태 해제
+    if (crew.requiresDelegation()) {
+      crew.completeLeaderDelegation();
     }
 
-    /**
-     * 크루장 멤버십 만료 처리
-     */
-    @Transactional
-    public void handleLeaderMembershipExpiry(Long crewId, Long leaderId) {
-        Crew crew = findCrewById(crewId);
+    log.info("크루장 수동 위임 완료 - crewId: {}, 이전: {}, 새: {}",
+        crewId, currentLeader.getId(), newLeaderId);
+  }
 
-        // 이미 위임 대기 중이면 무시
-        if (crew.requiresDelegation()) {
-            log.info("이미 위임 대기 중인 크루입니다. crewId: {}", crewId);
-            return;
-        }
+  /**
+   * 크루장 위임 실행 (공통)
+   */
+  @Transactional
+  public void executeLeaderDelegation(Long crewId, Long currentLeaderId, Long newLeaderId) {
+    Crew crew = findCrewById(crewId);
 
-        // 3일 유예 기간 설정
-        crew.requireLeaderDelegation();
+    // 기존 크루장 → 일반 멤버
+    CrewUser currentLeader = crewUserRepository
+        .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, currentLeaderId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+    currentLeader.changeRole(CrewRole.MEMBER);
 
-        // 크루 모집 자동 중단
-        if (crew.getCrewRecruitStatus() == CrewRecruitStatus.RECRUITING) {
-            crew.updateRecruitStatus(CrewRecruitStatus.CLOSED);
-        }
+    // 새 크루장 → 크루장
+    CrewUser newLeader = crewUserRepository
+        .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, newLeaderId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
+    newLeader.changeRole(CrewRole.LEADER);
 
-        log.info("크루장 멤버십 만료 - 3일 유예 시작. crewId: {}, leaderId: {}, 기한: {}",
-                crewId, leaderId, crew.getDelegationDeadline());
-    }
+    crew.changeLeader(newLeader.getUser());
 
-    /**
-     * 크루장 수동 위임
-     */
-    @Transactional
-    public void delegateLeaderManually(Long crewId, Long newLeaderId, CustomUser principal) {
-        User currentLeader = getUserOrThrow(principal);
-        Crew crew = findCrewById(crewId);
-
-        // 크루장 권한 확인
-        validateCrewLeader(crewId, currentLeader.getId());
-
-        // 새 크루장 검증
-        CrewUser newLeaderCrewUser = crewUserRepository
-                .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, newLeaderId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
-
-        // 부크루장 또는 운영진만 위임 가능
-        if (newLeaderCrewUser.getRole() != CrewRole.SUB_LEADER
-                && newLeaderCrewUser.getRole() != CrewRole.STAFF) {
-            throw new BusinessException(ErrorCode.ONLY_SUB_LEADER_OR_STAFF_CAN_BE_LEADER);
-        }
-
-        // 멤버십 확인
-        boolean hasValidMembership = membershipRepository
-                .existsByUser_IdAndMembershipStatusIn(
-                        newLeaderId,
-                        List.of(MembershipStatus.ACTIVE, MembershipStatus.CANCELED)
-                );
-
-        if (!hasValidMembership) {
-            throw new BusinessException(ErrorCode.MEMBERSHIP_REQUIRED_FOR_LEADER);
-        }
-
-        // 권한 위임 실행
-        executeLeaderDelegation(crewId, currentLeader.getId(), newLeaderId);
-
-        // 위임 필요 상태 해제
-        if (crew.requiresDelegation()) {
-            crew.completeLeaderDelegation();
-        }
-
-        log.info("크루장 수동 위임 완료 - crewId: {}, 이전: {}, 새: {}",
-                crewId, currentLeader.getId(), newLeaderId);
-    }
-
-    /**
-     * 크루장 위임 실행 (공통)
-     */
-    @Transactional
-    public void executeLeaderDelegation(Long crewId, Long currentLeaderId, Long newLeaderId) {
-        Crew crew = findCrewById(crewId);
-
-        // 기존 크루장 → 일반 멤버
-        CrewUser currentLeader = crewUserRepository
-                .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, currentLeaderId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
-        currentLeader.changeRole(CrewRole.MEMBER);
-
-        // 새 크루장 → 크루장
-        CrewUser newLeader = crewUserRepository
-                .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, newLeaderId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CREW_MEMBER_NOT_FOUND));
-        newLeader.changeRole(CrewRole.LEADER);
-
-        crew.changeLeader(newLeader.getUser());
-
-        log.info("크루장 권한 위임 완료 - crewId: {}, 이전: {}, 새: {}",
-                crewId, currentLeaderId, newLeaderId);
-    }
+    log.info("크루장 권한 위임 완료 - crewId: {}, 이전: {}, 새: {}",
+        crewId, currentLeaderId, newLeaderId);
+  }
 }

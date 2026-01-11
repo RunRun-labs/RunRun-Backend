@@ -33,4 +33,14 @@ public class MembershipScheduler {
         log.info("=== 멤버십 만료 처리 스케줄러 종료 ===");
     }
 
+    /**
+     * @description : 멤버십 만료 하루 전 알림 발송 (스케줄러-> 매일 자정)
+     */
+    @Scheduled(cron = "0 0 0 * * *")
+    public void sendMembershipExpiryNotifications() {
+        log.info("=== 멤버십 만료 전 알림 스케줄러 시작 ===");
+        membershipService.sendMembershipExpiryNotifications();
+        log.info("=== 멤버십 만료 전 알림 스케줄러 종료 ===");
+    }
+
 }
