@@ -377,6 +377,15 @@ public class PathController {
         return "admin/coupon-update";
     }
 
+    @GetMapping("/admin/coupon/detail/{coupon_id}")
+    public String adminCouponDetailView(
+        @PathVariable(name = "coupon_id") Long couponId,
+        Model model
+    ) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-detail";
+    }
+
     @GetMapping("/admin/coupon-role/inquiry")
     public String adminCouponRoleInquiryView() {
         return "admin/coupon-role-inquiry";
@@ -494,5 +503,18 @@ public class PathController {
         model.addAttribute("placementId", placementId);
         return "admin/ad-placement-detail";
     }
+
+    // 대시보드
+    @GetMapping("/admin/dashboard")
+    public String adminDashboardView() {
+        return "admin/dashboard";
+    }
+
+    // 러닝 통계
+    @GetMapping("/admin/running/stats")
+    public String runningStatsView() {
+        return "admin/running-stats";
+    }
+
 
 }
