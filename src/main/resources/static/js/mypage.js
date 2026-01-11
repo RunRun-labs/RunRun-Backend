@@ -12,7 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
     attachDeleteRecordModalHandlers();
     attachCalendarModalHandlers();
     attachTierRatingModalHandlers();
+    attachPointClickHandler();
     loadMyBodyInfo();
+    loadPointBalance();
 
     // 초기 로드 시 빈 상태 숨김
     hideEmptyState();
@@ -1593,4 +1595,57 @@ function renderTierRatingModal(results) {
 
         ratingList.appendChild(ratingCard);
     });
+}
+
+/**
+ * 포인트 클릭 핸들러
+ */
+function attachPointClickHandler() {
+    const pointSection = document.querySelector('[data-role="point-click"]');
+    if (!pointSection) return;
+
+    pointSection.addEventListener("click", () => {
+        window.location.href = "/point";
+    });
+}
+
+/**
+ * 포인트 잔액 조회
+ */
+async function loadPointBalance() {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        const response = await fetch("/api/points", {
+            headers: {"Authorization": `Bearer ${token}`}
+        });
+
+        if (!response.ok) {
+            console.warn("포인트 조회 실패:", response.status);
+            return;
+        }
+
+        const payload = await response.json();
+        const pointData = payload?.data;
+        
+        if (pointData) {
+            const availablePoints = pointData.availablePoints || 0;
+            renderPointBalance(availablePoints);
+        }
+    } catch (error) {
+        console.error("포인트 조회 중 오류:", error);
+    }
+}
+
+/**
+ * 포인트 잔액 렌더링
+ */
+function renderPointBalance(availablePoints) {
+    const pointValueEl = document.getElementById("pointValue");
+    if (pointValueEl) {
+        pointValueEl.textContent = availablePoints !== undefined && availablePoints !== null
+            ? availablePoints.toLocaleString()
+            : "-";
+    }
 }
