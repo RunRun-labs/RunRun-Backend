@@ -20,181 +20,132 @@
     />
     <link
             rel="stylesheet"
-            href="/css/point-product.css"
-            th:href="@{/css/point-product.css}"
+            href="/css/point-product-inquiry.css"
+            th:href="@{/css/point-product-inquiry.css}"
     />
 </head>
 <body>
 <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
 <!-- 레이아웃 적용 -->
-<div th:replace="~{admin/layout :: adminLayout(~{::.point-content})}">
+<div
+        th:replace="~{admin/layout :: adminLayout(~{::.point-product-inquiry-content})}"
+>
     <!-- 컨텐츠 영역 -->
-    <div class="point-content">
-        <!-- 상단 헤더: 타이틀 + 필터 + 액션 버튼 통합 -->
-        <div class="content-header">
-            <div class="header-left">
-                <h1 class="page-title">포인트 상품 목록</h1>
+    <div class="point-product-inquiry-content point-product-inquiry-container">
+        <div class="point-product-inquiry-card">
+            <div class="page-header">
+                <h1 class="page-title">포인트 상품 관리</h1>
+                <a href="/admin/points/products/create" class="create-button-link">
+                    <button type="button" class="create-button">생성하기</button>
+                </a>
+            </div>
 
-                <!-- 필터 영역 -->
-                <div class="filter-group">
-                    <div class="filter-item">
+            <!-- 필터 영역 -->
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-group">
                         <label class="filter-label">판매 상태</label>
-                        <select id="filterAvailable" class="filter-select">
-                            <option value="">전체</option>
-                            <option value="true">판매중</option>
-                            <option value="false">판매중지</option>
+                        <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input
+                                        type="checkbox"
+                                        value="true"
+                                        class="filter-checkbox"
+                                        id="isAvailableTrue"
+                                />
+                                <span class="checkbox-label">판매중</span>
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input
+                                        type="checkbox"
+                                        value="false"
+                                        class="filter-checkbox"
+                                        id="isAvailableFalse"
+                                />
+                                <span class="checkbox-label">판매중지</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">정렬</label>
+                        <select id="sortFilter" class="filter-select">
+                            <option value="createdAt,DESC">생성일 최신순</option>
+                            <option value="createdAt,ASC">생성일 오래된순</option>
+                            <option value="productName,ASC">상품명 오름차순</option>
+                            <option value="productName,DESC">상품명 내림차순</option>
                         </select>
                     </div>
-                </div>
-            </div>
 
-            <div class="header-actions">
-                <button class="btn-create" id="btnCreate">
-                    <span class="btn-icon">생성하기</span>
-                </button>
-                <button class="btn-delete" id="btnDelete">
-                    <span class="btn-icon">삭제하기</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- 상품 목록 테이블 -->
-        <section class="table-section">
-            <table class="product-table">
-                <thead>
-                <tr>
-                    <th style="width: 50px">
-                        <input type="checkbox" id="selectAll"/>
-                    </th>
-                    <th style="width: 60px">no</th>
-                    <th style="width: 80px">이미지</th>
-                    <th style="width: 25%">상품명</th>
-                    <th style="width: 120px">필요 포인트</th>
-                    <th style="width: 100px">판매 상태</th>
-                    <th style="width: 180px">생성일</th>
-                    <th style="width: 180px">수정일</th>
-                    <th style="width: 100px">관리</th>
-                </tr>
-                </thead>
-                <tbody id="productTableBody">
-                <!-- 동적으로 채워짐 -->
-                </tbody>
-            </table>
-        </section>
-
-        <!-- 페이지네이션 -->
-        <section class="pagination-section">
-            <div id="pagination"></div>
-        </section>
-    </div>
-</div>
-
-<!-- 상품 생성/수정 모달 -->
-<div id="productModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modalTitle">포인트 상품 생성</h2>
-            <button class="close-btn" id="closeModal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="productForm">
-                <input type="hidden" id="productId"/>
-
-                <div class="form-group">
-                    <label for="productName"
-                    >상품명 <span class="required">*</span></label
-                    >
-                    <input
-                            type="text"
-                            id="productName"
-                            required
-                            minlength="2"
-                            maxlength="100"
-                            placeholder="예: 스타벅스 아메리카노"
-                    />
-                    <div class="field-error" id="errProductName"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="productDescription"
-                    >상품 설명 <span class="required">*</span></label
-                    >
-                    <textarea
-                            id="productDescription"
-                            required
-                            minlength="10"
-                            maxlength="1000"
-                            placeholder="상품에 대한 자세한 설명을 입력하세요 (최소 10자)"
-                    ></textarea>
-                    <div class="field-error" id="errProductDescription"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="requiredPoint"
-                    >필요 포인트 <span class="required">*</span></label
-                    >
-                    <input
-                            type="number"
-                            id="requiredPoint"
-                            required
-                            min="1"
-                            placeholder="예: 5000"
-                    />
-                    <div class="field-error" id="errRequiredPoint"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="productImage"
-                    >상품 이미지 <span class="required">*</span></label
-                    >
-                    <div class="image-upload-area">
+                    <div class="filter-group filter-group-full">
+                        <label class="filter-label">검색어</label>
                         <input
-                                type="file"
-                                id="productImage"
-                                accept="image/*"
-                                style="display: none"
+                                type="text"
+                                id="keywordFilter"
+                                class="filter-input"
+                                placeholder="상품명으로 검색"
                         />
-                        <div class="image-preview" id="imagePreview">
-                            <img
-                                    id="previewImg"
-                                    src=""
-                                    alt="미리보기"
-                                    style="display: none"
-                            />
-                            <div id="uploadPlaceholder" class="upload-placeholder">
-                                <span class="upload-icon">📷</span>
-                                <p>클릭하여 이미지 업로드</p>
-                                <small>권장 크기: 500x500px</small>
-                            </div>
-                        </div>
-                        <input type="hidden" id="productImageUrl"/>
-                        <div class="field-error" id="errProductImage"></div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="isAvailable" checked/>
-                        <span>판매 가능</span>
-                    </label>
+                <div class="filter-actions">
+                    <button type="button" class="filter-btn" id="applyFilterBtn">
+                        필터 적용
+                    </button>
+                    <button
+                            type="button"
+                            class="filter-btn filter-btn-reset"
+                            id="resetFilterBtn"
+                    >
+                        초기화
+                    </button>
                 </div>
+            </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel" id="btnCancel">
-                        취소
-                    </button>
-                    <button type="submit" class="btn-submit" id="btnSubmit">
-                        저장
-                    </button>
-                </div>
-            </form>
+            <!-- 테이블 영역 -->
+            <div class="table-container">
+                <table class="point-product-table">
+                    <thead>
+                    <tr>
+                        <th style="width: 50px">
+                            <input type="checkbox" id="selectAll"/>
+                        </th>
+                        <th style="width: 60px">#</th>
+                        <th style="width: 80px">이미지</th>
+                        <th style="width: 25%">상품명</th>
+                        <th style="width: 120px">필요 포인트</th>
+                        <th style="width: 100px">판매 상태</th>
+                        <th style="width: 180px">생성일</th>
+                        <th style="width: 100px">관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="productTableBody">
+                    <!-- 데이터가 여기에 동적으로 로드됩니다 -->
+                    <tr class="loading-row">
+                        <td colspan="8" class="loading-message">로딩 중...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이지네이션 영역 -->
+            <div class="pagination-container" id="paginationContainer">
+                <!-- 페이지네이션이 여기에 동적으로 생성됩니다 -->
+            </div>
+
+            <!-- 삭제 버튼 -->
+            <div class="filter-actions" style="margin-top: 20px;">
+                <button type="button" class="filter-btn" id="btnDelete" style="background: #ff4444;">
+                    선택 삭제
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <script
-        src="/js/point-product.js"
-        th:src="@{/js/point-product.js}"
+        src="/js/point-product-inquiry.js"
+        th:src="@{/js/point-product-inquiry.js}"
 ></script>
 </body>
 </html>
