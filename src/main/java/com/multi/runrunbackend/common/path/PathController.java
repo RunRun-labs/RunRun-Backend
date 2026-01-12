@@ -120,7 +120,8 @@ public class PathController {
     }
 
     @GetMapping("/crews/{crewId}")
-    public String crewDetailPage() {
+    public String crewDetailPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
         return "crew/crewDetailList";
     }
 
@@ -152,25 +153,6 @@ public class PathController {
     public String crewMain() {
         return "crew/crewMain";
     }
-
-    @GetMapping("/crews/{crewId}/activities/create")
-    public String crewActivityCreatePage(@PathVariable Long crewId, Model model) {
-        model.addAttribute("crewId", crewId);
-        return "crew/crewActivityCreate";
-    }
-
-    @GetMapping("/crews/{crewId}/activities/{activityId}/edit")
-    public String crewActivityEditPage(@PathVariable Long crewId, @PathVariable Long activityId, Model model) {
-        model.addAttribute("crewId", crewId);
-        model.addAttribute("activityId", activityId);
-        return "crew/crewActivityEdit";
-    }
-
-    @GetMapping("/membership")
-    public String membership() {
-        return "membership/membership";
-    }
-
 
     /* ===================== CHAT ===================== */
 
@@ -259,11 +241,11 @@ public class PathController {
         return "challenge/challenge-end";
     }
 
-    /* ===================== COURSE ===================== */
-  @GetMapping("/course_auto")
-  public String courseAutoView() {
-    return "courseAuto";
-  }
+
+    @GetMapping("/course_auto")
+    public String courseAutoView() {
+        return "courseAuto";
+    }
 
     @GetMapping("/course_manual")
     public String courseManualView() {
@@ -294,6 +276,10 @@ public class PathController {
 
     /* ===================== PAYMENT / POINT ===================== */
 
+    @GetMapping("/membership")
+    public String membership() {
+        return "membership/membership";
+    }
 
     @GetMapping("/payment/pay")
     public String paymentPayView() {
@@ -340,9 +326,27 @@ public class PathController {
         return "point/pointShop";
     }
 
+
+
+    /* ===================== ADMIN POINT PRODUCT ===================== */
+
     @GetMapping("/admin/points/products")
-    public String pointProductAdminView() {
-        return "point/pointAdmin";
+    public String adminPointProductListView() {
+        return "admin/point-product-list";
+    }
+
+    @GetMapping("/admin/points/products/create")
+    public String adminPointProductCreateView() {
+        return "admin/point-product-create";
+    }
+
+    @GetMapping("/admin/points/products/update/{product_id}")
+    public String adminPointProductUpdateView(
+            @PathVariable(name = "product_id") Long productId,
+            Model model
+    ) {
+        model.addAttribute("productId", productId);
+        return "admin/point-product-update";
     }
 
     /* ===================== ETC ===================== */
@@ -396,12 +400,12 @@ public class PathController {
         return "admin/coupon-create";
     }
 
-  @GetMapping("/admin/coupon/update/{coupon_id}")
-  public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
-      Model model) {
-    model.addAttribute("couponId", couponId);
-    return "admin/coupon-update";
-  }
+    @GetMapping("/admin/coupon/update/{coupon_id}")
+    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
+                                        Model model) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-update";
+    }
 
     @GetMapping("/admin/coupon-role/inquiry")
     public String adminCouponRoleInquiryView() {
@@ -415,8 +419,8 @@ public class PathController {
 
     @GetMapping("/admin/coupon-role/update/{coupon_role_id}")
     public String adminCouponRoleUpdateView(
-        @PathVariable(name = "coupon_role_id") Long couponRoleId,
-        Model model
+            @PathVariable(name = "coupon_role_id") Long couponRoleId,
+            Model model
     ) {
         model.addAttribute("couponRoleId", couponRoleId);
         return "admin/coupon-role-update";
@@ -467,8 +471,8 @@ public class PathController {
 
     @GetMapping("/admin/ad-slot/update/{slot_id}")
     public String adminAdSlotUpdateView(
-        @PathVariable(name = "slot_id") Long slotId,
-        Model model
+            @PathVariable(name = "slot_id") Long slotId,
+            Model model
     ) {
         model.addAttribute("slotId", slotId);
         return "admin/ad-slot-update";
@@ -487,8 +491,8 @@ public class PathController {
 
     @GetMapping("/admin/ad/update/{ad_id}")
     public String adminAdUpdateView(
-        @PathVariable(name = "ad_id") Long adId,
-        Model model
+            @PathVariable(name = "ad_id") Long adId,
+            Model model
     ) {
         model.addAttribute("adId", adId);
         return "admin/ad-update";
@@ -496,8 +500,8 @@ public class PathController {
 
     @GetMapping("/admin/ad/detail/{ad_id}")
     public String adminAdDetailView(
-        @PathVariable(name = "ad_id") Long adId,
-        Model model
+            @PathVariable(name = "ad_id") Long adId,
+            Model model
     ) {
         model.addAttribute("adId", adId);
         return "admin/ad-detail";
@@ -516,8 +520,8 @@ public class PathController {
 
     @GetMapping("/admin/ad-placement/update/{placement_id}")
     public String adminAdPlacementUpdateView(
-        @PathVariable(name = "placement_id") Long placementId,
-        Model model
+            @PathVariable(name = "placement_id") Long placementId,
+            Model model
     ) {
         model.addAttribute("placementId", placementId);
         return "admin/ad-placement-update";
@@ -525,8 +529,8 @@ public class PathController {
 
     @GetMapping("/admin/ad-placement/detail/{placement_id}")
     public String adminAdPlacementDetailView(
-        @PathVariable(name = "placement_id") Long placementId,
-        Model model
+            @PathVariable(name = "placement_id") Long placementId,
+            Model model
     ) {
         model.addAttribute("placementId", placementId);
         return "admin/ad-placement-detail";
