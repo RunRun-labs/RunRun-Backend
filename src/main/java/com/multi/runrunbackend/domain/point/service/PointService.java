@@ -8,6 +8,9 @@ import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
+import com.multi.runrunbackend.domain.notification.constant.NotificationType;
+import com.multi.runrunbackend.domain.notification.constant.RelatedType;
+import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.point.dto.req.*;
 import com.multi.runrunbackend.domain.point.dto.res.*;
 import com.multi.runrunbackend.domain.point.entity.PointExpiration;
@@ -20,9 +23,6 @@ import com.multi.runrunbackend.domain.point.repository.PointProductRepository;
 import com.multi.runrunbackend.domain.point.repository.UserPointRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
-import com.multi.runrunbackend.domain.notification.service.NotificationService;
-import com.multi.runrunbackend.domain.notification.constant.NotificationType;
-import com.multi.runrunbackend.domain.notification.constant.RelatedType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -93,17 +93,27 @@ public class PointService {
                         .build()
         );
 
-        // 소멸 예정 포인트
-        List<PointExpiration> activeExpirations = pointExpirationRepository
-                .findActivePointsByUserIdOrderByExpiresAt(userId);
+        // 소멸 예정 포인트  - 이번 달 기준
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfMonth = now.withDayOfMonth(now.toLocalDate().lengthOfMonth())
+                .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
+        List<PointExpiration> expiringThisMonth = pointExpirationRepository
+                .findExpiringThisMonth(userId, startOfMonth, endOfMonth);
 
         PointMainResDto.UpcomingExpiryInfo expiryInfo;
-        if (!activeExpirations.isEmpty()) {
-            PointExpiration earliest = activeExpirations.get(0);
+        if (!expiringThisMonth.isEmpty()) {
+            // 이번 달 소멸 포인트의 총합 계산
+            int totalExpiringPoints = expiringThisMonth.stream()
+                    .mapToInt(PointExpiration::getRemainingPoint)
+                    .sum();
+
+            PointExpiration earliest = expiringThisMonth.get(0);
             expiryInfo = PointMainResDto.UpcomingExpiryInfo.builder()
                     .expiryDate(earliest.getExpiresAt()
                             .format(DateTimeFormatter.ofPattern("yyyy년 M월 d일")))
-                    .expiringPoints(earliest.getRemainingPoint())
+                    .expiringPoints(totalExpiringPoints)
                     .build();
         } else {
             // 포인트 없을 때 기본값

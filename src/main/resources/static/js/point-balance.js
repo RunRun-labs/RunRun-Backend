@@ -57,8 +57,13 @@ async function loadPointBalance() {
             '-' + data.summary.usedPoints.toLocaleString() + ' P';
 
         // 소멸 예정 포인트
-        document.getElementById('expiryInfo').textContent =
-            `${data.upcomingExpiry.expiryDate} ${data.upcomingExpiry.expiringPoints}P 소멸 예정`;
+        if (data.upcomingExpiry && data.upcomingExpiry.expiringPoints > 0) {
+            document.getElementById('expiryInfo').textContent =
+                `이번 달 ${data.upcomingExpiry.expiringPoints.toLocaleString()}P 소멸 예정`;
+        } else {
+            document.getElementById('expiryInfo').textContent =
+                '이번 달 소멸 예정 포인트 없음';
+        }
 
         // 총 적립 포인트
         document.getElementById('totalPoints').textContent =

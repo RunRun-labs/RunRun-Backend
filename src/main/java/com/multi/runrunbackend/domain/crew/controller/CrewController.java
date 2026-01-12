@@ -2,9 +2,8 @@ package com.multi.runrunbackend.domain.crew.controller;
 
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
-import com.multi.runrunbackend.domain.crew.dto.req.CrewCreateReqDto;
-import com.multi.runrunbackend.domain.crew.dto.req.CrewStatusChangeReqDto;
-import com.multi.runrunbackend.domain.crew.dto.req.CrewUpdateReqDto;
+import com.multi.runrunbackend.domain.crew.dto.req.*;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewActivityParticipantResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewAppliedResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
@@ -18,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * @author : BoKyung
@@ -180,5 +181,75 @@ public class CrewController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.success("크루장 위임이 완료되었습니다.", null));
+    }
+
+    /**
+     * @param crewId    크루 ID
+     * @param principal 인증된 사용자
+     * @param reqDto    크루 활동 생성 요청 DTO
+     * @description : 크루 활동 생성 (크루장, 부크루장, 운영진만 가능)
+     */
+    @PostMapping("/{crewId}/activities")
+    public ResponseEntity<ApiResponse<Long>> createActivity(
+            @PathVariable Long crewId,
+            @AuthenticationPrincipal CustomUser principal,
+            @Valid @RequestBody CrewActivityCreateReqDto reqDto
+    ) {
+        Long activityId = crewService.createCrewActivity(crewId, principal, reqDto);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success("크루 활동 생성 성공", activityId));
+    }
+
+    /**
+     * @param crewId     크루 ID
+     * @param activityId 활동 ID
+     * @param principal  인증된 사용자
+     * @param reqDto     크루 활동 수정 요청 DTO
+     * @description : 크루 활동 수정 (크루장, 부크루장, 운영진만 가능)
+     */
+    @PutMapping("/{crewId}/activities/{activityId}")
+    public ResponseEntity<ApiResponse<Void>> updateActivity(
+            @PathVariable Long crewId,
+            @PathVariable Long activityId,
+            @AuthenticationPrincipal CustomUser principal,
+            @Valid @RequestBody CrewActivityUpdateReqDto reqDto
+    ) {
+        crewService.updateCrewActivity(activityId, crewId, principal, reqDto);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 활동 수정 성공", null));
+    }
+
+    /**
+     * @param crewId     크루 ID
+     * @param activityId 활동 ID
+     * @param principal  인증된 사용자
+     * @description : 크루 활동 삭제 (크루장, 부크루장, 운영진만 가능)
+     */
+    @DeleteMapping("/{crewId}/activities/{activityId}")
+    public ResponseEntity<ApiResponse<Void>> deleteActivity(
+            @PathVariable Long crewId,
+            @PathVariable Long activityId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        crewService.deleteCrewActivity(activityId, crewId, principal);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 활동 삭제 성공", null));
+    }
+
+    /**
+     * @param activityId 활동 ID
+     * @description : 크루 활동 참여자 목록 조회
+     */
+    @GetMapping("/activities/{activityId}/participants")
+    public ResponseEntity<ApiResponse<List<CrewActivityParticipantResDto>>> getActivityParticipants(
+            @PathVariable Long activityId
+    ) {
+        List<CrewActivityParticipantResDto> participants = crewService.getActivityParticipants(activityId);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("활동 참여자 조회 성공", participants));
     }
 }

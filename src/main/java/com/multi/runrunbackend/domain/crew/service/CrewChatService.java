@@ -11,11 +11,7 @@ import com.multi.runrunbackend.domain.crew.dto.req.CrewChatMessageDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewChatNoticeReqDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewChatNoticeResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewChatRoomListResDto;
-import com.multi.runrunbackend.domain.crew.entity.Crew;
-import com.multi.runrunbackend.domain.crew.entity.CrewChatNotice;
-import com.multi.runrunbackend.domain.crew.entity.CrewChatRoom;
-import com.multi.runrunbackend.domain.crew.entity.CrewChatUser;
-import com.multi.runrunbackend.domain.crew.entity.CrewUser;
+import com.multi.runrunbackend.domain.crew.entity.*;
 import com.multi.runrunbackend.domain.crew.repository.CrewChatMessageRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewChatRoomRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewChatUserRepository;
@@ -24,6 +20,11 @@ import com.multi.runrunbackend.domain.notification.constant.RelatedType;
 import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -87,7 +88,7 @@ public class CrewChatService {
   public void sendMessage(CrewChatMessageDto messageDto) {
     // 현재 시간 설정
     LocalDateTime now = LocalDateTime.now();
-
+    
     // MongoDB에 저장
     CrewChatMessage chatMessage = CrewChatMessage.builder()
         .roomId(messageDto.getRoomId())
@@ -105,7 +106,7 @@ public class CrewChatService {
     String channel = "crew-chat:" + messageDto.getRoomId();
     redisPublisher.publishObject(channel, messageDto);
 
-    log.info("크루 메시지 전송: roomId={}, sender={}, createdAt={}",
+    log.info("크루 메시지 전송: roomId={}, sender={}, createdAt={}", 
         messageDto.getRoomId(), messageDto.getSenderName(), now);
   }
 
@@ -151,7 +152,7 @@ public class CrewChatService {
         .build();
 
     sendMessage(systemMessage);
-    log.info("크루 역할 변경 시스템 메시지 전송: roomId={}, userName={}, roleName={}",
+    log.info("크루 역할 변경 시스템 메시지 전송: roomId={}, userName={}, roleName={}", 
         roomId, userName, roleName);
   }
 
@@ -163,7 +164,7 @@ public class CrewChatService {
     // 크루의 채팅방 조회
     CrewChatRoom chatRoom = chatRoomRepository.findByCrewId(crewId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.CHAT_ROOM_NOT_FOUND));
-
+    
     sendRoleChangeMessage(chatRoom.getId(), userName, roleName);
   }
 
@@ -289,7 +290,7 @@ public class CrewChatService {
     String httpsImageUrl = (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
         ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
         : "";
-    
+
     log.info("✅ 크루 채팅방 DTO 변환: crewId={}, crewName={}, S3키={}, HTTPS URL={}",
         crew.getId(), crew.getCrewName(), crew.getCrewImageUrl(), httpsImageUrl);
 
@@ -424,9 +425,9 @@ public class CrewChatService {
       chatMessageRepository.deleteByRoomId(roomId);
       log.info("채팅 메시지 삭제 완료: roomId={}", roomId);
 
-      // 2. 모든 참여자 제거
-      List<CrewChatUser> chatUsers = chatUserRepository.findActiveUsersByRoomId(roomId);
-      chatUserRepository.deleteAll(chatUsers);
+            // 2. 모든 참여자 제거
+            chatUserRepository.deleteByRoomId(roomId);
+            log.info("채팅방 참여자 삭제 완료: roomId={}", roomId);
 
       // 3. 채팅방 삭제
       chatRoomRepository.delete(chatRoom);

@@ -120,7 +120,8 @@ public class PathController {
     }
 
     @GetMapping("/crews/{crewId}")
-    public String crewDetailPage() {
+    public String crewDetailPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
         return "crew/crewDetailList";
     }
 
@@ -153,11 +154,7 @@ public class PathController {
         return "crew/crewMain";
     }
 
-    @GetMapping("/membership")
-    public String membership() {
-        return "membership/membership";
-    }
-
+    /* ===================== CHAT ===================== */
 
     @GetMapping("/chat")
     public String chatList() {
@@ -245,10 +242,10 @@ public class PathController {
     }
 
 
-  @GetMapping("/course_auto")
-  public String courseAutoView() {
-    return "courseAuto";
-  }
+    @GetMapping("/course_auto")
+    public String courseAutoView() {
+        return "courseAuto";
+    }
 
     @GetMapping("/course_manual")
     public String courseManualView() {
@@ -277,6 +274,42 @@ public class PathController {
         return "course/courseUpdate";
     }
 
+    /* ===================== PAYMENT / POINT ===================== */
+
+    @GetMapping("/membership")
+    public String membership() {
+        return "membership/membership";
+    }
+
+    @GetMapping("/payment/pay")
+    public String paymentPayView() {
+        return "payment/pay";
+    }
+
+    @GetMapping("/payment/history")
+    public String paymentHistoryView() {
+        return "payment/history";
+    }
+
+    @GetMapping("/payment/success")
+    public String paymentSuccessView() {
+        return "payment/success";
+    }
+
+    @GetMapping("/payment/free-success")
+    public String freePaymentSuccess() {
+        return "payment/free-success";
+    }
+
+    @GetMapping("/payment/fail")
+    public String paymentFailView() {
+        return "payment/fail";
+    }
+
+    @GetMapping("/points")
+    public String point() {
+        return "point/point";
+    }
 
     @GetMapping("/points/balance")
     public String pointBalance() {
@@ -294,19 +327,26 @@ public class PathController {
     }
 
 
-    @GetMapping("/admin/coupon/detail/{coupon_id}")
-    public String adminCouponDetailView(
-        @PathVariable(name = "coupon_id") Long couponId,
-        Model model
-    ) {
-        model.addAttribute("couponId", couponId);
-        return "admin/coupon-detail";
-    }
 
+    /* ===================== ADMIN POINT PRODUCT ===================== */
 
     @GetMapping("/admin/points/products")
-    public String pointProductAdminView() {
-        return "point/pointAdmin";
+    public String adminPointProductListView() {
+        return "admin/point-product-list";
+    }
+
+    @GetMapping("/admin/points/products/create")
+    public String adminPointProductCreateView() {
+        return "admin/point-product-create";
+    }
+
+    @GetMapping("/admin/points/products/update/{product_id}")
+    public String adminPointProductUpdateView(
+            @PathVariable(name = "product_id") Long productId,
+            Model model
+    ) {
+        model.addAttribute("productId", productId);
+        return "admin/point-product-update";
     }
 
     /* ===================== ETC ===================== */
@@ -360,12 +400,12 @@ public class PathController {
         return "admin/coupon-create";
     }
 
-  @GetMapping("/admin/coupon/update/{coupon_id}")
-  public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
-      Model model) {
-    model.addAttribute("couponId", couponId);
-    return "admin/coupon-update";
-  }
+    @GetMapping("/admin/coupon/update/{coupon_id}")
+    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
+                                        Model model) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-update";
+    }
 
     @GetMapping("/admin/coupon-role/inquiry")
     public String adminCouponRoleInquiryView() {
@@ -379,11 +419,20 @@ public class PathController {
 
     @GetMapping("/admin/coupon-role/update/{coupon_role_id}")
     public String adminCouponRoleUpdateView(
-        @PathVariable(name = "coupon_role_id") Long couponRoleId,
-        Model model
+            @PathVariable(name = "coupon_role_id") Long couponRoleId,
+            Model model
     ) {
         model.addAttribute("couponRoleId", couponRoleId);
         return "admin/coupon-role-update";
+    }
+
+    @GetMapping("/admin/coupon/detail/{coupon_id}")
+    public String adminCouponDetailView(
+            @PathVariable(name = "coupon_id") Long couponId,
+            Model model
+    ) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-detail";
     }
 
     @GetMapping("/admin/coupon/select")
@@ -422,8 +471,8 @@ public class PathController {
 
     @GetMapping("/admin/ad-slot/update/{slot_id}")
     public String adminAdSlotUpdateView(
-        @PathVariable(name = "slot_id") Long slotId,
-        Model model
+            @PathVariable(name = "slot_id") Long slotId,
+            Model model
     ) {
         model.addAttribute("slotId", slotId);
         return "admin/ad-slot-update";
@@ -442,8 +491,8 @@ public class PathController {
 
     @GetMapping("/admin/ad/update/{ad_id}")
     public String adminAdUpdateView(
-        @PathVariable(name = "ad_id") Long adId,
-        Model model
+            @PathVariable(name = "ad_id") Long adId,
+            Model model
     ) {
         model.addAttribute("adId", adId);
         return "admin/ad-update";
@@ -451,8 +500,8 @@ public class PathController {
 
     @GetMapping("/admin/ad/detail/{ad_id}")
     public String adminAdDetailView(
-        @PathVariable(name = "ad_id") Long adId,
-        Model model
+            @PathVariable(name = "ad_id") Long adId,
+            Model model
     ) {
         model.addAttribute("adId", adId);
         return "admin/ad-detail";
@@ -471,8 +520,8 @@ public class PathController {
 
     @GetMapping("/admin/ad-placement/update/{placement_id}")
     public String adminAdPlacementUpdateView(
-        @PathVariable(name = "placement_id") Long placementId,
-        Model model
+            @PathVariable(name = "placement_id") Long placementId,
+            Model model
     ) {
         model.addAttribute("placementId", placementId);
         return "admin/ad-placement-update";
@@ -480,8 +529,8 @@ public class PathController {
 
     @GetMapping("/admin/ad-placement/detail/{placement_id}")
     public String adminAdPlacementDetailView(
-        @PathVariable(name = "placement_id") Long placementId,
-        Model model
+            @PathVariable(name = "placement_id") Long placementId,
+            Model model
     ) {
         model.addAttribute("placementId", placementId);
         return "admin/ad-placement-detail";
@@ -499,5 +548,9 @@ public class PathController {
         return "admin/running-stats";
     }
 
-
+    @GetMapping("/attendance-event")
+    public String attendanceEventPage() {
+        return "attendance/attendance-event";
+    }
 }
+
