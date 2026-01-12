@@ -31,9 +31,6 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   // 이미지 미리보기
-  const imageUploadArea = document.getElementById("imageUploadArea");
-  const uploadPlaceholder = document.getElementById("uploadPlaceholder");
-  
   imageFileInput.addEventListener("change", function (e) {
     const file = e.target.files[0];
     if (file) {
@@ -144,48 +141,46 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // 광고 데이터 로드
-  function loadAdData() {
-    fetch(`/api/admin/ads/${adId}`, {
-      method: "GET",
-      headers: getAuthHeaders(),
-    })
-      .then((response) => {
-        return response.json().then((data) => {
-          if (!response.ok) {
-            return Promise.reject(data);
-          }
-          return data;
-        });
-      })
-      .then((result) => {
-        if (result.success && result.data) {
-          const ad = result.data;
-          currentImageUrl = ad.imageUrl;
-
-          // 폼에 데이터 채우기
-          fields.name.value = ad.name || "";
-          fields.redirectUrl.value = ad.redirectUrl || "";
-
-          // 현재 이미지 표시
-          if (ad.imageUrl) {
-            currentImg.src = ad.imageUrl;
-            currentImageDiv.style.display = "block";
-          } else {
-            currentImageDiv.style.display = "none";
-          }
-        } else {
-          throw new Error(result.message || "광고 데이터를 불러올 수 없습니다.");
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        let errorMessage = "광고 데이터를 불러오는 중 오류가 발생했습니다.";
-        if (error.message) {
-          errorMessage = error.message;
-        }
-        alert(errorMessage);
-        window.location.href = "/admin/ad/inquiry";
+  async function loadAdData() {
+    try {
+      const response = await fetch(`/api/admin/ads/${adId}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
       });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "광고 데이터를 불러올 수 없습니다.");
+      }
+
+      if (result.success && result.data) {
+        const ad = result.data;
+        currentImageUrl = ad.imageUrl;
+
+        // 폼에 데이터 채우기
+        fields.name.value = ad.name || "";
+        fields.redirectUrl.value = ad.redirectUrl || "";
+
+        // 현재 이미지 표시
+        if (ad.imageUrl && currentImg && currentImageDiv) {
+          currentImg.src = ad.imageUrl;
+          currentImageDiv.style.display = "block";
+        } else if (currentImageDiv) {
+          currentImageDiv.style.display = "none";
+        }
+      } else {
+        throw new Error(result.message || "광고 데이터를 불러올 수 없습니다.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      let errorMessage = "광고 데이터를 불러오는 중 오류가 발생했습니다.";
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      alert(errorMessage);
+      window.location.href = "/admin/ad/inquiry";
+    }
   }
 
   // 수정 버튼 클릭
