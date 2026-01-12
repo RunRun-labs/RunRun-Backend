@@ -83,13 +83,13 @@ public class FeedPostService {
         } else {
             // 코스 썸네일 URL 사용
             if (runningResult.getCourse() != null && runningResult.getCourse().getThumbnailUrl() != null) {
-                String thumbnailUrl = runningResult.getCourse().getThumbnailUrl();
-                if (!thumbnailUrl.startsWith("http")) {
-                    imageUrl = fileStorage.toHttpsUrl(thumbnailUrl);
-                } else {
-                    imageUrl = thumbnailUrl;
-                }
+                imageUrl = runningResult.getCourse().getThumbnailUrl();
             }
+        }
+
+        // 이미지가 끝까지 없으면 피드 공유 불가
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new InvalidRequestException(ErrorCode.FILE_REQUIRED);
         }
 
         FeedPost feedPost = FeedPost.create(
