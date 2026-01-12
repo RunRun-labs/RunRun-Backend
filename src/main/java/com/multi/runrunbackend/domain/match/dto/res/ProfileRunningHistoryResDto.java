@@ -22,30 +22,27 @@ import java.time.LocalDateTime;
 public class ProfileRunningHistoryResDto {
 
     private Long runningResultId;
-
     private LocalDateTime startedAt;
 
-    // 거리 / 시간
     private BigDecimal totalDistanceKm;
     private Integer totalTimeSec;
-
-    // 평균 페이스 (분/km)
     private BigDecimal avgPace;
 
-    // 러닝 타입
     private RunningType runningType;
     private String runningTypeDescription;
 
-    // 코스
     private Long courseId;
     private String courseTitle;
     private String courseThumbnailUrl;
 
-    // 러닝 상태
     private String runStatus;
     private String runStatusDescription;
 
+    // ✅ 온라인 배틀 전용(ONLINEBATTLE이 아닌 경우 null)
+    private Integer onlineBattleRanking;
+
     public static ProfileRunningHistoryResDto from(RunningResult r, FileStorage fileStorage) {
+        // 고스트는 보류: 기존과 동일하게 코스가 없으면 null로 내려감
         Course c = r.getCourse();
 
         String thumbnailUrl = null;
@@ -63,9 +60,37 @@ public class ProfileRunningHistoryResDto {
                 .runningTypeDescription(r.getRunningType().getDescription())
                 .courseId(c != null ? c.getId() : null)
                 .courseTitle(c != null ? c.getAddress() : null)
-                .courseThumbnailUrl(thumbnailUrl) // S3 URL로 변환된 값 사용
+                .courseThumbnailUrl(thumbnailUrl)
                 .runStatus(r.getRunStatus().name())
                 .runStatusDescription(r.getRunStatus().getDescription())
+                .onlineBattleRanking(null)
+                .build();
+    }
+
+    /**
+     * onlineBattleRanking까지 주입하는 오버로드
+     */
+    public static ProfileRunningHistoryResDto from(
+            RunningResult r,
+            FileStorage fileStorage,
+            Integer onlineBattleRanking
+    ) {
+        ProfileRunningHistoryResDto base = from(r, fileStorage);
+
+        return ProfileRunningHistoryResDto.builder()
+                .runningResultId(base.getRunningResultId())
+                .startedAt(base.getStartedAt())
+                .totalDistanceKm(base.getTotalDistanceKm())
+                .totalTimeSec(base.getTotalTimeSec())
+                .avgPace(base.getAvgPace())
+                .runningType(base.getRunningType())
+                .runningTypeDescription(base.getRunningTypeDescription())
+                .courseId(base.getCourseId())
+                .courseTitle(base.getCourseTitle())
+                .courseThumbnailUrl(base.getCourseThumbnailUrl())
+                .runStatus(base.getRunStatus())
+                .runStatusDescription(base.getRunStatusDescription())
+                .onlineBattleRanking(onlineBattleRanking)
                 .build();
     }
 }
