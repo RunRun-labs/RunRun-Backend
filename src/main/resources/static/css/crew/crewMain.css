@@ -17,7 +17,6 @@
 html,
 body {
     margin: 0;
-    height: 100%;
 }
 
 body {
@@ -26,18 +25,17 @@ body {
     color: var(--text-strong);
     display: flex;
     justify-content: center;
-    overflow: hidden;
 }
 
 .page {
     position: relative;
     width: min(420px, 100vw);
     margin: 0 auto;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
     background: #fff;
+    padding-bottom: 76px;
 }
 
 /* Top Navigation */
@@ -93,13 +91,11 @@ body {
 /* Main Content */
 .crew-main-content {
     flex: 1;
-    overflow-y: auto;
     padding: 20px 35px;
     display: flex;
     flex-direction: column;
     gap: 30px;
-    padding-bottom: 100px;
-    -webkit-overflow-scrolling: touch;
+    padding-bottom: 40px;
 }
 
 /* Section Title */
@@ -243,8 +239,12 @@ body {
 
 /* Responsive Design */
 @media (max-width: 480px) {
+    .page {
+        padding-bottom: 68px;
+    }
+
     .crew-main-content {
-        padding: 16px 20px 100px;
+        padding: 16px 20px 40px;
         gap: 24px;
     }
 
@@ -298,12 +298,13 @@ body {
     .page {
         max-width: 960px;
         width: 100%;
+        padding-bottom: 82px;
     }
 
     .crew-main-content {
         max-width: 960px;
         margin: 0 auto;
-        padding: 32px 48px 140px;
+        padding: 32px 48px 40px;
     }
 
     .top-nav {

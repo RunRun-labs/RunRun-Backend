@@ -5,7 +5,10 @@ import com.multi.runrunbackend.domain.feed.entity.FeedPost;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,5 +29,10 @@ public interface FeedCommentRepository extends JpaRepository<FeedComment, Long> 
             FeedPost feedPost,
             Pageable pageable
     );
+
+    // ✅ 같은 피드에 댓글을 단 사람들의 userId 목록 조회 (중복 제거)
+    @Query("SELECT DISTINCT fc.user.id FROM FeedComment fc " +
+           "WHERE fc.feedPost = :feedPost AND fc.isDeleted = false")
+    List<Long> findDistinctUserIdsByFeedPost(@Param("feedPost") FeedPost feedPost);
 
 }

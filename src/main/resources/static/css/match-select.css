@@ -16,7 +16,6 @@
 html,
 body {
   margin: 0;
-  height: 100%;
 }
 
 body {
@@ -31,18 +30,16 @@ body {
   color: var(--text-strong);
   display: flex;
   justify-content: center;
-  overflow: hidden;
 }
 
 .page {
   position: relative;
   width: min(420px, 100vw);
   margin: 0 auto;
-  height: 100vh;
+  min-height: 100vh;
   padding: 0 20px 96px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .header {
@@ -332,7 +329,7 @@ body {
   .page {
     max-width: 960px;
     width: 100%;
-    padding: 0 32px 140px;
+    padding: 0 32px 100px;
   }
 
   .match-buttons {

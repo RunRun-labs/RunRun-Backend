@@ -1,9 +1,11 @@
 package com.multi.runrunbackend.domain.crew.service;
 
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.chat.service.RedisPublisher;
+import com.multi.runrunbackend.domain.crew.constant.CrewRole;
 import com.multi.runrunbackend.domain.crew.document.CrewChatMessage;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewChatMessageDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewChatNoticeReqDto;
@@ -14,11 +16,12 @@ import com.multi.runrunbackend.domain.crew.entity.CrewChatNotice;
 import com.multi.runrunbackend.domain.crew.entity.CrewChatRoom;
 import com.multi.runrunbackend.domain.crew.entity.CrewChatUser;
 import com.multi.runrunbackend.domain.crew.entity.CrewUser;
-import com.multi.runrunbackend.domain.crew.constant.CrewRole;
-import com.multi.runrunbackend.common.exception.custom.BusinessException;
 import com.multi.runrunbackend.domain.crew.repository.CrewChatMessageRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewChatRoomRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewChatUserRepository;
+import com.multi.runrunbackend.domain.notification.constant.NotificationType;
+import com.multi.runrunbackend.domain.notification.constant.RelatedType;
+import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.time.LocalDateTime;
@@ -29,6 +32,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -49,6 +53,7 @@ public class CrewChatService {
   private final UserRepository userRepository;
   private final com.multi.runrunbackend.domain.crew.repository.CrewUserRepository crewUserRepository;  // ⭐ 추가
   private final com.multi.runrunbackend.domain.crew.repository.CrewChatNoticeRepository chatNoticeRepository;
+  private final NotificationService notificationService;
 
 
   /**
@@ -79,6 +84,9 @@ public class CrewChatService {
    * 메시지 전송 (MongoDB 저장 + Redis Pub/Sub 발행)
    */
   public void sendMessage(CrewChatMessageDto messageDto) {
+    // 현재 시간 설정
+    LocalDateTime now = LocalDateTime.now();
+    
     // MongoDB에 저장
     CrewChatMessage chatMessage = CrewChatMessage.builder()
         .roomId(messageDto.getRoomId())
@@ -86,17 +94,18 @@ public class CrewChatService {
         .senderName(messageDto.getSenderName())
         .content(messageDto.getContent())
         .messageType(messageDto.getMessageType())
-        .createdAt(LocalDateTime.now())
+        .createdAt(now)
         .build();
 
     chatMessageRepository.save(chatMessage);
 
-    // Redis Pub/Sub으로 발행
+    // DTO에 시간 설정 후 Redis Pub/Sub으로 발행
+    messageDto.setCreatedAt(now);
     String channel = "crew-chat:" + messageDto.getRoomId();
-    redisPublisher.publishObject(channel, messageDto);  // publishObject 사용
+    redisPublisher.publishObject(channel, messageDto);
 
-    log.info("크루 메시지 전송: roomId={}, sender={}", messageDto.getRoomId(),
-        messageDto.getSenderName());
+    log.info("크루 메시지 전송: roomId={}, sender={}, createdAt={}", 
+        messageDto.getRoomId(), messageDto.getSenderName(), now);
   }
 
   /**
@@ -130,21 +139,50 @@ public class CrewChatService {
   }
 
   /**
+   * ✅ 크루 역할 변경 시스템 메시지 전송
+   */
+  public void sendRoleChangeMessage(Long roomId, String userName, String roleName) {
+    CrewChatMessageDto systemMessage = CrewChatMessageDto.builder()
+        .roomId(roomId)
+        .senderName("SYSTEM")
+        .content(userName + "님이 " + roleName + "으로 임명되었습니다.")
+        .messageType("SYSTEM")
+        .build();
+
+    sendMessage(systemMessage);
+    log.info("크루 역할 변경 시스템 메시지 전송: roomId={}, userName={}, roleName={}", 
+        roomId, userName, roleName);
+  }
+
+  /**
+   * ✅ crewId로 역할 변경 시스템 메시지 전송
+   * 별도 트랜잭션으로 실행하여 메시지 전송 실패 시에도 역할 변경은 정상 처리
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void sendRoleChangeMessageByCrewId(Long crewId, String userName, String roleName) {
+    // 크루의 채팅방 조회
+    CrewChatRoom chatRoom = chatRoomRepository.findByCrewId(crewId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+    
+    sendRoleChangeMessage(chatRoom.getId(), userName, roleName);
+  }
+
+  /**
    * 과거 메시지 조회 (가입 시점 이후 메시지만 조회)
    */
   @Transactional(readOnly = true)
   public List<CrewChatMessage> getMessages(Long roomId, CustomUser principal) {
     User user = getUserFromPrincipal(principal);
-    
+
     // 사용자의 채팅방 가입 시점 조회
     CrewChatUser chatUser = chatUserRepository.findByRoomIdAndUserId(roomId, user.getId())
         .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_CREW_USER));
-    
+
     LocalDateTime joinedAt = chatUser.getCreatedAt();
-    
-    log.info("크루 메시지 조회: roomId={}, userId={}, joinedAt={}", 
+
+    log.info("크루 메시지 조회: roomId={}, userId={}, joinedAt={}",
         roomId, user.getId(), joinedAt);
-    
+
     // 가입 시점 이후 메시지만 조회
     return chatMessageRepository.findByRoomIdAndCreatedAtAfterOrderByCreatedAtAsc(roomId, joinedAt);
   }
@@ -160,7 +198,7 @@ public class CrewChatService {
     if (chatUsers.isEmpty()) {
       return List.of();
     }
-    
+
     Long crewId = chatUsers.get(0).getRoom().getCrew().getId();
 
     return chatUsers.stream()
@@ -169,13 +207,13 @@ public class CrewChatService {
           User user = cu.getUser();
           map.put("userId", user.getId());
           map.put("name", user.getName());
-          
+
           // ⭐ 크루 역할 조회
           crewUserRepository.findByCrewIdAndUserIdAndIsDeletedFalse(crewId, user.getId())
               .ifPresent(crewUser -> {
                 map.put("role", crewUser.getRole().name());
               });
-          
+
           return map;
         })
         .collect(Collectors.toList());
@@ -221,9 +259,15 @@ public class CrewChatService {
           LocalDateTime timeA = a.getLastMessageTime();
           LocalDateTime timeB = b.getLastMessageTime();
 
-          if (timeA == null && timeB == null) return 0;
-          if (timeA == null) return 1;
-          if (timeB == null) return -1;
+          if (timeA == null && timeB == null) {
+            return 0;
+          }
+          if (timeA == null) {
+            return 1;
+          }
+          if (timeB == null) {
+            return -1;
+          }
 
           return timeB.compareTo(timeA);
         })
@@ -320,7 +364,7 @@ public class CrewChatService {
 
               log.info("채팅방 참여자 추가 완료: roomId={}, userId={}",
                   chatRoom.getId(), user.getId());
-              
+
               // ⭐ 크루 가입 시스템 메시지 전송
               sendJoinMessage(chatRoom.getId(), user.getName());
             }
@@ -344,7 +388,7 @@ public class CrewChatService {
     if (chatUser != null) {
       // ⭐ 탈퇴 시스템 메시지 전송 (delete 전에 호출)
       sendLeaveMessage(chatRoom.getId(), user.getName());
-      
+
       // Soft delete 처리 (BaseEntity의 isDeleted 사용)
       chatUserRepository.delete(chatUser);
 
@@ -361,11 +405,11 @@ public class CrewChatService {
     // 크루의 채팅방 조회
     chatRoomRepository.findByCrewId(crewId).ifPresent(chatRoom -> {
       Long roomId = chatRoom.getId();
-      
+
       // 1. MongoDB 채팅 메시지 삭제
       chatMessageRepository.deleteByRoomId(roomId);
       log.info("채팅 메시지 삭제 완료: roomId={}", roomId);
-      
+
       // 2. 모든 참여자 제거
       List<CrewChatUser> chatUsers = chatUserRepository.findActiveUsersByRoomId(roomId);
       chatUserRepository.deleteAll(chatUsers);
@@ -385,26 +429,58 @@ public class CrewChatService {
    * 공지사항 작성
    */
   @Transactional
-  public CrewChatNoticeResDto createNotice(Long roomId, CustomUser principal, CrewChatNoticeReqDto reqDto) {
+  public CrewChatNoticeResDto createNotice(Long roomId, CustomUser principal,
+      CrewChatNoticeReqDto reqDto) {
     User user = getUserFromPrincipal(principal);
-    
+
     // 채팅방 조회
     CrewChatRoom chatRoom = chatRoomRepository.findById(roomId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.CHAT_ROOM_NOT_FOUND));
-    
+
     // 권한 검증: STAFF 이상
     validateStaffOrAbove(chatRoom.getCrew().getId(), user.getId());
-    
+
     // 공지사항 생성
     CrewChatNotice notice = CrewChatNotice.create(chatRoom, user, reqDto.getContent());
     chatNoticeRepository.save(notice);
-    
+
     // WebSocket으로 실시간 알림
     sendNoticeMessage(roomId, "NOTICE_CREATED", user.getName());
-    
-    log.info("공지사항 작성 완료: roomId={}, userId={}, noticeId={}", 
+
+    try {
+      Crew crew = chatRoom.getCrew();
+      List<CrewUser> allMembers = crewUserRepository
+          .findByCrewAndIsDeletedFalse(crew);
+
+      String message = "새로운 공지사항이 등록되었습니다.";
+
+      for (CrewUser member : allMembers) {
+        try {
+          notificationService.create(
+              member.getUser(),
+              "크루 채팅 공지사항",
+              message,
+              NotificationType.CREW,
+              RelatedType.CREW_CHAT_ROOM,
+              roomId
+          );
+          log.debug("크루 채팅 공지사항 알림 발송 완료 - roomId: {}, receiverId: {}",
+              roomId, member.getUser().getId());
+        } catch (Exception e) {
+          log.error("크루 채팅 공지사항 알림 생성 실패 - roomId: {}, receiverId: {}",
+              roomId, member.getUser().getId(), e);
+        }
+      }
+      log.info("크루원 전체에게 공지사항 알림 발송 완료 - roomId: {}, crewId: {}, totalMembers: {}",
+          roomId, crew.getId(), allMembers.size());
+    } catch (Exception e) {
+      log.error("크루원 전체 알림 발송 중 오류 발생 - roomId: {}",
+          roomId, e);
+    }
+
+    log.info("공지사항 작성 완료: roomId={}, userId={}, noticeId={}",
         roomId, user.getId(), notice.getId());
-    
+
     return CrewChatNoticeResDto.fromEntity(notice);
   }
 
@@ -415,7 +491,7 @@ public class CrewChatService {
   public List<CrewChatNoticeResDto> getNotices(Long roomId) {
     List<CrewChatNotice> notices = chatNoticeRepository
         .findByRoomIdAndIsDeletedFalseOrderByCreatedAtDesc(roomId);
-    
+
     return notices.stream()
         .map(CrewChatNoticeResDto::fromEntity)
         .collect(Collectors.toList());
@@ -425,27 +501,28 @@ public class CrewChatService {
    * 공지사항 수정
    */
   @Transactional
-  public CrewChatNoticeResDto updateNotice(Long noticeId, CustomUser principal, CrewChatNoticeReqDto reqDto) {
+  public CrewChatNoticeResDto updateNotice(Long noticeId, CustomUser principal,
+      CrewChatNoticeReqDto reqDto) {
     User user = getUserFromPrincipal(principal);
-    
+
     // 공지사항 조회
     CrewChatNotice notice = chatNoticeRepository.findById(noticeId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.NOTICE_NOT_FOUND));
-    
+
     // 권한 검증: 작성자 본인 또는 STAFF 이상
     Long crewId = notice.getRoom().getCrew().getId();
     if (!notice.getCreatedBy().getId().equals(user.getId())) {
       validateStaffOrAbove(crewId, user.getId());
     }
-    
+
     // 공지사항 수정
     notice.update(reqDto.getContent());
-    
+
     // WebSocket으로 실시간 알림
     sendNoticeMessage(notice.getRoom().getId(), "NOTICE_UPDATED", user.getName());
-    
+
     log.info("공지사항 수정 완료: noticeId={}, userId={}", noticeId, user.getId());
-    
+
     return CrewChatNoticeResDto.fromEntity(notice);
   }
 
@@ -455,24 +532,24 @@ public class CrewChatService {
   @Transactional
   public void deleteNotice(Long noticeId, CustomUser principal) {
     User user = getUserFromPrincipal(principal);
-    
+
     // 공지사항 조회
     CrewChatNotice notice = chatNoticeRepository.findById(noticeId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.NOTICE_NOT_FOUND));
-    
+
     // 권한 검증: 작성자 본인 또는 STAFF 이상
     Long crewId = notice.getRoom().getCrew().getId();
     Long roomId = notice.getRoom().getId();
     if (!notice.getCreatedBy().getId().equals(user.getId())) {
       validateStaffOrAbove(crewId, user.getId());
     }
-    
+
     // Soft delete
     chatNoticeRepository.delete(notice);
-    
+
     // WebSocket으로 실시간 알림
     sendNoticeMessage(roomId, "NOTICE_DELETED", user.getName());
-    
+
     log.info("공지사항 삭제 완료: noticeId={}, userId={}", noticeId, user.getId());
   }
 
@@ -483,7 +560,7 @@ public class CrewChatService {
     CrewUser crewUser = crewUserRepository
         .findByCrewIdAndUserIdAndIsDeletedFalse(crewId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CREW_USER));
-    
+
     CrewRole role = crewUser.getRole();
     if (role != CrewRole.LEADER && role != CrewRole.SUB_LEADER && role != CrewRole.STAFF) {
       throw new BusinessException(ErrorCode.INSUFFICIENT_PERMISSION);

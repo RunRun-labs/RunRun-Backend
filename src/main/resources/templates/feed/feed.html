@@ -18,6 +18,8 @@
             href="/css/feed.css"
             th:href="@{/css/feed.css}"
     />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
 </head>
 <body class="feed-body">
 <main class="page feed-page">
@@ -40,9 +42,11 @@
         <div class="empty-text-small">피드가 없습니다.</div>
     </div>
 
-    <!-- 나의 런 공유하기 버튼 (고정 위치) -->
-    <button class="share-run-button" id="shareRunButton" type="button">
-        나의 런 공유하기
+    <!-- 피드 게시물 생성 버튼 (FAB) -->
+    <button class="fab-button" id="shareRunButton" type="button" aria-label="피드 게시물 생성">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
     </button>
 </main>
 
@@ -63,6 +67,7 @@
         th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/feed.js" th:src="@{/js/feed.js}"></script>
 </body>
 </html>

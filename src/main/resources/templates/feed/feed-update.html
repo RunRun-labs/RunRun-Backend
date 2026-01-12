@@ -18,6 +18,8 @@
             href="/css/feed-create.css"
             th:href="@{/css/feed-create.css}"
     />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
 </head>
 <body class="feed-create-body">
 <main class="page feed-create-page">
@@ -89,6 +91,7 @@
         th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/feed-update.js" th:src="@{/js/feed-update.js}"></script>
 </body>
 </html>

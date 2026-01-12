@@ -14,6 +14,8 @@
       rel="stylesheet"
   />
   <link rel="stylesheet" href="/css/match-waiting.css" th:href="@{/css/match-waiting.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
   
   <!-- WebSocket Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
@@ -34,7 +36,7 @@
         <div class="match-badge">
           <span class="badge-text">⚡ 매칭 완료</span>
         </div>
-        <h1 class="challenge-title">5KM 스피드 대결</h1>
+        <h1 class="challenge-title" id="challenge-title">로딩 중...</h1>
         <p class="challenge-subtitle">모든 참가자가 준비되면 시작됩니다</p>
       </div>
     </header>
@@ -115,6 +117,7 @@
   // MY_USER_ID는 JavaScript에서 myUserId로 설정됨
 </script>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/match-waiting.js" th:src="@{/js/match-waiting.js}"></script>
 </body>
 </html>

@@ -1,6 +1,10 @@
 package com.multi.runrunbackend.domain.payment.service;
 
-import com.multi.runrunbackend.common.exception.custom.*;
+import com.multi.runrunbackend.common.exception.custom.BadRequestException;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.custom.ExternalApiException;
+import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
+import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.coupon.constant.CouponBenefitType;
@@ -10,25 +14,35 @@ import com.multi.runrunbackend.domain.coupon.service.CouponIssueService;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.entity.Membership;
 import com.multi.runrunbackend.domain.membership.repository.MembershipRepository;
+import com.multi.runrunbackend.domain.notification.constant.NotificationType;
+import com.multi.runrunbackend.domain.notification.constant.RelatedType;
+import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.payment.client.TossPaymentClient;
 import com.multi.runrunbackend.domain.payment.constant.PaymentMethod;
 import com.multi.runrunbackend.domain.payment.constant.PaymentStatus;
-import com.multi.runrunbackend.domain.payment.dto.req.*;
-import com.multi.runrunbackend.domain.payment.dto.res.*;
+import com.multi.runrunbackend.domain.payment.dto.req.BillingFirstPaymentConfirmReqDto;
+import com.multi.runrunbackend.domain.payment.dto.req.PaymentApproveReqDto;
+import com.multi.runrunbackend.domain.payment.dto.req.PaymentRequestReqDto;
+import com.multi.runrunbackend.domain.payment.dto.req.TossBillingKeyIssueReqDto;
+import com.multi.runrunbackend.domain.payment.dto.req.TossBillingPaymentReqDto;
+import com.multi.runrunbackend.domain.payment.dto.res.PaymentApproveResDto;
+import com.multi.runrunbackend.domain.payment.dto.res.PaymentHistoryResDto;
+import com.multi.runrunbackend.domain.payment.dto.res.PaymentRequestResDto;
+import com.multi.runrunbackend.domain.payment.dto.res.TossBillingKeyResDto;
+import com.multi.runrunbackend.domain.payment.dto.res.TossPaymentResDto;
 import com.multi.runrunbackend.domain.payment.entity.Payment;
 import com.multi.runrunbackend.domain.payment.repository.PaymentRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * @author : BoKyung
@@ -49,6 +63,7 @@ public class PaymentService {
     private final MembershipRepository membershipRepository;
     private final TossPaymentClient tossPaymentClient;
     private final CouponIssueService couponIssueService;
+    private final NotificationService notificationService;
 
     /**
      * @description : 결제 요청 생성
@@ -103,7 +118,7 @@ public class PaymentService {
 
         // 주문 ID 생성
         String orderId = "ORDER_" + UUID.randomUUID().toString();
-        
+
         // 프리미엄 가격 = 9900원 고정
         Integer originalAmount = PREMIUM_MONTHLY_PRICE;
 
@@ -375,8 +390,24 @@ public class PaymentService {
 
             log.info("자동결제 성공 - userId: {}, amount: {}원", user.getId(), originalAmount);
 
-        } catch (Exception e) {
-            payment.fail();
+      try {
+        notificationService.create(
+            user,
+            "멤버십 자동결제 완료",
+            "멤버십 자동결제가 완료되었습니다.",
+            NotificationType.MEMBERSHIP,
+            RelatedType.MEMBERSHIP,
+            membership.getId()
+        );
+        log.info("자동결제 성공 알림 발송 완료 - userId: {}, membershipId: {}",
+            user.getId(), membership.getId());
+      } catch (Exception notifyEx) {
+        log.error("자동결제 성공 알림 발송 실패 - userId: {}, membershipId: {}",
+            user.getId(), membership.getId(), notifyEx);
+      }
+
+    } catch (Exception e) {
+      payment.fail();
 
             // 멤버십 만료 처리
             membership.expire();

@@ -47,4 +47,6 @@ public class FeedLike extends BaseSoftDeleteEntity {
         like.user = user;
         return like;
     }
+
+   
 }
