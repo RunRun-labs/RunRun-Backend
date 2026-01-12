@@ -95,8 +95,7 @@ function attachMenuHandlers() {
     // TTS 설정
     if (ttsSettingsBtn) {
         ttsSettingsBtn.addEventListener("click", () => {
-            // TODO: TTS 설정 페이지로 이동
-            alert("TTS 설정 기능은 준비 중입니다.");
+            openTtsSettingsModal();
         });
     }
 
@@ -234,6 +233,42 @@ function attachMenuHandlers() {
         saveVisibilitySettingsBtn.addEventListener("click", async () => {
             await saveProfileVisibilitySettings();
         });
+    }
+
+    // TTS 설정 저장
+    const saveTtsSettingsBtn = document.querySelector('[data-role="save-tts-settings"]');
+    if (saveTtsSettingsBtn) {
+        saveTtsSettingsBtn.addEventListener("click", async () => {
+            await saveTtsSettings();
+        });
+    }
+
+    // TTS 설정 모달 닫기
+    const ttsSettingsModalCloseBtn = document.querySelector('[data-role="close-tts-settings-modal"]');
+    if (ttsSettingsModalCloseBtn) {
+        ttsSettingsModalCloseBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeTtsSettingsModal();
+        });
+    }
+
+    // TTS 설정 모달 배경 클릭 시 닫기
+    const ttsSettingsModalOverlay = document.querySelector('[data-role="tts-settings-modal"]');
+    if (ttsSettingsModalOverlay) {
+        ttsSettingsModalOverlay.addEventListener("click", (e) => {
+            if (e.target === ttsSettingsModalOverlay) {
+                closeTtsSettingsModal();
+            }
+        });
+
+        // 모달 콘텐츠 클릭 시 닫히지 않도록
+        const ttsSettingsModalContent = ttsSettingsModalOverlay.querySelector(".modal-content");
+        if (ttsSettingsModalContent) {
+            ttsSettingsModalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+        }
     }
 
     // 공개 범위 설정 모달 닫기
@@ -533,6 +568,150 @@ async function saveProfileVisibilitySettings() {
         console.error("Failed to save profile visibility settings:", error);
         alert(error.message || "설정 저장 중 오류가 발생했습니다.");
     }
+}
+
+// TTS 설정 모달 열기
+async function openTtsSettingsModal() {
+    const modal = document.querySelector('[data-role="tts-settings-modal"]');
+    if (modal) {
+        modal.removeAttribute("hidden");
+        document.body.style.overflow = "hidden";
+        await loadTtsVoicePacks();
+    }
+}
+
+// TTS 설정 모달 닫기
+function closeTtsSettingsModal() {
+    const modal = document.querySelector('[data-role="tts-settings-modal"]');
+    if (modal) {
+        modal.setAttribute("hidden", "hidden");
+        document.body.style.overflow = "";
+    }
+}
+
+// TTS 보이스팩 목록 로드
+async function loadTtsVoicePacks() {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            window.location.href = "/login";
+            return;
+        }
+
+        // 보이스팩 목록과 현재 선택된 보이스팩 동시에 로드
+        const [voicePacksResponse, myVoicePackResponse] = await Promise.all([
+            fetch("/api/tts/voice-packs", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }),
+            fetch("/api/tts/me/voice-pack", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            })
+        ]);
+
+        if (!voicePacksResponse.ok || !myVoicePackResponse.ok) {
+            throw new Error("보이스팩 목록 조회 실패");
+        }
+
+        const voicePacksResult = await voicePacksResponse.json();
+        const myVoicePackResult = await myVoicePackResponse.json();
+
+        const voicePacks = voicePacksResult?.data || [];
+        const myVoicePack = myVoicePackResult?.data;
+
+        const voicePackListContainer = document.getElementById("ttsVoicePackList");
+        if (!voicePackListContainer) return;
+
+        if (voicePacks.length === 0) {
+            voicePackListContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">보이스팩이 없습니다.</p>';
+            return;
+        }
+
+        const currentVoicePackId = myVoicePack?.voicePackId || null;
+
+        voicePackListContainer.innerHTML = voicePacks.map(pack => {
+            const isChecked = currentVoicePackId === pack.id;
+            return `
+                <label class="radio-option-item">
+                    <input type="radio" name="ttsVoicePack" value="${pack.id}" ${isChecked ? "checked" : ""} data-role="tts-voice-pack-${pack.id}"/>
+                    <span class="radio-option-label">${escapeHtml(pack.displayName || pack.voiceType || "-")}</span>
+                    <span class="radio-checkmark"></span>
+                </label>
+            `;
+        }).join("");
+    } catch (error) {
+        console.error("Failed to load TTS voice packs:", error);
+        const voicePackListContainer = document.getElementById("ttsVoicePackList");
+        if (voicePackListContainer) {
+            voicePackListContainer.innerHTML = '<p style="text-align: center; color: var(--error); padding: 20px;">보이스팩 목록을 불러올 수 없습니다.</p>';
+        }
+    }
+}
+
+// TTS 설정 저장
+async function saveTtsSettings() {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            window.location.href = "/login";
+            return;
+        }
+
+        const selectedRadio = document.querySelector('input[name="ttsVoicePack"]:checked');
+        if (!selectedRadio) {
+            alert("보이스팩을 선택해주세요.");
+            return;
+        }
+
+        const voicePackId = parseInt(selectedRadio.value, 10);
+
+        const saveBtn = document.querySelector('[data-role="save-tts-settings"]');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = "저장 중...";
+        }
+
+        const response = await fetch("/api/tts/me/voice-pack", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                voicePackId: voicePackId
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error?.message || "설정 저장 실패");
+        }
+
+        alert("설정이 저장되었습니다.");
+        closeTtsSettingsModal();
+    } catch (error) {
+        console.error("Failed to save TTS settings:", error);
+        alert(error.message || "설정 저장 중 오류가 발생했습니다.");
+    } finally {
+        const saveBtn = document.querySelector('[data-role="save-tts-settings"]');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "저장";
+        }
+    }
+}
+
+// HTML 이스케이프 함수
+function escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // 로그아웃 처리

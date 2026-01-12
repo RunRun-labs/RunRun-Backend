@@ -1351,8 +1351,28 @@ function displayMessage(message, isPrevious = false) {
       // 아바타
       const avatar = document.createElement("div");
       avatar.className = "message-avatar";
-      avatar.innerHTML =
-        '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
+      
+      // ✅ participantsList에서 프로필 이미지 찾기
+      const participant = participantsList.find(p => p.userId == message.senderId);
+      const profileImage = participant?.profileImage;
+      
+      if (profileImage) {
+        const img = document.createElement('img');
+        img.src = profileImage;
+        img.alt = message.senderName;
+        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+        
+        // 이미지 로드 실패 시 기본 아이콘으로 대체
+        img.onerror = function() {
+          avatar.innerHTML = '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
+        };
+        
+        avatar.appendChild(img);
+      } else {
+        avatar.innerHTML =
+          '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
+      }
+      
       messageItem.appendChild(avatar);
     }
 
@@ -1846,18 +1866,20 @@ function renderParticipantList() {
         '<svg class="participant-avatar-icon" width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 0C4.925 0 0 4.925 0 11C0 17.075 4.925 22 11 22C17.075 22 22 17.075 22 11C22 4.925 17.075 0 11 0Z" fill="#E5E7EB"/></svg>';
     }
 
-    // 준비 상태 배지
-    const statusBadge = document.createElement("div");
-    statusBadge.className = "participant-status-badge";
-    if (!isReady) {
-      statusBadge.classList.add("waiting");
-    } else {
-      statusBadge.innerHTML =
-        '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.33333 2.5L3.75 7.08333L1.66667 5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    // 준비 상태 배지 (러닝 시작 전에만 표시)
+    if (currentSession?.status !== "IN_PROGRESS") {
+      const statusBadge = document.createElement("div");
+      statusBadge.className = "participant-status-badge";
+      if (!isReady) {
+        statusBadge.classList.add("waiting");
+      } else {
+        statusBadge.innerHTML =
+          '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.33333 2.5L3.75 7.08333L1.66667 5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      }
+      avatarWrapper.appendChild(statusBadge);
     }
 
     avatarWrapper.appendChild(avatar);
-    avatarWrapper.appendChild(statusBadge);
 
     // 참여자 정보
     const info = document.createElement("div");
@@ -1902,18 +1924,21 @@ function renderParticipantList() {
     const rightSection = document.createElement("div");
     rightSection.className = "participant-right-section";
 
-    const readyStatus = document.createElement("div");
-    readyStatus.className = "participant-ready-status";
-    const readyText = document.createElement("span");
-    readyText.className = "participant-ready-text";
-    if (!isReady) {
-      readyText.classList.add("waiting");
-      readyText.textContent = "대기중";
-    } else {
-      readyText.textContent = "준비완료";
+    // 준비 상태 표시 (러닝 시작 전에만 표시)
+    if (currentSession?.status !== "IN_PROGRESS") {
+      const readyStatus = document.createElement("div");
+      readyStatus.className = "participant-ready-status";
+      const readyText = document.createElement("span");
+      readyText.className = "participant-ready-text";
+      if (!isReady) {
+        readyText.classList.add("waiting");
+        readyText.textContent = "대기중";
+      } else {
+        readyText.textContent = "준비완료";
+      }
+      readyStatus.appendChild(readyText);
+      rightSection.appendChild(readyStatus);
     }
-    readyStatus.appendChild(readyText);
-    rightSection.appendChild(readyStatus);
 
     // 강퇴 버튼 (방장이고, 자기 자신이 아닌 경우만)
     if (isHost && !isCurrentUser) {

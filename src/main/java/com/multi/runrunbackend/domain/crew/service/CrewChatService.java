@@ -11,11 +11,7 @@ import com.multi.runrunbackend.domain.crew.dto.req.CrewChatMessageDto;
 import com.multi.runrunbackend.domain.crew.dto.req.CrewChatNoticeReqDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewChatNoticeResDto;
 import com.multi.runrunbackend.domain.crew.dto.res.CrewChatRoomListResDto;
-import com.multi.runrunbackend.domain.crew.entity.Crew;
-import com.multi.runrunbackend.domain.crew.entity.CrewChatNotice;
-import com.multi.runrunbackend.domain.crew.entity.CrewChatRoom;
-import com.multi.runrunbackend.domain.crew.entity.CrewChatUser;
-import com.multi.runrunbackend.domain.crew.entity.CrewUser;
+import com.multi.runrunbackend.domain.crew.entity.*;
 import com.multi.runrunbackend.domain.crew.repository.CrewChatMessageRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewChatRoomRepository;
 import com.multi.runrunbackend.domain.crew.repository.CrewChatUserRepository;
@@ -24,6 +20,11 @@ import com.multi.runrunbackend.domain.notification.constant.RelatedType;
 import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +55,7 @@ public class CrewChatService {
   private final com.multi.runrunbackend.domain.crew.repository.CrewUserRepository crewUserRepository;  // ⭐ 추가
   private final com.multi.runrunbackend.domain.crew.repository.CrewChatNoticeRepository chatNoticeRepository;
   private final NotificationService notificationService;
+  private final com.multi.runrunbackend.common.file.storage.FileStorage s3FileStorage;  // ✅ S3 파일 스토리지 추가
 
 
   /**
@@ -155,8 +157,7 @@ public class CrewChatService {
   }
 
   /**
-   * ✅ crewId로 역할 변경 시스템 메시지 전송
-   * 별도 트랜잭션으로 실행하여 메시지 전송 실패 시에도 역할 변경은 정상 처리
+   * ✅ crewId로 역할 변경 시스템 메시지 전송 별도 트랜잭션으로 실행하여 메시지 전송 실패 시에도 역할 변경은 정상 처리
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void sendRoleChangeMessageByCrewId(Long crewId, String userName, String roleName) {
@@ -207,6 +208,7 @@ public class CrewChatService {
           User user = cu.getUser();
           map.put("userId", user.getId());
           map.put("name", user.getName());
+          map.put("profileImage", user.getProfileImageUrl());  // ⭐ 프로필 이미지 추가
 
           // ⭐ 크루 역할 조회
           crewUserRepository.findByCrewIdAndUserIdAndIsDeletedFalse(crewId, user.getId())
@@ -284,6 +286,14 @@ public class CrewChatService {
     CrewChatRoom room = chatUser.getRoom();
     Crew crew = room.getCrew();
 
+    // ✅ S3 키 → HTTPS URL 변환
+    String httpsImageUrl = (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
+        ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
+        : "";
+
+    log.info("✅ 크루 채팅방 DTO 변환: crewId={}, crewName={}, S3키={}, HTTPS URL={}",
+        crew.getId(), crew.getCrewName(), crew.getCrewImageUrl(), httpsImageUrl);
+
     // 참가자 수 조회
     Long currentMembers = chatUserRepository.countActiveUsersByRoomId(room.getId());
 
@@ -294,18 +304,23 @@ public class CrewChatService {
     // 읽지 않은 메시지 개수 계산 (TODO: lastReadAt 필드 추가 후 구현)
     int unreadCount = 0;
 
-    return CrewChatRoomListResDto.builder()
+    CrewChatRoomListResDto dto = CrewChatRoomListResDto.builder()
         .roomId(room.getId())
         .roomName(room.getCrewRoomName())
         .crewId(crew.getId())
         .crewName(crew.getCrewName())
         .crewDescription(crew.getCrewDescription())
+        .crewImageUrl(httpsImageUrl)  // ✅ HTTPS URL 사용
         .currentMembers(currentMembers.intValue())
         .lastMessageContent(lastMessage != null ? lastMessage.getContent() : null)
         .lastMessageSender(lastMessage != null ? lastMessage.getSenderName() : null)
         .lastMessageTime(lastMessage != null ? lastMessage.getCreatedAt() : null)
         .unreadCount(unreadCount)
         .build();
+
+    log.info("✅ DTO 변환 완료: roomId={}, crewImageUrl={}", dto.getRoomId(), dto.getCrewImageUrl());
+
+    return dto;
   }
 
   // ============================================
@@ -410,9 +425,9 @@ public class CrewChatService {
       chatMessageRepository.deleteByRoomId(roomId);
       log.info("채팅 메시지 삭제 완료: roomId={}", roomId);
 
-      // 2. 모든 참여자 제거
-      List<CrewChatUser> chatUsers = chatUserRepository.findActiveUsersByRoomId(roomId);
-      chatUserRepository.deleteAll(chatUsers);
+            // 2. 모든 참여자 제거
+            chatUserRepository.deleteByRoomId(roomId);
+            log.info("채팅방 참여자 삭제 완료: roomId={}", roomId);
 
       // 3. 채팅방 삭제
       chatRoomRepository.delete(chatRoom);

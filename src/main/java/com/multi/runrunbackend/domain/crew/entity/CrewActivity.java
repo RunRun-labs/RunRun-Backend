@@ -51,4 +51,19 @@ public class CrewActivity extends BaseEntity {
         return activity;
     }
 
+    /**
+     * @description : 활동 정보 수정
+     */
+    public void update(String region, Integer distance) {
+        this.region = region;
+        this.distance = distance;
+    }
+
+    /**
+     * @description : updateParticipationCnt - 참여 인원 수 업데이트
+     */
+    public void updateParticipationCnt(Integer participationCnt) {
+        this.participationCnt = participationCnt;
+    }
+
 }

@@ -120,7 +120,8 @@ public class PathController {
     }
 
     @GetMapping("/crews/{crewId}")
-    public String crewDetailPage() {
+    public String crewDetailPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
         return "crew/crewDetailList";
     }
 
@@ -240,7 +241,6 @@ public class PathController {
         return "challenge/challenge-end";
     }
 
-    /* ===================== COURSE ===================== */
 
     @GetMapping("/course_auto")
     public String courseAutoView() {
@@ -326,9 +326,27 @@ public class PathController {
         return "point/pointShop";
     }
 
+
+
+    /* ===================== ADMIN POINT PRODUCT ===================== */
+
     @GetMapping("/admin/points/products")
-    public String pointProductAdminView() {
-        return "point/pointAdmin";
+    public String adminPointProductListView() {
+        return "admin/point-product-list";
+    }
+
+    @GetMapping("/admin/points/products/create")
+    public String adminPointProductCreateView() {
+        return "admin/point-product-create";
+    }
+
+    @GetMapping("/admin/points/products/update/{product_id}")
+    public String adminPointProductUpdateView(
+            @PathVariable(name = "product_id") Long productId,
+            Model model
+    ) {
+        model.addAttribute("productId", productId);
+        return "admin/point-product-update";
     }
 
     /* ===================== ETC ===================== */
@@ -368,7 +386,7 @@ public class PathController {
     public String friendListView() {
         return "friend/friend-list";
     }
-    
+
 
     /* ===================== ADMIN COUPON ===================== */
 
@@ -383,7 +401,8 @@ public class PathController {
     }
 
     @GetMapping("/admin/coupon/update/{coupon_id}")
-    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId, Model model) {
+    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
+                                        Model model) {
         model.addAttribute("couponId", couponId);
         return "admin/coupon-update";
     }
@@ -405,6 +424,15 @@ public class PathController {
     ) {
         model.addAttribute("couponRoleId", couponRoleId);
         return "admin/coupon-role-update";
+    }
+
+    @GetMapping("/admin/coupon/detail/{coupon_id}")
+    public String adminCouponDetailView(
+            @PathVariable(name = "coupon_id") Long couponId,
+            Model model
+    ) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-detail";
     }
 
     @GetMapping("/admin/coupon/select")
@@ -429,4 +457,100 @@ public class PathController {
         model.addAttribute("sessionId", sessionId);
         return "running/running";
     }
+
+    // 광고 슬롯 관리
+    @GetMapping("/admin/ad-slot/inquiry")
+    public String adminAdSlotInquiryView() {
+        return "admin/ad-slot-inquiry";
+    }
+
+    @GetMapping("/admin/ad-slot/create")
+    public String adminAdSlotCreateView() {
+        return "admin/ad-slot-create";
+    }
+
+    @GetMapping("/admin/ad-slot/update/{slot_id}")
+    public String adminAdSlotUpdateView(
+            @PathVariable(name = "slot_id") Long slotId,
+            Model model
+    ) {
+        model.addAttribute("slotId", slotId);
+        return "admin/ad-slot-update";
+    }
+
+    // 광고 관리
+    @GetMapping("/admin/ad/inquiry")
+    public String adminAdInquiryView() {
+        return "admin/ad-inquiry";
+    }
+
+    @GetMapping("/admin/ad/create")
+    public String adminAdCreateView() {
+        return "admin/ad-create";
+    }
+
+    @GetMapping("/admin/ad/update/{ad_id}")
+    public String adminAdUpdateView(
+            @PathVariable(name = "ad_id") Long adId,
+            Model model
+    ) {
+        model.addAttribute("adId", adId);
+        return "admin/ad-update";
+    }
+
+    @GetMapping("/admin/ad/detail/{ad_id}")
+    public String adminAdDetailView(
+            @PathVariable(name = "ad_id") Long adId,
+            Model model
+    ) {
+        model.addAttribute("adId", adId);
+        return "admin/ad-detail";
+    }
+
+    // 광고 배치 관리
+    @GetMapping("/admin/ad-placement/inquiry")
+    public String adminAdPlacementInquiryView() {
+        return "admin/ad-placement-inquiry";
+    }
+
+    @GetMapping("/admin/ad-placement/create")
+    public String adminAdPlacementCreateView() {
+        return "admin/ad-placement-create";
+    }
+
+    @GetMapping("/admin/ad-placement/update/{placement_id}")
+    public String adminAdPlacementUpdateView(
+            @PathVariable(name = "placement_id") Long placementId,
+            Model model
+    ) {
+        model.addAttribute("placementId", placementId);
+        return "admin/ad-placement-update";
+    }
+
+    @GetMapping("/admin/ad-placement/detail/{placement_id}")
+    public String adminAdPlacementDetailView(
+            @PathVariable(name = "placement_id") Long placementId,
+            Model model
+    ) {
+        model.addAttribute("placementId", placementId);
+        return "admin/ad-placement-detail";
+    }
+
+    // 대시보드
+    @GetMapping("/admin/dashboard")
+    public String adminDashboardView() {
+        return "admin/dashboard";
+    }
+
+    // 러닝 통계
+    @GetMapping("/admin/running/stats")
+    public String runningStatsView() {
+        return "admin/running-stats";
+    }
+
+    @GetMapping("/attendance-event")
+    public String attendanceEventPage() {
+        return "attendance/attendance-event";
+    }
 }
+

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RunRun Admin | 광고 배치 상세</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/admin-layout.css"
+      th:href="@{/css/admin-layout.css}"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/ad-placement-detail.css"
+      th:href="@{/css/ad-placement-detail.css}"
+    />
+  </head>
+  <body>
+    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+    <!-- 레이아웃 적용 -->
+    <div th:replace="~{admin/layout :: adminLayout(~{::.ad-placement-detail-content})}">
+      <!-- 컨텐츠 영역 -->
+      <div class="ad-placement-detail-content ad-placement-detail-container">
+        <div class="ad-placement-detail-card">
+          <div class="page-header">
+            <h1 class="page-title">광고 배치 상세</h1>
+            <div style="display: flex; gap: 12px;">
+              <button 
+                type="button" 
+                class="create-button" 
+                onclick="window.location.href='/admin/ad-placement/update/' + placementId"
+              >
+                수정하기
+              </button>
+              <button 
+                type="button" 
+                class="create-button" 
+                style="background: var(--text-secondary);"
+                onclick="window.location.href='/admin/ad-placement/inquiry'"
+              >
+                목록으로
+              </button>
+            </div>
+          </div>
+
+          <!-- 배치 기본 정보 -->
+          <div class="info-section">
+            <h2 class="section-title">기본 정보</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <label class="info-label">슬롯명</label>
+                <div class="info-value" id="slotName">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">슬롯 타입</label>
+                <div class="info-value" id="slotType">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">광고명</label>
+                <div class="info-value" id="adName">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">가중치</label>
+                <div class="info-value" id="weight">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">시작일</label>
+                <div class="info-value" id="startAt">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">종료일</label>
+                <div class="info-value" id="endAt">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">총 노출 수</label>
+                <div class="info-value" id="totalImpressions">0</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">총 클릭 수</label>
+                <div class="info-value" id="totalClicks">0</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">상태</label>
+                <div class="info-value" id="isActive">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 데일리 스텟 필터 -->
+          <div class="stats-section">
+            <div class="stats-header">
+              <h2 class="section-title">일별 통계</h2>
+              <div class="stats-filter">
+                <label class="filter-label">시작일</label>
+                <input type="date" id="fromDate" class="filter-input" />
+                <label class="filter-label">종료일</label>
+                <input type="date" id="toDate" class="filter-input" />
+                <label class="filter-label">정렬</label>
+                <select id="sortFilter" class="filter-select">
+                  <option value="DATE">날짜</option>
+                  <option value="IMPRESSIONS">노출 수</option>
+                  <option value="CLICKS">클릭 수</option>
+                </select>
+                <label class="filter-label">방향</label>
+                <select id="dirFilter" class="filter-select">
+                  <option value="DESC">내림차순</option>
+                  <option value="ASC">오름차순</option>
+                </select>
+                <button type="button" class="filter-btn" id="applyStatsFilterBtn">
+                  적용
+                </button>
+              </div>
+            </div>
+
+            <!-- 데일리 스텟 테이블 -->
+            <div class="table-container">
+              <table class="stats-table">
+                <thead>
+                  <tr>
+                    <th>날짜</th>
+                    <th>노출 수</th>
+                    <th>클릭 수</th>
+                    <th>CTR</th>
+                  </tr>
+                </thead>
+                <tbody id="statsTableBody">
+                  <tr class="loading-row">
+                    <td colspan="4" class="loading-message">로딩 중...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div class="pagination-container" id="paginationContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="/js/ad-placement-detail.js"
+      th:src="@{/js/ad-placement-detail.js}"
+    ></script>
+  </body>
+</html>
+

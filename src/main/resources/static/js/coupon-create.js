@@ -58,6 +58,40 @@ document.addEventListener("DOMContentLoaded", function () {
     fields.endAt.setAttribute("min", todayStr);
   }
 
+  // 혜택 타입 변경 시 혜택 값 레이블에 단위 표시
+  if (fields.benefitType) {
+    fields.benefitType.addEventListener("change", function () {
+      updateBenefitValueLabel();
+    });
+    // 초기 로드 시에도 단위 표시
+    updateBenefitValueLabel();
+  }
+
+  // 혜택 값 레이블 업데이트 함수
+  function updateBenefitValueLabel() {
+    const benefitValueLabel = document.querySelector('label[for="benefitValue"]');
+    if (!benefitValueLabel) return;
+
+    const benefitType = fields.benefitType.value;
+    let unit = "";
+    
+    if (benefitType === "RATE_DISCOUNT") {
+      unit = "%";
+    } else if (benefitType === "FIXED_DISCOUNT") {
+      unit = "원";
+    } else if (benefitType === "EXPERIENCE") {
+      unit = "일";
+    }
+
+    // 레이블 텍스트에서 기존 단위 제거 후 새 단위 추가
+    const baseText = benefitValueLabel.textContent.replace(/ \([%원일]\)/, "");
+    if (unit) {
+      benefitValueLabel.textContent = baseText + ` (${unit})`;
+    } else {
+      benefitValueLabel.textContent = baseText;
+    }
+  }
+
   // 벨리데이션 규칙
   const validators = {
     name: (value) => {

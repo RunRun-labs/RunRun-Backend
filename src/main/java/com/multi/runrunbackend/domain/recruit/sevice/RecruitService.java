@@ -210,7 +210,7 @@ public class RecruitService {
   }
 
   @Transactional
-  public void joinRecruit(Long recruitId, CustomUser principal) {
+  public Long joinRecruit(Long recruitId, CustomUser principal) {
     User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
 
@@ -247,17 +247,17 @@ public class RecruitService {
     recruit.increaseParticipants();
 
     if (recruit.getCurrentParticipants().equals(recruit.getMaxParticipants())) {
-      matchSessionService.createOfflineSessionBySystem(recruit.getId());
+      Long sessionId = matchSessionService.createOfflineSessionBySystem(recruit.getId());
+      return sessionId;
     }
+
+    return null;
   }
 
   @Transactional
   public void leaveRecruit(Long recruitId, CustomUser principal) {
     User user = getUser(principal);
     Recruit recruit = getActiveRecruitOrThrow(recruitId);
-
-    RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
-        .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_PARTICIPATED));
 
     if (recruit.getUser().getId().equals(user.getId())) {
       Optional<RecruitUser> nextLeader = recruitUserRepository
@@ -283,9 +283,14 @@ public class RecruitService {
               recruitId, newHost.getId(), e);
         }
       } else {
+
         recruitRepository.delete(recruit);
       }
+      return;
     }
+
+    RecruitUser recruitUser = recruitUserRepository.findByRecruitAndUser(recruit, user)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_PARTICIPATED));
 
     recruitUserRepository.delete(recruitUser);
     recruit.decreaseParticipants();

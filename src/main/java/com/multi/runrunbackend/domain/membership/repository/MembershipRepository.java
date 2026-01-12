@@ -3,12 +3,11 @@ package com.multi.runrunbackend.domain.membership.repository;
 import com.multi.runrunbackend.domain.membership.constant.MembershipStatus;
 import com.multi.runrunbackend.domain.membership.entity.Membership;
 import com.multi.runrunbackend.domain.user.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author : BoKyung
@@ -51,4 +50,15 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
             LocalDateTime startDateTime,
             LocalDateTime endDateTime
     );
+
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    // 체험권 만료 예정 조회
+    List<Membership> findByMembershipStatusAndNextBillingDateIsNullAndEndDateBetween(
+            MembershipStatus status,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
+
+
 }

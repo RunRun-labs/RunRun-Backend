@@ -13,7 +13,9 @@ function initDOMElements() {
   courseListContainer = document.getElementById("courseList");
   loadingMessage = document.getElementById("loadingMessage");
   emptyMessage = document.getElementById("emptyMessage");
-  searchInput = document.querySelector(".search-input");
+  searchInput =
+    document.getElementById("keywordInput") ||
+    document.querySelector(".search-input");
   searchButton = document.querySelector(".search-button");
   filterButton = document.querySelector(".filter-button");
   sortButton = document.querySelector(".sort-button");
@@ -33,6 +35,9 @@ let currentFilters = {
   lat: null,
   lng: null,
   radiusM: 1500, // default: 1.5km
+  myCourses: false,
+  myLikedCourses: false,
+  myFavoritedCourses: false,
 };
 const DEFAULT_PAGE_SIZE = 5;
 
@@ -62,7 +67,9 @@ function getAccessToken() {
 // Load Course List
 // ==========================
 async function loadCourseList(reset = false) {
-  if (isLoading) return;
+  if (isLoading) {
+    return;
+  }
 
   if (reset) {
     currentCursor = null;
@@ -73,7 +80,9 @@ async function loadCourseList(reset = false) {
     loadingEl.id = "loadingMessage";
     loadingEl.innerHTML = "<p>코스를 불러오는 중...</p>";
     courseListContainer.appendChild(loadingEl);
-    if (emptyMessage) emptyMessage.style.display = "none";
+    if (emptyMessage) {
+      emptyMessage.style.display = "none";
+    }
   } else if (loadingMessage) {
     loadingMessage.style.display = "block";
   }
@@ -111,6 +120,15 @@ async function loadCourseList(reset = false) {
         params.append("lng", currentFilters.lng);
         params.append("radiusM", currentFilters.radiusM || 1500);
       }
+    }
+    if (currentFilters.myCourses) {
+      params.append("myCourses", "true");
+    }
+    if (currentFilters.myLikedCourses) {
+      params.append("myLikedCourses", "true");
+    }
+    if (currentFilters.myFavoritedCourses) {
+      params.append("myFavoritedCourses", "true");
     }
     if (currentCursor) {
       params.append("cursor", currentCursor);
@@ -169,7 +187,9 @@ async function loadCourseList(reset = false) {
         courseListContainer.appendChild(emptyEl);
       }
     } else {
-      if (emptyMessage) emptyMessage.style.display = "none";
+      if (emptyMessage) {
+        emptyMessage.style.display = "none";
+      }
       data.items.forEach((course) => {
         const card = createCourseCard(course);
         courseListContainer.appendChild(card);
@@ -212,14 +232,11 @@ async function loadCourseList(reset = false) {
 // ==========================
 function createCourseCard(course) {
   const card = document.createElement("div");
-  card.className = "course-card";
+  card.className = "recruit-card";
   card.style.cursor = "pointer";
+  card.setAttribute("data-course-id", course.id);
   card.addEventListener("click", () => {
-    // 코스 선택 모드(모집글에서 진입)면 query param을 상세로 그대로 전달
-    const currentUrl = new URL(window.location.href);
-    const params = currentUrl.searchParams;
-    const qs = params.toString();
-    window.location.href = `/courseDetail/${course.id}${qs ? "?" + qs : ""}`;
+    window.location.href = `/courseDetail/${course.id}`;
   });
 
   // Format course distance (코스 길이)
@@ -235,71 +252,88 @@ function createCourseCard(course) {
   // Format register type
   const registerTypeText = getRegisterTypeText(course.registerType);
 
-  // 내 주변 필터가 활성화되어 있고 distM이 있으면 거리 표시, 아니면 등록타입 표시
-  const showDistance =
+  // 내 주변 필터가 활성화되어 있고 distM이 있으면 거리 표시
+  const showDistanceFromUser =
     currentFilters.nearby &&
     course.distM !== null &&
     course.distM !== undefined;
 
+  // Register type badge class
+  const registerTypeClass = (course.registerType || "").toLowerCase();
+
+  // 썸네일 URL
+  const thumbnailUrl = course.thumbnailUrl
+    ? escapeHtml(course.thumbnailUrl)
+    : null;
+
   card.innerHTML = `
-    <div class="course-info">
-      <div class="info-field">
-        <label>제목</label>
-        <input type="text" value="${escapeHtml(course.title || "")}" readonly/>
+    <div class="course-card-content">
+      <!-- 1행: 뱃지 (등록 타입) -->
+      <div class="card-badge-wrapper">
+        <span class="card-badge register-type-${registerTypeClass}">${registerTypeText}</span>
       </div>
-      <div class="info-field">
-        <label>거리</label>
-        <input type="text" value="${courseDistance}" readonly/>
+      
+      <!-- 2행: 제목 -->
+      <h3 class="card-title">${escapeHtml(course.title || "제목 없음")}</h3>
+      
+      <!-- 3행: 거리 정보 (내 위치에서 거리 - 내 주변 필터 활성화시만) -->
+      ${
+        showDistanceFromUser
+          ? `
+      <div class="card-distance">
+        <svg class="card-distance-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>내 위치에서 ${distanceFromUser}</span>
       </div>
-      <div class="info-field info-field-address">
-        <label>주소</label>
-        <input type="text" class="address-input-full" value="${escapeHtml(
-          course.address || ""
-        )}" readonly/>
-      </div>
-      <div class="info-field info-field-badge-only">
-        <div class="badge-container">
-          <span class="register-type-badge register-type-${(
-            course.registerType || ""
-          ).toLowerCase()}">
-            ${registerTypeText}
-          </span>
-          ${
-            showDistance
-              ? `<span class="distance-badge">${distanceFromUser}</span>`
-              : ""
-          }
-        </div>
-      </div>
-    </div>
-    <div class="course-thumbnail-wrapper">
-      <div class="course-actions">
-        <button class="action-icon heart-icon ${course.isLiked ? "active" : ""}" type="button" aria-label="좋아요" onclick="event.stopPropagation();">
-          <img
-              src="http://localhost:3845/assets/9af0c1d4ec1d966c7ec0b9ad1664f0fb4dc60971.svg"
-              alt="하트 아이콘"
-          />
-          <span class="action-count">${course.likeCount || 0}</span>
-        </button>
-        <button class="action-icon star-icon ${course.isFavorited ? "active" : ""}" type="button" aria-label="즐겨찾기" onclick="event.stopPropagation();">
-          <img
-              src="http://localhost:3845/assets/a153ec3dff46ec34044b8bce0977bd3c5e0e43d7.svg"
-              alt="별 아이콘"
-          />
-          <span class="action-count">${course.favoriteCount || 0}</span>
-        </button>
-      </div>
-      <div class="course-thumbnail">
+      `
+          : ""
+      }
+      
+      <!-- 4행: 상세 스펙 (코스 거리 | 주소) -->
+      <div class="card-specs">
         ${
-          course.thumbnailUrl
-            ? `<img src="${escapeHtml(
-                course.thumbnailUrl
-              )}" alt="코스 썸네일" class="thumbnail-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
-               <span style="display:none;">썸네일</span>`
-            : `<span>썸네일</span>`
+          courseDistance
+            ? `
+        <div class="card-spec-item">
+          <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 12L5 10M5 10L12 3L19 10M5 10V20C5 20.5523 5.44772 21 6 21H9M19 10L21 12M19 10V20C19 20.5523 18.5523 21 18 21H15M9 21C9.55228 21 10 20.5523 10 20V16C10 15.4477 10.4477 15 11 15H13C13.5523 15 14 15.4477 14 16V20C14 20.5523 14.4477 21 15 21M9 21H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>${courseDistance}</span>
+        </div>
+        `
+            : ""
+        }
+        ${
+          courseDistance && course.address
+            ? `<span class="card-spec-divider">·</span>`
+            : ""
+        }
+        ${
+          course.address
+            ? `
+        <div class="card-spec-item">
+          <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>${escapeHtml(course.address)}</span>
+        </div>
+        `
+            : ""
         }
       </div>
     </div>
+    
+    <!-- 썸네일 이미지 (오른쪽) -->
+    ${
+      thumbnailUrl
+        ? `<div class="course-card-thumbnail">
+            <img src="${thumbnailUrl}" alt="코스 썸네일" class="course-card-thumbnail-image" onerror="this.style.display='none';" />
+          </div>`
+        : ""
+    }
   `;
 
   return card;
@@ -309,7 +343,9 @@ function createCourseCard(course) {
 // Get Register Type Text
 // ==========================
 function getRegisterTypeText(registerType) {
-  if (!registerType) return "";
+  if (!registerType) {
+    return "";
+  }
 
   switch (registerType.toUpperCase()) {
     case "MANUAL":
@@ -327,7 +363,9 @@ function getRegisterTypeText(registerType) {
 // Escape HTML
 // ==========================
 function escapeHtml(text) {
-  if (!text) return "";
+  if (!text) {
+    return "";
+  }
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
@@ -338,15 +376,19 @@ function escapeHtml(text) {
 // ==========================
 
 function initSearchListeners() {
-  if (!searchButton || !searchInput) {
+  if (!searchInput) {
     return;
   }
 
-  searchButton.addEventListener("click", () => {
-    currentFilters.keyword = searchInput.value.trim() || null;
-    loadCourseList(true);
-  });
+  // 검색 버튼이 있으면 클릭 이벤트 추가
+  if (searchButton) {
+    searchButton.addEventListener("click", () => {
+      currentFilters.keyword = searchInput.value.trim() || null;
+      loadCourseList(true);
+    });
+  }
 
+  // Enter 키로 검색
   searchInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       currentFilters.keyword = searchInput.value.trim() || null;
@@ -354,6 +396,7 @@ function initSearchListeners() {
     }
   });
 
+  // 실시간 검색 (한글자씩 입력할 때마다)
   let searchDebounceTimer = null;
   searchInput.addEventListener("input", () => {
     const nextKeyword = searchInput.value.trim();
@@ -422,7 +465,9 @@ if (filterToggleBtn) {
     if (filterPanel) {
       const isVisible = filterPanel.style.display !== "none";
       filterPanel.style.display = isVisible ? "none" : "block";
-      if (sortPanel) sortPanel.style.display = "none";
+      if (sortPanel) {
+        sortPanel.style.display = "none";
+      }
     }
   });
 }
@@ -431,10 +476,18 @@ if (filterToggleBtn) {
 if (sortToggleBtn) {
   sortToggleBtn.addEventListener("click", (e) => {
     e.stopPropagation();
+    // ✅ Sort By 열 때마다 현재 필터 상태를 UI에 먼저 반영(거리순 disabled 동기화)
+    try {
+      updateFilterUI();
+    } catch (e) {
+      // ignore
+    }
     if (sortPanel) {
       const isVisible = sortPanel.style.display !== "none";
       sortPanel.style.display = isVisible ? "none" : "block";
-      if (filterPanel) filterPanel.style.display = "none";
+      if (filterPanel) {
+        filterPanel.style.display = "none";
+      }
     }
   });
 }
@@ -470,20 +523,86 @@ function updateFilterUI() {
     }
   });
 
-  // 거리 정렬 옵션 표시/숨김 (내 주변 선택 시에만 표시)
+  // ✅ 거리 정렬 옵션: "내 주변" 필터가 활성화된 경우에만 클릭 가능
   const distanceSortOption = document.querySelector(
     '.sort-option[data-sort="DISTANCE"]'
   );
   if (distanceSortOption) {
-    if (currentFilters.nearby) {
-      distanceSortOption.style.display = "block";
+    distanceSortOption.disabled = !currentFilters.nearby;
+    if (!currentFilters.nearby) {
+      distanceSortOption.style.opacity = "0.45";
+      distanceSortOption.style.cursor = "not-allowed";
     } else {
-      distanceSortOption.style.display = "none";
-      // 거리 정렬이 선택되어 있는데 nearby가 false면 최신순으로 변경
-      if (currentFilters.sortType === "DISTANCE") {
-        currentFilters.sortType = "LATEST";
-        updateFilterUI();
-      }
+      distanceSortOption.style.opacity = "1";
+      distanceSortOption.style.cursor = "pointer";
+    }
+  }
+
+  // ✅ 거리순 정렬이 선택된 상태에서는 "내 주변" 필터 옵션 비활성화
+  const nearbyFilterOption = document.querySelector(
+    '.filter-option[data-filter="nearby"]'
+  );
+  if (nearbyFilterOption) {
+    if (currentFilters.sortType === "DISTANCE" && currentFilters.nearby) {
+      // 거리순 정렬이 선택되고 "내 주변" 필터가 활성화된 경우 비활성화
+      nearbyFilterOption.disabled = true;
+      nearbyFilterOption.style.opacity = "0.6";
+      nearbyFilterOption.style.cursor = "not-allowed";
+    } else {
+      nearbyFilterOption.disabled = false;
+      nearbyFilterOption.style.opacity = "1";
+      nearbyFilterOption.style.cursor = "pointer";
+    }
+  }
+
+  // 새 필터 옵션 UI 업데이트
+  const myCoursesOption = document.querySelector(
+    '.filter-option[data-filter="myCourses"]'
+  );
+  const myLikedCoursesOption = document.querySelector(
+    '.filter-option[data-filter="myLikedCourses"]'
+  );
+  const myFavoritedCoursesOption = document.querySelector(
+    '.filter-option[data-filter="myFavoritedCourses"]'
+  );
+
+  if (myCoursesOption) {
+    myCoursesOption.classList.toggle("active", currentFilters.myCourses);
+  }
+  if (myLikedCoursesOption) {
+    myLikedCoursesOption.classList.toggle(
+      "active",
+      currentFilters.myLikedCourses
+    );
+  }
+  if (myFavoritedCoursesOption) {
+    myFavoritedCoursesOption.classList.toggle(
+      "active",
+      currentFilters.myFavoritedCourses
+    );
+  }
+
+  // ✅ "내 코스 보기" 필터가 활성화되면 좋아요/즐겨찾기 필터 옵션 숨기기
+  // ✅ 좋아요/즐겨찾기 필터가 활성화되면 "내 코스 보기" 필터 옵션 숨기기 (양방향 배타)
+  if (myLikedCoursesOption) {
+    if (currentFilters.myCourses) {
+      myLikedCoursesOption.style.display = "none";
+    } else {
+      myLikedCoursesOption.style.display = "block";
+    }
+  }
+  if (myFavoritedCoursesOption) {
+    if (currentFilters.myCourses) {
+      myFavoritedCoursesOption.style.display = "none";
+    } else {
+      myFavoritedCoursesOption.style.display = "block";
+    }
+  }
+  if (myCoursesOption) {
+    if (currentFilters.myLikedCourses || currentFilters.myFavoritedCourses) {
+      myCoursesOption.style.display = "none";
+    } else {
+      myCoursesOption.style.display = "block";
     }
   }
 }
@@ -512,11 +631,23 @@ function initFilterOptions() {
         }
         updateFilterUI();
       } else if (filterType === "nearby") {
+        // ✅ 거리순 정렬이 선택된 상태에서는 "내 주변" 필터 해제 불가
+        if (currentFilters.nearby && currentFilters.sortType === "DISTANCE") {
+          alert(
+            "거리순 정렬이 선택된 상태에서는 '내 주변' 필터를 해제할 수 없습니다. 다른 정렬을 선택한 후 해제해주세요."
+          );
+          return;
+        }
+
         // Toggle nearby
         if (currentFilters.nearby) {
           currentFilters.nearby = false;
           currentFilters.lat = null;
           currentFilters.lng = null;
+          // ✅ "내 주변" 필터 해제 시 거리순 정렬도 해제
+          if (currentFilters.sortType === "DISTANCE") {
+            currentFilters.sortType = "LATEST";
+          }
           updateFilterUI();
         } else {
           // Get user location
@@ -534,6 +665,29 @@ function initFilterOptions() {
               console.error("Location error:", error);
             });
         }
+      } else if (filterType === "myCourses") {
+        // ✅ "내 코스 보기" 클릭 시 좋아요/즐겨찾기 필터 비활성화
+        currentFilters.myCourses = !currentFilters.myCourses;
+        if (currentFilters.myCourses) {
+          // 내 코스 보기가 활성화되면 좋아요/즐겨찾기 필터 비활성화
+          currentFilters.myLikedCourses = false;
+          currentFilters.myFavoritedCourses = false;
+        }
+        updateFilterUI();
+      } else if (filterType === "myLikedCourses") {
+        // ✅ 좋아요 필터 클릭 시 "내 코스 보기" 필터 비활성화
+        if (currentFilters.myCourses) {
+          currentFilters.myCourses = false;
+        }
+        currentFilters.myLikedCourses = !currentFilters.myLikedCourses;
+        updateFilterUI();
+      } else if (filterType === "myFavoritedCourses") {
+        // ✅ 즐겨찾기 필터 클릭 시 "내 코스 보기" 필터 비활성화
+        if (currentFilters.myCourses) {
+          currentFilters.myCourses = false;
+        }
+        currentFilters.myFavoritedCourses = !currentFilters.myFavoritedCourses;
+        updateFilterUI();
       }
     });
   });
@@ -543,7 +697,15 @@ function initFilterOptions() {
 const filterApplyBtn = document.querySelector(".filter-apply");
 if (filterApplyBtn) {
   filterApplyBtn.addEventListener("click", () => {
-    if (filterPanel) filterPanel.style.display = "none";
+    if (filterPanel) {
+      filterPanel.style.display = "none";
+    }
+    // ✅ 적용 시점에 UI 먼저 동기화(거리순 disabled 동기화)
+    try {
+      updateFilterUI();
+    } catch (e) {
+      // ignore
+    }
     loadCourseList(true);
   });
 }
@@ -557,13 +719,24 @@ if (filterResetBtn) {
     currentFilters.nearby = false;
     currentFilters.lat = null;
     currentFilters.lng = null;
+    currentFilters.myCourses = false;
+    currentFilters.myLikedCourses = false;
+    currentFilters.myFavoritedCourses = false;
 
     // Reset UI
     filterOptions.forEach((opt) => {
       opt.classList.remove("active");
     });
 
-    if (filterPanel) filterPanel.style.display = "none";
+    if (filterPanel) {
+      filterPanel.style.display = "none";
+    }
+    // ✅ 리셋 시점에 UI 동기화(거리순 disabled 동기화)
+    try {
+      updateFilterUI();
+    } catch (e) {
+      // ignore
+    }
     loadCourseList(true);
   });
 }
@@ -575,20 +748,25 @@ function initSortOptions() {
     option.addEventListener("click", async () => {
       const sortType = option.dataset.sort;
 
-      // DISTANCE 정렬 선택 시 위치 정보 필요
-      if (
-        sortType === "DISTANCE" &&
-        (!currentFilters.lat || !currentFilters.lng)
-      ) {
-        try {
-          const location = await getUserLocation();
-          currentFilters.lat = location.lat;
-          currentFilters.lng = location.lng;
-        } catch (error) {
-          alert(
-            "거리 정렬을 사용하려면 위치 정보가 필요합니다. 위치 권한을 확인해주세요."
-          );
-          return;
+      // ✅ 거리순 정렬 선택 시 자동으로 "내 주변" 필터 활성화
+      if (sortType === "DISTANCE") {
+        // "내 주변" 필터가 비활성화되어 있으면 자동으로 활성화
+        if (!currentFilters.nearby) {
+          currentFilters.nearby = true;
+        }
+
+        // 위치 정보가 없으면 사용자 위치 가져오기
+        if (!currentFilters.lat || !currentFilters.lng) {
+          try {
+            const location = await getUserLocation();
+            currentFilters.lat = location.lat;
+            currentFilters.lng = location.lng;
+          } catch (error) {
+            alert(
+              "거리 정렬을 사용하려면 위치 정보가 필요합니다. 위치 권한을 확인해주세요."
+            );
+            return;
+          }
         }
       }
 
@@ -596,7 +774,9 @@ function initSortOptions() {
 
       updateFilterUI();
 
-      if (sortPanel) sortPanel.style.display = "none";
+      if (sortPanel) {
+        sortPanel.style.display = "none";
+      }
       loadCourseList(true);
     });
   });
@@ -622,11 +802,24 @@ if (courseContent) {
 }
 
 // ==========================
+// FAB Button
+// ==========================
+function initCreateButton() {
+  const createBtn = document.getElementById("createBtn");
+  if (createBtn) {
+    createBtn.addEventListener("click", () => {
+      window.location.href = "/courseCreate";
+    });
+  }
+}
+
+// ==========================
 // Initialize
 // ==========================
 function init() {
   initDOMElements();
   initSearchListeners();
+  initCreateButton();
 
   if (!courseListContainer) {
     console.error("courseList container not found!");

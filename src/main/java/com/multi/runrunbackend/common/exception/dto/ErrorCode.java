@@ -78,29 +78,35 @@ public enum ErrorCode {
     ALREADY_REQUESTED(HttpStatus.CONFLICT, "CR012", "이미 가입 신청한 크루입니다."),
     CANNOT_LEAVE_AS_LEADER(HttpStatus.CONFLICT, "CR013",
             "크루장은 탈퇴할 수 없습니다. 부크루장 또는 운영진에게 크루장을 위임하거나 크루를 해체해주세요."),
+    CREW_LEADER_REGISTRATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CR014", "크루장 등록에 실패했습니다."),
     /* ===== 크루 가입 ===== */
-    ALREADY_JOINED_CREW(HttpStatus.CONFLICT, "CR014", "이미 가입한 크루가 있습니다."),
-    CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR015", "크루원을 찾을 수 없습니다."),
-    CREW_RECRUITMENT_CLOSED(HttpStatus.CONFLICT, "CR016", "모집이 마감된 크루입니다."),
-    NOT_CREW_USER(HttpStatus.FORBIDDEN, "CR017", "크루원이 아닙니다."),
-    CANNOT_ASSIGN_LEADER_TO_MEMBER(HttpStatus.FORBIDDEN, "CR018",
+    ALREADY_JOINED_CREW(HttpStatus.CONFLICT, "CR015", "이미 가입한 크루가 있습니다."),
+    CREW_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CR016", "크루원을 찾을 수 없습니다."),
+    CREW_RECRUITMENT_CLOSED(HttpStatus.CONFLICT, "CR017", "모집이 마감된 크루입니다."),
+    NOT_CREW_USER(HttpStatus.FORBIDDEN, "CR018", "크루원이 아닙니다."),
+    CANNOT_ASSIGN_LEADER_TO_MEMBER(HttpStatus.FORBIDDEN, "CR019",
             "일반 멤버는 크루장이 될 수 없습니다. 부크루장 또는 운영진에게만 위임 가능합니다."),
-    CREW_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "CR019", "모집중인 크루가 아닙니다."),
+    CREW_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "CR020", "모집중인 크루가 아닙니다."),
     /* ===== 크루 권한 / 멤버십 ===== */
-    LEADER_REQUIRES_PREMIUM(HttpStatus.FORBIDDEN, "CR020",
+    LEADER_REQUIRES_PREMIUM(HttpStatus.FORBIDDEN, "CR021",
             "크루장은 프리미엄 멤버십이 필요합니다."),
-    CANNOT_LEAVE_WITHOUT_SUCCESSOR(HttpStatus.BAD_REQUEST, "CR021",
-            "프리미엄 멤버십을 가진 부크루장에게 크루장을 위임한 후 탈퇴할 수 있습니다."),
-    NO_SUB_LEADERS(HttpStatus.NOT_FOUND, "CR022",
+    CANNOT_LEAVE_WITHOUT_SUCCESSOR(HttpStatus.BAD_REQUEST, "CR022",
+            "크루장을 위임한 후 탈퇴할 수 있습니다."),
+    NO_SUB_LEADERS(HttpStatus.NOT_FOUND, "CR023",
             "해당 크루에 부크루장이 없습니다."),
-    NO_ELIGIBLE_MEMBERS(HttpStatus.NOT_FOUND, "CR023",
+    NO_ELIGIBLE_MEMBERS(HttpStatus.NOT_FOUND, "CR024",
             "해당 크루에 부크루장 또는 운영진이 없습니다."),
-    NO_ELIGIBLE_LEADERS(HttpStatus.NOT_FOUND, "CR024",
+    NO_ELIGIBLE_LEADERS(HttpStatus.NOT_FOUND, "CR025",
             "크루장 위임이 가능한 멤버가 없습니다. (프리미엄 멤버십 필요)"),
-    ONLY_SUB_LEADER_OR_STAFF_CAN_BE_LEADER(HttpStatus.FORBIDDEN, "CR025",
+    ONLY_SUB_LEADER_OR_STAFF_CAN_BE_LEADER(HttpStatus.FORBIDDEN, "CR026",
             "부크루장 또는 운영진만 크루장으로 위임할 수 있습니다."),
-    MEMBERSHIP_REQUIRED_FOR_LEADER(HttpStatus.FORBIDDEN, "CR026",
+    MEMBERSHIP_REQUIRED_FOR_LEADER(HttpStatus.FORBIDDEN, "CR027",
             "크루장은 프리미엄 멤버십이 필요합니다."),
+    /* ===== 크루 활동 관련 ===== */
+    CREW_ACTIVITY_NOT_FOUND(HttpStatus.NOT_FOUND, "CR028",
+            "크루 활동을 찾을 수 없습니다."),
+    INSUFFICIENT_CREW_ROLE(HttpStatus.FORBIDDEN, "CR029",
+            "크루 관리 권한이 없습니다. (크루장, 부크루장, 운영진만 작성 가능합니다.)"),
     /* ===== 멤버십 ===== */
     MEMBERSHIP_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "멤버십 정보를 찾을 수 없습니다."),
     MEMBERSHIP_ALREADY_PREMIUM(HttpStatus.CONFLICT, "M002", "이미 프리미엄 멤버십입니다."),
@@ -446,10 +452,52 @@ public enum ErrorCode {
     ),
 
     START_GATE_TOO_FAR(
-            HttpStatus.BAD_REQUEST,
-            "G003",
-            "출발점 20m 이내에서만 시작할 수 있습니다."
-    );
+        HttpStatus.BAD_REQUEST,
+        "G003",
+        "출발점 20m 이내에서만 시작할 수 있습니다."
+    ),
+    /*===== Ad=====*/
+    AD_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "AD001", "잘못된 광고 요청입니다"),
+    AD_NOT_FOUND(HttpStatus.NOT_FOUND, "AD002", "존재하지 않는 광고입니다."),
+    AD_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "AD003", "존재하지 않는 광고 슬롯입니다."),
+    AD_PLACEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "AD004", "존재하지 않는 광고 배치입니다."),
+
+    AD_IMAGE_REQUIRED(HttpStatus.BAD_REQUEST, "AD005", "광고 이미지는 필수입니다."),
+    AD_INVALID_SLOT_TYPE(HttpStatus.BAD_REQUEST, "AD006", "유효하지 않은 광고 슬롯 타입입니다."),
+    AD_NO_ACTIVE_PLACEMENT(HttpStatus.NOT_FOUND, "AD007", "현재 노출 가능한 광고가 없습니다."),
+
+    AD_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD008", "광고 생성에 실패했습니다."),
+    AD_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD009", "광고 수정에 실패했습니다."),
+    AD_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD10", "광고 삭제에 실패했습니다."),
+
+    AD_SLOT_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD011", "광고 슬롯 생성에 실패했습니다."),
+    AD_SLOT_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD012", "광고 슬롯 수정에 실패했습니다."),
+    AD_SLOT_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD013", "광고 슬롯 삭제에 실패했습니다."),
+
+    AD_PLACEMENT_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD014", "광고 배치 생성에 실패했습니다."),
+    AD_PLACEMENT_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD015", "광고 배치 수정에 실패했습니다."),
+    AD_PLACEMENT_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD16", "광고 배치 삭제에 실패했습니다."),
+    AD_EVENT_INVALID(HttpStatus.BAD_REQUEST, "AD17", "광고 이벤트 요청이 올바르지 않습니다."),
+    AD_ALREADY_DELETED(HttpStatus.NOT_FOUND, "AD018", "활성화 상태의 광고가 안닙니다"),
+    AD_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD019",
+        "광고 저장에 실패했습니다."), AD_LOCKED_BY_PLACEMENT(
+        HttpStatus.FORBIDDEN, "AD020", "등록된 광고는 수정할 수 없습니다"),
+    AD_SLOT_UPDATE_ONLY_DISABLED(HttpStatus.FORBIDDEN,
+        "AD021", "비활성화 중인 슬롯을 비활성화 수 없습니다"),
+    AD_SLOT_IN_USE(HttpStatus.FORBIDDEN, "AD021",
+        "이미 광고가 있는 슬롯은 수정할 수 없습니다"), AD_PLACEMENT_UPDATE_ONLY_DISABLED(
+        HttpStatus.FORBIDDEN, "AD022", "활성화 중인 AdPlace를 수정할 수 없습니다"),
+    AD_PLACEMENT_OUT_OF_PERIOD(HttpStatus.FORBIDDEN
+        , "AD023", "마감일이 지나면 활성화 할 수 없습니다"),
+    AD_PLACEMENT_UPDATE_NOT_ALLOWED_DURING_PERIOD(HttpStatus.FORBIDDEN
+        , "AD024", "집행기간에는 수정 할 수 없습니다"),
+    AD_SERVE_NOT_FOUND(HttpStatus.NOT_FOUND, "AD025", "슬롯에 광고가 없습니다"),
+    AD_SLOT_TYPE_ALREADY_EXISTS(HttpStatus.CONFLICT, "AD026", "이미 같은 타입의 광고 슬롯이 존재합니다"),
+    AD_PLACEMENT_DUPLICATE(HttpStatus.CONFLICT, "AD027", "이미 해당 슬롯과 광고 조합의 배치가 존재합니다"),
+
+    /* ===== 출석(Attendance) ===== */
+    ALREADY_ATTENDED_TODAY(HttpStatus.CONFLICT, "AT001", "이미 출석 이벤트에 참가했습니다.");
+
 
     private final HttpStatus httpStatus;
     private final String code;

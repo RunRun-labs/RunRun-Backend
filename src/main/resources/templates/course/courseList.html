@@ -1,129 +1,239 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8"/>
-  <meta
+  <head>
+    <meta charset="UTF-8" />
+    <meta
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
-  />
-  <title>RUNRUN | 코스 목록</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link
+    />
+    <title>RUNRUN | 코스 목록</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
-  />
-  <link rel="stylesheet" href="/css/courseList.css" th:href="@{/css/courseList.css}">
-</head>
-<body>
-  <div class="page">
-    <!-- Top Navigation -->
-    <div th:replace="~{common/top-nav :: topNav}"></div>
+    />
+    <link
+      rel="stylesheet"
+      href="/css/courseList.css"
+      th:href="@{/css/courseList.css}"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <!-- Top Navigation -->
+      <div th:replace="~{common/top-nav :: topNav}"></div>
 
-    <!-- Main Content -->
-    <main class="course-content">
-      <!-- Search Bar -->
-      <div class="search-container">
-        <div class="search-bar">
-          <img
-              src="http://localhost:3845/assets/6d484871e3121b305b0e801a9ac15685e3ca1b8e.svg"
-              alt="검색 아이콘"
-              class="search-icon"
-          />
+      <!-- Main Content -->
+      <main class="course-content">
+        <!-- Search Bar -->
+        <div class="search-container">
+          <svg
+            class="search-icon"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M21 21L16.65 16.65"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
           <input
-              type="text"
-              placeholder="Search"
-              class="search-input"
+            type="text"
+            id="keywordInput"
+            class="search-input"
+            placeholder="검색어를 입력하세요"
           />
-          <button class="search-button" type="button">Search</button>
         </div>
-      </div>
 
-      <!-- Filter Panel -->
-      <div class="filter-panel" id="filterPanel" style="display: none;">
-        <div class="filter-section">
-          <label class="filter-label">등록 타입</label>
-          <div class="filter-options">
-            <button class="filter-option" data-filter="registerType" data-value="AUTO" type="button">
-              자동
-            </button>
-            <button class="filter-option" data-filter="registerType" data-value="MANUAL" type="button">
-              수동
-            </button>
-            <button class="filter-option" data-filter="registerType" data-value="AI" type="button">
-              AI
+        <!-- Filter Panel -->
+        <div class="filter-panel" id="filterPanel" style="display: none">
+          <div class="filter-section">
+            <label class="filter-label">등록 타입</label>
+            <div class="filter-options">
+              <button
+                class="filter-option"
+                data-filter="registerType"
+                data-value="AUTO"
+                type="button"
+              >
+                자동
+              </button>
+              <button
+                class="filter-option"
+                data-filter="registerType"
+                data-value="MANUAL"
+                type="button"
+              >
+                수동
+              </button>
+              <button
+                class="filter-option"
+                data-filter="registerType"
+                data-value="AI"
+                type="button"
+              >
+                AI
+              </button>
+            </div>
+          </div>
+          <div class="filter-section">
+            <label class="filter-label">주변 코스</label>
+            <button
+              class="filter-option"
+              data-filter="nearby"
+              data-value="true"
+              type="button"
+            >
+              내 주변
             </button>
           </div>
+          <div class="filter-section">
+            <label class="filter-label">내 코스</label>
+            <div class="filter-options">
+              <button
+                class="filter-option"
+                data-filter="myCourses"
+                data-value="true"
+                type="button"
+              >
+                내 코스 보기
+              </button>
+              <button
+                class="filter-option"
+                data-filter="myLikedCourses"
+                data-value="true"
+                type="button"
+              >
+                내가 좋아요한 코스 보기
+              </button>
+              <button
+                class="filter-option"
+                data-filter="myFavoritedCourses"
+                data-value="true"
+                type="button"
+              >
+                내가 즐겨찾기한 코스 보기
+              </button>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="filter-apply" type="button">적용</button>
+            <button class="filter-reset" type="button">초기화</button>
+          </div>
         </div>
-        <div class="filter-section">
-          <label class="filter-label">주변 코스</label>
-          <button class="filter-option" data-filter="nearby" data-value="true" type="button">
-            내 주변
+
+        <!-- Sort Panel -->
+        <div class="sort-panel" id="sortPanel" style="display: none">
+          <button class="sort-option" data-sort="LATEST" type="button">
+            최신
+          </button>
+          <button class="sort-option" data-sort="DISTANCE" type="button">
+            거리
+          </button>
+          <button class="sort-option" data-sort="LIKE" type="button">
+            좋아요
+          </button>
+          <button class="sort-option" data-sort="FAVORITE" type="button">
+            즐겨찾기
           </button>
         </div>
-        <div class="filter-actions">
-          <button class="filter-apply" type="button">적용</button>
-          <button class="filter-reset" type="button">초기화</button>
-        </div>
-      </div>
 
-      <!-- Sort Panel -->
-      <div class="sort-panel" id="sortPanel" style="display: none;">
-        <button class="sort-option" data-sort="LATEST" type="button">최신</button>
-        <button class="sort-option" data-sort="DISTANCE" type="button" style="display: none;">거리</button>
-        <button class="sort-option" data-sort="LIKE" type="button">좋아요</button>
-        <button class="sort-option" data-sort="FAVORITE" type="button">즐겨찾기</button>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="action-buttons">
-        <button class="filter-button" type="button" id="filterToggleBtn">
-          <img
-              src="http://localhost:3845/assets/2d475983e4f2a9e0120a583603acbb5ddd38349f.svg"
-              alt="필터 아이콘"
-          />
-          <span>Filters</span>
-        </button>
-        <button class="sort-button" type="button" id="sortToggleBtn">
-          <span>Sort By</span>
-          <img
-              src="http://localhost:3845/assets/9830370436cc703ae34abf44e4814dc292f925e8.svg"
-              alt="정렬 아이콘"
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button class="filter-button" type="button" id="filterToggleBtn">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M2 4h16M2 10h16M2 16h16"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span>필터</span>
+          </button>
+          <button class="sort-button" type="button" id="sortToggleBtn">
+            <span>정렬</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
               class="sort-icon"
-          />
-        </button>
-      </div>
-
-      <!-- Course List -->
-      <div class="course-list" id="courseList">
-        <!-- Loading state -->
-        <div class="loading-message" id="loadingMessage">
-          <p>코스를 불러오는 중...</p>
+            >
+              <path
+                d="M6 4l4 4 4-4M6 16l4-4 4 4"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
         </div>
-        
-        <!-- Empty state -->
-        <div class="empty-message" id="emptyMessage" style="display: none;">
-          <p>등록된 코스가 없습니다.</p>
+
+        <!-- Course List -->
+        <div class="course-list" id="courseList">
+          <!-- Loading state -->
+          <div class="loading-message" id="loadingMessage">
+            <p>코스를 불러오는 중...</p>
+          </div>
+
+          <!-- Empty state -->
+          <div class="empty-message" id="emptyMessage" style="display: none">
+            <p>등록된 코스가 없습니다.</p>
+          </div>
         </div>
-      </div>
 
-      <!-- Create Button -->
-      <div class="create-button-container">
-        <button class="create-button-large" type="button" onclick="location.href='/courseCreate'">
-          <img
-              src="http://localhost:3845/assets/d9931cad35b977fe4f21bb0671a67162edb1775f.svg"
-              alt="플러스 아이콘"
-          />
-          <span>생성하기</span>
+        <!-- FAB (Floating Action Button) - 코스 생성 -->
+        <button
+          type="button"
+          id="createBtn"
+          class="fab-button"
+          aria-label="코스 생성"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 5V19M5 12H19"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
         </button>
-      </div>
-    </main>
+      </main>
 
-    <!-- Bottom Navigation -->
-    <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
-  </div>
+      <!-- Bottom Navigation -->
+      <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+    </div>
 
-  <script src="/js/courseList.js" th:src="@{/js/courseList.js}"></script>
-</body>
+    <script src="/js/courseList.js" th:src="@{/js/courseList.js}"></script>
+  </body>
 </html>
-

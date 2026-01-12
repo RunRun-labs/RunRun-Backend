@@ -22,8 +22,11 @@
       href="/css/courseDetail.css"
       th:href="@{/css/courseDetail.css}"
     />
-    <link rel="stylesheet" href="/css/notification-toast.css"
-          th:href="@{/css/notification-toast.css}">
+    <link
+      rel="stylesheet"
+      href="/css/notification-toast.css"
+      th:href="@{/css/notification-toast.css}"
+    />
   </head>
   <body>
     <div class="page">
@@ -36,24 +39,27 @@
           onclick="history.back()"
         >
           <img
-            src="http://localhost:3845/assets/5d8e7700a6d94e6f5d3b62853522a7c52a457010.svg"
+            th:src="@{/img/icons/back.svg}"
+            src="/img/icons/back.svg"
             alt="뒤로가기 아이콘"
           />
         </button>
         <h1 class="page-title">코스 상세보기</h1>
       </header>
 
-      <!-- Main Content -->
-      <main class="course-content" id="courseContent">
-        <!-- Course Image -->
+      <!-- Course Image Hero (크루 상세보기처럼) -->
+      <section class="course-hero">
         <div
-          class="course-image-container"
+          class="course-hero__image-wrapper"
           id="courseImageContainer"
           style="display: none"
         >
-          <img id="courseImage" alt="코스 이미지" class="course-image" />
+          <img id="courseImage" alt="코스 이미지" class="course-hero__image" />
         </div>
+      </section>
 
+      <!-- Main Content -->
+      <main class="course-content" id="courseContent">
         <!-- Course Map -->
         <div class="form-field">
           <label class="field-label">코스</label>
@@ -197,18 +203,6 @@
           </div>
         </div>
 
-        <!-- Course Images -->
-        <div class="form-field" id="courseImageField" style="display: none">
-          <label class="field-label">이미지</label>
-          <div class="image-preview">
-            <img
-              id="courseImagePreview"
-              alt="코스 이미지"
-              class="preview-image"
-            />
-          </div>
-        </div>
-
         <!-- Action Buttons (Edit/Delete) -->
         <div class="course-actions" id="courseActions" style="display: none">
           <button class="edit-button" type="button" id="editBtn">
@@ -221,8 +215,16 @@
       </main>
 
       <!-- Select Confirm Bar (모집글에서 코스 선택 모드로 들어온 경우만 표시) -->
-      <div class="select-confirm-bar" id="selectConfirmBar" style="display: none">
-        <button class="select-confirm-button" type="button" id="selectConfirmBtn">
+      <div
+        class="select-confirm-bar"
+        id="selectConfirmBar"
+        style="display: none"
+      >
+        <button
+          class="select-confirm-button"
+          type="button"
+          id="selectConfirmBtn"
+        >
           확인
         </button>
       </div>
@@ -238,7 +240,10 @@
       /*]]>*/
     </script>
 
-    <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+    <script
+      src="/js/notification-common.js"
+      th:src="@{/js/notification-common.js}"
+    ></script>
     <script src="/js/courseDetail.js" th:src="@{/js/courseDetail.js}"></script>
   </body>
 </html>

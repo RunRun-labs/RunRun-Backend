@@ -4,21 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RunRun - 멤버십</title>
-    <link rel="stylesheet" href="css/membership.css">
+    <link rel="stylesheet" href="/css/membership.css" th:href="@{/css/membership.css}">
     <link rel="stylesheet" href="/css/notification-toast.css"
           th:href="@{/css/notification-toast.css}">
 </head>
 <body>
-<!-- 헤더 -->
-<header class="header">
-    <nav class="nav">
-        <a href="#" class="nav-link">코스</a>
-        <a href="#" class="nav-link">포인트</a>
-        <a href="#" class="nav-link active">멤버십</a>
-        <a href="#" class="nav-link">크루</a>
-        <a href="#" class="nav-link">알림</a>
-    </nav>
-</header>
+
+<!-- 상단 네비게이션 -->
+<div th:replace="~{common/top-nav :: topNav}"></div>
+
 
 <!-- 메인 컨텐츠 -->
 <main class="container">
@@ -66,28 +60,7 @@
 </main>
 
 <!-- 하단 네비게이션 -->
-<footer class="bottom-nav">
-    <a href="#" class="bottom-nav-item">
-        <span class="bottom-nav-icon">💬</span>
-        <span class="bottom-nav-text">chat</span>
-    </a>
-    <a href="#" class="bottom-nav-item">
-        <span class="bottom-nav-icon">👥</span>
-        <span class="bottom-nav-text">crew</span>
-    </a>
-    <a href="#" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏠</span>
-        <span class="bottom-nav-text">home</span>
-    </a>
-    <a href="#" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🎯</span>
-        <span class="bottom-nav-text">match</span>
-    </a>
-    <a href="#" class="bottom-nav-item">
-        <span class="bottom-nav-icon">👤</span>
-        <span class="bottom-nav-text">my</span>
-    </a>
-</footer>
+<div th:replace="~{common/bottom-nav :: bottomNav}"></div>
 
 <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="js/membership.js"></script>

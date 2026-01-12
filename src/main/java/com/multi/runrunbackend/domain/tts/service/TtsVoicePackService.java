@@ -242,8 +242,6 @@ public class TtsVoicePackService {
 
         switch (mode) {
             case ONLINE -> base.addAll(List.of(
-                TtsCue.OPPONENT_AHEAD,
-                TtsCue.YOU_AHEAD,
                 TtsCue.WIN,
                 TtsCue.RANK_2,
                 TtsCue.RANK_3,

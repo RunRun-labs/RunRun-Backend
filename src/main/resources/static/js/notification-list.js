@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
       WAITING_ROOM: `/match/waiting?sessionId=${relatedId}`,
       ONLINE: `/match/waiting?sessionId=${relatedId}`,
 
-      CRE_JOINT_REQUEST: `/crews/${relatedId}/join-requests`,
+      CREW_JOIN_REQUEST: `/crews/${relatedId}/join-requests`,
       CREW: `/crews/${relatedId}`,
       CREW_USERS: `/crews/${relatedId}/users`,
       CREW_MAIN: `/crews/main`,
@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
       CHALLENGE: `/challenge`,
       CHALLENGE_END: `/challenge/end`,
 
-      FEED_POST: `/feed/records`,
+      FEED_RECORD: `/feed/records`,
 
       FRIEND_LIST: `/friends/list`
     };
@@ -142,33 +142,33 @@ document.addEventListener("DOMContentLoaded", () => {
       // 200 OK면 응답 본문 확인
       if (response.ok) {
         const result = await response.json();
-        
+
         // ApiResponse 구조: { success: true, data: { status: "STANDBY", participants: [...], ... } }
         if (result.success && result.data) {
           const sessionData = result.data;
           const sessionStatus = sessionData.status;
           const participants = sessionData.participants || [];
-          
+
           // ✅ 1. STANDBY 상태인지 확인
           if (sessionStatus !== "STANDBY") {
             console.log(`매치 세션이 STANDBY 상태가 아님: ${sessionStatus}`);
             return false;
           }
-          
+
           // ✅ 2. 현재 사용자가 참가자 목록에 있는지 확인
           const isParticipant = participants.some(
-            participant => participant.userId === currentUserId
+              participant => participant.userId === currentUserId
           );
-          
+
           if (!isParticipant) {
             console.log(`현재 사용자(${currentUserId})가 세션(${sessionId})의 참가자가 아님`);
             return false;
           }
-          
+
           // STANDBY 상태이고 참가자인 경우에만 유효
           return true;
         }
-        
+
         return false;
       }
 
@@ -202,7 +202,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // 라우팅 처리
     if (notification.relatedType && notification.relatedId) {
       // ✅ 매치 세션 관련 알림인 경우 유효성 확인
-      if (notification.relatedType === "WAITING_ROOM" || notification.relatedType === "ONLINE") {
+      if (notification.relatedType === "WAITING_ROOM"
+          || notification.relatedType === "ONLINE") {
         const isValid = await validateMatchSession(notification.relatedId);
         if (!isValid) {
           alert("이미 종료되거나 유효하지 않은 매치 세션입니다.");
