@@ -52,7 +52,7 @@ public class RunningResultService {
     User user = getUser(principal);
 
     List<RunStatus> targetStatuses = List.of(
-        RunStatus.COMPLETED,
+        RunStatus.COMPLETED
     );
 
     LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
