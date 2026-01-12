@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RunRun Admin | 광고 슬롯 수정</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/admin-layout.css"
+      th:href="@{/css/admin-layout.css}"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/ad-slot-create.css"
+      th:href="@{/css/ad-slot-create.css}"
+    />
+  </head>
+  <body>
+    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+    <!-- 레이아웃 적용 -->
+    <div th:replace="~{admin/layout :: adminLayout(~{::.ad-slot-content})}">
+      <!-- 컨텐츠 영역 -->
+      <div class="ad-slot-content ad-slot-create-container">
+        <div class="ad-slot-create-card">
+          <h1 class="page-title">광고 슬롯 수정</h1>
+
+          <form class="ad-slot-form" id="adSlotForm" novalidate>
+            <!-- 슬롯명 -->
+            <div class="form-field">
+              <label for="name" class="form-label"
+                >슬롯명 <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="form-input"
+                placeholder="슬롯명을 입력하세요 (2~50자)"
+                maxlength="50"
+              />
+              <span class="error-message" id="name-error"></span>
+            </div>
+
+            <!-- 한 줄에 2개: 슬롯 타입, 일일 제한 -->
+            <div class="form-row">
+              <div class="form-field">
+                <label for="slotType" class="form-label"
+                  >슬롯 타입 <span class="required">*</span></label
+                >
+                <select id="slotType" name="slotType" class="form-select">
+                  <option value="">선택하세요</option>
+                  <option value="FEED_LIST_ITEM">피드 리스트</option>
+                  <option value="RUN_END_BANNER">러닝 종료 배너</option>
+                  <option value="HOME_TOP_BANNER">홈 상단 배너</option>
+                  <option value="COUPON_LIST_BANNER">쿠폰 리스트 배너</option>
+                </select>
+                <span class="error-message" id="slotType-error"></span>
+              </div>
+
+              <div class="form-field">
+                <label for="dailyLimit" class="form-label"
+                  >일일 제한 <span class="required">*</span></label
+                >
+                <input
+                  type="number"
+                  id="dailyLimit"
+                  name="dailyLimit"
+                  class="form-input"
+                  placeholder="0=무제한, 양수 입력"
+                  min="0"
+                />
+                <span class="error-message" id="dailyLimit-error"></span>
+                <span class="help-text">0이면 무제한입니다</span>
+              </div>
+            </div>
+
+            <!-- 프리미엄 허용 -->
+            <div class="form-field">
+              <label class="form-label"
+                >프리미엄 허용 <span class="required">*</span></label
+              >
+              <div class="premium-toggle-wrapper">
+                <label class="premium-toggle">
+                  <input
+                    type="checkbox"
+                    name="allowPremium"
+                    class="premium-toggle-input"
+                  />
+                  <span class="premium-toggle-slider"></span>
+                  <span class="premium-toggle-label">프리미엄 허용</span>
+                </label>
+              </div>
+              <span class="error-message" id="allowPremium-error"></span>
+            </div>
+          </form>
+
+          <!-- 수정하기 버튼 -->
+          <button type="button" class="create-button" id="updateBtn">
+            수정하기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="/js/ad-slot-update.js"
+      th:src="@{/js/ad-slot-update.js}"
+    ></script>
+  </body>
+</html>

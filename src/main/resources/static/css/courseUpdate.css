@@ -1,5 +1,7 @@
 :root {
   --primary: #baff29;
+  --primary-green: #10b981;
+  --primary-green-light: #34d399;
   --text-strong: #1a1c1e;
   --text-muted: #6c7278;
   --stroke: #edf1f3;
@@ -20,14 +22,8 @@ body {
 }
 
 body {
-  font-family:
-    "Inter",
-    "Nunito Sans",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: "Inter", "Nunito Sans", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text-strong);
   display: flex;
@@ -90,30 +86,45 @@ body {
   text-align: center;
 }
 
-/* Sticky Create Button - Fixed above bottom nav */
-.create-button-sticky {
+/* FAB Button - Fixed above bottom nav */
+.fab-button {
   position: fixed;
-  bottom: 92px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(322px, calc(100vw - 72px));
-  height: 52px;
-  background: var(--primary);
-  border: 1px solid var(--primary);
-  border-radius: 12px;
-  font-family: "Nunito Sans", "Noto Sans KR", sans-serif;
-  font-size: 16px;
-  font-weight: 800;
-  color: #000;
+  bottom: 100px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 100;
-  display: block;
-  box-shadow: 0px 2px 8px 0px rgba(186, 255, 41, 0.6);
-  transition: opacity 0.2s;
+  transition: all 0.2s ease;
+  color: white;
 }
 
-.create-button-sticky:hover {
-  opacity: 0.9;
+/* 페이지 내부로 제한 */
+@media (min-width: 480px) {
+  .fab-button {
+    right: max(20px, calc(50vw - 210px + 20px));
+  }
+}
+
+.fab-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+}
+
+.fab-button:active {
+  transform: scale(0.95);
+}
+
+.fab-button svg {
+  width: 24px;
+  height: 24px;
 }
 
 /* Main Content */
@@ -225,6 +236,8 @@ body {
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
+  pointer-events: auto !important;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 
 .map-container.compact {
@@ -235,6 +248,7 @@ body {
 .map-container > div {
   width: 100% !important;
   height: 100% !important;
+  pointer-events: auto !important;
 }
 
 .route-launcher {
@@ -406,7 +420,6 @@ body {
   border: none;
 }
 
-
 /* Bottom Navigation (using existing styles) */
 .bottom-nav {
   position: fixed;
@@ -452,10 +465,6 @@ body {
     padding: 8px 20px;
   }
 
-  .create-button-sticky {
-    width: calc(100vw - 40px);
-    bottom: 92px;
-  }
 }
 
 /* 모바일 가로(예: 844x390)에서도 모바일 비율 유지 */
@@ -469,9 +478,6 @@ body {
     gap: 8px;
   }
 
-  .create-button-sticky {
-    bottom: 84px;
-  }
 
   .course-header {
     padding: 6px 16px;
@@ -499,7 +505,7 @@ body {
   .map-container {
     height: 250px;
   }
-  
+
   .map-container.compact {
     height: 230px;
   }
@@ -522,7 +528,6 @@ body {
     height: 50px;
   }
 
-  .create-button-sticky,
   .create-button-bottom {
     height: 48px;
     font-size: 14px;
@@ -562,10 +567,6 @@ body {
     padding: 12px 48px;
   }
 
-  .create-button-sticky {
-    max-width: 600px;
-    bottom: 98px;
-  }
 
   .create-button-bottom {
     max-width: 600px;

@@ -55,6 +55,7 @@ public class CrewChatService {
   private final com.multi.runrunbackend.domain.crew.repository.CrewUserRepository crewUserRepository;  // ⭐ 추가
   private final com.multi.runrunbackend.domain.crew.repository.CrewChatNoticeRepository chatNoticeRepository;
   private final NotificationService notificationService;
+  private final com.multi.runrunbackend.common.file.storage.FileStorage s3FileStorage;  // ✅ S3 파일 스토리지 추가
 
 
   /**
@@ -87,7 +88,7 @@ public class CrewChatService {
   public void sendMessage(CrewChatMessageDto messageDto) {
     // 현재 시간 설정
     LocalDateTime now = LocalDateTime.now();
-
+    
     // MongoDB에 저장
     CrewChatMessage chatMessage = CrewChatMessage.builder()
         .roomId(messageDto.getRoomId())
@@ -95,7 +96,7 @@ public class CrewChatService {
         .senderName(messageDto.getSenderName())
         .content(messageDto.getContent())
         .messageType(messageDto.getMessageType())
-        .createdAt(LocalDateTime.now())
+        .createdAt(now)
         .build();
 
     chatMessageRepository.save(chatMessage);
@@ -103,10 +104,10 @@ public class CrewChatService {
     // DTO에 시간 설정 후 Redis Pub/Sub으로 발행
     messageDto.setCreatedAt(now);
     String channel = "crew-chat:" + messageDto.getRoomId();
-    redisPublisher.publishObject(channel, messageDto);  // publishObject 사용
+    redisPublisher.publishObject(channel, messageDto);
 
-    log.info("크루 메시지 전송: roomId={}, sender={}", messageDto.getRoomId(),
-        messageDto.getSenderName());
+    log.info("크루 메시지 전송: roomId={}, sender={}, createdAt={}", 
+        messageDto.getRoomId(), messageDto.getSenderName(), now);
   }
 
   /**
@@ -151,20 +152,19 @@ public class CrewChatService {
         .build();
 
     sendMessage(systemMessage);
-    log.info("크루 역할 변경 시스템 메시지 전송: roomId={}, userName={}, roleName={}",
+    log.info("크루 역할 변경 시스템 메시지 전송: roomId={}, userName={}, roleName={}", 
         roomId, userName, roleName);
   }
 
   /**
-   * ✅ crewId로 역할 변경 시스템 메시지 전송
-   * 별도 트랜잭션으로 실행하여 메시지 전송 실패 시에도 역할 변경은 정상 처리
+   * ✅ crewId로 역할 변경 시스템 메시지 전송 별도 트랜잭션으로 실행하여 메시지 전송 실패 시에도 역할 변경은 정상 처리
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void sendRoleChangeMessageByCrewId(Long crewId, String userName, String roleName) {
     // 크루의 채팅방 조회
     CrewChatRoom chatRoom = chatRoomRepository.findByCrewId(crewId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.CHAT_ROOM_NOT_FOUND));
-
+    
     sendRoleChangeMessage(chatRoom.getId(), userName, roleName);
   }
 
@@ -208,6 +208,7 @@ public class CrewChatService {
           User user = cu.getUser();
           map.put("userId", user.getId());
           map.put("name", user.getName());
+          map.put("profileImage", user.getProfileImageUrl());  // ⭐ 프로필 이미지 추가
 
           // ⭐ 크루 역할 조회
           crewUserRepository.findByCrewIdAndUserIdAndIsDeletedFalse(crewId, user.getId())
@@ -285,6 +286,14 @@ public class CrewChatService {
     CrewChatRoom room = chatUser.getRoom();
     Crew crew = room.getCrew();
 
+    // ✅ S3 키 → HTTPS URL 변환
+    String httpsImageUrl = (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
+        ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
+        : "";
+
+    log.info("✅ 크루 채팅방 DTO 변환: crewId={}, crewName={}, S3키={}, HTTPS URL={}",
+        crew.getId(), crew.getCrewName(), crew.getCrewImageUrl(), httpsImageUrl);
+
     // 참가자 수 조회
     Long currentMembers = chatUserRepository.countActiveUsersByRoomId(room.getId());
 
@@ -295,18 +304,23 @@ public class CrewChatService {
     // 읽지 않은 메시지 개수 계산 (TODO: lastReadAt 필드 추가 후 구현)
     int unreadCount = 0;
 
-    return CrewChatRoomListResDto.builder()
+    CrewChatRoomListResDto dto = CrewChatRoomListResDto.builder()
         .roomId(room.getId())
         .roomName(room.getCrewRoomName())
         .crewId(crew.getId())
         .crewName(crew.getCrewName())
         .crewDescription(crew.getCrewDescription())
+        .crewImageUrl(httpsImageUrl)  // ✅ HTTPS URL 사용
         .currentMembers(currentMembers.intValue())
         .lastMessageContent(lastMessage != null ? lastMessage.getContent() : null)
         .lastMessageSender(lastMessage != null ? lastMessage.getSenderName() : null)
         .lastMessageTime(lastMessage != null ? lastMessage.getCreatedAt() : null)
         .unreadCount(unreadCount)
         .build();
+
+    log.info("✅ DTO 변환 완료: roomId={}, crewImageUrl={}", dto.getRoomId(), dto.getCrewImageUrl());
+
+    return dto;
   }
 
   // ============================================

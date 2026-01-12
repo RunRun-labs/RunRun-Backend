@@ -38,4 +38,17 @@ public interface CouponRoleRepository extends JpaRepository<CouponRole, Long>,
         """)
     List<CouponRole> findActiveRoles(@Param("event") CouponTriggerEvent event,
         @Param("cond") Integer cond);
+
+    /**
+     * 특정 이벤트의 모든 활성 역할 조회 (누적 거리 쿠폰 발급용)
+     */
+    @Query("""
+        select r
+        from CouponRole r
+        join fetch r.coupon c
+        where r.isActive = true
+          and r.triggerEvent = :event
+          and r.conditionValue is not null
+        """)
+    List<CouponRole> findAllActiveRolesByEvent(@Param("event") CouponTriggerEvent event);
 }

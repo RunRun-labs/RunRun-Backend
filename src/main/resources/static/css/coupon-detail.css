@@ -1,0 +1,190 @@
+.coupon-detail-container {
+  width: 100%;
+  max-width: 1200px;
+  position: relative;
+}
+
+.coupon-detail-card {
+  background: var(--bg-secondary);
+  border-radius: 24px;
+  box-shadow: 0px 30px 60px 0px rgba(0, 0, 0, 0.2);
+  padding: 38px 23px;
+  position: relative;
+  min-height: 665px;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-top: 20px;
+}
+
+.page-title {
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.create-button {
+  padding: 10px 24px;
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  color: var(--bg-primary);
+  font-family: "Fugaz One", "Noto Sans KR", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0px 2px 8px 0px rgba(186, 255, 41, 0.6);
+}
+
+.create-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 4px 12px 0px rgba(186, 255, 41, 0.8);
+}
+
+.info-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.section-title {
+  font-family: "Nunito Sans", "Noto Sans KR", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 20px 0;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item-full {
+  grid-column: 1 / -1;
+}
+
+.info-label {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.info-value {
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.stats-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.stats-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-label {
+  font-family: "Nunito Sans", "Noto Sans KR", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.filter-select {
+  height: 36px;
+  background: var(--text-primary);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--bg-primary);
+  outline: none;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23171821' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.stat-label {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: "Inter", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.chart-container {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+.chart-title {
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+}
+
+.chart-container canvas {
+  max-height: 300px;
+}
+

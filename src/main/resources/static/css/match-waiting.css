@@ -375,6 +375,11 @@ body {
   margin-top: 8px;
 }
 
+/* 프로필 이미지는 정상 방향으로 표시 */
+.card-avatar img {
+  transform: scaleY(-1);
+}
+
 .speed-icon {
   background: var(--overlay-orange-20);
   transform: scaleY(-1);

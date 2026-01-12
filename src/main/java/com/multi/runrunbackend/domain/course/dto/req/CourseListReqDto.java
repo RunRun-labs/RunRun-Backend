@@ -39,6 +39,10 @@ public class CourseListReqDto {
     private String cursor;
     private Integer size;
 
+    private Boolean myCourses;
+    private Boolean myLikedCourses;
+    private Boolean myFavoritedCourses;
+
 
     public static CourseListReqDto fromParams(
         String keyword,
@@ -50,7 +54,10 @@ public class CourseListReqDto {
         String distanceBucket,
         CourseSortType sortType,
         String cursor,
-        Integer size
+        Integer size,
+        Boolean myCourses,
+        Boolean myLikedCourses,
+        Boolean myFavoritedCourses
     ) {
         return CourseListReqDto.builder()
             .keyword(normalizeBlank(keyword))
@@ -63,6 +70,9 @@ public class CourseListReqDto {
             .sortType(sortType)
             .cursor(normalizeBlank(cursor))
             .size(normalizeSize(size))
+            .myCourses(myCourses)
+            .myLikedCourses(myLikedCourses)
+            .myFavoritedCourses(myFavoritedCourses)
             .build();
     }
 

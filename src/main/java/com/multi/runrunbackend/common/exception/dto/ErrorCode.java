@@ -447,10 +447,49 @@ public enum ErrorCode {
     ),
 
     START_GATE_TOO_FAR(
-            HttpStatus.BAD_REQUEST,
-            "G003",
-            "출발점 20m 이내에서만 시작할 수 있습니다."
+        HttpStatus.BAD_REQUEST,
+        "G003",
+        "출발점 20m 이내에서만 시작할 수 있습니다."
     ),
+    /*===== Ad=====*/
+    AD_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "AD001", "잘못된 광고 요청입니다"),
+    AD_NOT_FOUND(HttpStatus.NOT_FOUND, "AD002", "존재하지 않는 광고입니다."),
+    AD_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "AD003", "존재하지 않는 광고 슬롯입니다."),
+    AD_PLACEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "AD004", "존재하지 않는 광고 배치입니다."),
+
+    AD_IMAGE_REQUIRED(HttpStatus.BAD_REQUEST, "AD005", "광고 이미지는 필수입니다."),
+    AD_INVALID_SLOT_TYPE(HttpStatus.BAD_REQUEST, "AD006", "유효하지 않은 광고 슬롯 타입입니다."),
+    AD_NO_ACTIVE_PLACEMENT(HttpStatus.NOT_FOUND, "AD007", "현재 노출 가능한 광고가 없습니다."),
+
+    AD_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD008", "광고 생성에 실패했습니다."),
+    AD_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD009", "광고 수정에 실패했습니다."),
+    AD_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD10", "광고 삭제에 실패했습니다."),
+
+    AD_SLOT_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD011", "광고 슬롯 생성에 실패했습니다."),
+    AD_SLOT_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD012", "광고 슬롯 수정에 실패했습니다."),
+    AD_SLOT_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD013", "광고 슬롯 삭제에 실패했습니다."),
+
+    AD_PLACEMENT_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD014", "광고 배치 생성에 실패했습니다."),
+    AD_PLACEMENT_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD015", "광고 배치 수정에 실패했습니다."),
+    AD_PLACEMENT_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD16", "광고 배치 삭제에 실패했습니다."),
+    AD_EVENT_INVALID(HttpStatus.BAD_REQUEST, "AD17", "광고 이벤트 요청이 올바르지 않습니다."),
+    AD_ALREADY_DELETED(HttpStatus.NOT_FOUND, "AD018", "활성화 상태의 광고가 안닙니다"),
+    AD_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD019",
+        "광고 저장에 실패했습니다."), AD_LOCKED_BY_PLACEMENT(
+        HttpStatus.FORBIDDEN, "AD020", "등록된 광고는 수정할 수 없습니다"),
+    AD_SLOT_UPDATE_ONLY_DISABLED(HttpStatus.FORBIDDEN,
+        "AD021", "비활성화 중인 슬롯을 비활성화 수 없습니다"),
+    AD_SLOT_IN_USE(HttpStatus.FORBIDDEN, "AD021",
+        "이미 광고가 있는 슬롯은 수정할 수 없습니다"), AD_PLACEMENT_UPDATE_ONLY_DISABLED(
+        HttpStatus.FORBIDDEN, "AD022", "활성화 중인 AdPlace를 수정할 수 없습니다"),
+    AD_PLACEMENT_OUT_OF_PERIOD(HttpStatus.FORBIDDEN
+        , "AD023", "마감일이 지나면 활성화 할 수 없습니다"),
+    AD_PLACEMENT_UPDATE_NOT_ALLOWED_DURING_PERIOD(HttpStatus.FORBIDDEN
+        , "AD024", "집행기간에는 수정 할 수 없습니다"),
+    AD_SERVE_NOT_FOUND(HttpStatus.NOT_FOUND, "AD025", "슬롯에 광고가 없습니다"),
+    AD_SLOT_TYPE_ALREADY_EXISTS(HttpStatus.CONFLICT, "AD026", "이미 같은 타입의 광고 슬롯이 존재합니다"),
+    AD_PLACEMENT_DUPLICATE(HttpStatus.CONFLICT, "AD027", "이미 해당 슬롯과 광고 조합의 배치가 존재합니다"),
+
     /* ===== 출석(Attendance) ===== */
     ALREADY_ATTENDED_TODAY(HttpStatus.CONFLICT, "AT001", "이미 출석 이벤트에 참가했습니다.");
 

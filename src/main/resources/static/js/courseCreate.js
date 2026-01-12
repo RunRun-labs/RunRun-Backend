@@ -49,11 +49,11 @@ function showError(name, message) {
   if (errorEls[name]) {
     errorEls[name].textContent = message || "";
     const field =
-      name === "title"
-        ? titleInput
-        : name === "description"
-        ? descInput
-        : pathInput;
+        name === "title"
+            ? titleInput
+            : name === "description"
+                ? descInput
+                : pathInput;
     setFieldState(field, message);
   }
 }
@@ -90,8 +90,8 @@ function validateRoute() {
   const distance = Number(distanceMInput.value);
   if (Number.isFinite(distance) && distance > MAX_DISTANCE_M) {
     showError(
-      "path",
-      "마라톤(42.195km)보다 긴 코스는 등록할 수 없습니다. 다시 작성해 주세요."
+        "path",
+        "마라톤(42.195km)보다 긴 코스는 등록할 수 없습니다. 다시 작성해 주세요."
     );
     return false;
   }
@@ -111,6 +111,8 @@ function anyInvalid() {
 
 let previewStartMarker = null;
 let previewEndMarker = null;
+let previewStartInfoWindow = null;
+let previewEndInfoWindow = null;
 
 function initMapPreview() {
   if (previewMap || !mapPreviewEl || typeof kakao === "undefined") {
@@ -134,47 +136,52 @@ function clearPreviewMarkers() {
     previewEndMarker.setMap(null);
     previewEndMarker = null;
   }
+  if (previewStartInfoWindow) {
+    previewStartInfoWindow.close();
+    previewStartInfoWindow = null;
+  }
+  if (previewEndInfoWindow) {
+    previewEndInfoWindow.close();
+    previewEndInfoWindow = null;
+  }
 }
 
 function addPreviewMarker(lat, lng, labelText, variant = "default") {
   const latlng = new kakao.maps.LatLng(lat, lng);
-  const palette = {
-    start: "#1e88e5",
-    end: "#ff3d00",
-    default: "#333333",
-  };
-  const color = palette[variant] || palette.default;
 
-  const content = `
-    <div style="transform:translate(-50%,-100%);text-align:center;">
-      <div style="
-        padding:4px 10px;
-        border-radius:14px;
-        background:${color};
-        color:#fff;
-        font-size:11px;
-        font-weight:bold;
-        white-space:nowrap;
-        box-shadow:0 2px 4px rgba(0,0,0,0.3);
-      ">${labelText}</div>
-      <div style="
-        width:0;
-        height:0;
-        border-left:6px solid transparent;
-        border-right:6px solid transparent;
-        border-top:8px solid ${color};
-        margin:0 auto;
-      "></div>
-    </div>
-  `;
-
-  const marker = new kakao.maps.CustomOverlay({
+  // 기본 마커 생성
+  const marker = new kakao.maps.Marker({
     position: latlng,
-    content: content,
-    yAnchor: 1,
+  });
+  marker.setMap(previewMap);
+
+  // InfoWindow 생성
+  const infoContent = `<div style="padding:8px;font-size:13px;font-weight:bold;">${labelText}</div>`;
+  const infoWindow = new kakao.maps.InfoWindow({
+    content: infoContent,
   });
 
-  marker.setMap(previewMap);
+  // 마커 클릭 시 InfoWindow 표시
+  kakao.maps.event.addListener(marker, "click", function () {
+    // 다른 InfoWindow 닫기
+    if (previewStartInfoWindow) {
+      previewStartInfoWindow.close();
+    }
+    if (previewEndInfoWindow) {
+      previewEndInfoWindow.close();
+    }
+
+    // 현재 InfoWindow 열기
+    infoWindow.open(previewMap, marker);
+  });
+
+  // variant에 따라 InfoWindow 저장
+  if (variant === "start") {
+    previewStartInfoWindow = infoWindow;
+  } else if (variant === "end") {
+    previewEndInfoWindow = infoWindow;
+  }
+
   return marker;
 }
 
@@ -216,29 +223,29 @@ function renderRouteOnMap(coords) {
 
   // Check if round trip (start and end are the same)
   const isRoundTrip =
-    Math.abs(startCoord.getLat() - endCoord.getLat()) < 0.0001 &&
-    Math.abs(startCoord.getLng() - endCoord.getLng()) < 0.0001;
+      Math.abs(startCoord.getLat() - endCoord.getLat()) < 0.0001 &&
+      Math.abs(startCoord.getLng() - endCoord.getLng()) < 0.0001;
 
   if (isRoundTrip) {
     // 루프 코스일 때는 출발점만 표시
     previewStartMarker = addPreviewMarker(
-      startCoord.getLat(),
-      startCoord.getLng(),
-      "출발",
-      "start"
+        startCoord.getLat(),
+        startCoord.getLng(),
+        "📍 출발점",
+        "start"
     );
   } else {
     previewStartMarker = addPreviewMarker(
-      startCoord.getLat(),
-      startCoord.getLng(),
-      "출발",
-      "start"
+        startCoord.getLat(),
+        startCoord.getLng(),
+        "📍 출발점",
+        "start"
     );
     previewEndMarker = addPreviewMarker(
-      endCoord.getLat(),
-      endCoord.getLng(),
-      "도착",
-      "end"
+        endCoord.getLat(),
+        endCoord.getLng(),
+        "🏁 도착점",
+        "end"
     );
   }
 
@@ -269,8 +276,8 @@ function applyDraft(draft) {
   // If path is a string (WKT), reject it
   if (typeof pathToStore === "string") {
     console.error(
-      "ERROR: draft.path is a string (WKT), not GeoJSON:",
-      pathToStore.substring(0, 100)
+        "ERROR: draft.path is a string (WKT), not GeoJSON:",
+        pathToStore.substring(0, 100)
     );
     alert("코스 경로 형식 오류가 감지되었습니다. 코스를 다시 생성해주세요.");
     applyDraft(null);
@@ -279,9 +286,9 @@ function applyDraft(draft) {
 
   // Ensure it's a GeoJSON object with coordinates
   if (
-    !pathToStore.coordinates ||
-    !Array.isArray(pathToStore.coordinates) ||
-    pathToStore.coordinates.length === 0
+      !pathToStore.coordinates ||
+      !Array.isArray(pathToStore.coordinates) ||
+      pathToStore.coordinates.length === 0
   ) {
     console.error("ERROR: draft.path has no valid coordinates:", pathToStore);
     applyDraft(null);
@@ -312,15 +319,16 @@ function applyDraft(draft) {
   }
 
   const distanceKm =
-    draft.distanceM != null ? (Number(draft.distanceM) / 1000).toFixed(2) : "-";
+      draft.distanceM != null ? (Number(draft.distanceM) / 1000).toFixed(2)
+          : "-";
   summaryEl.innerHTML = `
     <div class="summary-row"><span>등록 방식</span><strong>${
       draft.courseRegisterType ?? "-"
-    }</strong></div>
+  }</strong></div>
     <div class="summary-row"><span>거리</span><strong>${distanceKm} km</strong></div>
     <div class="summary-row"><span>출발지</span><strong>${
       draft.address ?? "-"
-    }</strong></div>
+  }</strong></div>
   `;
 
   renderRouteOnMap(draft.path.coordinates);
@@ -425,15 +433,15 @@ form.addEventListener("submit", async (e) => {
 
     // Check if it's already a WKT string (starts with "LINESTRING")
     if (
-      pathValue.startsWith("LINESTRING") ||
-      pathValue.startsWith("linestring")
+        pathValue.startsWith("LINESTRING") ||
+        pathValue.startsWith("linestring")
     ) {
       console.error(
-        "ERROR: pathInput contains WKT string, not GeoJSON:",
-        pathValue.substring(0, 100)
+          "ERROR: pathInput contains WKT string, not GeoJSON:",
+          pathValue.substring(0, 100)
       );
       alert(
-        "코스 경로 형식 오류: WKT 형식이 감지되었습니다. 코스를 다시 생성해주세요."
+          "코스 경로 형식 오류: WKT 형식이 감지되었습니다. 코스를 다시 생성해주세요."
       );
       return;
     }
@@ -444,8 +452,8 @@ form.addEventListener("submit", async (e) => {
       // Ensure it's a GeoJSON object, not a string
       if (typeof parsed === "string") {
         console.error(
-          "Path is a string, not GeoJSON:",
-          parsed.substring(0, 100)
+            "Path is a string, not GeoJSON:",
+            parsed.substring(0, 100)
         );
         alert("코스 경로 형식이 올바르지 않습니다");
         return;
@@ -454,10 +462,10 @@ form.addEventListener("submit", async (e) => {
       pathObj = parsed;
     } catch (e) {
       console.error(
-        "Error parsing path:",
-        e,
-        "pathInput.value (first 200 chars):",
-        pathValue.substring(0, 200)
+          "Error parsing path:",
+          e,
+          "pathInput.value (first 200 chars):",
+          pathValue.substring(0, 200)
       );
       alert("코스 경로 형식이 올바르지 않습니다. 코스를 다시 생성해주세요.");
       return;
@@ -465,10 +473,10 @@ form.addEventListener("submit", async (e) => {
   }
 
   if (
-    !pathObj ||
-    !pathObj.coordinates ||
-    !Array.isArray(pathObj.coordinates) ||
-    pathObj.coordinates.length === 0
+      !pathObj ||
+      !pathObj.coordinates ||
+      !Array.isArray(pathObj.coordinates) ||
+      pathObj.coordinates.length === 0
   ) {
     alert("코스 경로를 생성해주세요");
     return;
@@ -503,8 +511,8 @@ form.addEventListener("submit", async (e) => {
 
   // Get distance
   const distanceM = distanceMInput.value
-    ? Math.round(Number(distanceMInput.value))
-    : null;
+      ? Math.round(Number(distanceMInput.value))
+      : null;
 
   // Get coordinates
   const startLat = parseFloat(startLatInput.value) || null;
@@ -519,8 +527,8 @@ form.addEventListener("submit", async (e) => {
 
   if (typeof pathObj === "string") {
     console.error(
-      "ERROR: pathObj is a string (WKT):",
-      pathObj.substring(0, 100)
+        "ERROR: pathObj is a string (WKT):",
+        pathObj.substring(0, 100)
     );
     alert("코스 경로가 WKT 형식입니다. 코스를 다시 생성해주세요.");
     return;
@@ -535,8 +543,8 @@ form.addEventListener("submit", async (e) => {
 
   if (!Array.isArray(pathObj.coordinates) || pathObj.coordinates.length < 2) {
     console.error(
-      "ERROR: pathObj.coordinates is invalid:",
-      pathObj.coordinates
+        "ERROR: pathObj.coordinates is invalid:",
+        pathObj.coordinates
     );
     alert("코스 경로에 충분한 좌표가 없습니다.");
     return;
@@ -562,8 +570,8 @@ form.addEventListener("submit", async (e) => {
 
   // Add course as JSON blob
   formData.append(
-    "course",
-    new Blob([JSON.stringify(course)], { type: "application/json" })
+      "course",
+      new Blob([JSON.stringify(course)], {type: "application/json"})
   );
 
   // Add image file if exists
@@ -583,8 +591,8 @@ form.addEventListener("submit", async (e) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/courses", true);
     xhr.setRequestHeader(
-      "Authorization",
-      token.startsWith("Bearer ") ? token : `Bearer ${token}`
+        "Authorization",
+        token.startsWith("Bearer ") ? token : `Bearer ${token}`
     );
 
     // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
@@ -607,19 +615,19 @@ form.addEventListener("submit", async (e) => {
           const errorData = JSON.parse(xhr.responseText);
           // 여러 필드에서 에러 메시지 추출 시도
           errorMessage =
-            errorData.message ||
-            errorData.error ||
-            errorData.code ||
-            errorData.detail ||
-            errorMessage;
+              errorData.message ||
+              errorData.error ||
+              errorData.code ||
+              errorData.detail ||
+              errorMessage;
           console.error("Error response:", errorData);
         } catch (e) {
           console.error("Error response (raw):", xhr.responseText);
           // JSON이 아닌 경우 raw 텍스트 사용
           errorMessage =
-            xhr.responseText ||
-            `HTTP ${xhr.status}: ${xhr.statusText}` ||
-            errorMessage;
+              xhr.responseText ||
+              `HTTP ${xhr.status}: ${xhr.statusText}` ||
+              errorMessage;
         }
         alert("코스 생성 실패: " + errorMessage);
       }

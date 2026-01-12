@@ -298,7 +298,8 @@ body {
   align-items: center;
   justify-content: center;
   position: relative;
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  background: transparent;  /* ✅ 배경 투명하게 변경 */
+  overflow: hidden;  /* 이미지가 영역 밖으로 나가지 않게 */
 }
 
 .chat-avatar.avatar-gray {
