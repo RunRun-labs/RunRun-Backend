@@ -120,7 +120,8 @@ public class PathController {
     }
 
     @GetMapping("/crews/{crewId}")
-    public String crewDetailPage() {
+    public String crewDetailPage(@PathVariable Long crewId, Model model) {
+        model.addAttribute("crewId", crewId);
         return "crew/crewDetailList";
     }
 
@@ -240,7 +241,6 @@ public class PathController {
         return "challenge/challenge-end";
     }
 
-    /* ===================== COURSE ===================== */
 
     @GetMapping("/course_auto")
     public String courseAutoView() {
@@ -327,15 +327,6 @@ public class PathController {
     }
 
 
-    @GetMapping("/admin/coupon/detail/{coupon_id}")
-    public String adminCouponDetailView(
-            @PathVariable(name = "coupon_id") Long couponId,
-            Model model
-    ) {
-        model.addAttribute("couponId", couponId);
-        return "admin/coupon-detail";
-    }
-
 
     /* ===================== ADMIN POINT PRODUCT ===================== */
 
@@ -410,7 +401,8 @@ public class PathController {
     }
 
     @GetMapping("/admin/coupon/update/{coupon_id}")
-    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId, Model model) {
+    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
+                                        Model model) {
         model.addAttribute("couponId", couponId);
         return "admin/coupon-update";
     }
@@ -432,6 +424,15 @@ public class PathController {
     ) {
         model.addAttribute("couponRoleId", couponRoleId);
         return "admin/coupon-role-update";
+    }
+
+    @GetMapping("/admin/coupon/detail/{coupon_id}")
+    public String adminCouponDetailView(
+            @PathVariable(name = "coupon_id") Long couponId,
+            Model model
+    ) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-detail";
     }
 
     @GetMapping("/admin/coupon/select")
@@ -547,5 +548,9 @@ public class PathController {
         return "admin/running-stats";
     }
 
-
+    @GetMapping("/attendance-event")
+    public String attendanceEventPage() {
+        return "attendance/attendance-event";
+    }
 }
+
