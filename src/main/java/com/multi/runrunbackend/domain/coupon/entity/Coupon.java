@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Check;
 import org.hibernate.annotations.SQLRestriction;
 
 /**
@@ -33,6 +34,13 @@ import org.hibernate.annotations.SQLRestriction;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@Check(constraints = """
+    (
+      (benefit_type = 'FIXED_DISCOUNT' AND benefit_value BETWEEN 1000 AND 9900 AND MOD(benefit_value, 1000) = 0)
+      OR
+      (benefit_type = 'RATE_DISCOUNT' AND benefit_value BETWEEN 1 AND 100)
+    )
+    """)
 @Table(
     name = "coupon",
     uniqueConstraints = @UniqueConstraint(name = "uk_coupon_code", columnNames = "code")
@@ -49,6 +57,7 @@ public class Coupon extends BaseTimeEntity {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
 
     private Integer quantity;
 

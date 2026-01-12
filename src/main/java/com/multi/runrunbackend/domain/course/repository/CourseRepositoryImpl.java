@@ -67,6 +67,44 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
             params.put("currentUserId", currentUserId);
         }
 
+        // ✅ 내 코스 보기 필터
+        if (Boolean.TRUE.equals(req.getMyCourses())) {
+            if (currentUserId == null) {
+                throw new InvalidRequestException(ErrorCode.UNAUTHORIZED);
+            }
+            where.append(" AND c.user_id = :currentUserId ");
+        }
+
+        // ✅ 내가 좋아요한 코스 보기 필터
+        if (Boolean.TRUE.equals(req.getMyLikedCourses())) {
+            if (currentUserId == null) {
+                throw new InvalidRequestException(ErrorCode.UNAUTHORIZED);
+            }
+            where.append("""
+                AND EXISTS (
+                    SELECT 1
+                    FROM course_like cl
+                    WHERE cl.course_id = c.id
+                      AND cl.user_id = :currentUserId
+                )
+                """);
+        }
+
+        // ✅ 내가 즐겨찾기한 코스 보기 필터
+        if (Boolean.TRUE.equals(req.getMyFavoritedCourses())) {
+            if (currentUserId == null) {
+                throw new InvalidRequestException(ErrorCode.UNAUTHORIZED);
+            }
+            where.append("""
+                AND EXISTS (
+                    SELECT 1
+                    FROM course_favorite cf
+                    WHERE cf.course_id = c.id
+                      AND cf.user_id = :currentUserId
+                )
+                """);
+        }
+
         // keyword
         if (req.getKeyword() != null && !req.getKeyword().isBlank()) {
             where.append(" AND (c.title ILIKE :kw OR c.description ILIKE :kw) ");

@@ -306,11 +306,16 @@ function createRankingItem(participant, isMe) {
   // 아바타
   const avatar = document.createElement('div');
   avatar.className = 'participant-avatar';
-  avatar.innerHTML = `
-    <svg width="20" height="24" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 0L10 24M0 12L20 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-  `;
+  
+  // ✅ 프로필 이미지 표시 (기본 이미지 포함)
+  const avatarImg = document.createElement('img');
+  avatarImg.src = participant.profileImage || '/img/default-profile.svg';
+  avatarImg.alt = participant.username;
+  avatarImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+  avatarImg.onerror = function() {
+    this.src = '/img/default-profile.svg';
+  };
+  avatar.appendChild(avatarImg);
   
   // 참가자 정보
   const info = document.createElement('div');
@@ -371,6 +376,30 @@ function renderComparison(data) {
     document.querySelector('.comparison-section').style.display = 'none';
     return;
   }
+  
+  // ✅ 내 아바타 업데이트
+  const myAvatar = document.querySelector('.user-me');
+  const myImg = document.createElement('img');
+  myImg.src = myData.profileImage || '/img/default-profile.svg';
+  myImg.alt = '나';
+  myImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+  myImg.onerror = function() {
+    this.src = '/img/default-profile.svg';
+  };
+  myAvatar.innerHTML = '';
+  myAvatar.appendChild(myImg);
+  
+  // ✅ 1위 아바타 업데이트
+  const winnerAvatar = document.querySelector('.user-winner');
+  const winnerImg = document.createElement('img');
+  winnerImg.src = firstPlace.profileImage || '/img/default-profile.svg';
+  winnerImg.alt = firstPlace.username;
+  winnerImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+  winnerImg.onerror = function() {
+    this.src = '/img/default-profile.svg';
+  };
+  winnerAvatar.innerHTML = '';
+  winnerAvatar.appendChild(winnerImg);
   
   // 헤더 - 이름
   document.querySelector('.user-me + .user-name').textContent = '나';

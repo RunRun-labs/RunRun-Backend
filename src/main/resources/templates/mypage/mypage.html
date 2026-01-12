@@ -72,8 +72,8 @@
                 <div class="profile-meta">
                     <div class="tier-section">
                         <span class="tier-label">티어 :</span>
-                        <div class="tier-display">
-                            <img src="/img/tier/rabbit.png" alt="토끼" class="tier-image" id="tierImage"
+                        <div class="tier-display" data-role="tier-click" style="cursor: pointer;">
+                            <img src="/img/tier/Rabbit.png" alt="토끼" class="tier-image" id="tierImage"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
                             <span class="tier-text" id="tierText">🐰</span>
                         </div>
@@ -82,9 +82,9 @@
                         <span class="rating-label">레이팅:</span>
                         <span class="rating-value" id="ratingValue">-</span>
                     </div>
-                    <div class="point-section">
+                    <div class="point-section" data-role="point-click" style="cursor: pointer;">
                         <span class="point-label">포인트:</span>
-                        <span class="point-value" th:text="${pointBalance != null ? pointBalance : '-'}">-</span>
+                        <span class="point-value" id="pointValue">-</span>
                     </div>
                 </div>
             </div>
@@ -202,7 +202,8 @@
             <h2 class="run-list-title">러닝 기록</h2>
             <button class="date-search-button" type="button" id="dateSearchButton" aria-label="날짜 검색">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 <span id="dateSearchLabel">날짜 검색</span>
             </button>
@@ -251,7 +252,29 @@
                       stroke-linejoin="round"/>
             </svg>
         </button>
-        <img class="image-modal-img" id="imageModalImg" src="" alt="코스 이미지" />
+        <img class="image-modal-img" id="imageModalImg" src="" alt="코스 이미지"/>
+    </div>
+</div>
+
+<!-- 티어/레이팅 모달 -->
+<div class="course-modal" id="tierRatingModal" data-role="tier-rating-modal" hidden>
+    <div class="course-modal-overlay" data-role="tier-rating-modal-overlay"></div>
+    <div class="course-modal-content">
+        <div class="course-modal-header">
+            <h2 class="course-modal-title">거리별 티어 & 레이팅</h2>
+            <button class="course-modal-close" type="button" data-role="tier-rating-modal-close" aria-label="닫기">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="course-modal-options" id="tierRatingList">
+            <!-- 거리별 티어/레이팅은 JavaScript로 동적 생성 -->
+            <div style="padding: 20px; text-align: center; color: #999;">
+                <p>로딩 중...</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -271,13 +294,15 @@
             <div class="calendar-month-header">
                 <button class="calendar-nav-button" type="button" id="calendarPrevMonth" aria-label="이전 달">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
                     </svg>
                 </button>
                 <div class="calendar-month-year" id="calendarMonthYear">2026년 1월</div>
                 <button class="calendar-nav-button" type="button" id="calendarNextMonth" aria-label="다음 달">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
                     </svg>
                 </button>
             </div>
@@ -354,5 +379,3 @@
 <script src="/js/mypage.js" th:src="@{/js/mypage.js}"></script>
 </body>
 </html>
-
-

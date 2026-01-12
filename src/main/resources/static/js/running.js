@@ -103,6 +103,7 @@ function getUserId() {
 // Kakao Map
 // ==========================
 let map = null;
+let geocoder = null;
 let coursePolyline = null;
 let userMarker = null;
 let startMarker = null;
@@ -365,9 +366,22 @@ function openFreeRunCourseModal(preview) {
       )}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
     if (freeRunCourseDescInput) freeRunCourseDescInput.value = "";
-    // ✅ 주소는 모집글 출발지(meetingPlace)로 설정
+    // ✅ 주소는 모집글 출발지(meetingPlace)로 설정, 없으면 역지오코딩으로 자동 채우기
     if (freeRunCourseAddressInput && sessionDataCache?.meetingPlace) {
       freeRunCourseAddressInput.value = sessionDataCache.meetingPlace;
+    } else if (freeRunCourseAddressInput && preview?.startLat != null && preview?.startLng != null && geocoder) {
+      // ✅ 솔로 러닝: 역지오코딩으로 주소 자동 채우기
+      geocoder.coord2Address(preview.startLng, preview.startLat, (result, status) => {
+        if (status === kakao.maps.services.Status.OK && result?.[0] && freeRunCourseAddressInput) {
+          const addr =
+            result[0].road_address?.address_name ??
+            result[0].address?.address_name ??
+            "";
+          freeRunCourseAddressInput.value = addr;
+        } else if (freeRunCourseAddressInput) {
+          freeRunCourseAddressInput.value = "";
+        }
+      });
     } else if (freeRunCourseAddressInput) {
       freeRunCourseAddressInput.value = "";
     }
@@ -2126,6 +2140,7 @@ function initKakaoMap() {
       };
 
       map = new kakao.maps.Map(mapContainer, mapOption);
+      geocoder = new kakao.maps.services.Geocoder();
 
       // 사용자가 지도를 움직이면 자동 따라가기(follow) 해제
       try {

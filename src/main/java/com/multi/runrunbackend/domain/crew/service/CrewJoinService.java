@@ -535,7 +535,7 @@ public class CrewJoinService {
     }
 
     // ❌ 임시 주석 처리 - 알림 전송 비활성화
-    /*
+   
     if (newRole == CrewRole.SUB_LEADER || newRole == CrewRole.STAFF) {
       try {
         List<CrewUser> allMembers = crewUserRepository
@@ -576,7 +576,7 @@ public class CrewJoinService {
             crewId, userId, newRole, e);
       }
     }
-    */  // ❌ 임시 주석 처리 끝
+    // ❌ 임시 주석 처리 끝
 
     log.info("크루원 권한 변경 완료 - crewId: {}, userId: {}, oldRole: {}, newRole: {}",
         crewId, userId, oldRole, newRole);
