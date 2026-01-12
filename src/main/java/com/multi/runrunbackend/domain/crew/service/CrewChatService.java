@@ -54,6 +54,7 @@ public class CrewChatService {
   private final com.multi.runrunbackend.domain.crew.repository.CrewUserRepository crewUserRepository;  // ⭐ 추가
   private final com.multi.runrunbackend.domain.crew.repository.CrewChatNoticeRepository chatNoticeRepository;
   private final NotificationService notificationService;
+  private final com.multi.runrunbackend.common.file.storage.FileStorage s3FileStorage;  // ✅ S3 파일 스토리지 추가
 
 
   /**
@@ -284,6 +285,14 @@ public class CrewChatService {
     CrewChatRoom room = chatUser.getRoom();
     Crew crew = room.getCrew();
 
+    // ✅ S3 키 → HTTPS URL 변환
+    String httpsImageUrl = (crew.getCrewImageUrl() != null && !crew.getCrewImageUrl().isEmpty())
+        ? s3FileStorage.toHttpsUrl(crew.getCrewImageUrl())
+        : "";
+    
+    log.info("✅ 크루 채팅방 DTO 변환: crewId={}, crewName={}, S3키={}, HTTPS URL={}",
+        crew.getId(), crew.getCrewName(), crew.getCrewImageUrl(), httpsImageUrl);
+
     // 참가자 수 조회
     Long currentMembers = chatUserRepository.countActiveUsersByRoomId(room.getId());
 
@@ -294,18 +303,23 @@ public class CrewChatService {
     // 읽지 않은 메시지 개수 계산 (TODO: lastReadAt 필드 추가 후 구현)
     int unreadCount = 0;
 
-    return CrewChatRoomListResDto.builder()
+    CrewChatRoomListResDto dto = CrewChatRoomListResDto.builder()
         .roomId(room.getId())
         .roomName(room.getCrewRoomName())
         .crewId(crew.getId())
         .crewName(crew.getCrewName())
         .crewDescription(crew.getCrewDescription())
+        .crewImageUrl(httpsImageUrl)  // ✅ HTTPS URL 사용
         .currentMembers(currentMembers.intValue())
         .lastMessageContent(lastMessage != null ? lastMessage.getContent() : null)
         .lastMessageSender(lastMessage != null ? lastMessage.getSenderName() : null)
         .lastMessageTime(lastMessage != null ? lastMessage.getCreatedAt() : null)
         .unreadCount(unreadCount)
         .build();
+
+    log.info("✅ DTO 변환 완료: roomId={}, crewImageUrl={}", dto.getRoomId(), dto.getCrewImageUrl());
+
+    return dto;
   }
 
   // ============================================
