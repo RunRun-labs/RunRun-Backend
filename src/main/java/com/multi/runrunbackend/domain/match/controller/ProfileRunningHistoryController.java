@@ -9,9 +9,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 /**
  *
@@ -33,6 +36,8 @@ public class ProfileRunningHistoryController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<Slice<ProfileRunningHistoryResDto>>> getMyRunningRecords(
             @AuthenticationPrincipal CustomUser principal,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @PageableDefault(
                     size = 4,
                     sort = "startedAt",
@@ -40,7 +45,7 @@ public class ProfileRunningHistoryController {
             ) Pageable pageable
     ) {
         Slice<ProfileRunningHistoryResDto> result =
-                profileRunningHistoryService.getMyRunningRecords(principal, pageable);
+                profileRunningHistoryService.getMyRunningRecords(principal, startDate, endDate, pageable);
 
         return ResponseEntity.ok(
                 ApiResponse.success("내 러닝 기록 조회 성공", result)
@@ -54,6 +59,8 @@ public class ProfileRunningHistoryController {
     public ResponseEntity<ApiResponse<Slice<ProfileRunningHistoryResDto>>> getUserRunningRecords(
             @PathVariable Long userId,
             @AuthenticationPrincipal CustomUser principal,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @PageableDefault(
                     size = 4,
                     sort = "startedAt",
@@ -64,6 +71,8 @@ public class ProfileRunningHistoryController {
                 profileRunningHistoryService.getUserRunningRecords(
                         userId,
                         principal,
+                        startDate,
+                        endDate,
                         pageable
                 );
 

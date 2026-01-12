@@ -10,8 +10,6 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.chat.repository.OfflineChatMessageRepository;
 import com.multi.runrunbackend.domain.course.entity.Course;
 import com.multi.runrunbackend.domain.course.repository.CourseRepository;
-import com.multi.runrunbackend.domain.match.constant.RunStatus;
-import com.multi.runrunbackend.domain.match.constant.RunningResultFilterType;
 import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.constant.SessionType;
 import com.multi.runrunbackend.domain.match.constant.Tier;
@@ -20,7 +18,6 @@ import com.multi.runrunbackend.domain.match.dto.res.ActiveSessionResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchSessionDetailResDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingInfoDto;
 import com.multi.runrunbackend.domain.match.dto.res.MatchWaitingParticipantDto;
-import com.multi.runrunbackend.domain.match.dto.res.RunningRecordResDto;
 import com.multi.runrunbackend.domain.match.entity.MatchSession;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
@@ -52,8 +49,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -416,37 +411,6 @@ public class MatchSessionService {
     log.info("고스트 세션 생성 - SessionID: {}, GhostResultID: {}", session.getId(), runningResultId);
 
     return session.getId();
-  }
-
-  public Slice<RunningRecordResDto> getMyRunningRecords(CustomUser principal,
-      RunningResultFilterType filterType, Pageable pageable) {
-    User user = getUser(principal);
-
-    BigDecimal min = filterType != null ? switch (filterType) {
-      case UNDER_3 -> BigDecimal.ZERO;
-      case BETWEEN_3_5 -> BigDecimal.valueOf(3.0);
-      case BETWEEN_5_10 -> BigDecimal.valueOf(5.0);
-      case OVER_10 -> BigDecimal.valueOf(10.0);
-      case ALL -> null;
-    } : null;
-
-    BigDecimal max = filterType != null ? switch (filterType) {
-      case UNDER_3 -> BigDecimal.valueOf(3.0);
-      case BETWEEN_3_5 -> BigDecimal.valueOf(5.0);
-      case BETWEEN_5_10 -> BigDecimal.valueOf(10.0);
-      case OVER_10 -> null;
-      case ALL -> null;
-    } : null;
-
-    Slice<RunningResult> resultSlice = runningResultRepository.findMySoloRecordsByDistance(
-        user.getId(),
-        RunStatus.COMPLETED,
-        min,
-        max,
-        pageable
-    );
-
-    return resultSlice.map(RunningRecordResDto::from);
   }
 
   @Transactional

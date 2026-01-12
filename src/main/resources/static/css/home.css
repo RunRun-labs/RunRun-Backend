@@ -48,53 +48,78 @@ body {
 
 /* 상단 네비게이션 */
 .top-nav {
+    position: relative;
+    width: 100%;
+    background: #fff;
+    border-bottom: 1px solid #000;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 0;
-    margin: 16px 0;
-    border-bottom: 1px solid var(--stroke);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-
-.top-nav::-webkit-scrollbar {
-    display: none;
+    align-items: flex-start;
+    padding: 9px 35px 0;
+    z-index: 5;
+    min-height: 48px;
+    flex-shrink: 0;
 }
 
 .top-nav-item {
-    flex: 0 0 auto;
-    padding: 8px 16px;
-    border-radius: 20px;
-    background: var(--bg);
-    border: 1px solid var(--stroke);
+    position: relative;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-decoration: none;
-    color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 500;
-    white-space: nowrap;
-    transition: all 0.2s ease;
-}
-
-.top-nav-item:hover {
-    background: #f9fafb;
-    border-color: var(--text-muted);
+    color: #000;
+    font-family: "Fugaz One", "Noto Sans KR", sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: -0.24px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 51px;
+    padding-bottom: 4px;
 }
 
 .top-nav-item.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: var(--text-strong);
-    font-weight: 700;
+    border-bottom: 2px solid var(--primary);
 }
 
-/* 헤더: RUNRUN 타이틀 + 알림 */
+.top-nav-item.active span {
+    color: #86c10a;
+    font-size: 15px;
+}
+
+.top-nav-item span {
+    display: block;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* 알림 뱃지 */
+.top-nav-item .notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--error);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-family: "Inter", sans-serif;
+}
+
+/* 헤더: RUNRUN 타이틀 */
 .home-header {
-    margin-top: 40px;
     position: relative;
-    padding: 60px 0 20px;
+    padding: 20px 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -108,10 +133,6 @@ body {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
     width: fit-content;
 }
 
@@ -233,7 +254,7 @@ body {
 /* 칼로리 툴팁 스타일 */
 .calories-tooltip {
     position: relative;
-    cursor: help;
+    cursor: pointer;
 }
 
 .calories-tooltip::after {
@@ -459,6 +480,51 @@ body {
     justify-self: center;
     align-self: flex-end;
     /* 막대 그래프의 시작점(하단)과 동일한 위치에 정렬 */
+}
+
+.chart-clickable {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.chart-clickable:hover {
+    opacity: 0.8;
+}
+
+/* 거리 정보 툴팁 */
+.chart-distance-tooltip {
+    position: absolute;
+    background: #1f2937;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+.chart-distance-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1f2937;
+}
+
+.tooltip-date {
+    font-size: 11px;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+.tooltip-distance {
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .chart-days {
@@ -733,13 +799,12 @@ body {
         padding-bottom: 120px;
     }
 
-    .home-logo {
-        font-size: 32px;
+    .top-nav {
+        padding: 9px 20px 0;
     }
 
-    .notification-button {
-        width: 44px;
-        height: 44px;
+    .home-logo {
+        font-size: 32px;
     }
 
     .today-stats-section {
@@ -775,19 +840,26 @@ body {
         padding: 0 14px 100px;
     }
 
-    .home-logo {
-        font-size: 30px;
+    .top-nav {
+        padding: 8px 16px 0;
     }
 
-    .notification-button {
-        width: 40px;
-        height: 40px;
+    .top-nav-item {
+        font-size: 9px;
+        width: 45px;
+    }
+
+    .top-nav-item.active span {
+        font-size: 13px;
+    }
+
+    .home-logo {
+        font-size: 30px;
     }
 
     .today-stats-section {
         padding: 12px;
     }
-
 
     .chart-bars {
         height: 60px;
@@ -817,6 +889,22 @@ body {
 
     .home-page {
         padding-bottom: 160px;
+    }
+
+    .top-nav {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 12px 48px 0;
+    }
+
+    .top-nav-item {
+        font-size: 11px;
+        width: auto;
+        padding: 0 16px;
+    }
+
+    .top-nav-item.active span {
+        font-size: 16px;
     }
 
     .home-logo {
