@@ -38,16 +38,19 @@ public class ProfileRunningHistoryResDto {
     private String runStatus;
     private String runStatusDescription;
 
-    // ✅ 온라인 배틀 전용(ONLINEBATTLE이 아닌 경우 null)
+    //  온라인 배틀 전용(ONLINEBATTLE이 아닌 경우 null)
     private Integer onlineBattleRanking;
 
     public static ProfileRunningHistoryResDto from(RunningResult r, FileStorage fileStorage) {
-        // 고스트는 보류: 기존과 동일하게 코스가 없으면 null로 내려감
-        Course c = r.getCourse();
-
         String thumbnailUrl = null;
-        if (c != null && c.getThumbnailUrl() != null) {
-            thumbnailUrl = fileStorage.toHttpsUrl(c.getThumbnailUrl());
+        Course c = r.getCourse();
+        if (r.getRunningType().equals(RunningType.GHOST) || r.getRunningType().equals(RunningType.ONLINEBATTLE)) {
+            thumbnailUrl = "";
+        } else {
+
+            if (c != null && c.getThumbnailUrl() != null) {
+                thumbnailUrl = fileStorage.toHttpsUrl(c.getThumbnailUrl());
+            }
         }
 
         return ProfileRunningHistoryResDto.builder()
