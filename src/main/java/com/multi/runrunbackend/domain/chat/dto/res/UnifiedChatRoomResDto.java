@@ -48,6 +48,7 @@ public class UnifiedChatRoomResDto {
   private Long crewId;
   private String crewName;
   private String crewDescription;
+  private String crewImageUrl;
 
   /**
    * 오프라인 채팅방 → 통합 DTO 변환
@@ -92,6 +93,7 @@ public class UnifiedChatRoomResDto {
         .crewId(crew.getCrewId())
         .crewName(crew.getCrewName())
         .crewDescription(crew.getCrewDescription())
+        .crewImageUrl(crew.getCrewImageUrl())
         .build();
   }
 

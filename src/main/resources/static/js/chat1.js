@@ -1351,8 +1351,28 @@ function displayMessage(message, isPrevious = false) {
       // 아바타
       const avatar = document.createElement("div");
       avatar.className = "message-avatar";
-      avatar.innerHTML =
-        '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
+      
+      // ✅ participantsList에서 프로필 이미지 찾기
+      const participant = participantsList.find(p => p.userId == message.senderId);
+      const profileImage = participant?.profileImage;
+      
+      if (profileImage) {
+        const img = document.createElement('img');
+        img.src = profileImage;
+        img.alt = message.senderName;
+        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+        
+        // 이미지 로드 실패 시 기본 아이콘으로 대체
+        img.onerror = function() {
+          avatar.innerHTML = '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
+        };
+        
+        avatar.appendChild(img);
+      } else {
+        avatar.innerHTML =
+          '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
+      }
+      
       messageItem.appendChild(avatar);
     }
 

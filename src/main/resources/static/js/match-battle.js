@@ -741,11 +741,16 @@ function createRankingItem(participant, isMe, allRankings) {
   
   const avatar = document.createElement('div');
   avatar.className = 'participant-avatar';
-  avatar.innerHTML = `
-    <svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M9 0L0 4.5V9C0 14.25 3.825 19.125 9 21C14.175 19.125 18 14.25 18 9V4.5L9 0Z" fill="white"/>
-    </svg>
-  `;
+  
+  // ✅ 프로필 이미지 표시 (기본 이미지 포함)
+  const avatarImg = document.createElement('img');
+  avatarImg.src = participant.profileImage || '/img/default-profile.svg';
+  avatarImg.alt = participant.username;
+  avatarImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+  avatarImg.onerror = function() {
+    this.src = '/img/default-profile.svg';
+  };
+  avatar.appendChild(avatarImg);
   
   const participantInfo = document.createElement('div');
   participantInfo.className = 'participant-info';
@@ -872,7 +877,8 @@ function renderPaceComparison(rankings) {
     name: '나',
     pace: myData.currentPace,
     comparison: { type: 'reference' },
-    className: 'user'
+    className: 'user',
+    profileImage: myData.profileImage  // ✅ 프로필 이미지 추가
   });
   paceGrid.appendChild(myCard);
   
@@ -883,7 +889,8 @@ function renderPaceComparison(rankings) {
       name: participant.username,
       pace: participant.currentPace,
       comparison: calculatePaceComparison(myData.currentPace, participant.currentPace),
-      className: `opponent-${index + 1}`
+      className: `opponent-${index + 1}`,
+      profileImage: participant.profileImage  // ✅ 프로필 이미지 추가
     });
     paceGrid.appendChild(card);
   });
@@ -923,12 +930,18 @@ function createPaceCard(data) {
   const card = document.createElement('div');
   card.className = `pace-card ${data.className}`;
   
+  // ✅ 프로필 이미지 HTML 생성
+  let avatarHtml = `
+    <img src="${data.profileImage || '/img/default-profile.svg'}" 
+         alt="${data.name}" 
+         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
+         onerror="this.src='/img/default-profile.svg'">
+  `;
+  
   card.innerHTML = `
     <div class="pace-card-header">
       <div class="pace-card-avatar">
-        <svg width="10" height="12" viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M5 0L0 2.5V5C0 7.92 2.125 10.625 5 12C7.875 10.625 10 7.92 10 5V2.5L5 0Z" fill="white"/>
-        </svg>
+        ${avatarHtml}
       </div>
       <div class="pace-card-name">${data.name}</div>
     </div>
