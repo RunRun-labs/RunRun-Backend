@@ -260,11 +260,10 @@ public class PathController {
     }
 
     /* ===================== COURSE ===================== */
-
-    @GetMapping("/course_auto")
-    public String courseAutoView() {
-        return "courseAuto";
-    }
+  @GetMapping("/course_auto")
+  public String courseAutoView() {
+    return "courseAuto";
+  }
 
     @GetMapping("/course_manual")
     public String courseManualView() {
@@ -383,7 +382,7 @@ public class PathController {
     public String friendListView() {
         return "friend/friend-list";
     }
-    
+
 
     /* ===================== ADMIN COUPON ===================== */
 
@@ -397,12 +396,12 @@ public class PathController {
         return "admin/coupon-create";
     }
 
-    @GetMapping("/admin/coupon/update/{coupon_id}")
-    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
-        Model model) {
-        model.addAttribute("couponId", couponId);
-        return "admin/coupon-update";
-    }
+  @GetMapping("/admin/coupon/update/{coupon_id}")
+  public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
+      Model model) {
+    model.addAttribute("couponId", couponId);
+    return "admin/coupon-update";
+  }
 
     @GetMapping("/admin/coupon-role/inquiry")
     public String adminCouponRoleInquiryView() {
@@ -416,8 +415,8 @@ public class PathController {
 
     @GetMapping("/admin/coupon-role/update/{coupon_role_id}")
     public String adminCouponRoleUpdateView(
-            @PathVariable(name = "coupon_role_id") Long couponRoleId,
-            Model model
+        @PathVariable(name = "coupon_role_id") Long couponRoleId,
+        Model model
     ) {
         model.addAttribute("couponRoleId", couponRoleId);
         return "admin/coupon-role-update";
