@@ -492,6 +492,10 @@ function displayMessage(message, isPrevious = false) {
     const messageItem = document.createElement('div');
     messageItem.className = `message-item ${isMyMessage ? 'message-right'
         : 'message-left'}`;
+    
+    // 메시지 데이터 저장 (시간 표시 판단용)
+    messageItem.dataset.senderId = message.senderId;
+    messageItem.dataset.createdAt = message.createdAt;
 
     if (!isMyMessage) {
       const avatar = document.createElement('div');
@@ -530,6 +534,9 @@ function displayMessage(message, isPrevious = false) {
 
     messageItem.appendChild(contentWrapper);
     messagesDiv.appendChild(messageItem);
+    
+    // 메시지 추가 후 시간 표시 여부 업데이트
+    updateMessageTimeVisibility();
   }
 
   if (!isPrevious) {
@@ -542,6 +549,60 @@ function displayMessage(message, isPrevious = false) {
         });
       }
     }, 100);
+  }
+}
+
+/**
+ * 메시지 시간 표시 여부 업데이트 (카톡 스타일)
+ * 같은 사람이 같은 분에 보낸 연속된 메시지는 마지막에만 시간 표시
+ */
+function updateMessageTimeVisibility() {
+  const messagesDiv = document.getElementById('chat-messages');
+  const messageItems = messagesDiv.querySelectorAll('.message-item:not(.system-message)');
+  
+  for (let i = 0; i < messageItems.length; i++) {
+    const currentMsg = messageItems[i];
+    const nextMsg = messageItems[i + 1];
+    const timeElement = currentMsg.querySelector('.message-time');
+    
+    if (!timeElement) continue;
+    
+    // 마지막 메시지면 항상 시간 표시
+    if (!nextMsg) {
+      timeElement.style.display = '';
+      continue;
+    }
+    
+    const currentSenderId = currentMsg.dataset.senderId;
+    const nextSenderId = nextMsg.dataset.senderId;
+    const currentCreatedAt = currentMsg.dataset.createdAt;
+    const nextCreatedAt = nextMsg.dataset.createdAt;
+    
+    // 보낸 사람이 다르면 시간 표시
+    if (currentSenderId !== nextSenderId) {
+      timeElement.style.display = '';
+      continue;
+    }
+    
+    // 시간(분 단위) 비교
+    if (currentCreatedAt && nextCreatedAt) {
+      const currentTime = new Date(currentCreatedAt);
+      const nextTime = new Date(nextCreatedAt);
+      
+      const isSameMinute = 
+        currentTime.getFullYear() === nextTime.getFullYear() &&
+        currentTime.getMonth() === nextTime.getMonth() &&
+        currentTime.getDate() === nextTime.getDate() &&
+        currentTime.getHours() === nextTime.getHours() &&
+        currentTime.getMinutes() === nextTime.getMinutes();
+      
+      // 같은 분에 보낸 메시지면 시간 숨김
+      if (isSameMinute) {
+        timeElement.style.display = 'none';
+      } else {
+        timeElement.style.display = '';
+      }
+    }
   }
 }
 
@@ -700,11 +761,8 @@ function loadNotices() {
       renderNotices();
       updateNoticeCount();
 
-      // 공지사항이 있거나 운영진 이상이면 표시
-      const noticeSection = document.getElementById('notice-section');
-      if (noticesList.length > 0 || isStaffOrAbove()) {
-        noticeSection.style.display = 'block';
-      }
+      // 공지사항 섹션 표시 여부 업데이트
+      updateNoticeSection();
     }
   })
   .catch(error => console.error('공지사항 로드 실패:', error));
@@ -999,8 +1057,23 @@ function loadCurrentUserRole() {
         if (isStaffOrAbove()) {
           document.getElementById('notice-add-btn').style.display = 'flex';
         }
+        
+        // 역할 로드 완료 후 공지사항 섹션 표시 여부 재확인
+        updateNoticeSection();
       }
     }
   })
   .catch(error => console.error('사용자 역할 조회 실패:', error));
+}
+
+/**
+ * 공지사항 섹션 표시 여부 업데이트
+ */
+function updateNoticeSection() {
+  const noticeSection = document.getElementById('notice-section');
+  if (noticesList.length > 0 || isStaffOrAbove()) {
+    noticeSection.style.display = 'block';
+  } else {
+    noticeSection.style.display = 'none';
+  }
 }

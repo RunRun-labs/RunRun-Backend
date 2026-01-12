@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Controller
 public class PathController {
 
+    /* ===================== AUTH / HOME ===================== */
+
     @GetMapping("/login")
     public String loginView() {
         return "auth/login";
@@ -156,55 +158,6 @@ public class PathController {
         return "membership/membership";
     }
 
-    @GetMapping("/payment/pay")
-    public String paymentPayView() {
-        return "payment/pay";
-    }
-
-    @GetMapping("/payment/history")
-    public String paymentHistoryView() {
-        return "payment/history";
-    }
-
-    @GetMapping("/payment/success")
-    public String paymentSuccessView() {
-        return "payment/success";
-    }
-
-    @GetMapping("/payment/free-success")
-    public String freePaymentSuccess() {
-        return "payment/free-success";
-    }
-
-    @GetMapping("/payment/fail")
-    public String paymentFailView() {
-        return "payment/fail";
-    }
-
-    @GetMapping("/points")
-    public String point() {
-        return "point/point";
-    }
-
-    @GetMapping("/points/balance")
-    public String pointBalance() {
-        return "point/pointBalance";
-    }
-
-    @GetMapping("/points/history")
-    public String pointHistory() {
-        return "point/pointHistory";
-    }
-
-    @GetMapping("/points/shop")
-    public String pointShop() {
-        return "point/pointShop";
-    }
-
-    @GetMapping("/admin/points/products")
-    public String pointProductAdminView() {
-        return "point/pointAdmin";
-    }
 
     @GetMapping("/chat")
     public String chatList() {
@@ -219,6 +172,13 @@ public class PathController {
     @GetMapping("/chat/crew")
     public String crewChat() {
         return "chat/crew-chat";
+    }
+
+    /* ===================== NOTIFICATION ===================== */
+
+    @GetMapping("/notification")
+    public String notificationListView() {
+        return "notification/notification-list";
     }
 
     /* ===================== MY PAGE ===================== */
@@ -294,6 +254,16 @@ public class PathController {
         return "courseManual";
     }
 
+    @GetMapping("/course_auto")
+    public String courseAutoView() {
+        return "courseAuto";
+    }
+
+    @GetMapping("/course_manual")
+    public String courseManualView() {
+        return "courseManual";
+    }
+
     @GetMapping("/course")
     public String courseView() {
         return "course/courseList";
@@ -315,6 +285,40 @@ public class PathController {
         model.addAttribute("courseId", courseId);
         return "course/courseUpdate";
     }
+
+
+    @GetMapping("/points/balance")
+    public String pointBalance() {
+        return "point/pointBalance";
+    }
+
+    @GetMapping("/points/history")
+    public String pointHistory() {
+        return "point/pointHistory";
+    }
+
+    @GetMapping("/points/shop")
+    public String pointShop() {
+        return "point/pointShop";
+    }
+
+
+    @GetMapping("/admin/coupon/detail/{coupon_id}")
+    public String adminCouponDetailView(
+        @PathVariable(name = "coupon_id") Long couponId,
+        Model model
+    ) {
+        model.addAttribute("couponId", couponId);
+        return "admin/coupon-detail";
+    }
+
+
+    @GetMapping("/admin/points/products")
+    public String pointProductAdminView() {
+        return "point/pointAdmin";
+    }
+
+    /* ===================== ETC ===================== */
 
     @GetMapping("/test/gps")
     public String gpsTestView() {
@@ -347,16 +351,13 @@ public class PathController {
         return "user/user-profile";
     }
 
-
     @GetMapping("/friends/list")
     public String friendListView() {
         return "friend/friend-list";
     }
 
-    @GetMapping("/notification")
-    public String notificationListView() {
-        return "notification/notification-list";
-    }
+
+    /* ===================== ADMIN COUPON ===================== */
 
     @GetMapping("/admin/coupon/inquiry")
     public String adminCouponInquiryView() {
@@ -369,21 +370,10 @@ public class PathController {
     }
 
     @GetMapping("/admin/coupon/update/{coupon_id}")
-    public String adminCouponUpdateView(
-        @PathVariable(name = "coupon_id") Long couponId,
-        Model model
-    ) {
+    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
+        Model model) {
         model.addAttribute("couponId", couponId);
         return "admin/coupon-update";
-    }
-
-    @GetMapping("/admin/coupon/detail/{coupon_id}")
-    public String adminCouponDetailView(
-        @PathVariable(name = "coupon_id") Long couponId,
-        Model model
-    ) {
-        model.addAttribute("couponId", couponId);
-        return "admin/coupon-detail";
     }
 
     @GetMapping("/admin/coupon-role/inquiry")
@@ -419,6 +409,8 @@ public class PathController {
     public String couponEventView() {
         return "coupon/coupon-event";
     }
+
+    /* ===================== RUNNING ===================== */
 
     @GetMapping("/running/{sessionId}")
     public String runningView(@PathVariable Long sessionId, Model model) {

@@ -556,8 +556,14 @@ function loadSessionData() {
  * 세션 정보 UI 업데이트
  */
 function updateSessionInfo() {
-  // 목표 거리 (이미 km 단위)
+  // ✅ 제목 업데이트
   const targetKm = sessionData.targetDistance.toFixed(1);
+  const titleElement = document.getElementById('challenge-title');
+  if (titleElement) {
+    titleElement.textContent = `${targetKm}km 스피드 대결`;
+  }
+  
+  // 목표 거리 (이미 km 단위)
   document.getElementById('target-distance-km').textContent = targetKm;
   
   // 참가자 수

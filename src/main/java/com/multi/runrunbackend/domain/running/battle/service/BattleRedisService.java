@@ -34,7 +34,46 @@ public class BattleRedisService {
   private static final String BATTLE_USER_KEY = "battle:%d:user:%d";
   private static final String BATTLE_RANKING_KEY = "battle:%d:ranking";
   private static final String BATTLE_TIMEOUT_KEY = "battle:%d:timeout";  // ✅ 타임아웃 정보
+  private static final String BATTLE_START_TIME_KEY = "battle:%d:start_time";  // ✅ 배틀 시작 시간
   private static final Duration BATTLE_TTL = Duration.ofHours(3);
+
+  /**
+   * ✅ 배틀 시작 시간 저장
+   */
+  public void setBattleStartTime(Long sessionId, LocalDateTime startTime) {
+    String key = String.format(BATTLE_START_TIME_KEY, sessionId);
+    
+    try {
+      String timeStr = startTime.toString();
+      redisTemplate.opsForValue().set(key, timeStr, BATTLE_TTL);
+      
+      log.info("✅ 배틀 시작 시간 저장: sessionId={}, startTime={}", sessionId, startTime);
+    } catch (Exception e) {
+      log.error("❌ 배틀 시작 시간 저장 실패: sessionId={}", sessionId, e);
+      throw new RuntimeException("배틀 시작 시간 저장 실패", e);
+    }
+  }
+
+  /**
+   * ✅ 배틀 시작 시간 조회
+   */
+  public LocalDateTime getBattleStartTime(Long sessionId) {
+    String key = String.format(BATTLE_START_TIME_KEY, sessionId);
+    
+    try {
+      String timeStr = (String) redisTemplate.opsForValue().get(key);
+      
+      if (timeStr == null) {
+        log.warn("⚠️ 배틀 시작 시간 없음: sessionId={}", sessionId);
+        return null;
+      }
+      
+      return LocalDateTime.parse(timeStr);
+    } catch (Exception e) {
+      log.error("❌ 배틀 시작 시간 조회 실패: sessionId={}", sessionId, e);
+      return null;
+    }
+  }
 
   /**
    * 배틀 참가자 초기화
@@ -42,7 +81,13 @@ public class BattleRedisService {
   public void initializeBattleUser(Long sessionId, Long userId, String username) {
     String key = String.format(BATTLE_USER_KEY, sessionId, userId);
 
-    LocalDateTime now = LocalDateTime.now();
+    // ✅ Redis에서 배틀 시작 시간 조회
+    LocalDateTime battleStartTime = getBattleStartTime(sessionId);
+    
+    if (battleStartTime == null) {
+      log.warn("⚠️ 배틀 시작 시간이 없음, 현재 시각 사용: sessionId={}", sessionId);
+      battleStartTime = LocalDateTime.now();
+    }
 
     BattleUserDto userData = BattleUserDto.builder()
         .userId(userId)
@@ -53,10 +98,10 @@ public class BattleRedisService {
         .lastGpsLat(null)
         .lastGpsLng(null)
         .lastGpsTime(null)
-        .startTime(now)  // ✅ 시작 시간 설정
+        .startTime(battleStartTime)  // ✅ 공통 시작 시간
         .isFinished(false)
         .finishTime(null)
-        .status("RUNNING")  // ✅ 초기 상태
+        .status("RUNNING")
         .build();
 
     try {
@@ -71,8 +116,8 @@ public class BattleRedisService {
     redisTemplate.opsForZSet().add(rankingKey, userId.toString(), 0.0);
     redisTemplate.expire(rankingKey, BATTLE_TTL);
 
-    log.info("✅ 배틀 참가자 초기화: sessionId={}, userId={}, username={}, startTime={}",
-        sessionId, userId, username, now);
+    log.info("✅ 배틀 참가자 초기화: sessionId={}, userId={}, username={}, battleStartTime={}",
+        sessionId, userId, username, battleStartTime);
   }
 
   /**
@@ -190,11 +235,14 @@ public class BattleRedisService {
                 .toMillis();
           } else if (userData.getStartTime() != null) {
             // 아직 완주 안 한 경우 = 현재까지의 경과 시간
-            finishTimeMillis = Duration.between(userData.getStartTime(), LocalDateTime.now())
+            long elapsed = Duration.between(userData.getStartTime(), LocalDateTime.now())
                 .toMillis();
+            // ✅ 음수면 0 (카운트다운 중 - startTime이 미래)
+            finishTimeMillis = Math.max(0L, elapsed);
           } else {
-            // startTime이 없으면 0
+            // startTime이 없는 경우 (예외 상황)
             finishTimeMillis = 0L;
+            log.warn("⚠️ startTime이 없음: sessionId={}, userId={}", sessionId, userId);
           }
 
           // ✅ status 결정 로직 (null 처리)

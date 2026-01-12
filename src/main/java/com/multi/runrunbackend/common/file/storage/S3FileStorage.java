@@ -17,7 +17,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -37,7 +36,6 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
  * @since : 2025. 12. 24. Wednesday
  */
 @Component
-@Profile("s3")
 @RequiredArgsConstructor
 @Slf4j
 public class S3FileStorage implements FileStorage {
@@ -65,7 +63,6 @@ public class S3FileStorage implements FileStorage {
         }
     }
 
-
     @Override
     public String uploadIfChanged(MultipartFile file, FileDomainType domainType, Long refId,
         String existingUrl) {
@@ -78,6 +75,7 @@ public class S3FileStorage implements FileStorage {
         }
 
         try {
+            // 기존 URL에서 key 뽑기
             String existingKey = extractKey(existingUrl);
             if (existingKey == null || existingKey.isBlank()) {
                 return upload(file, domainType, refId);
@@ -144,6 +142,7 @@ public class S3FileStorage implements FileStorage {
                 .key(key)
                 .build());
         } catch (S3Exception e) {
+
             throw new FileUploadException(ErrorCode.FILE_DELETE_FAILED);
         }
     }
@@ -260,6 +259,7 @@ public class S3FileStorage implements FileStorage {
             String b = noScheme.substring(0, firstSlash);
             String k = noScheme.substring(firstSlash + 1);
             if (!bucket.equals(b)) {
+                // 다른 버킷이면 정책에 따라 처리 (여긴 그냥 null)
                 return null;
             }
             return trimLeadingSlash(k);
