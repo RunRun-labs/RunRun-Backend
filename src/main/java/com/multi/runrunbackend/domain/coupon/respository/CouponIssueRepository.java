@@ -42,18 +42,58 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long>,
     );
 
     // 날짜별 발급/사용/만료 집계 (발급 날짜 기준)
+    // 날짜별 발급/사용/만료 집계 (각 날짜별 기준으로 집계)
     @Query(value = """
         SELECT 
-            cast(created_at as date) as stat_date,
-            COUNT(*) as issued_count,
-            COUNT(CASE WHEN status = 'USED' AND used_at IS NOT NULL 
-                AND cast(used_at as date) = cast(created_at as date) THEN 1 END) as used_count,
-            COUNT(CASE WHEN status = 'EXPIRED' AND expiry_at IS NOT NULL 
-                AND cast(expiry_at as date) = cast(created_at as date) THEN 1 END) as expired_count
-        FROM coupon_issue
-        WHERE coupon_id = :couponId
-          AND cast(created_at as date) BETWEEN :from AND :to
-        GROUP BY cast(created_at as date)
+            stat_date,
+            COALESCE(SUM(issued_count), 0) as issued_count,
+            COALESCE(SUM(used_count), 0) as used_count,
+            COALESCE(SUM(expired_count), 0) as expired_count
+        FROM (
+            -- 발급일 기준 집계
+            SELECT 
+                cast(created_at as date) as stat_date,
+                COUNT(*) as issued_count,
+                0 as used_count,
+                0 as expired_count
+            FROM coupon_issue
+            WHERE coupon_id = :couponId
+              AND cast(created_at as date) BETWEEN :from AND :to
+            GROUP BY cast(created_at as date)
+        
+            UNION ALL
+        
+            -- 사용일 기준 집계 (발급일 범위 내에 발급된 쿠폰 중)
+            SELECT 
+                cast(used_at as date) as stat_date,
+                0 as issued_count,
+                COUNT(*) as used_count,
+                0 as expired_count
+            FROM coupon_issue
+            WHERE coupon_id = :couponId
+              AND status = 'USED'
+              AND used_at IS NOT NULL
+              AND cast(created_at as date) BETWEEN :from AND :to
+              AND cast(used_at as date) BETWEEN :from AND :to
+            GROUP BY cast(used_at as date)
+        
+            UNION ALL
+        
+            -- 만료일 기준 집계 (발급일 범위 내에 발급된 쿠폰 중)
+            SELECT 
+                cast(expiry_at as date) as stat_date,
+                0 as issued_count,
+                0 as used_count,
+                COUNT(*) as expired_count
+            FROM coupon_issue
+            WHERE coupon_id = :couponId
+              AND status = 'EXPIRED'
+              AND expiry_at IS NOT NULL
+              AND cast(created_at as date) BETWEEN :from AND :to
+              AND cast(expiry_at as date) BETWEEN :from AND :to
+            GROUP BY cast(expiry_at as date)
+        ) daily_stats
+        GROUP BY stat_date
         ORDER BY stat_date ASC
         """, nativeQuery = true)
     List<Object[]> sumDailyTrendByCouponId(
