@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let customOverlays = []; // InfoWindow 대신 CustomOverlay 사용
   let userLat = null;
   let userLng = null;
-  let currentRadius = 3;
+  let currentRadius = null; // "전체"가 기본값
   let currentSortBy = "distance";
   let currentKeyword = "";
   let currentIsParticipated = null;
@@ -100,8 +100,10 @@ document.addEventListener("DOMContentLoaded", () => {
         size: "10",
       });
 
-      // 거리 필터 추가
-      params.append("radiusKm", currentRadius.toString());
+      // 거리 필터 추가 (null이 아니고 "all"이 아닐 때만)
+      if (currentRadius !== null && currentRadius !== "all") {
+        params.append("radiusKm", currentRadius.toString());
+      }
 
       if (currentSortBy && currentSortBy !== "latest") {
         params.append("sortBy", currentSortBy);
@@ -488,7 +490,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const activeRadius = document.querySelector(".filter-option[data-filter='radius'].active");
 
       if (activeRadius) {
-        currentRadius = parseFloat(activeRadius.dataset.value);
+        const value = activeRadius.dataset.value;
+        // "all"이면 null로 설정, 아니면 숫자로 변환
+        currentRadius = (value === "all") ? null : parseFloat(value);
       }
 
       // 필터 적용
@@ -508,11 +512,11 @@ document.addEventListener("DOMContentLoaded", () => {
         opt.classList.remove("active");
       });
 
-      // 기본값으로 설정
-      document.querySelector(".filter-option[data-filter='radius'][data-value='3']")?.classList.add("active");
+      // 기본값으로 설정 ("전체"가 기본)
+      document.querySelector(".filter-option[data-filter='radius'][data-value='all']")?.classList.add("active");
 
       // 필터 초기화
-      currentRadius = 3;
+      currentRadius = null; // "전체"가 기본값
       currentIsParticipated = null;
       const checkbox = document.getElementById("isParticipatedCheckbox");
       if (checkbox) checkbox.checked = false;

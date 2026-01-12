@@ -309,6 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const actionButton = document.getElementById("actionButton");
     const actionDisabledText = document.getElementById("actionDisabledText");
     const startRunningButton = document.getElementById("startRunningButton");
+    const editDeleteButtons = document.getElementById("editDeleteButtons");
 
     const isAuthor = recruitData.isAuthor || false;
     const isParticipant = recruitData.isParticipant || false;
@@ -317,34 +318,62 @@ document.addEventListener("DOMContentLoaded", () => {
     actionButton.style.display = "none";
     actionDisabledText.style.display = "none";
     startRunningButton.style.display = "none";
+    if (editDeleteButtons) editDeleteButtons.style.display = "none";
 
-    // 방장인 경우 러닝 시작하기 버튼 표시
-    if (isAuthor && currentParticipants > 1) {
-      startRunningButton.style.display = "block";
-      startRunningButton.onclick = () => {
-        confirmMatch();
-      };
-      return;
-    }
+    // 방장인 경우
+    if (isAuthor) {
+      if (currentParticipants === 1) {
+        // 수정하기와 삭제하기 버튼 표시
+        editDeleteButtons.style.display = "flex";
 
-    if (isAuthor && currentParticipants === 1) {
-      // 수정하기와 삭제하기 버튼 표시
-      const editDeleteButtons = document.getElementById("editDeleteButtons");
-      editDeleteButtons.style.display = "flex";
+        const editButton = document.getElementById("editButton");
+        const deleteButton = document.getElementById("deleteButton");
 
-      const editButton = document.getElementById("editButton");
-      const deleteButton = document.getElementById("deleteButton");
+        editButton.onclick = () => {
+          window.location.href = `/recruit/${recruitId}/update`;
+        };
 
-      editButton.onclick = () => {
-        window.location.href = `/recruit/${recruitId}/update`;
-      };
-
-      deleteButton.onclick = () => {
-        if (confirm("정말로 이 모집글을 삭제하시겠습니까?")) {
-          deleteRecruit();
+        deleteButton.onclick = () => {
+          if (confirm("정말로 이 모집글을 삭제하시겠습니까?")) {
+            deleteRecruit();
+          }
+        };
+        return;
+      } else if (currentParticipants >= 2) {
+        // 참가인원 2명 이상인 경우
+        const status = recruitData.status;
+        if (status && (status === "MATCHED" || status === "COMPLETED")) {
+          // 매칭 확정 또는 완료된 경우 버튼 표시하지 않음
+          return;
         }
-      };
-      return;
+
+        // 모임 시간 3시간 전인지 확인
+        let canShowMatchButton = false;
+        if (recruitData.meetingAt) {
+          const meetingAt = new Date(recruitData.meetingAt);
+          const now = new Date();
+          const threeHoursBefore = new Date(meetingAt.getTime() - 3 * 60 * 60 * 1000);
+          canShowMatchButton = now >= threeHoursBefore;
+        }
+
+        if (canShowMatchButton) {
+          // 매칭 확인 버튼 표시 (3시간 전부터)
+          startRunningButton.style.display = "block";
+          startRunningButton.onclick = () => {
+            confirmMatch();
+          };
+        } else {
+          // 3시간 전이 아니면 나가기 버튼만 표시
+          actionButton.textContent = "나가기";
+          actionButton.style.display = "block";
+          actionButton.onclick = () => {
+            if (confirm("정말로 모집글에서 나가시겠습니까? 다른 참가자에게 방장이 위임됩니다.")) {
+              leaveRecruit();
+            }
+          };
+        }
+        return;
+      }
     }
 
     if (!isAuthor && isParticipant) {
@@ -437,10 +466,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Step 3: API 에러 핸들링 (토스트로 처리)
           if (response.ok && result.success) {
-            showToast("참여가 완료되었습니다.", "success");
-            setTimeout(() => {
-              location.reload();
-            }, 1500);
+            const sessionId = result.data;
+            if (sessionId) {
+              // 인원이 꽉 차서 매칭이 확정된 경우 채팅방으로 이동
+              showToast("참여가 완료되었습니다. 매칭이 확정되었습니다.", "success");
+              setTimeout(() => {
+                window.location.href = `/chat/chat1?sessionId=${sessionId}`;
+              }, 1500);
+            } else {
+              // 인원이 아직 안 찬 경우 현재 페이지 새로고침
+              showToast("참여가 완료되었습니다.", "success");
+              setTimeout(() => {
+                location.reload();
+              }, 1500);
+            }
           } else {
             const errorMessage = result.message || "참여 처리 중 오류가 발생했습니다.";
             showToast(errorMessage, "error");
@@ -563,10 +602,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        showToast("매칭이 확정되었습니다", "success");
-        setTimeout(() => {
-          window.location.href = "/recruit";
-        }, 1500);
+        const sessionId = result.data?.sessionId || result.data;
+        if (sessionId) {
+          showToast("매칭이 확정되었습니다", "success");
+          setTimeout(() => {
+            window.location.href = `/chat/chat1?sessionId=${sessionId}`;
+          }, 1500);
+        } else {
+          showToast("매칭이 확정되었습니다", "success");
+          setTimeout(() => {
+            window.location.href = "/recruit";
+          }, 1500);
+        }
       } else {
         showToast(result.message || "매칭 확정 처리 중 오류가 발생했습니다.", "error");
       }

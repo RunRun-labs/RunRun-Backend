@@ -244,20 +244,11 @@ public class PathController {
         return "challenge/challenge-end";
     }
 
-    @GetMapping("/course_auto")
-    public String testView() {
-        return "courseAuto";
-    }
 
-    @GetMapping("/course_manual")
-    public String test2View() {
-        return "courseManual";
-    }
-
-    @GetMapping("/course_auto")
-    public String courseAutoView() {
-        return "courseAuto";
-    }
+  @GetMapping("/course_auto")
+  public String courseAutoView() {
+    return "courseAuto";
+  }
 
     @GetMapping("/course_manual")
     public String courseManualView() {
@@ -369,12 +360,12 @@ public class PathController {
         return "admin/coupon-create";
     }
 
-    @GetMapping("/admin/coupon/update/{coupon_id}")
-    public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
-        Model model) {
-        model.addAttribute("couponId", couponId);
-        return "admin/coupon-update";
-    }
+  @GetMapping("/admin/coupon/update/{coupon_id}")
+  public String adminCouponUpdateView(@PathVariable(name = "coupon_id") Long couponId,
+      Model model) {
+    model.addAttribute("couponId", couponId);
+    return "admin/coupon-update";
+  }
 
     @GetMapping("/admin/coupon-role/inquiry")
     public String adminCouponRoleInquiryView() {
