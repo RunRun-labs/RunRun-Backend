@@ -31,4 +31,9 @@ public class CouponStatusService {
     public int activate() {
         return couponStatusRepository.bulkActivate();
     }
+
+    @Transactional
+    public int expireCouponIssues() {
+        return couponStatusRepository.issuedBulkExpire();
+    }
 }

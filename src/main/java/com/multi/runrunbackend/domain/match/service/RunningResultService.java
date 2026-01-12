@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.match.service;
 
+import com.multi.runrunbackend.common.event.RunningResultCompletedEvent;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
@@ -18,6 +19,7 @@ import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -38,6 +40,7 @@ public class RunningResultService {
 
   private final RunningResultRepository runningResultRepository;
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   public Slice<RunningRecordResDto> getMyRunningResults(
       CustomUser principal,
@@ -49,8 +52,7 @@ public class RunningResultService {
     User user = getUser(principal);
 
     List<RunStatus> targetStatuses = List.of(
-        RunStatus.COMPLETED,
-        RunStatus.GIVE_UP
+        RunStatus.COMPLETED
     );
 
     LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
@@ -103,9 +105,8 @@ public class RunningResultService {
   }
 
   /**
-   * RunningResult 저장 및 평균 페이스 업데이트
-   * - 모든 런닝 모드에서 RunningResult 저장 시 이 메서드를 사용
-   * - 저장 후 자동으로 사용자의 평균 페이스를 업데이트
+   * RunningResult 저장 및 평균 페이스 업데이트 - 모든 런닝 모드에서 RunningResult 저장 시 이 메서드를 사용 - 저장 후 자동으로 사용자의 평균
+   * 페이스를 업데이트
    *
    * @param runningResult 저장할 RunningResult
    * @return 저장된 RunningResult
@@ -124,13 +125,18 @@ public class RunningResultService {
     // 2. 평균 페이스 업데이트 (저장 후!)
     updateUserAveragePace(saved.getUser().getId());
 
+    if (saved.getRunStatus() == RunStatus.COMPLETED
+        || saved.getRunStatus() == RunStatus.TIME_OUT) {
+      eventPublisher.publishEvent(
+          new RunningResultCompletedEvent(saved.getUser().getId(), saved.getTotalDistance())
+      );
+    }
+
     return saved;
   }
 
   /**
-   * 사용자의 평균 페이스 업데이트
-   * - 최근 5개 완주 기록의 avgPace 평균 계산
-   * - 기록이 없으면 null로 설정
+   * 사용자의 평균 페이스 업데이트 - 최근 5개 완주 기록의 avgPace 평균 계산 - 기록이 없으면 null로 설정
    *
    * @param userId 사용자 ID
    */

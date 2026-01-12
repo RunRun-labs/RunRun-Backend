@@ -56,4 +56,14 @@ public interface CouponStatusRepository extends JpaRepository<Coupon, Long> {
            AND (quantity = 0 OR issued_count < quantity)
         """, nativeQuery = true)
     int bulkActivate();
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+        UPDATE coupon_issue
+           SET status = 'EXPIRED'
+         WHERE status = 'AVAILABLE'
+           AND expiry_at IS NOT NULL
+           AND expiry_at < now()
+        """, nativeQuery = true)
+    int issuedBulkExpire();
 }

@@ -32,6 +32,38 @@ document.addEventListener("DOMContentLoaded", function () {
     status: document.getElementById("status"),
   };
 
+  // 혜택 값 레이블 업데이트 함수
+  function updateBenefitValueLabel() {
+    const benefitValueLabel = document.querySelector('label[for="benefitValue"]');
+    if (!benefitValueLabel) return;
+
+    const benefitType = fields.benefitType.value;
+    let unit = "";
+    
+    if (benefitType === "RATE_DISCOUNT") {
+      unit = "%";
+    } else if (benefitType === "FIXED_DISCOUNT") {
+      unit = "원";
+    } else if (benefitType === "EXPERIENCE") {
+      unit = "일";
+    }
+
+    // 레이블 텍스트에서 기존 단위 제거 후 새 단위 추가
+    const baseText = benefitValueLabel.textContent.replace(/ \([%원일]\)/, "");
+    if (unit) {
+      benefitValueLabel.textContent = baseText + ` (${unit})`;
+    } else {
+      benefitValueLabel.textContent = baseText;
+    }
+  }
+
+  // 혜택 타입 변경 시 혜택 값 레이블에 단위 표시
+  if (fields.benefitType) {
+    fields.benefitType.addEventListener("change", function () {
+      updateBenefitValueLabel();
+    });
+  }
+
   // 쿠폰 데이터 로드
   function loadCouponData() {
     const token = getAccessToken();
@@ -75,6 +107,9 @@ document.addEventListener("DOMContentLoaded", function () {
           fields.channel.value = coupon.channel || "";
           fields.benefitType.value = coupon.benefitType || "";
           fields.benefitValue.value = coupon.benefitValue || "";
+          
+          // 혜택 타입에 맞게 레이블 업데이트
+          updateBenefitValueLabel();
           fields.code.value = coupon.code || "";
 
           // 날짜 형식 변환 (LocalDateTime -> YYYY-MM-DD)

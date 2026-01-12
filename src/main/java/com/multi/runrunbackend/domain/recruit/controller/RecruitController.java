@@ -97,12 +97,18 @@ public class RecruitController {
   }
 
   @PostMapping("/{recruitId}/join")
-  public ResponseEntity<ApiResponse> joinRecruit(
+  public ResponseEntity<ApiResponse<Long>> joinRecruit(
       @AuthenticationPrincipal CustomUser principal,
       @PathVariable Long recruitId
   ) {
-    recruitService.joinRecruit(recruitId, principal);
-    return ResponseEntity.ok(ApiResponse.success("모집글 참가 성공", null));
+    Long sessionId = recruitService.joinRecruit(recruitId, principal);
+    if (sessionId != null) {
+      // 인원이 꽉 차서 세션이 생성된 경우
+      return ResponseEntity.ok(ApiResponse.success("모집글 참가 성공 및 매칭 확정", sessionId));
+    } else {
+      // 인원이 아직 안 찬 경우
+      return ResponseEntity.ok(ApiResponse.success("모집글 참가 성공", null));
+    }
   }
 
   @DeleteMapping("/{recruitId}/join")

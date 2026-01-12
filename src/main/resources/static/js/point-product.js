@@ -360,27 +360,53 @@ function renderPagination(currentPageNum, totalPagesNum) {
         return;
     }
 
-    let html = '';
+    let html = '<div class="pagination">';
 
-    if (currentPageNum > 0) {
-        html += `<button class="page-btn" onclick="changePage(${
-            currentPageNum - 1
-        })">이전</button>`;
-    }
+    // 이전 버튼
+    html += `
+        <button 
+            type="button" 
+            class="pagination-btn pagination-prev" 
+            ${currentPageNum === 0 ? 'disabled' : ''}
+            onclick="changePage(${currentPageNum - 1})"
+        >
+            이전
+        </button>
+    `;
+
+    // 페이지 번호들
+    html += '<div class="pagination-numbers">';
 
     const startPage = Math.max(0, currentPageNum - 2);
     const endPage = Math.min(totalPagesNum - 1, currentPageNum + 2);
 
     for (let i = startPage; i <= endPage; i++) {
-        html += `<button class="page-btn ${i === currentPageNum ? 'active' : ''}" 
-                        onclick="changePage(${i})">${i + 1}</button>`;
+        html += `
+            <button 
+                type="button" 
+                class="pagination-number ${i === currentPageNum ? 'active' : ''}" 
+                onclick="changePage(${i})"
+            >
+                <span>${i + 1}</span>
+            </button>
+        `;
     }
 
-    if (currentPageNum < totalPagesNum - 1) {
-        html += `<button class="page-btn" onclick="changePage(${
-            currentPageNum + 1
-        })">다음</button>`;
-    }
+    html += '</div>';
+
+    // 다음 버튼
+    html += `
+        <button 
+            type="button" 
+            class="pagination-btn pagination-next" 
+            ${currentPageNum >= totalPagesNum - 1 ? 'disabled' : ''}
+            onclick="changePage(${currentPageNum + 1})"
+        >
+            다음
+        </button>
+    `;
+
+    html += '</div>';
 
     pagination.innerHTML = html;
 }

@@ -86,6 +86,31 @@ public class CouponCreateReqDto {
         return t.getHour() == 0 && t.getMinute() == 0 && t.getSecond() == 0 && t.getNano() == 0;
     }
 
+    @AssertTrue(message = "정률 할인은 1~100%만 가능합니다.")
+    private boolean isValidRateDiscount() {
+        if (benefitType != CouponBenefitType.RATE_DISCOUNT) {
+            return true;
+        }
+        if (benefitValue == null) {
+            return false;
+        }
+        return benefitValue >= 1 && benefitValue <= 100;
+    }
+
+    @AssertTrue(message = "정액 할인은 1000~9900원, 1000원 단위만 가능합니다.")
+    private boolean isValidFixedDiscount() {
+        if (benefitType != CouponBenefitType.FIXED_DISCOUNT) {
+            return true;
+        }
+        if (benefitValue == null) {
+            return false;
+        }
+        if (benefitValue < 1000 || benefitValue > 9900) {
+            return false;
+        }
+        return benefitValue % 1000 == 0;
+    }
+
     @AssertTrue(message = "MULTI 쿠폰은 쿠폰 코드(code)가 필수입니다.")
     public boolean isCodeRequiredForMulti() {
         if (codeType == null) {

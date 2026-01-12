@@ -11,7 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
     attachImageModalHandlers();
     attachDeleteRecordModalHandlers();
     attachCalendarModalHandlers();
+    attachTierRatingModalHandlers();
+    attachPointClickHandler();
     loadMyBodyInfo();
+    loadPointBalance();
 
     // 초기 로드 시 빈 상태 숨김
     hideEmptyState();
@@ -23,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     attachUserScrollGate();
 
     loadRunningRecords(0, true); // 초기 로드 (첫 페이지, 초기화)
-    
+
     // 달력 모달 초기화
     initCalendarModal();
 });
@@ -33,6 +36,7 @@ async function loadMyBodyInfo() {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
 
+        // 1. 기본 유저 정보 조회
         const res = await fetch("/users", {
             headers: {"Authorization": `Bearer ${token}`}
         });
@@ -41,6 +45,32 @@ async function loadMyBodyInfo() {
 
         const payload = await res.json();
         const user = payload?.data ?? null;
+
+        // 2. 레이팅 정보 조회 (추가)
+        if (user) {
+            try {
+                // 거리별 레이팅 조회를 위해 기본값 KM_3 사용
+                const targetDistanceType = "KM_3";
+
+                const rateRes = await fetch(`/api/rating/distance?distanceType=${targetDistanceType}`, {
+                    headers: {"Authorization": `Bearer ${token}`}
+                });
+
+                if (rateRes.ok) {
+                    const ratePayload = await rateRes.json();
+                    const rateData = ratePayload.data;
+
+                    if (rateData) {
+                        // user 객체에 레이팅 및 티어 정보 병합
+                        user.rating = rateData.currentRating;
+                        user.tierName = rateData.currentTier; // 예: "RABBIT", "TURTLE" 등
+                    }
+                }
+            } catch (rateError) {
+                console.warn("레이팅 정보 로드 실패 (기본값 표시):", rateError);
+            }
+        }
+
         renderTierAndRating(user);
         renderProfileImage(user);
     } catch (e) {
@@ -53,42 +83,46 @@ function renderTierAndRating(user) {
     const tierText = document.getElementById("tierText");
     const ratingValue = document.getElementById("ratingValue");
 
-    // 티어 정보 (추후 API 연동 예정)
-    const tier = user?.tier || "토끼";
-    const tierImagePath = `/img/tier/${tier.toLowerCase()}.png`;
-    
-    // 티어 이미지 설정
-    if (tierImage) {
-        tierImage.src = tierImagePath;
-        tierImage.alt = tier;
-        // 이미지 로드 실패 시 텍스트 표시
-        tierImage.onerror = function() {
-            this.style.display = "none";
-            if (tierText) {
-                tierText.style.display = "inline";
-            }
-        };
-        // 이미지 로드 성공 시 텍스트 숨김
-        tierImage.onload = function() {
-            if (tierText) {
-                tierText.style.display = "none";
-            }
-        };
-    }
-    
-    // 티어 텍스트 설정 (이미지가 없을 경우 대체)
+    // 티어 정보 (API에서 받은 tierName 사용, 없으면 기본값)
+    // 백엔드에서 한글 티어 이름이 올 수 있음: 거북이, 토끼, 사슴, 표범, 호랑이, 장산범
+    const tier = user?.tierName || "거북이"; // 기본값 거북이
+
+    // 티어 이모지 매핑 (한글 이름 기준)
+    const tierEmojiMap = {
+        "거북이": "🐢",
+        "토끼": "🐇",
+        "사슴": "🦌",
+        "표범": "🐆",
+        "호랑이": "🐅",
+        "장산범": "🫅"
+    };
+
+    // 티어 텍스트 설정
     if (tierText) {
-        const tierEmojiMap = {
-            "토끼": "🐰",
-            "rabbit": "🐰"
-        };
-        tierText.textContent = tierEmojiMap[tier] || "🐰";
+        const emoji = tierEmojiMap[tier] || "🐢";
+        tierText.textContent = emoji;
+        tierText.setAttribute("title", tier);
+        // 이미지를 사용하지 않으므로 텍스트(이모지)를 항상 표시하고 폰트 크기를 키움
+        tierText.style.display = "inline";
+        tierText.style.fontSize = "2rem";
     }
 
-    // 레이팅 정보 (추후 API 연동 예정)
-    const rating = user?.rating || null;
+    // 티어 이미지 설정 (사용하지 않음, 숨김 처리)
+    if (tierImage) {
+        tierImage.style.display = "none";
+        tierImage.src = ""; // 불필요한 네트워크 요청 방지
+    } else {
+        if (tierText) {
+            tierText.style.fontSize = "2rem";
+        }
+    }
+
+    // 레이팅 정보
+    const rating = user?.rating;
     if (ratingValue) {
-        ratingValue.textContent = rating !== null ? rating : "-";
+        ratingValue.textContent = rating !== undefined && rating !== null
+            ? Math.floor(rating).toLocaleString()
+            : "-";
     }
 }
 
@@ -381,7 +415,7 @@ async function loadRunningRecords(page = 0, reset = false) {
 
         // 날짜 필터 계산: 기본적으로 최근 7일만 조회 (선택된 날짜가 없을 때)
         let url = `/api/records/me?page=${page}&size=4&sort=startedAt,desc`;
-        
+
         if (selectedDate) {
             // 선택된 날짜가 있으면 해당 날짜만 조회
             url += `&startDate=${selectedDate}&endDate=${selectedDate}`;
@@ -390,7 +424,7 @@ async function loadRunningRecords(page = 0, reset = false) {
             const today = new Date();
             const sevenDaysAgo = new Date(today);
             sevenDaysAgo.setDate(today.getDate() - 6); // 7일 전 (오늘 포함)
-            
+
             const startDateStr = formatDateForAPI(sevenDaysAgo);
             const endDateStr = formatDateForAPI(today);
             url += `&startDate=${startDateStr}&endDate=${endDateStr}`;
@@ -411,7 +445,7 @@ async function loadRunningRecords(page = 0, reset = false) {
         }
 
         const records = sliceData.content || [];
-        
+
         // 기록의 날짜를 allRecordsDates에 추가 (달력 표시용)
         records.forEach(record => {
             if (record.startedAt) {
@@ -419,7 +453,7 @@ async function loadRunningRecords(page = 0, reset = false) {
                 allRecordsDates.add(dateStr);
             }
         });
-        
+
         // Page 객체의 last 속성 사용
         hasNext = !(sliceData.last ?? true);
         currentPage = page;
@@ -493,7 +527,7 @@ function showEmptyState() {
     if (emptyState) {
         emptyState.removeAttribute("hidden");
         emptyState.style.display = "flex";
-        
+
         // 빈 상태 메시지 설정
         const emptyTextSmall = emptyState.querySelector(".empty-text-small");
         if (emptyTextSmall) {
@@ -841,7 +875,7 @@ function attachImageModalHandlers() {
         if (e.key === "Escape" && !modal.hasAttribute("hidden")) {
             closeImageModal();
         }
-        
+
         // 삭제 모달 ESC 키로 닫기
         const deleteModal = document.getElementById("deleteRecordModal");
         if (e.key === "Escape" && deleteModal && !deleteModal.hasAttribute("hidden")) {
@@ -870,12 +904,12 @@ function openImageModal(imageUrl) {
 function closeImageModal() {
     const modal = document.getElementById("imageModal");
     const modalImg = document.getElementById("imageModalImg");
-    
+
     if (!modal) return;
 
     modal.setAttribute("hidden", "hidden");
     document.body.style.overflow = "";
-    
+
     // 이미지 소스 제거 (메모리 절약)
     if (modalImg) {
         modalImg.src = "";
@@ -914,7 +948,7 @@ function attachDeleteRecordModalHandlers() {
     if (confirmBtn) {
         confirmBtn.addEventListener("click", async () => {
             const recordId = confirmBtn.getAttribute('data-record-id');
-            
+
             if (recordId) {
                 // recordId로 카드 찾기
                 const recordElement = document.querySelector(`[data-record-id="${recordId}"]`)?.closest('.run-card');
@@ -947,7 +981,7 @@ function attachDeleteRecordModalHandlers() {
 function openDeleteRecordModal(recordId, recordElement) {
     const modal = document.getElementById("deleteRecordModal");
     const confirmBtn = document.querySelector('[data-role="confirm-delete-record"]');
-    
+
     if (!modal) return;
 
     // 확인 버튼에 recordId와 element 정보 저장
@@ -969,7 +1003,7 @@ function openDeleteRecordModal(recordId, recordElement) {
 function closeDeleteRecordModal() {
     const modal = document.getElementById("deleteRecordModal");
     const confirmBtn = document.querySelector('[data-role="confirm-delete-record"]');
-    
+
     if (!modal) return;
 
     modal.setAttribute("hidden", "hidden");
@@ -1078,7 +1112,7 @@ async function openCalendarModal() {
 
     // 달력 렌더링 (내부에서 기록 날짜 로드)
     await renderCalendar();
-    
+
     modal.removeAttribute("hidden");
     document.body.style.overflow = "hidden";
 }
@@ -1136,7 +1170,7 @@ async function loadCalendarRecordsDates() {
         // 현재 달의 첫 날과 마지막 날 계산
         const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1);
         const lastDay = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
-        
+
         const startDateStr = formatDateForAPI(firstDay);
         const endDateStr = formatDateForAPI(lastDay);
 
@@ -1174,7 +1208,7 @@ async function loadCalendarRecordsDates() {
 async function renderCalendar() {
     const calendarDays = document.getElementById("calendarDays");
     const calendarMonthYear = document.getElementById("calendarMonthYear");
-    
+
     if (!calendarDays || !calendarMonthYear) return;
 
     // 년/월 표시 업데이트
@@ -1205,14 +1239,14 @@ async function renderCalendar() {
     // 현재 달의 날짜들 표시
     const today = new Date();
     const todayStr = formatDateForAPI(today);
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = formatDateForAPI(new Date(currentCalendarYear, currentCalendarMonth, day));
         const isToday = dateStr === todayStr;
         const isSelected = selectedDate === dateStr;
         const hasRecord = calendarRecordsDates.has(dateStr);
         const isDisabled = dateStr > todayStr; // 미래 날짜는 비활성화
-        
+
         const dayElement = createCalendarDay(day, false, isDisabled, isToday, isSelected, hasRecord, dateStr);
         calendarDays.appendChild(dayElement);
     }
@@ -1269,11 +1303,11 @@ function createCalendarDay(day, isOtherMonth, isDisabled, isToday = false, isSel
  */
 function selectDate(dateStr) {
     if (!dateStr) return;
-    
+
     selectedDate = dateStr;
     updateDateSearchLabel();
     closeCalendarModal();
-    
+
     // 선택된 날짜의 기록 로드
     currentPage = 0;
     hasNext = true;
@@ -1337,7 +1371,7 @@ async function deleteRunningRecord(recordId, recordElement) {
         // 성공 시 카드 제거
         if (recordElement) {
             recordElement.remove();
-            
+
             // 기록이 없으면 빈 상태 표시
             const runList = document.querySelector('[data-role="run-list"]');
             if (runList && runList.children.length === 0) {
@@ -1350,17 +1384,268 @@ async function deleteRunningRecord(recordId, recordElement) {
             confirmBtn.disabled = false;
             confirmBtn.textContent = "삭제";
         }
-        
+
         closeDeleteRecordModal();
         alert("러닝 기록이 삭제되었습니다.");
     } catch (error) {
         console.error("Failed to delete running record:", error);
         alert(error.message || "러닝 기록 삭제 중 오류가 발생했습니다.");
-        
+
         const confirmBtn = document.querySelector('[data-role="confirm-delete-record"]');
         if (confirmBtn) {
             confirmBtn.disabled = false;
             confirmBtn.textContent = "삭제";
         }
+    }
+}
+
+/**
+ * 티어/레이팅 모달 핸들러
+ */
+function attachTierRatingModalHandlers() {
+    // tier-display div를 클릭 대상으로 설정
+    const tierClickAreas = document.querySelectorAll('[data-role="tier-click"]');
+    const modal = document.getElementById("tierRatingModal");
+    const modalOverlay = document.querySelector('[data-role="tier-rating-modal-overlay"]');
+    const modalClose = document.querySelector('[data-role="tier-rating-modal-close"]');
+
+    console.log("티어 모달 핸들러 초기화:", {
+        tierClickAreas: tierClickAreas.length,
+        modal: !!modal,
+        modalOverlay: !!modalOverlay,
+        modalClose: !!modalClose
+    });
+
+    if (!modal) {
+        console.warn("티어 상세 모달 요소를 찾을 수 없습니다.");
+        return;
+    }
+
+    // 티어 클릭 시 모달 열기 (모든 클릭 영역에 이벤트 리스너 추가)
+    if (tierClickAreas.length > 0) {
+        tierClickAreas.forEach(area => {
+            area.addEventListener("click", (e) => {
+                console.log("티어 클릭 이벤트 발생");
+                // 이벤트 버블링 방지 (필요한 경우)
+                e.stopPropagation();
+                e.preventDefault();
+                openTierRatingModal();
+            });
+            // 커서 스타일 명시적 지정
+            area.style.cursor = "pointer";
+            console.log("티어 클릭 이벤트 리스너 등록 완료");
+        });
+    } else {
+        console.warn("티어 클릭 영역(data-role='tier-click')을 찾을 수 없습니다.");
+    }
+
+    // 모달 닫기
+    const closeModal = () => {
+        modal.classList.remove("active");
+        modal.setAttribute("hidden", "hidden");
+        document.body.style.overflow = "";
+    };
+
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", closeModal);
+    }
+
+    if (modalClose) {
+        modalClose.addEventListener("click", closeModal);
+    }
+
+    // ESC 키로 모달 닫기
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("active")) {
+            closeModal();
+        }
+    });
+}
+
+/**
+ * 티어/레이팅 모달 열기
+ */
+async function openTierRatingModal() {
+    const modal = document.getElementById("tierRatingModal");
+    const ratingList = document.getElementById("tierRatingList");
+
+    if (!modal || !ratingList) {
+        console.warn("티어 모달 또는 리스트 요소를 찾을 수 없습니다.");
+        return;
+    }
+
+    console.log("티어 모달 열기 시도");
+
+    // hidden 속성 제거 및 active 클래스 추가
+    modal.removeAttribute("hidden");
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+
+    // 로딩 표시
+    ratingList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;"><p>로딩 중...</p></div>';
+
+    // 모든 거리별 레이팅 조회
+    await loadAllDistanceRatings();
+}
+
+/**
+ * 모든 거리별 레이팅 조회 및 렌더링
+ */
+async function loadAllDistanceRatings() {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    const distanceTypes = ["KM_3", "KM_5", "KM_10"];
+    const distanceLabels = {
+        "KM_3": "3km",
+        "KM_5": "5km",
+        "KM_10": "10km"
+    };
+
+    const ratingList = document.getElementById("tierRatingList");
+    if (!ratingList) return;
+
+    try {
+        // 모든 거리별 레이팅을 병렬로 조회
+        const ratingPromises = distanceTypes.map(async (distanceType) => {
+            try {
+                const res = await fetch(`/api/rating/distance?distanceType=${distanceType}`, {
+                    headers: {"Authorization": `Bearer ${token}`}
+                });
+
+                if (res.ok) {
+                    const payload = await res.json();
+                    return {
+                        distanceType,
+                        distanceLabel: distanceLabels[distanceType],
+                        rating: payload.data
+                    };
+                }
+                return {
+                    distanceType,
+                    distanceLabel: distanceLabels[distanceType],
+                    rating: null
+                };
+            } catch (error) {
+                console.error(`레이팅 조회 실패 (${distanceType}):`, error);
+                return {
+                    distanceType,
+                    distanceLabel: distanceLabels[distanceType],
+                    rating: null
+                };
+            }
+        });
+
+        const results = await Promise.all(ratingPromises);
+
+        // 모달 렌더링
+        renderTierRatingModal(results);
+    } catch (error) {
+        console.error("거리별 레이팅 조회 실패:", error);
+        ratingList.innerHTML = '<div style="padding: 20px; text-align: center; color: #ff3b30;"><p>레이팅 조회에 실패했습니다.</p></div>';
+    }
+}
+
+/**
+ * 티어/레이팅 모달 렌더링
+ */
+function renderTierRatingModal(results) {
+    const ratingList = document.getElementById("tierRatingList");
+    if (!ratingList) return;
+
+    // 티어 이모지 매핑 (한글 이름 기준)
+    const tierEmojiMap = {
+        "거북이": "🐢",
+        "토끼": "🐇",
+        "사슴": "🦌",
+        "표범": "🐆",
+        "호랑이": "🐅",
+        "장산범": "🫅"
+    };
+
+    ratingList.innerHTML = "";
+
+    results.forEach(result => {
+        const {distanceLabel, rating} = result;
+
+        const ratingCard = document.createElement("div");
+        ratingCard.className = "course-modal-option";
+        ratingCard.style.cursor = "default";
+
+        const tierName = rating?.currentTier || "거북이";
+        const tierRating = rating?.currentRating || 1000;
+        const emoji = tierEmojiMap[tierName] || "🐢";
+
+        ratingCard.innerHTML = `
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="option-icon" style="font-size: 1.5rem;">${emoji}</span>
+                    <span class="option-text" style="font-weight: 600;">${distanceLabel}</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px; margin-left: 2rem;">
+                    <div style="font-size: 0.9rem; color: #666;">
+                        <span style="font-weight: 500;">티어:</span> ${tierName}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #666;">
+                        <span style="font-weight: 500;">레이팅:</span> ${Math.floor(tierRating).toLocaleString()}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        ratingList.appendChild(ratingCard);
+    });
+}
+
+/**
+ * 포인트 클릭 핸들러
+ */
+function attachPointClickHandler() {
+    const pointSection = document.querySelector('[data-role="point-click"]');
+    if (!pointSection) return;
+
+    pointSection.addEventListener("click", () => {
+        window.location.href = "/point";
+    });
+}
+
+/**
+ * 포인트 잔액 조회
+ */
+async function loadPointBalance() {
+    try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        const response = await fetch("/api/points", {
+            headers: {"Authorization": `Bearer ${token}`}
+        });
+
+        if (!response.ok) {
+            console.warn("포인트 조회 실패:", response.status);
+            return;
+        }
+
+        const payload = await response.json();
+        const pointData = payload?.data;
+        
+        if (pointData) {
+            const availablePoints = pointData.availablePoints || 0;
+            renderPointBalance(availablePoints);
+        }
+    } catch (error) {
+        console.error("포인트 조회 중 오류:", error);
+    }
+}
+
+/**
+ * 포인트 잔액 렌더링
+ */
+function renderPointBalance(availablePoints) {
+    const pointValueEl = document.getElementById("pointValue");
+    if (pointValueEl) {
+        pointValueEl.textContent = availablePoints !== undefined && availablePoints !== null
+            ? availablePoints.toLocaleString()
+            : "-";
     }
 }

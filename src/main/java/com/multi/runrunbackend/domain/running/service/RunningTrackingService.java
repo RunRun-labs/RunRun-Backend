@@ -24,6 +24,8 @@ import com.multi.runrunbackend.domain.match.repository.MatchSessionRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
 import com.multi.runrunbackend.domain.match.service.RunningResultService;
+import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
+import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.running.dto.FreeRunCoursePreviewResDto;
 import com.multi.runrunbackend.domain.running.dto.GPSDataDTO;
 import com.multi.runrunbackend.domain.running.dto.RunningCoursePathResDto;
@@ -55,17 +57,18 @@ import java.util.*;
 @Slf4j
 public class RunningTrackingService {
 
-    private final RedisTemplate<String, String> gpsRedisTemplate;
-    private final ObjectMapper objectMapper;
-    private final MatchSessionRepository sessionRepository;
-    private final SessionUserRepository sessionUserRepository;
-    private final RunningResultRepository runningResultRepository;
-    private final RunningResultService runningResultService;
-    private final UserRepository userRepository;
-    private final ChallengeProgressService challengeProgressService;
-    private final CourseRepository courseRepository;
-    private final CoursePathProcessor coursePathProcessor;
-    private final ChatService chatService;
+  private final RedisTemplate<String, String> gpsRedisTemplate;
+  private final ObjectMapper objectMapper;
+  private final MatchSessionRepository sessionRepository;
+  private final SessionUserRepository sessionUserRepository;
+  private final RunningResultRepository runningResultRepository;
+  private final RunningResultService runningResultService;
+  private final UserRepository userRepository;
+  private final ChallengeProgressService challengeProgressService;
+  private final CourseRepository courseRepository;
+  private final CoursePathProcessor coursePathProcessor;
+  private final ChatService chatService;
+  private final RecruitRepository recruitRepository;
 
     private static final Duration LATEST_STATS_TTL = Duration.ofHours(2);
 
@@ -82,9 +85,9 @@ public class RunningTrackingService {
         Long userId = gpsData.getUserId();
 
         log.debug("📡 GPS 처리: sessionId={}, userId={}, distance={}km, time={}초",
-                "matchedDistanceM={}",
-                sessionId, userId, gpsData.getTotalDistance(), gpsData.getRunningTime(),
-                gpsData.getMatchedDistanceM());
+            "matchedDistanceM={}",
+            sessionId, userId, gpsData.getTotalDistance(), gpsData.getRunningTime(),
+            gpsData.getMatchedDistanceM());
         log.info("getMatchedDistanceM : " + gpsData.getMatchedDistanceM());
         // 1. Redis List에 GPS 데이터 추가 (계속 누적)
         saveUserGPSData(gpsData);
@@ -94,7 +97,7 @@ public class RunningTrackingService {
 
         // 3. 세션 정보 조회 (목표 거리)
         MatchSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         Double targetDistance = session.getTargetDistance();
 
@@ -123,7 +126,7 @@ public class RunningTrackingService {
             if (session.getCourse() != null && session.getCourse().getPath() != null) {
                 double totalM = computeLineStringMeters(session.getCourse().getPath());
                 double matchedM = gpsData.getMatchedDistanceM() != null && Double.isFinite(
-                        gpsData.getMatchedDistanceM()) ? gpsData.getMatchedDistanceM() : 0.0;
+                    gpsData.getMatchedDistanceM()) ? gpsData.getMatchedDistanceM() : 0.0;
                 // 5m 여유 (좌표/근사 오차)
                 courseDone = matchedM >= Math.max(0.0, totalM - 5.0);
             }
@@ -151,7 +154,7 @@ public class RunningTrackingService {
 
         // 세션 참여자 검증
         sessionUserRepository.findBySessionIdAndUserId(sessionId, user.getId())
-                .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
 
         MatchSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.SESSION_NOT_FOUND));
@@ -159,22 +162,22 @@ public class RunningTrackingService {
         Course course = session.getCourse();
         if (course == null || course.getPath() == null) {
             return RunningCoursePathResDto.builder()
-                    .courseId(null)
-                    .fullPath(null)
-                    .remainingPath(null)
-                    .startLat(null)
-                    .startLng(null)
-                    .distanceM(null)
-                    .hostMatchedDistM(null)
-                    .build();
+                .courseId(null)
+                .fullPath(null)
+                .remainingPath(null)
+                .startLat(null)
+                .startLng(null)
+                .distanceM(null)
+                .hostMatchedDistM(null)
+                .build();
         }
 
         RunningStatsDTO latest = getLatestRunningStats(sessionId, principal);
         double matchedM = 0.0;
         // ✅ STANDBY 상태일 때는 진행도를 0으로 고정 (이전 러닝 데이터 무시)
         if (session.getStatus() == SessionStatus.IN_PROGRESS &&
-                latest != null && latest.getHostMatchedDistM() != null &&
-                Double.isFinite(latest.getHostMatchedDistM())) {
+            latest != null && latest.getHostMatchedDistM() != null &&
+            Double.isFinite(latest.getHostMatchedDistM())) {
             matchedM = Math.max(0.0, latest.getHostMatchedDistM());
         }
 
@@ -543,12 +546,12 @@ public class RunningTrackingService {
 
         log.info("🏁 오프라인 런닝 종료: sessionId={}, loginId={}", sessionId, loginId);
 
-        Long courseId = (req != null) ? req.getCourseId() : null;
-        // 0. loginId로 User 조회
-        User hostUser = userRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+    Long courseId = (req != null) ? req.getCourseId() : null;
+    // 0. loginId로 User 조회
+    User hostUser = userRepository.findByLoginId(loginId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
-        Long hostUserId = hostUser.getId();
+    Long hostUserId = hostUser.getId();
 
         // 1. 세션 조회 (필요시 코스 연결) 및 상태 업데이트
         MatchSession session = sessionRepository.findById(sessionId)
@@ -580,9 +583,15 @@ public class RunningTrackingService {
 
         log.info("✅ 세션 상태 업데이트: sessionId={}, status=COMPLETED", sessionId);
 
-        // 2. Redis에서 방장 GPS 데이터 조회
-        String trackKey = String.format("running:%d:user:%d:track", sessionId, hostUserId);
-        List<String> rawTrack = gpsRedisTemplate.opsForList().range(trackKey, 0, -1);
+    if (session.getType() == SessionType.OFFLINE && session.getRecruit() != null) {
+      session.getRecruit().updateStatus(RecruitStatus.COMPLETED);
+      recruitRepository.save(session.getRecruit());
+      log.info("모집글 상태 업데이트: recruitId={}, status=COMPLETED", session.getRecruit().getId());
+    }
+
+    // 2. Redis에서 방장 GPS 데이터 조회
+    String trackKey = String.format("running:%d:user:%d:track", sessionId, hostUserId);
+    List<String> rawTrack = gpsRedisTemplate.opsForList().range(trackKey, 0, -1);
 
         if (rawTrack == null || rawTrack.isEmpty()) {
             throw new NotFoundException(ErrorCode.SESSION_NOT_FOUND);
@@ -729,42 +738,42 @@ public class RunningTrackingService {
                     : null;
         }
 
-        if (hostUserId == null || !hostUserId.equals(user.getId())) {
-            throw new ForbiddenException(ErrorCode.NOT_SESSION_HOST);
+    if (hostUserId == null || !hostUserId.equals(user.getId())) {
+      throw new ForbiddenException(ErrorCode.NOT_SESSION_HOST);
+    }
+
+    // 코스가 이미 있는 세션이면 프리뷰 생성 불가
+    if (session.getCourse() != null) {
+      throw new BadRequestException(ErrorCode.INVALID_REQUEST);
+    }
+
+    // 방장 GPS 트랙 조회 (프리뷰 생성은 방장만 수행)
+    String trackKey = String.format("running:%d:user:%d:track", sessionId, hostUserId);
+    List<String> rawTrack = gpsRedisTemplate.opsForList().range(trackKey, 0, -1);
+    if (rawTrack == null || rawTrack.isEmpty()) {
+      throw new NotFoundException(ErrorCode.SESSION_NOT_FOUND);
+    }
+
+    // ✅ 마지막 GPS 데이터에서 실제 뛴 거리 가져오기
+    GPSDataDTO finalGPS = null;
+    try {
+      String lastJson = rawTrack.get(rawTrack.size() - 1);
+      finalGPS = objectMapper.readValue(lastJson, GPSDataDTO.class);
+    } catch (Exception e) {
+      log.warn("마지막 GPS 파싱 실패: {}", e.getMessage());
+    }
+
+    List<Coordinate> coords = new ArrayList<>();
+    long startTime = -1;
+    double startLat = 0;
+    double startLng = 0;
+    int skipCount = 0;
+
+    for (String json : rawTrack) {
+      try {
+        GPSDataDTO gps = objectMapper.readValue(json, GPSDataDTO.class);
+        if (gps.getLatitude() == null || gps.getLongitude() == null) {
         }
-
-        // 코스가 이미 있는 세션이면 프리뷰 생성 불가
-        if (session.getCourse() != null) {
-            throw new BadRequestException(ErrorCode.INVALID_REQUEST);
-        }
-
-        // 방장 GPS 트랙 조회 (프리뷰 생성은 방장만 수행)
-        String trackKey = String.format("running:%d:user:%d:track", sessionId, hostUserId);
-        List<String> rawTrack = gpsRedisTemplate.opsForList().range(trackKey, 0, -1);
-        if (rawTrack == null || rawTrack.isEmpty()) {
-            throw new NotFoundException(ErrorCode.SESSION_NOT_FOUND);
-        }
-
-        // ✅ 마지막 GPS 데이터에서 실제 뛴 거리 가져오기
-        GPSDataDTO finalGPS = null;
-        try {
-            String lastJson = rawTrack.get(rawTrack.size() - 1);
-            finalGPS = objectMapper.readValue(lastJson, GPSDataDTO.class);
-        } catch (Exception e) {
-            log.warn("마지막 GPS 파싱 실패: {}", e.getMessage());
-        }
-
-        List<Coordinate> coords = new ArrayList<>();
-        long startTime = -1;
-        double startLat = 0;
-        double startLng = 0;
-        int skipCount = 0;
-
-        for (String json : rawTrack) {
-            try {
-                GPSDataDTO gps = objectMapper.readValue(json, GPSDataDTO.class);
-                if (gps.getLatitude() == null || gps.getLongitude() == null) {
-                }
 
                 // ✅ 시작 시간 기록 (첫 GPS)
                 if (startTime < 0) {

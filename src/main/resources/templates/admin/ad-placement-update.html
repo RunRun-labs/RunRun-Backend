@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RunRun Admin | 광고 배치 수정</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/admin-layout.css"
+      th:href="@{/css/admin-layout.css}"
+    />
+    <link
+      rel="stylesheet"
+      href="/css/ad-placement-create.css"
+      th:href="@{/css/ad-placement-create.css}"
+    />
+  </head>
+  <body>
+    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+    <!-- 레이아웃 적용 -->
+    <div th:replace="~{admin/layout :: adminLayout(~{::.ad-placement-content})}">
+      <!-- 컨텐츠 영역 -->
+      <div class="ad-placement-content ad-placement-create-container">
+        <div class="ad-placement-create-card">
+          <h1 class="page-title">광고 배치 수정</h1>
+
+          <form class="ad-placement-form" id="adPlacementForm" novalidate>
+            <!-- 슬롯 선택 -->
+            <div class="form-field">
+              <label for="slotId" class="form-label"
+                >슬롯 <span class="required">*</span></label
+              >
+              <select id="slotId" name="slotId" class="form-select" disabled>
+                <option value="">선택하세요</option>
+              </select>
+              <span class="error-message" id="slotId-error"></span>
+              <span class="help-text" id="slotId-help">시작일이 지난 배치는 슬롯과 광고를 변경할 수 없습니다</span>
+            </div>
+
+            <!-- 광고 선택 -->
+            <div class="form-field">
+              <label for="adId" class="form-label"
+                >광고 <span class="required">*</span></label
+              >
+              <select id="adId" name="adId" class="form-select" disabled>
+                <option value="">선택하세요</option>
+              </select>
+              <span class="error-message" id="adId-error"></span>
+              <span class="help-text" id="adId-help">시작일이 지난 배치는 슬롯과 광고를 변경할 수 없습니다</span>
+            </div>
+
+            <!-- 가중치 -->
+            <div class="form-field">
+              <label for="weight" class="form-label"
+                >가중치 <span class="required">*</span></label
+              >
+              <input
+                type="number"
+                id="weight"
+                name="weight"
+                class="form-input"
+                placeholder="1 이상"
+                min="1"
+              />
+              <span class="error-message" id="weight-error"></span>
+            </div>
+
+            <!-- 시작일/종료일 -->
+            <div class="form-row form-row-2">
+              <div class="form-field">
+                <label for="startAt" class="form-label"
+                  >시작일 <span class="required">*</span></label
+                >
+                <input
+                  type="date"
+                  id="startAt"
+                  name="startAt"
+                  class="form-input"
+                />
+                <span class="error-message" id="startAt-error"></span>
+                <span class="help-text">시간은 자동으로 00:00:00으로 설정됩니다</span>
+              </div>
+
+              <div class="form-field">
+                <label for="endAt" class="form-label"
+                  >종료일 <span class="required">*</span></label
+                >
+                <input
+                  type="date"
+                  id="endAt"
+                  name="endAt"
+                  class="form-input"
+                />
+                <span class="error-message" id="endAt-error"></span>
+                <span class="help-text">시작일 이후만 선택 가능합니다</span>
+              </div>
+            </div>
+          </form>
+
+          <!-- 수정하기 버튼 -->
+          <button type="button" class="create-button" id="updateBtn">
+            수정하기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="/js/ad-placement-update.js"
+      th:src="@{/js/ad-placement-update.js}"
+    ></script>
+  </body>
+</html>
