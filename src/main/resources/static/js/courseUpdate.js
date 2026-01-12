@@ -52,7 +52,9 @@ function getAccessToken() {
 }
 
 function setFieldState(el, message) {
-  if (!el) return;
+  if (!el) {
+    return;
+  }
   const field = el.closest(".form-field");
   if (message) {
     field?.classList.add("has-error");
@@ -68,11 +70,11 @@ function showError(name, message) {
   if (errorEls[name]) {
     errorEls[name].textContent = message || "";
     const field =
-      name === "title"
-        ? titleInput
-        : name === "description"
-        ? descInput
-        : pathInput;
+        name === "title"
+            ? titleInput
+            : name === "description"
+                ? descInput
+                : pathInput;
     setFieldState(field, message);
   }
 }
@@ -109,8 +111,8 @@ function validateRoute() {
   const distance = Number(distanceMInput.value);
   if (Number.isFinite(distance) && distance > MAX_DISTANCE_M) {
     showError(
-      "path",
-      "마라톤(42.195km)보다 긴 코스는 등록할 수 없습니다. 다시 작성해 주세요."
+        "path",
+        "마라톤(42.195km)보다 긴 코스는 등록할 수 없습니다. 다시 작성해 주세요."
     );
     return false;
   }
@@ -130,10 +132,15 @@ function anyInvalid() {
 
 let previewStartMarker = null;
 let previewEndMarker = null;
+let previewStartInfoWindow = null;
+let previewEndInfoWindow = null;
 
 function initMapPreview() {
-  if (previewMap || !mapPreviewEl || typeof kakao === "undefined") return;
+  if (previewMap || !mapPreviewEl || typeof kakao === "undefined") {
+    return;
+  }
   const center = new kakao.maps.LatLng(37.5665, 126.978);
+  // ⭐ recruit-detail.js처럼 최소한의 옵션만 사용 (기본값이 draggable: true, scrollwheel: true)
   previewMap = new kakao.maps.Map(mapPreviewEl, {
     center,
     level: 6,
@@ -184,47 +191,55 @@ function clearPreviewMarkers() {
     previewEndMarker.setMap(null);
     previewEndMarker = null;
   }
+  if (previewStartInfoWindow) {
+    previewStartInfoWindow.close();
+    previewStartInfoWindow = null;
+  }
+  if (previewEndInfoWindow) {
+    previewEndInfoWindow.close();
+    previewEndInfoWindow = null;
+  }
 }
 
 function addPreviewMarker(lat, lng, labelText, variant = "default") {
   const latlng = new kakao.maps.LatLng(lat, lng);
-  const palette = {
-    start: "#1e88e5",
-    end: "#ff3d00",
-    default: "#333333",
-  };
-  const color = palette[variant] || palette.default;
 
-  const content = `
-    <div style="transform:translate(-50%,-100%);text-align:center;">
-      <div style="
-        padding:4px 10px;
-        border-radius:14px;
-        background:${color};
-        color:#fff;
-        font-size:11px;
-        font-weight:bold;
-        white-space:nowrap;
-        box-shadow:0 2px 4px rgba(0,0,0,0.3);
-      ">${labelText}</div>
-      <div style="
-        width:0;
-        height:0;
-        border-left:6px solid transparent;
-        border-right:6px solid transparent;
-        border-top:8px solid ${color};
-        margin:0 auto;
-      "></div>
-    </div>
-  `;
-
-  const marker = new kakao.maps.CustomOverlay({
+  // 기본 마커 생성
+  const marker = new kakao.maps.Marker({
     position: latlng,
-    content: content,
-    yAnchor: 1,
+    clickable: true, // 클릭 가능하도록 명시
   });
 
   marker.setMap(previewMap);
+
+  // InfoWindow 생성
+  const infoContent = `<div style="padding:8px;font-size:13px;font-weight:bold;">${labelText}</div>`;
+  const infoWindow = new kakao.maps.InfoWindow({
+    content: infoContent,
+    removable: true, // 닫기 버튼 표시
+  });
+
+  // variant에 따라 InfoWindow 저장 (이벤트 리스너 등록 전에 저장)
+  if (variant === "start") {
+    previewStartInfoWindow = infoWindow;
+  } else if (variant === "end") {
+    previewEndInfoWindow = infoWindow;
+  }
+
+  // 마커 클릭 시 InfoWindow 표시
+  kakao.maps.event.addListener(marker, "click", function () {
+    // 다른 InfoWindow 닫기
+    if (previewStartInfoWindow && previewStartInfoWindow !== infoWindow) {
+      previewStartInfoWindow.close();
+    }
+    if (previewEndInfoWindow && previewEndInfoWindow !== infoWindow) {
+      previewEndInfoWindow.close();
+    }
+
+    // 현재 InfoWindow 열기
+    infoWindow.open(previewMap, marker);
+  });
+
   return marker;
 }
 
@@ -239,7 +254,9 @@ function renderRouteOnMap(coords) {
   }
   initMapPreview();
   const latLngs = coords.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
-  if (!previewMap) return;
+  if (!previewMap) {
+    return;
+  }
 
   // Clear existing polyline
   if (previewPolyline) {
@@ -271,58 +288,66 @@ function renderRouteOnMap(coords) {
 
   // Check if round trip (start and end are the same)
   const isRoundTrip =
-    Math.abs(startCoord.getLat() - endCoord.getLat()) < 0.0001 &&
-    Math.abs(startCoord.getLng() - endCoord.getLng()) < 0.0001;
+      Math.abs(startCoord.getLat() - endCoord.getLat()) < 0.0001 &&
+      Math.abs(startCoord.getLng() - endCoord.getLng()) < 0.0001;
 
   if (isRoundTrip) {
     // 루프 코스일 때는 출발점만 표시
     previewStartMarker = addPreviewMarker(
-      startCoord.getLat(),
-      startCoord.getLng(),
-      "출발",
-      "start"
+        startCoord.getLat(),
+        startCoord.getLng(),
+        "📍 출발점",
+        "start"
     );
   } else {
     previewStartMarker = addPreviewMarker(
-      startCoord.getLat(),
-      startCoord.getLng(),
-      "출발",
-      "start"
+        startCoord.getLat(),
+        startCoord.getLng(),
+        "📍 출발점",
+        "start"
     );
     previewEndMarker = addPreviewMarker(
-      endCoord.getLat(),
-      endCoord.getLng(),
-      "도착",
-      "end"
+        endCoord.getLat(),
+        endCoord.getLng(),
+        "🏁 도착점",
+        "end"
     );
   }
 
   const bounds = new kakao.maps.LatLngBounds();
   latLngs.forEach((p) => bounds.extend(p));
-  previewMap.setBounds(bounds);
 
-  // ⭐ 경로 그린 뒤 + setBounds 이후 relayout 필수
-  setTimeout(() => {
-    if (previewMap) {
-      previewMap.relayout();
-    }
-  }, 0);
+  // ⭐ setBounds는 드래그/줌을 비활성화할 수 있으므로, 대신 center와 level 계산
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const centerLat = (sw.getLat() + ne.getLat()) / 2;
+  const centerLng = (sw.getLng() + ne.getLng()) / 2;
 
-  setTimeout(() => {
-    if (previewMap) {
-      previewMap.relayout();
-    }
-  }, 300);
+  // 거리에 따라 적절한 level 계산
+  const latDiff = ne.getLat() - sw.getLat();
+  const lngDiff = ne.getLng() - sw.getLng();
+  const maxDiff = Math.max(latDiff, lngDiff);
 
-  // ⭐ 마커 추가 후 + 전체 작업 완료 후 최종 relayout
-  setTimeout(() => {
-    if (previewMap) {
-      previewMap.relayout();
-      // 드래그/줌 기능 명시적 재활성화
-      previewMap.setDraggable(true);
-      previewMap.setZoomable(true);
-    }
-  }, 500);
+  let level = 6; // 기본값
+  if (maxDiff > 0.1) {
+    level = 4;
+  } else if (maxDiff > 0.05) {
+    level = 5;
+  } else if (maxDiff > 0.02) {
+    level = 6;
+  } else if (maxDiff > 0.01) {
+    level = 7;
+  } else {
+    level = 8;
+  }
+
+  // center와 level 설정 (setBounds 대신)
+  previewMap.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
+  previewMap.setLevel(level);
+  
+  // ⭐ setLevel 호출 직후 드래그/줌 재활성화 (setLevel이 드래그/줌을 비활성화할 수 있음)
+  previewMap.setDraggable(true);
+  previewMap.setZoomable(true);
 }
 
 function applyDraft(draft) {
@@ -347,8 +372,8 @@ function applyDraft(draft) {
   // If path is a string (WKT), reject it
   if (typeof pathToStore === "string") {
     console.error(
-      "ERROR: draft.path is a string (WKT), not GeoJSON:",
-      pathToStore.substring(0, 100)
+        "ERROR: draft.path is a string (WKT), not GeoJSON:",
+        pathToStore.substring(0, 100)
     );
     alert("코스 경로 형식 오류가 감지되었습니다. 코스를 다시 생성해주세요.");
     applyDraft(null);
@@ -357,9 +382,9 @@ function applyDraft(draft) {
 
   // Ensure it's a GeoJSON object with coordinates
   if (
-    !pathToStore.coordinates ||
-    !Array.isArray(pathToStore.coordinates) ||
-    pathToStore.coordinates.length === 0
+      !pathToStore.coordinates ||
+      !Array.isArray(pathToStore.coordinates) ||
+      pathToStore.coordinates.length === 0
   ) {
     console.error("ERROR: draft.path has no valid coordinates:", pathToStore);
     applyDraft(null);
@@ -390,21 +415,22 @@ function applyDraft(draft) {
   }
 
   const distanceKm =
-    draft.distanceM != null ? (Number(draft.distanceM) / 1000).toFixed(2) : "-";
+      draft.distanceM != null ? (Number(draft.distanceM) / 1000).toFixed(2)
+          : "-";
   const registerTypeText =
-    draft.courseRegisterType === "AUTO"
-      ? "자동 등록"
-      : draft.courseRegisterType === "MANUAL"
-      ? "수동 등록"
-      : draft.courseRegisterType === "AI"
-      ? "AI 등록"
-      : draft.courseRegisterType ?? "-";
+      draft.courseRegisterType === "AUTO"
+          ? "자동 등록"
+          : draft.courseRegisterType === "MANUAL"
+              ? "수동 등록"
+              : draft.courseRegisterType === "AI"
+                  ? "AI 등록"
+                  : draft.courseRegisterType ?? "-";
   summaryEl.innerHTML = `
     <div class="summary-row"><span>등록 방식</span><strong>${registerTypeText}</strong></div>
     <div class="summary-row"><span>거리</span><strong>${distanceKm} km</strong></div>
     <div class="summary-row"><span>출발지</span><strong>${
       draft.address ?? "-"
-    }</strong></div>
+  }</strong></div>
   `;
 
   renderRouteOnMap(pathToStore.coordinates);
@@ -456,9 +482,9 @@ async function loadCourseData() {
     console.log("Course path:", course.path);
     console.log("Path type:", typeof course.path);
     console.log(
-      "Register type:",
-      course.registerType,
-      typeof course.registerType
+        "Register type:",
+        course.registerType,
+        typeof course.registerType
     );
 
     // Fill form fields
@@ -492,22 +518,22 @@ async function loadCourseData() {
       } else if (registerTypeValue && typeof registerTypeValue === "object") {
         // 객체인 경우 name() 메서드나 toString() 사용
         registerTypeValue = registerTypeValue.name
-          ? registerTypeValue.name()
-          : String(registerTypeValue);
+            ? registerTypeValue.name()
+            : String(registerTypeValue);
       } else {
         registerTypeValue = "AUTO";
       }
 
       // path.coordinates 확인 및 GeoJSON 형식 보장
       if (
-        pathObj &&
-        pathObj.coordinates &&
-        Array.isArray(pathObj.coordinates) &&
-        pathObj.coordinates.length > 0
+          pathObj &&
+          pathObj.coordinates &&
+          Array.isArray(pathObj.coordinates) &&
+          pathObj.coordinates.length > 0
       ) {
         // Ensure GeoJSON format: { type: "LineString", coordinates: [...] }
         if (!pathObj.type) {
-          pathObj = { type: "LineString", coordinates: pathObj.coordinates };
+          pathObj = {type: "LineString", coordinates: pathObj.coordinates};
         } else if (pathObj.type !== "LineString") {
           pathObj.type = "LineString";
         }
@@ -670,9 +696,9 @@ form.addEventListener("submit", async (e) => {
   if (pathInput.value) {
     try {
       pathObj =
-        typeof pathInput.value === "string"
-          ? JSON.parse(pathInput.value)
-          : pathInput.value;
+          typeof pathInput.value === "string"
+              ? JSON.parse(pathInput.value)
+              : pathInput.value;
 
       // Ensure it's in GeoJSON format
       if (!pathObj.type) {
@@ -692,10 +718,10 @@ form.addEventListener("submit", async (e) => {
   }
 
   if (
-    !pathObj ||
-    !pathObj.coordinates ||
-    !Array.isArray(pathObj.coordinates) ||
-    pathObj.coordinates.length === 0
+      !pathObj ||
+      !pathObj.coordinates ||
+      !Array.isArray(pathObj.coordinates) ||
+      pathObj.coordinates.length === 0
   ) {
     alert("코스 경로를 생성해주세요");
     return;
@@ -708,8 +734,8 @@ form.addEventListener("submit", async (e) => {
 
   // Get distance
   const distanceM = distanceMInput.value
-    ? Math.round(Number(distanceMInput.value))
-    : null;
+      ? Math.round(Number(distanceMInput.value))
+      : null;
 
   // Get coordinates
   const startLat = parseFloat(startLatInput.value) || null;
@@ -733,8 +759,8 @@ form.addEventListener("submit", async (e) => {
   // Create FormData
   const formData = new FormData();
   formData.append(
-    "dto",
-    new Blob([JSON.stringify(dto)], { type: "application/json" })
+      "dto",
+      new Blob([JSON.stringify(dto)], {type: "application/json"})
   );
 
   // Add image file if selected
@@ -768,10 +794,10 @@ form.addEventListener("submit", async (e) => {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage =
-            errorData.message ||
-            errorData.code ||
-            errorData.error ||
-            errorMessage;
+              errorData.message ||
+              errorData.code ||
+              errorData.error ||
+              errorMessage;
           console.error("Error response (parsed):", errorData);
         } catch (parseError) {
           // If not JSON, use the raw text
@@ -824,7 +850,9 @@ function saveFormData() {
 // 저장된 입력값 복원
 function restoreFormData() {
   const raw = sessionStorage.getItem(FORM_DATA_KEY);
-  if (!raw) return;
+  if (!raw) {
+    return;
+  }
 
   try {
     const formData = JSON.parse(raw);
@@ -892,7 +920,7 @@ manualRouteBtn?.addEventListener("click", () => {
   } else {
     sessionStorage.setItem("returnPage", "/courseUpdate");
   }
-  window.location.href = "/test2";
+  window.location.href = "/course_manual";
 });
 
 imageUploadArea?.addEventListener("click", () => imageInput?.click());
@@ -900,13 +928,23 @@ imageInput?.addEventListener("change", handleImageUpload);
 
 // Initialize on page load
 // 맵을 먼저 초기화하여 경로를 그리기 전에도 상호작용 가능하도록
+function initMapOnLoad() {
+  if (typeof kakao !== "undefined" && kakao.maps) {
+    initMapPreview();
+    // 맵 컨테이너에 pointer-events 확인
+    if (mapPreviewEl) {
+      mapPreviewEl.style.pointerEvents = "auto";
+    }
+  } else {
+    setTimeout(initMapOnLoad, 100);
+  }
+}
+
 if (typeof kakao !== "undefined" && kakao.maps) {
-  initMapPreview();
+  initMapOnLoad();
 } else {
   window.addEventListener("load", () => {
-    if (typeof kakao !== "undefined" && kakao.maps) {
-      initMapPreview();
-    }
+    initMapOnLoad();
   });
 }
 
