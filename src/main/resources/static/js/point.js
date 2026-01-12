@@ -83,8 +83,7 @@ function getMethodIcon(methodName) {
         '출석': '✅',
         '친구 초대': '👥',
         '친구 추천': '👥',
-        '미션 성공': '📝',
-        '주간 미션': '📝'
+        '챌린지 성공': '📝'
     };
     return icons[methodName] || '⭐';
 }
