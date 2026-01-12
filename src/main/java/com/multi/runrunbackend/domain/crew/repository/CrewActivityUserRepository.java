@@ -2,6 +2,8 @@ package com.multi.runrunbackend.domain.crew.repository;
 
 import com.multi.runrunbackend.domain.crew.entity.CrewActivityUser;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,5 +23,7 @@ public interface CrewActivityUserRepository extends JpaRepository<CrewActivityUs
     /**
      * @description : 특정 활동의 참여자 전체 삭제
      */
+    @Modifying
+    @Transactional
     void deleteByCrewActivityId(Long activityId);
 }
