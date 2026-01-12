@@ -586,9 +586,28 @@ function createRunCard(record) {
     // 페이스 포맷팅 (분/km)
     const paceStr = formatPace(record.avgPace);
 
-    // 코스 이미지 URL
-    const imageUrl = record.courseThumbnailUrl || null;
-    const courseTitle = record.courseTitle || '러닝';
+    // ✅ 썸네일 결정
+    // - 일반: courseThumbnailUrl 있으면 사용
+    // - 고스트런: 기본 이미지 ghost-run.png 사용
+    const isGhostRun = record.runningType === 'GHOST';
+    const defaultGhostImageUrl = '/img/ghost-run.png';
+
+    const imageUrl = isGhostRun
+        ? defaultGhostImageUrl
+        : (record.courseThumbnailUrl || null);
+
+    // ✅ 온라인배틀은 코스 정보가 없으므로 제목을 고정하고, 등수 노출
+    const isOnlineBattle = record.runningType === 'ONLINEBATTLE';
+    const onlineRank = (typeof record.onlineBattleRanking === 'number') ? record.onlineBattleRanking : null;
+
+    // ✅ 제목 결정 (우선순위: 고스트런 > 온라인배틀 > 일반)
+    const courseTitle = isGhostRun
+        ? '고스트런'
+        : (isOnlineBattle ? '온라인배틀' : (record.courseTitle || '러닝'));
+
+    const titleSuffix = (!isGhostRun && isOnlineBattle && onlineRank)
+        ? ` <span class="run-title-rank">#${onlineRank}</span>`
+        : '';
 
     // 러닝 상태 확인
     const runStatus = record.runStatus || 'COMPLETED';
@@ -613,7 +632,7 @@ function createRunCard(record) {
                     <span class="run-status-badge run-status-${runStatus.toLowerCase().replace('_', '-')}">${statusLabel}</span>
                 </div>
             </div>
-            <p class="run-title">${courseTitle}</p>
+            <p class="run-title">${courseTitle}${titleSuffix}</p>
             <div class="run-stats">
                 <span class="run-stat">
                     <span class="run-icon">🏃‍♂️</span>
@@ -1628,7 +1647,7 @@ async function loadPointBalance() {
 
         const payload = await response.json();
         const pointData = payload?.data;
-        
+
         if (pointData) {
             const availablePoints = pointData.availablePoints || 0;
             renderPointBalance(availablePoints);
