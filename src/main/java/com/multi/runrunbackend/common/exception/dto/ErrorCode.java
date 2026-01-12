@@ -213,6 +213,11 @@ public enum ErrorCode {
             "FEED_009",
             "해당 피드 댓글에 대한 권한이 없습니다."
     ),
+    FEED_CONTENT_REQUIRED(
+            HttpStatus.BAD_REQUEST,
+            "FEED_010",
+            "피드 내용은 필수입니다."
+    ),
     /* ===== 챌린지 ===== */
     ALREADY_JOINED(
             HttpStatus.CONFLICT,
