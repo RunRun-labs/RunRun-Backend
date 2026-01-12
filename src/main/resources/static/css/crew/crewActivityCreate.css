@@ -145,6 +145,32 @@ body {
     color: var(--text-light);
 }
 
+/* ===== 읽기 전용 입력칸 (날짜) ===== */
+.form-input-readonly {
+    background: #f3f4f6 !important;
+    color: var(--text-muted) !important;
+    cursor: not-allowed !important;
+    border-color: var(--stroke) !important;
+}
+
+.form-input-readonly:focus {
+    border-color: var(--stroke) !important;
+    box-shadow: none !important;
+}
+
+/* ===== 에러 텍스트 ===== */
+.error-text {
+    font-size: 12px;
+    color: var(--error);
+    margin-top: 4px;
+    display: none;
+}
+
+.form-input.error,
+.dropdown-button.error {
+    border-color: var(--error) !important;
+}
+
 /* ===== 버튼 ===== */
 .btn-submit {
     width: 100%;
