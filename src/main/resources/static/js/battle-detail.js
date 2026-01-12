@@ -263,6 +263,15 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="ranking-row-expand">
         <div class="expand-content">
+          <div class="expand-user-info">
+            <span class="expand-user-name">${participant.loginId || 'Unknown'}</span>
+            <a href="/profile/${participant.userId}" class="profile-button" onclick="event.stopPropagation();">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              프로필 보기
+            </a>
+          </div>
           <div class="expand-stats">
             <span class="stat-chip">
               <span class="stat-label">기록</span>
