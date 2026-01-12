@@ -6,7 +6,7 @@
             name="viewport"
             content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>RunRun Admin | 쿠폰 정책 조회</title>
+    <title>RunRun Admin | 포인트 상품 관리</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link
@@ -20,22 +20,22 @@
     />
     <link
             rel="stylesheet"
-            href="/css/coupon-inquiry.css"
-            th:href="@{/css/coupon-inquiry.css}"
+            href="/css/point-product-inquiry.css"
+            th:href="@{/css/point-product-inquiry.css}"
     />
 </head>
 <body>
 <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
 <!-- 레이아웃 적용 -->
 <div
-        th:replace="~{admin/layout :: adminLayout(~{::.coupon-role-inquiry-content})}"
+        th:replace="~{admin/layout :: adminLayout(~{::.point-product-inquiry-content})}"
 >
     <!-- 컨텐츠 영역 -->
-    <div class="coupon-role-inquiry-content coupon-inquiry-container">
-        <div class="coupon-inquiry-card">
+    <div class="point-product-inquiry-content point-product-inquiry-container">
+        <div class="point-product-inquiry-card">
             <div class="page-header">
-                <h1 class="page-title">쿠폰 정책 조회</h1>
-                <a href="/admin/coupon-role/create" class="create-button-link">
+                <h1 class="page-title">포인트 상품 관리</h1>
+                <a href="/admin/points/products/create" class="create-button-link">
                     <button type="button" class="create-button">생성하기</button>
                 </a>
             </div>
@@ -44,63 +44,25 @@
             <div class="filter-section">
                 <div class="filter-row">
                     <div class="filter-group">
-                        <label class="filter-label">활성 상태</label>
+                        <label class="filter-label">판매 상태</label>
                         <div class="filter-checkbox-group">
                             <label class="filter-checkbox-item">
                                 <input
                                         type="checkbox"
                                         value="true"
                                         class="filter-checkbox"
-                                        id="isActiveTrue"
+                                        id="isAvailableTrue"
                                 />
-                                <span class="checkbox-label">활성</span>
+                                <span class="checkbox-label">판매중</span>
                             </label>
                             <label class="filter-checkbox-item">
                                 <input
                                         type="checkbox"
                                         value="false"
                                         class="filter-checkbox"
-                                        id="isActiveFalse"
+                                        id="isAvailableFalse"
                                 />
-                                <span class="checkbox-label">비활성</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="filter-group">
-                        <label class="filter-label">트리거 이벤트</label>
-                        <div class="filter-checkbox-group">
-                            <label class="filter-checkbox-item">
-                                <input
-                                        type="checkbox"
-                                        value="SIGNUP"
-                                        class="filter-checkbox trigger-event"
-                                />
-                                <span class="checkbox-label">SIGNUP</span>
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input
-                                        type="checkbox"
-                                        value="FIRST_RUNNING"
-                                        class="filter-checkbox trigger-event"
-                                />
-                                <span class="checkbox-label">FIRST_RUNNING</span>
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input
-                                        type="checkbox"
-                                        value="RUN_COUNT_REACHED"
-                                        class="filter-checkbox trigger-event"
-                                />
-                                <span class="checkbox-label">RUN_COUNT_REACHED</span>
-                            </label>
-                            <label class="filter-checkbox-item">
-                                <input
-                                        type="checkbox"
-                                        value="BIRTHDAY"
-                                        class="filter-checkbox trigger-event"
-                                />
-                                <span class="checkbox-label">BIRTHDAY</span>
+                                <span class="checkbox-label">판매중지</span>
                             </label>
                         </div>
                     </div>
@@ -110,8 +72,8 @@
                         <select id="sortFilter" class="filter-select">
                             <option value="createdAt,DESC">생성일 최신순</option>
                             <option value="createdAt,ASC">생성일 오래된순</option>
-                            <option value="name,ASC">이름 오름차순</option>
-                            <option value="name,DESC">이름 내림차순</option>
+                            <option value="productName,ASC">상품명 오름차순</option>
+                            <option value="productName,DESC">상품명 내림차순</option>
                         </select>
                     </div>
 
@@ -121,7 +83,7 @@
                                 type="text"
                                 id="keywordFilter"
                                 class="filter-input"
-                                placeholder="정책명으로 검색"
+                                placeholder="상품명으로 검색"
                         />
                     </div>
                 </div>
@@ -142,20 +104,22 @@
 
             <!-- 테이블 영역 -->
             <div class="table-container">
-                <table class="coupon-table">
+                <table class="point-product-table">
                     <thead>
                     <tr>
-                        <th>#</th>
-                        <th>정책명</th>
-                        <th>쿠폰명</th>
-                        <th>트리거 이벤트</th>
-                        <th>조건값</th>
-                        <th>활성 상태</th>
-                        <th>생성일</th>
-                        <th>작업</th>
+                        <th style="width: 50px">
+                            <input type="checkbox" id="selectAll"/>
+                        </th>
+                        <th style="width: 60px">#</th>
+                        <th style="width: 80px">이미지</th>
+                        <th style="width: 25%">상품명</th>
+                        <th style="width: 120px">필요 포인트</th>
+                        <th style="width: 100px">판매 상태</th>
+                        <th style="width: 180px">생성일</th>
+                        <th style="width: 100px">관리</th>
                     </tr>
                     </thead>
-                    <tbody id="couponRoleTableBody">
+                    <tbody id="productTableBody">
                     <!-- 데이터가 여기에 동적으로 로드됩니다 -->
                     <tr class="loading-row">
                         <td colspan="8" class="loading-message">로딩 중...</td>
@@ -168,13 +132,20 @@
             <div class="pagination-container" id="paginationContainer">
                 <!-- 페이지네이션이 여기에 동적으로 생성됩니다 -->
             </div>
+
+            <!-- 삭제 버튼 -->
+            <div class="filter-actions" style="margin-top: 20px;">
+                <button type="button" class="filter-btn" id="btnDelete" style="background: #ff4444;">
+                    선택 삭제
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <script
-        src="/js/coupon-role-inquiry.js"
-        th:src="@{/js/coupon-role-inquiry.js}"
+        src="/js/point-product-inquiry.js"
+        th:src="@{/js/point-product-inquiry.js}"
 ></script>
 </body>
 </html>

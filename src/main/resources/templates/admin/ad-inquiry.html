@@ -1,103 +1,103 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8"/>
     <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1"
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
     />
     <title>RunRun Admin | 광고 조회</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
-      rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+            rel="stylesheet"
     />
     <link
-      rel="stylesheet"
-      href="/css/admin-layout.css"
-      th:href="@{/css/admin-layout.css}"
+            rel="stylesheet"
+            href="/css/admin-layout.css"
+            th:href="@{/css/admin-layout.css}"
     />
     <link
-      rel="stylesheet"
-      href="/css/ad-inquiry.css"
-      th:href="@{/css/ad-inquiry.css}"
+            rel="stylesheet"
+            href="/css/ad-inquiry.css"
+            th:href="@{/css/ad-inquiry.css}"
     />
-  </head>
-  <body>
-    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
-    <!-- 레이아웃 적용 -->
-    <div
-      th:replace="~{admin/layout :: adminLayout(~{::.ad-inquiry-content})}"
-    >
-      <!-- 컨텐츠 영역 -->
-      <div class="ad-inquiry-content ad-inquiry-container">
+</head>
+<body>
+<script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+<!-- 레이아웃 적용 -->
+<div
+        th:replace="~{admin/layout :: adminLayout(~{::.ad-inquiry-content})}"
+>
+    <!-- 컨텐츠 영역 -->
+    <div class="ad-inquiry-content ad-inquiry-container">
         <div class="ad-inquiry-card">
-          <div class="page-header">
-            <h1 class="page-title">광고 조회</h1>
-            <a href="/admin/ad/create" class="create-button-link">
-              <button type="button" class="create-button">생성하기</button>
-            </a>
-          </div>
-
-          <!-- 필터 영역 -->
-          <div class="filter-section">
-            <div class="filter-row">
-              <div class="filter-group filter-group-full">
-                <label class="filter-label">검색어</label>
-                <input
-                  type="text"
-                  id="keywordFilter"
-                  class="filter-input"
-                  placeholder="광고명으로 검색..."
-                />
-              </div>
+            <div class="page-header">
+                <h1 class="page-title">광고 조회</h1>
+                <a href="/admin/ad/create" class="create-button-link">
+                    <button type="button" class="create-button">생성하기</button>
+                </a>
             </div>
 
-            <div class="filter-actions">
-              <button type="button" class="filter-btn" id="applyFilterBtn">
-                필터 적용
-              </button>
-              <button
-                type="button"
-                class="filter-btn filter-btn-reset"
-                id="resetFilterBtn"
-              >
-                초기화
-              </button>
+            <!-- 필터 영역 -->
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-group filter-group-full">
+                        <label class="filter-label">검색어</label>
+                        <input
+                                type="text"
+                                id="keywordFilter"
+                                class="filter-input"
+                                placeholder="광고명으로 검색"
+                        />
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="button" class="filter-btn" id="applyFilterBtn">
+                        필터 적용
+                    </button>
+                    <button
+                            type="button"
+                            class="filter-btn filter-btn-reset"
+                            id="resetFilterBtn"
+                    >
+                        초기화
+                    </button>
+                </div>
             </div>
-          </div>
 
-          <!-- 테이블 영역 -->
-          <div class="table-container">
-            <table class="ad-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>광고명</th>
-                  <th>리다이렉트 URL</th>
-                </tr>
-              </thead>
-              <tbody id="adTableBody">
-                <!-- 데이터가 여기에 동적으로 로드됩니다 -->
-                <tr class="loading-row">
-                  <td colspan="3" class="loading-message">로딩 중...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+            <!-- 테이블 영역 -->
+            <div class="table-container">
+                <table class="ad-table">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>광고명</th>
+                        <th>리다이렉트 URL</th>
+                    </tr>
+                    </thead>
+                    <tbody id="adTableBody">
+                    <!-- 데이터가 여기에 동적으로 로드됩니다 -->
+                    <tr class="loading-row">
+                        <td colspan="3" class="loading-message">로딩 중...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
-          <!-- 페이지네이션 영역 -->
-          <div class="pagination-container" id="paginationContainer">
-            <!-- 페이지네이션이 여기에 동적으로 생성됩니다 -->
-          </div>
+            <!-- 페이지네이션 영역 -->
+            <div class="pagination-container" id="paginationContainer">
+                <!-- 페이지네이션이 여기에 동적으로 생성됩니다 -->
+            </div>
         </div>
-      </div>
     </div>
+</div>
 
-    <script
-      src="/js/ad-inquiry.js"
-      th:src="@{/js/ad-inquiry.js}"
-    ></script>
-  </body>
+<script
+        src="/js/ad-inquiry.js"
+        th:src="@{/js/ad-inquiry.js}"
+></script>
+</body>
 </html>
