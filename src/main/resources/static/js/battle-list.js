@@ -117,16 +117,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 날짜 그룹 헤더 텍스트 생성
   function getDateGroupHeader(dateString) {
-    if (!dateString) return "";
+    if (!dateString) {
+      return "";
+    }
     const date = new Date(dateString);
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
     // 시간을 00:00:00으로 설정하여 날짜만 비교
-    const recordDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const yesterdayDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+    const recordDate = new Date(date.getFullYear(), date.getMonth(),
+        date.getDate());
+    const todayDate = new Date(today.getFullYear(), today.getMonth(),
+        today.getDate());
+    const yesterdayDate = new Date(yesterday.getFullYear(),
+        yesterday.getMonth(), yesterday.getDate());
 
     if (recordDate.getTime() === todayDate.getTime()) {
       return "오늘";
@@ -217,10 +222,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
       if (result.success && result.data) {
         const data = result.data;
-        
+
         // Slice 구조: { content: [...], hasNext: boolean, last: boolean, number: number, size: number, ... }
         const records = data.content || [];
-        
+
         // Slice의 hasNext 확인 (고스트런과 동일한 로직)
         // hasNext 필드가 없을 경우 !data.last를 확인
         hasNext = data.hasNext !== undefined ? data.hasNext : !data.last;
@@ -234,12 +239,48 @@ document.addEventListener("DOMContentLoaded", () => {
             return new Date(b.createdAt) - new Date(a.createdAt);
           });
 
+          // reset이 아닐 때, 이미 렌더링된 마지막 날짜 확인
+          if (!reset && battleList.children.length > 0) {
+            // 마지막 요소부터 역순으로 날짜 헤더 찾기
+            for (let i = battleList.children.length - 1; i >= 0; i--) {
+              const child = battleList.children[i];
+              if (child.classList.contains("date-section-header")) {
+                // 이미 렌더링된 마지막 날짜 헤더의 텍스트에서 날짜 추출
+                const headerText = child.textContent.trim();
+                // "오늘", "어제" 또는 날짜 형식(YYYY.MM.DD) 확인
+                if (headerText === "오늘") {
+                  lastRenderedDate = formatDate(new Date());
+                } else if (headerText === "어제") {
+                  const yesterday = new Date();
+                  yesterday.setDate(yesterday.getDate() - 1);
+                  lastRenderedDate = formatDate(yesterday);
+                } else if (headerText.match(/^\d{4}\.\d{2}\.\d{2}$/)) {
+                  lastRenderedDate = headerText;
+                }
+                break;
+              } else if (child.classList.contains("battle-card")) {
+                // 카드에서 날짜 추출
+                const cardDateAttr = child.querySelector(".battle-card-time");
+                if (cardDateAttr) {
+                  const cardDateText = cardDateAttr.textContent.trim();
+                  // YYYY.MM.DD HH:mm 형식에서 날짜 부분만 추출
+                  const dateMatch = cardDateText.match(
+                      /^(\d{4}\.\d{2}\.\d{2})/);
+                  if (dateMatch) {
+                    lastRenderedDate = dateMatch[1];
+                  }
+                }
+                break;
+              }
+            }
+          }
+
           // 각 기록을 순회하며 날짜 헤더 추가
           sortedRecords.forEach((record) => {
             const recordDate = formatDate(record.createdAt);
-            
-            // 날짜가 바뀔 때만 헤더 추가
-            if (reset || lastRenderedDate !== recordDate) {
+
+            // 날짜가 바뀔 때만 헤더 추가 (reset이거나 이전 날짜와 다를 때)
+            if (lastRenderedDate === null || lastRenderedDate !== recordDate) {
               const headerText = getDateGroupHeader(record.createdAt);
               const headerDiv = document.createElement("div");
               headerDiv.className = "date-section-header";
@@ -251,6 +292,12 @@ document.addEventListener("DOMContentLoaded", () => {
             // 카드 렌더링
             renderBattleCard(record);
           });
+
+          // 렌더링 후 마지막 레코드의 날짜를 저장 (다음 페이지 로드를 위해)
+          if (sortedRecords.length > 0) {
+            const lastRecord = sortedRecords[sortedRecords.length - 1];
+            lastRenderedDate = formatDate(lastRecord.createdAt);
+          }
 
           // 다음 페이지를 위해 페이지 번호 증가
           currentPage++;
@@ -289,22 +336,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const time = formatTime(record.totalTime);
     const pace = formatPace(record.avgPace);
     const distance = distanceMap[record.distanceType] || record.distanceType;
-    const distanceValue = record.totalDistance ? record.totalDistance.toFixed(2) : distance.replace("km", "");
+    const distanceValue = record.totalDistance ? record.totalDistance.toFixed(2)
+        : distance.replace("km", "");
     const dateTime = formatDateTime(record.createdAt);
-    
+
     // 레이팅 정보
     const previousRating = record.previousRating || 0;
     const currentRating = record.currentRating || 0;
     const delta = record.delta || 0;
     const deltaClass = delta > 0 ? "positive" : delta < 0 ? "negative" : "zero";
     const deltaText = delta > 0 ? `+${delta}` : delta.toString();
-    
+
     // 세션 타입 및 상태
     const sessionType = record.sessionType || "";
     const sessionStatus = record.sessionStatus || "";
-    const sessionTypeText = sessionType === "ONLINE" ? "온라인" : sessionType === "BATTLE" ? "배틀" : sessionType;
+    const sessionTypeText = sessionType === "ONLINE" ? "온라인" : sessionType
+    === "BATTLE" ? "배틀" : sessionType;
     const isCompleted = sessionStatus === "COMPLETED";
-    
+
     // 참가자 수
     const participants = record.participants || 0;
 
@@ -312,7 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let rankClass = "other";
     let rankText = "";
     const ranking = record.ranking;
-    
+
     // 모든 순위를 서수 형식으로 표시
     if (ranking === 1) {
       rankClass = "first";
@@ -327,7 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // 4 이상의 순위도 서수 형식으로 표시
       const lastDigit = ranking % 10;
       const lastTwoDigits = ranking % 100;
-      
+
       if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
         rankText = `${ranking}th`;
       } else if (lastDigit === 1) {
@@ -349,22 +398,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     card.className = cardClass;
-    
+
     // 순위/참가자 수 표시
-    const rankParticipantsText = participants > 0 ? `${record.ranking} / ${participants}` : rankText;
+    const rankParticipantsText = participants > 0
+        ? `${record.ranking} / ${participants}` : rankText;
 
     card.innerHTML = `
       <div class="battle-card-header">
         <div class="battle-card-left">
           <div class="battle-card-title-row">
-            ${sessionType ? `<span class="session-type-badge ${sessionType.toLowerCase()}">${sessionTypeText}</span>` : ""}
+            ${sessionType
+        ? `<span class="session-type-badge ${sessionType.toLowerCase()}">${sessionTypeText}</span>`
+        : ""}
             <h3 class="battle-card-title">${distanceValue}km 배틀 결과</h3>
           </div>
           <span class="battle-card-time">${dateTime}</span>
         </div>
         <div class="battle-card-right">
           <span class="battle-rank ${rankClass}">${rankText}</span>
-          ${participants > 0 ? `<span class="battle-participants">${rankParticipantsText}</span>` : ""}
+          ${participants > 0
+        ? `<span class="battle-participants">${rankParticipantsText}</span>`
+        : ""}
         </div>
       </div>
       <div class="battle-card-stats">
@@ -383,10 +437,11 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="battle-card-footer">
         <div class="rating-flow ${deltaClass}">
-          <span class="rating-previous">${previousRating.toLocaleString()}</span>
+          <span class="rating-previous">${previousRating.toLocaleString()} LP</span>
           <span class="rating-arrow">→</span>
-          <span class="rating-current">${currentRating.toLocaleString()}</span>
-          <span class="rating-delta">${deltaText}</span>
+          <span class="rating-current">${currentRating.toLocaleString()} LP</span>
+          <span class="rating-delta">${delta > 0 ? `+${delta.toLocaleString()}`
+        : delta.toLocaleString()}</span>
         </div>
       </div>
     `;
