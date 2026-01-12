@@ -2,7 +2,6 @@ package com.multi.runrunbackend.domain.match.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.multi.runrunbackend.common.constant.DistanceType;
-import com.multi.runrunbackend.common.exception.custom.BadRequestException;
 import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.custom.ValidationException;
@@ -129,18 +128,20 @@ public class MatchSessionService {
 
 
   @Transactional
-  public void createOfflineSessionBySystem(Long recruitId) {
+  public Long createOfflineSessionBySystem(Long recruitId) {
     Recruit recruit = recruitRepository.findById(recruitId)
         .orElseThrow(() -> new NotFoundException(ErrorCode.RECRUIT_NOT_FOUND));
 
     if (recruit.getCurrentParticipants() < 2) {
       recruitRepository.delete(recruit);
-      return;
+      return null;
     }
 
     Long sessionId = createSessionInternal(recruit);
 
     sendOffMatchConfirmedNotifications(sessionId, recruit.getUser().getId(), true);
+
+    return sessionId;
   }
 
   private Long createSessionInternal(Recruit recruit) {
@@ -150,7 +151,7 @@ public class MatchSessionService {
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime recruitCreatedAt = recruit.getCreatedAt();
 
-    long waitingTime = ChronoUnit.MINUTES.between(recruitCreatedAt, now);
+    long waitingTime = ChronoUnit.SECONDS.between(recruitCreatedAt, now);
 
     MatchSession matchSession = MatchSession.builder()
         .recruit(recruit)
@@ -419,10 +420,6 @@ public class MatchSessionService {
 
     Long courseId = reqDto.getCourseId();
 
-    if (courseId == null && reqDto.getDistance() == null) {
-      throw new BadRequestException(ErrorCode.DISTANCE_REQUIRED);
-    }
-
     Course course = null;
     Double distance = null;
 
@@ -434,8 +431,6 @@ public class MatchSessionService {
       distance = reqDto.getManualDistance();
     } else if (reqDto.getDistance() != null) {
       distance = convertToKilometer(reqDto.getDistance());
-    } else {
-      throw new BadRequestException(ErrorCode.DISTANCE_REQUIRED);
     }
 
     MatchSession session = MatchSession.builder()
@@ -784,10 +779,26 @@ public class MatchSessionService {
 
     String redirectUrl;
     if (status == SessionStatus.STANDBY) {
-      redirectUrl = "/match/waiting?sessionId=" + sessionId;
+      if (type == SessionType.ONLINE) {
+        redirectUrl = "/match/waiting?sessionId=" + sessionId;
+      } else if (type == SessionType.OFFLINE) {
+        redirectUrl = "/chat/chat1?sessionId=" + sessionId;
+      } else if (type == SessionType.GHOST) {
+        redirectUrl = "/match/ghost-run?sessionId=" + sessionId;
+      } else if (type == SessionType.SOLO) {
+        redirectUrl = "/running/" + sessionId;
+      } else {
+        redirectUrl = "/running/" + sessionId;
+      }
     } else if (status == SessionStatus.IN_PROGRESS) {
       if (type == SessionType.ONLINE) {
         redirectUrl = "/match/battle?sessionId=" + sessionId;
+      } else if (type == SessionType.OFFLINE) {
+        redirectUrl = "/chat/chat1?sessionId=" + sessionId;
+      } else if (type == SessionType.GHOST) {
+        redirectUrl = "/match/ghost-run?sessionId=" + sessionId;
+      } else if (type == SessionType.SOLO) {
+        redirectUrl = "/running/" + sessionId;
       } else {
         redirectUrl = "/running/" + sessionId;
       }

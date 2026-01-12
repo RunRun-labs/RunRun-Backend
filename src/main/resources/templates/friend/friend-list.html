@@ -1,68 +1,75 @@
 <!doctype html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
-    <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, maximum-scale=1"
-    />
-    <title>RUNRUN | 친구 목록</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
-            rel="stylesheet"
-    />
-    <link
-            rel="stylesheet"
-            href="/css/friend-list.css"
-            th:href="@{/css/friend-list.css}"
-    />
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 친구 목록</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link
+      rel="stylesheet"
+      href="/css/friend-list.css"
+      th:href="@{/css/friend-list.css}"
+  />
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
 </head>
 <body class="friend-list-body">
 <main class="page friend-list-page">
-    <header class="friend-list-header">
-        <button class="back-button" type="button" data-role="back" aria-label="뒤로가기">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="33" viewBox="0 0 40 33" fill="none">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M28.3839 3.3958C28.872 3.79852 28.872 4.45148 28.3839 4.8542L14.2678 16.5L28.3839 28.1458C28.872 28.5485 28.872 29.2015 28.3839 29.6042C27.8957 30.0069 27.1043 30.0069 26.6161 29.6042L11.6161 17.2292C11.128 16.8265 11.128 16.1735 11.6161 15.7708L26.6161 3.3958C27.1043 2.99307 27.8957 2.99307 28.3839 3.3958Z" fill="black"/>
-            </svg>
-        </button>
-        <h1 class="friend-list-title">친구 목록</h1>
-    </header>
+  <header class="friend-list-header">
+    <button class="back-button" type="button" data-role="back" aria-label="뒤로가기">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="33" viewBox="0 0 40 33"
+           fill="none">
+        <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M28.3839 3.3958C28.872 3.79852 28.872 4.45148 28.3839 4.8542L14.2678 16.5L28.3839 28.1458C28.872 28.5485 28.872 29.2015 28.3839 29.6042C27.8957 30.0069 27.1043 30.0069 26.6161 29.6042L11.6161 17.2292C11.128 16.8265 11.128 16.1735 11.6161 15.7708L26.6161 3.3958C27.1043 2.99307 27.8957 2.99307 28.3839 3.3958Z"
+              fill="black"/>
+      </svg>
+    </button>
+    <h1 class="friend-list-title">친구 목록</h1>
+  </header>
 
-    <!-- 친구 요청 알림 -->
-    <div class="friend-request-notification" id="friendRequestNotification" hidden>
-        <p class="notification-text">
-            새로운 친구 요청 <span class="notification-count" id="requestCount">0</span> 건이 있습니다
-        </p>
+  <!-- 친구 요청 알림 -->
+  <div class="friend-request-notification" id="friendRequestNotification" hidden>
+    <p class="notification-text">
+      새로운 친구 요청 <span class="notification-count" id="requestCount">0</span> 건이 있습니다
+    </p>
+  </div>
+
+  <!-- 친구 요청 목록 -->
+  <section class="friend-requests-section" id="friendRequestsSection">
+    <div class="friend-list-container" id="friendRequestsList">
+      <!-- 동적으로 생성됨 -->
     </div>
+  </section>
 
-    <!-- 친구 요청 목록 -->
-    <section class="friend-requests-section" id="friendRequestsSection">
-        <div class="friend-list-container" id="friendRequestsList">
-            <!-- 동적으로 생성됨 -->
-        </div>
-    </section>
-
-    <!-- 친구 목록 -->
-    <section class="friends-section">
-        <div class="friend-list-container" id="friendsList">
-            <!-- 동적으로 생성됨 -->
-        </div>
-    </section>
-
-    <!-- 빈 상태 메시지 -->
-    <div class="empty-state" id="emptyState" hidden>
-        <p>친구가 없습니다.</p>
+  <!-- 친구 목록 -->
+  <section class="friends-section">
+    <div class="friend-list-container" id="friendsList">
+      <!-- 동적으로 생성됨 -->
     </div>
+  </section>
+
+  <!-- 빈 상태 메시지 -->
+  <div class="empty-state" id="emptyState" hidden>
+    <p>친구가 없습니다.</p>
+  </div>
 </main>
 
 <div
-        id="bottomNavMount"
-        th:replace="~{common/bottom-nav :: bottomNav}"
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
 <script src="/js/friend-list.js" th:src="@{/js/friend-list.js}"></script>
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+
 </body>
 </html>
 

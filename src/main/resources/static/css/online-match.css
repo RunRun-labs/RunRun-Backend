@@ -146,6 +146,38 @@ body {
   line-height: 1.5;
 }
 
+/* 배틀 결과 보러가기 링크 */
+.battle-result-link-wrapper {
+  margin: 0 35px 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.battle-result-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--primary-light);
+  color: var(--text-strong);
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.battle-result-link:hover {
+  background: var(--primary);
+  color: var(--text-strong);
+}
+
+.battle-result-link svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .match-content {
   flex: 1;
   overflow-y: auto;
