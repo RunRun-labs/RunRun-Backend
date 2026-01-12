@@ -586,27 +586,43 @@ function createRunCard(record) {
     // 페이스 포맷팅 (분/km)
     const paceStr = formatPace(record.avgPace);
 
-    // ✅ 썸네일 결정
-    // - 일반: courseThumbnailUrl 있으면 사용
-    // - 고스트런: 기본 이미지 ghost-run.png 사용
+    // ✅ 실행 타입/썸네일 결정
     const isGhostRun = record.runningType === 'GHOST';
+    const isOnlineBattle = record.runningType === 'ONLINEBATTLE';
+
     const defaultGhostImageUrl = '/img/ghost-run.png';
 
+    // 온라인배틀 등수별 이미지 (1~4등 제공)
+    const onlineBattleRanking = (typeof record.onlineBattleRanking === 'number')
+        ? record.onlineBattleRanking
+        : (record.onlineBattleRanking ? Number(record.onlineBattleRanking) : null);
+
+    const onlineBattleRankImageMap = {
+        1: '/img/online-1st.png',
+        2: '/img/online-2nd.png',
+        3: '/img/online-3rd.png',
+        4: '/img/online-4th.png'
+    };
+
+    const defaultOnlineBattleImageUrl = '/img/online-1st.png'; // fallback (이미지 자산이 1~4만 있는 상태)
+
+    // 썸네일 URL 우선순위:
+    // 1) 고스트런: 고정 이미지
+    // 2) 온라인배틀: 등수별 이미지
+    // 3) 일반: courseThumbnailUrl
     const imageUrl = isGhostRun
         ? defaultGhostImageUrl
-        : (record.courseThumbnailUrl || null);
-
-    // ✅ 온라인배틀은 코스 정보가 없으므로 제목을 고정하고, 등수 노출
-    const isOnlineBattle = record.runningType === 'ONLINEBATTLE';
-    const onlineRank = (typeof record.onlineBattleRanking === 'number') ? record.onlineBattleRanking : null;
+        : (isOnlineBattle
+            ? (onlineBattleRankImageMap[onlineBattleRanking] || defaultOnlineBattleImageUrl)
+            : (record.courseThumbnailUrl || null));
 
     // ✅ 제목 결정 (우선순위: 고스트런 > 온라인배틀 > 일반)
     const courseTitle = isGhostRun
         ? '고스트런'
         : (isOnlineBattle ? '온라인배틀' : (record.courseTitle || '러닝'));
 
-    const titleSuffix = (!isGhostRun && isOnlineBattle && onlineRank)
-        ? ` <span class="run-title-rank">#${onlineRank}</span>`
+    const titleSuffix = (!isGhostRun && isOnlineBattle && onlineBattleRanking)
+        ? ` <span class="run-title-rank">#${onlineBattleRanking}</span>`
         : '';
 
     // 러닝 상태 확인
