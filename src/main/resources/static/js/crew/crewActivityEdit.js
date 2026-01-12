@@ -38,6 +38,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 드롭다운 이벤트
     initDropdown();
 
+    // Validation 초기화
+    initValidation();
+
     // 폼 제출 이벤트
     const activityForm = document.getElementById('activityForm');
     if (activityForm) {
@@ -50,6 +53,144 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnDelete.addEventListener('click', handleDelete);
     }
 });
+
+// ===========================
+// Validation 초기화
+// ===========================
+function initValidation() {
+    const regionInput = document.getElementById('region');
+    const distanceInput = document.getElementById('distance');
+    const dropdownButton = document.getElementById('dropdownButton');
+
+    // 활동 지역 validation
+    if (regionInput) {
+        regionInput.addEventListener('input', () => validateRegion());
+        regionInput.addEventListener('blur', () => validateRegion());
+    }
+
+    // 활동 거리 validation
+    if (distanceInput) {
+        distanceInput.addEventListener('input', () => validateDistance());
+        distanceInput.addEventListener('blur', () => validateDistance());
+        distanceInput.addEventListener('focus', () => validatePreviousFields('distance'));
+    }
+
+    // 참여 크루원 선택 validation
+    if (dropdownButton) {
+        dropdownButton.addEventListener('click', () => validatePreviousFields('participants'));
+    }
+}
+
+// ===========================
+// 이전 필드 검증
+// ===========================
+function validatePreviousFields(currentField) {
+    const regionInput = document.getElementById('region');
+
+    // 활동 거리나 참여 크루원 선택 시도 시, 활동 지역부터 검증
+    if (currentField === 'distance' || currentField === 'participants') {
+        if (regionInput && !regionInput.value.trim()) {
+            validateRegion();
+        }
+    }
+
+    // 참여 크루원 선택 시도 시, 활동 거리도 검증
+    if (currentField === 'participants') {
+        const distanceInput = document.getElementById('distance');
+        if (distanceInput && !distanceInput.value) {
+            validateDistance();
+        }
+    }
+}
+
+// ===========================
+// 활동 지역 검증
+// ===========================
+function validateRegion() {
+    const input = document.getElementById('region');
+    const errorElement = document.getElementById('regionError');
+    const value = input.value.trim();
+
+    if (!value) {
+        showFieldError(input, errorElement, '활동 지역은 필수입니다.');
+        return false;
+    }
+
+    if (value.length > 100) {
+        input.value = value.slice(0, 100);
+        showFieldError(input, errorElement, '활동 지역은 100자 이내로 입력해주세요.');
+        return false;
+    }
+
+    clearFieldError(input, errorElement);
+    return true;
+}
+
+// ===========================
+// 활동 거리 검증
+// ===========================
+function validateDistance() {
+    const input = document.getElementById('distance');
+    const errorElement = document.getElementById('distanceError');
+    const value = parseInt(input.value);
+
+    if (!input.value || isNaN(value)) {
+        showFieldError(input, errorElement, '활동 거리는 필수입니다.');
+        return false;
+    }
+
+    if (value < 1 || value > 100) {
+        showFieldError(input, errorElement, '활동 거리는 1~100km 사이로 입력해주세요.');
+        return false;
+    }
+
+    clearFieldError(input, errorElement);
+    return true;
+}
+
+// ===========================
+// 참여 크루원 검증
+// ===========================
+function validateParticipants() {
+    const dropdownButton = document.getElementById('dropdownButton');
+    const errorElement = document.getElementById('participantsError');
+
+    if (selectedParticipants.length === 0) {
+        showFieldError(dropdownButton, errorElement, '참여 크루원은 필수입니다.');
+        return false;
+    }
+
+    clearFieldError(dropdownButton, errorElement);
+    return true;
+}
+
+// ===========================
+// 에러 표시
+// ===========================
+function showFieldError(inputElement, errorElement, message) {
+    if (inputElement) {
+        inputElement.classList.add('error');
+        inputElement.style.borderColor = 'red';
+    }
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+    }
+}
+
+// ===========================
+// 에러 제거
+// ===========================
+function clearFieldError(inputElement, errorElement) {
+    if (inputElement) {
+        inputElement.classList.remove('error');
+        inputElement.style.borderColor = '';
+    }
+    if (errorElement) {
+        errorElement.textContent = '';
+        errorElement.style.display = 'none';
+    }
+}
 
 // ===========================
 // 크루원 목록 로드
@@ -117,6 +258,16 @@ async function loadActivityData() {
 
         if (!activity) {
             throw new Error('활동 정보를 찾을 수 없습니다.');
+        }
+
+        // 활동 날짜 표시
+        const activityDateInput = document.getElementById('activityDate');
+        if (activityDateInput && activity.activityDate) {
+            const date = new Date(activity.activityDate);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            activityDateInput.value = `${year}.${month}.${day}`;
         }
 
         // 폼에 데이터 채우기
@@ -213,6 +364,8 @@ function toggleParticipant(userId) {
         selectedParticipants.splice(index, 1);
     }
     updateSelectedCount();
+    // 참여 크루원 validation
+    validateParticipants();
 }
 
 // ===========================
@@ -274,23 +427,18 @@ function getRoleText(role) {
 async function handleSubmit(e) {
     e.preventDefault();
 
+    // 모든 필드 검증
+    const isRegionValid = validateRegion();
+    const isDistanceValid = validateDistance();
+    const isParticipantsValid = validateParticipants();
+
+    if (!isRegionValid || !isDistanceValid || !isParticipantsValid) {
+        alert('입력 항목을 확인해주세요.');
+        return;
+    }
+
     const region = document.getElementById('region').value.trim();
     const distance = parseInt(document.getElementById('distance').value);
-
-    if (!region) {
-        alert('활동 지역을 입력해주세요.');
-        return;
-    }
-
-    if (!distance || distance < 1) {
-        alert('활동 거리는 1km 이상이어야 합니다.');
-        return;
-    }
-
-    if (selectedParticipants.length === 0) {
-        alert('참여 크루원을 최소 1명 이상 선택해주세요.');
-        return;
-    }
 
     const submitBtn = document.querySelector('.btn-submit');
     if (submitBtn) {

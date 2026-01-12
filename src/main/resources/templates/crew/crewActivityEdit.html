@@ -22,6 +22,17 @@
     <main class="activity-main">
         <form id="activityForm" class="activity-form">
             <div class="form-group">
+                <label for="activityDate" class="form-label">활동 날짜 <span class="required">*</span></label>
+                <input
+                        type="text"
+                        id="activityDate"
+                        name="activityDate"
+                        class="form-input form-input-readonly"
+                        readonly
+                />
+            </div>
+
+            <div class="form-group">
                 <label for="region" class="form-label">활동 지역 <span class="required">*</span></label>
                 <input
                         type="text"
@@ -30,8 +41,8 @@
                         class="form-input"
                         placeholder="예: 서울 송파구"
                         required
-                        maxlength="100"
                 />
+                <p class="error-text" id="regionError"></p>
             </div>
 
             <div class="form-group">
@@ -46,6 +57,7 @@
                         min="1"
                         max="100"
                 />
+                <p class="error-text" id="distanceError"></p>
             </div>
 
             <div class="form-group">
@@ -64,6 +76,7 @@
                         </div>
                     </div>
                 </div>
+                <p class="error-text" id="participantsError"></p>
             </div>
 
             <button type="submit" class="btn-submit">수정하기</button>
