@@ -26,6 +26,7 @@ public class CrewChatRoomListResDto {
   private Long crewId;
   private String crewName;          // 크루 이름
   private String crewDescription;   // 크루 설명
+  private String crewImageUrl;      // 크루 이미지
 
   // 참가자 정보
   private Integer currentMembers;   // 현재 크루원 수

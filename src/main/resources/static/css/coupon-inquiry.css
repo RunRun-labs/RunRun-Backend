@@ -231,6 +231,19 @@
   border-bottom: none;
 }
 
+.table-link {
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  font-weight: 600;
+}
+
+.table-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
 .loading-row {
   text-align: center;
 }

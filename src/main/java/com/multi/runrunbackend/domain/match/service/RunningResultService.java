@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.match.service;
 
+import com.multi.runrunbackend.common.event.RunningResultCompletedEvent;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
@@ -18,6 +19,7 @@ import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -38,6 +40,7 @@ public class RunningResultService {
 
   private final RunningResultRepository runningResultRepository;
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   public Slice<RunningRecordResDto> getMyRunningResults(
       CustomUser principal,
@@ -49,7 +52,7 @@ public class RunningResultService {
     User user = getUser(principal);
 
     List<RunStatus> targetStatuses = List.of(
-        RunStatus.COMPLETED
+        RunStatus.COMPLETED,
     );
 
     LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
@@ -121,6 +124,13 @@ public class RunningResultService {
 
     // 2. 평균 페이스 업데이트 (저장 후!)
     updateUserAveragePace(saved.getUser().getId());
+
+    if (saved.getRunStatus() == RunStatus.COMPLETED
+        || saved.getRunStatus() == RunStatus.TIME_OUT) {
+      eventPublisher.publishEvent(
+          new RunningResultCompletedEvent(saved.getUser().getId(), saved.getTotalDistance())
+      );
+    }
 
     return saved;
   }

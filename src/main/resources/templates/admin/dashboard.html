@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>RunRun Admin | 대시보드</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/admin-layout.css" th:href="@{/css/admin-layout.css}" />
+    <link rel="stylesheet" href="/css/dashboard.css" th:href="@{/css/dashboard.css}" />
+  </head>
+  <body>
+    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+    <div th:replace="~{admin/layout :: adminLayout(~{::.dashboard-content})}">
+      <div class="dashboard-content dashboard-container">
+        <div class="page-header">
+          <h1 class="page-title">대시보드</h1>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- 오늘의 광고 -->
+          <div class="dashboard-card">
+            <h2 class="card-title">오늘의 광고</h2>
+            <div class="stat-list">
+              <div class="stat-item">
+                <span class="stat-label">오늘의 광고 클릭수</span>
+                <span class="stat-value" id="todayAdClicks">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">활성화 광고</span>
+                <span class="stat-value" id="activeAdPercentage">0.00%</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">오늘의 광고 노출 수</span>
+                <span class="stat-value" id="todayAdImpressions">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">새로운 멤버십 회원</span>
+                <span class="stat-value" id="newMembershipUsers">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 오늘의 쿠폰 -->
+          <div class="dashboard-card">
+            <h2 class="card-title">오늘의 쿠폰</h2>
+            <div class="stat-list">
+              <div class="stat-item">
+                <span class="stat-label">쿠폰 발급 수</span>
+                <span class="stat-value" id="todayCouponIssued">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">쿠폰 사용률</span>
+                <span class="stat-value" id="todayCouponUsageRate">0.00%</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">쿠폰 사용 수</span>
+                <span class="stat-value" id="todayCouponUsed">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">새로운 회원</span>
+                <span class="stat-value" id="newUsers">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top 5 광고 -->
+          <div class="dashboard-card">
+            <h2 class="card-title">Top 5 광고</h2>
+            <div class="top-list" id="topAdsList">
+              <div class="loading-message">로딩 중...</div>
+            </div>
+          </div>
+
+          <!-- Top 5 쿠폰 -->
+          <div class="dashboard-card">
+            <h2 class="card-title">Top 5 쿠폰</h2>
+            <div class="top-list" id="topCouponsList">
+              <div class="loading-message">로딩 중...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/dashboard.js" th:src="@{/js/dashboard.js}"></script>
+  </body>
+</html>
+

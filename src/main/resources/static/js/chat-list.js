@@ -69,6 +69,18 @@ async function loadChatList() {
     
     if (result.success) {
       chatRooms = result.data; // 전역 변수에 저장
+      
+      // ✅ 크루 채팅방 데이터 확인
+      console.log('=== 채팅방 목록 로드 ===');
+      console.log('전체 채팅방 수:', chatRooms.length);
+      const crewRooms = chatRooms.filter(r => r.chatType === 'CREW');
+      console.log('크루 채팅방 수:', crewRooms.length);
+      crewRooms.forEach(room => {
+        console.log('크루:', room.crewName);
+        console.log('  - crewImageUrl:', room.crewImageUrl);
+        console.log('  - chatRoomId:', room.chatRoomId);
+      });
+      
       renderChatList(chatRooms);
       updateNextRunning(chatRooms);
       updateFilterCounts(chatRooms);
@@ -99,7 +111,7 @@ function updateNextRunning(chatRooms) {
   const upcomingRooms = chatRooms.filter(room => {
     if (!room.meetingAt) return false;
     const meetingTime = new Date(room.meetingAt);
-    return meetingTime > now && room.sessionStatus === 'WAITING';
+    return meetingTime > now && room.sessionStatus === 'STANDBY';
   });
 
   if (upcomingRooms.length === 0) {
@@ -180,14 +192,37 @@ function renderChatList(chatRooms) {
 
 // ⭐ 크루 채팅방 아이템 렌더링
 function renderCrewChatItem(container, room) {
+  console.log('=== renderCrewChatItem 호출 ===');
+  console.log('크루명:', room.crewName);
+  console.log('crewImageUrl:', room.crewImageUrl);
+  console.log('room 객체 전체:', room);
+  
   const item = document.createElement('a');
   item.className = 'chat-item';
   item.href = `/chat/crew?roomId=${room.chatRoomId}`;  // ⭐ 경로 수정
 
-  // 아바타
+  // ✅ 크루 이미지 아바타
   const avatar = document.createElement('div');
-  avatar.className = 'chat-avatar avatar-gray';
-  avatar.innerHTML = '<svg class="chat-avatar-icon" width="24" height="29" viewBox="0 0 24 29" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0Z" fill="#E5E7EB"/></svg>';
+  avatar.className = 'chat-avatar';
+  
+  const avatarImg = document.createElement('img');
+  // ⭐ null, undefined, 빈 문자열 모두 처리
+  const imageUrl = (room.crewImageUrl && room.crewImageUrl.trim()) 
+    ? room.crewImageUrl 
+    : '/img/default-crew.svg';  // ✅ 크루 전용 디폴트 이미지
+  console.log('✅ 크루 이미지 URL:', room.crewImageUrl, '→', imageUrl);
+  
+  avatarImg.src = imageUrl;
+  avatarImg.alt = room.crewName || '크루';
+  avatarImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+  avatarImg.onerror = function() {
+    console.log('❌ 이미지 로드 실패:', this.src);
+    this.src = '/img/default-crew.svg';  // ✅ 크루 디폴트로 폴백
+  };
+  avatarImg.onload = function() {
+    console.log('✅ 이미지 로드 성공:', this.src);
+  };
+  avatar.appendChild(avatarImg);
 
   // 콘텐츠
   const content = document.createElement('div');
@@ -279,10 +314,15 @@ function renderOfflineChatItem(container, room) {
     item.className = 'chat-item';
     item.href = `/chat/chat1?sessionId=${room.chatRoomId}`;  // ⭐ sessionId → chatRoomId
 
-    // 아바타
+    // 아바타 (오프라인 러닝 디폴트 이미지)
     const avatar = document.createElement('div');
-    avatar.className = 'chat-avatar avatar-gray';
-    avatar.innerHTML = '<svg class="chat-avatar-icon" width="24" height="29" viewBox="0 0 24 29" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0Z" fill="#E5E7EB"/></svg>';
+    avatar.className = 'chat-avatar';
+    
+    const avatarImg = document.createElement('img');
+    avatarImg.src = '/img/default-offline.svg';  // ✅ 오프라인 전용 디폴트 이미지
+    avatarImg.alt = '오프라인 러닝';
+    avatarImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+    avatar.appendChild(avatarImg);
 
     // 콘텐츠
     const content = document.createElement('div');
@@ -301,15 +341,20 @@ function renderOfflineChatItem(container, room) {
     titleRow.appendChild(title);
 
     // 상태 뱃지
-    if (room.sessionStatus === 'WAITING') {
+    if (room.sessionStatus === 'STANDBY') {
       const statusBadge = document.createElement('span');
       statusBadge.className = 'chat-status-badge scheduled';
-      statusBadge.textContent = '예정';
+      statusBadge.textContent = '대기중';
       titleRow.appendChild(statusBadge);
     } else if (room.sessionStatus === 'IN_PROGRESS') {
       const statusBadge = document.createElement('span');
       statusBadge.className = 'chat-status-badge scheduled';
-      statusBadge.textContent = '진행중';
+      statusBadge.textContent = '러닝 중';
+      titleRow.appendChild(statusBadge);
+    } else if (room.sessionStatus === 'COMPLETED') {
+      const statusBadge = document.createElement('span');
+      statusBadge.className = 'chat-status-badge scheduled';
+      statusBadge.textContent = '러닝 종료';
       titleRow.appendChild(statusBadge);
     }
 

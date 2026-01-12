@@ -49,6 +49,8 @@ let polyline = null;
 let startMarker = null;
 let endMarker = null;
 let loopMarker = null;
+let startInfoWindow = null;
+let endInfoWindow = null;
 let loadedCourse = null;
 
 // ==========================
@@ -69,18 +71,24 @@ function setupSelectConfirm() {
   const { isSelectMode, returnTo } = getSelectModeParams();
   const bar = document.getElementById("selectConfirmBar");
   const btn = document.getElementById("selectConfirmBtn");
-  if (!bar || !btn) return;
+  if (!bar || !btn) {
+    return;
+  }
 
   if (!isSelectMode || !returnTo) {
     bar.style.display = "none";
     const content = document.querySelector(".course-content");
-    if (content) content.classList.remove("has-select-confirm");
+    if (content) {
+      content.classList.remove("has-select-confirm");
+    }
     return;
   }
 
   bar.style.display = "block";
   const content = document.querySelector(".course-content");
-  if (content) content.classList.add("has-select-confirm");
+  if (content) {
+    content.classList.add("has-select-confirm");
+  }
 
   btn.addEventListener("click", () => {
     if (!loadedCourse) {
@@ -89,10 +97,16 @@ function setupSelectConfirm() {
     }
 
     const base = new URL(returnTo, window.location.origin);
-    base.searchParams.set("courseId", String(loadedCourse.id || getCourseIdFromUrl()));
+    base.searchParams.set(
+      "courseId",
+      String(loadedCourse.id || getCourseIdFromUrl())
+    );
     base.searchParams.set("courseName", loadedCourse.title || "코스 선택됨");
     if (loadedCourse.distanceM != null) {
-      base.searchParams.set("courseDistanceKm", (loadedCourse.distanceM / 1000).toFixed(2));
+      base.searchParams.set(
+        "courseDistanceKm",
+        (loadedCourse.distanceM / 1000).toFixed(2)
+      );
     }
     window.location.href = base.pathname + base.search + base.hash;
   });
@@ -110,6 +124,7 @@ function initMap() {
   }
 
   const center = new kakao.maps.LatLng(37.5665, 126.978);
+  // ⭐ recruit-detail.js처럼 최소한의 옵션만 사용 (기본값이 draggable: true, scrollwheel: true)
   map = new kakao.maps.Map(mapContainer, {
     center: center,
     level: 5,
@@ -151,58 +166,64 @@ function initMap() {
   }, 500);
 }
 
-// Add marker
+// Add marker (기본 마커 사용)
 function addMarker(lat, lng, labelText, variant = "default") {
   const latlng = new kakao.maps.LatLng(lat, lng);
-  const palette = {
-    start: "#1e88e5",
-    end: "#ff3d00",
-    loop: "#8e24aa",
-    default: "#333333",
-  };
 
-  let color = palette[variant] || palette.default;
-  if (typeof variant === "string" && variant.startsWith("#")) {
-    color = variant;
+  // 기본 마커 생성
+  const marker = new kakao.maps.Marker({
+    position: latlng,
+    clickable: true, // 클릭 가능하도록 명시
+  });
+  marker.setMap(map);
+
+  // InfoWindow 생성
+  const infoContent = `<div style="padding:8px;font-size:13px;font-weight:bold;">${labelText}</div>`;
+  const infoWindow = new kakao.maps.InfoWindow({
+    content: infoContent,
+    removable: true, // 닫기 버튼 표시
+  });
+
+  // variant에 따라 InfoWindow 저장 (이벤트 리스너 등록 전에 저장)
+  if (variant === "start") {
+    startInfoWindow = infoWindow;
+  } else if (variant === "end") {
+    endInfoWindow = infoWindow;
   }
 
-  const content = `
-    <div style="transform:translate(-50%,-100%);text-align:center;">
-      <div style="
-        padding:4px 10px;
-        border-radius:14px;
-        background:${color};
-        color:#fff;
-        font-size:11px;
-        font-weight:bold;
-        box-shadow:0 2px 6px rgba(0,0,0,0.35);
-      ">
-        ${labelText}
-      </div>
-      <div style="
-        width:0;
-        height:0;
-        border-left:6px solid transparent;
-        border-right:6px solid transparent;
-        border-top:10px solid ${color};
-        margin:0 auto;
-      "></div>
-    </div>
-  `;
+  // 마커 클릭 시 InfoWindow 표시
+  kakao.maps.event.addListener(marker, "click", function () {
+    // 다른 InfoWindow 닫기
+    if (startInfoWindow && startInfoWindow !== infoWindow) {
+      startInfoWindow.close();
+    }
+    if (endInfoWindow && endInfoWindow !== infoWindow) {
+      endInfoWindow.close();
+    }
 
-  const overlay = new kakao.maps.CustomOverlay({
-    position: latlng,
-    content,
-    yAnchor: 1,
+    // 현재 InfoWindow 열기
+    infoWindow.open(map, marker);
   });
-  overlay.setMap(map);
-  return overlay;
+
+  return marker;
 }
 
 // Clear marker
 function clearMarker(markerRef) {
   if (markerRef) {
     markerRef.setMap(null);
+  }
+}
+
+// Clear InfoWindows
+function clearInfoWindows() {
+  if (startInfoWindow) {
+    startInfoWindow.close();
+    startInfoWindow = null;
+  }
+  if (endInfoWindow) {
+    endInfoWindow.close();
+    endInfoWindow = null;
   }
 }
 
@@ -331,7 +352,9 @@ async function checkOwnership(course) {
 
 // Format date to YYYY-MM-DD
 function formatDate(dateString) {
-  if (!dateString) return "";
+  if (!dateString) {
+    return "";
+  }
 
   try {
     // Handle ISO 8601 format (e.g., "2025-12-20T15:30:00" or "2025-12-20T15:30:00.000Z")
@@ -398,21 +421,13 @@ function fillCourseData(course) {
   // Image
   const courseImageContainer = document.getElementById("courseImageContainer");
   const courseImage = document.getElementById("courseImage");
-  const courseImageField = document.getElementById("courseImageField");
-  const courseImagePreview = document.getElementById("courseImagePreview");
 
   if (course.imageUrl) {
     if (courseImage) {
       courseImage.src = course.imageUrl;
     }
-    if (courseImagePreview) {
-      courseImagePreview.src = course.imageUrl;
-    }
     if (courseImageContainer) {
       courseImageContainer.style.display = "block";
-    }
-    if (courseImageField) {
-      courseImageField.style.display = "block";
     }
   }
 }
@@ -475,7 +490,7 @@ function displayCourseOnMap(course) {
       startMarker = addMarker(
         displayStartLat,
         displayStartLng,
-        "출발",
+        "📍 출발점",
         "start"
       );
       map.setCenter(new kakao.maps.LatLng(displayStartLat, displayStartLng));
@@ -505,48 +520,67 @@ function displayCourseOnMap(course) {
   clearMarker(startMarker);
   clearMarker(endMarker);
   clearMarker(loopMarker);
+  clearInfoWindows();
 
   if (isRoundTrip) {
     // 루프 코스일 때는 출발점만 표시
-    startMarker = addMarker(displayStartLat, displayStartLng, "출발", "start");
+    startMarker = addMarker(
+      displayStartLat,
+      displayStartLng,
+      "📍 출발점",
+      "start"
+    );
   } else {
-    startMarker = addMarker(displayStartLat, displayStartLng, "출발", "start");
-    endMarker = addMarker(endLat, endLng, "도착", "end");
+    startMarker = addMarker(
+      displayStartLat,
+      displayStartLng,
+      "📍 출발점",
+      "start"
+    );
+    endMarker = addMarker(endLat, endLng, "🏁 도착점", "end");
   }
 
   // Draw route
   drawRoute(pathCoords);
 
-  // Fit bounds to show entire route
+  // Fit bounds to show entire route (setBounds 대신 setCenter 사용)
   const latLngs = pathCoords.map(
     ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
   );
   const bounds = new kakao.maps.LatLngBounds();
   latLngs.forEach((p) => bounds.extend(p));
-  map.setBounds(bounds);
 
-  // ⭐ setBounds 이후에도 relayout 필수
-  setTimeout(() => {
-    if (map) {
-      map.relayout();
-    }
-  }, 0);
+  // ⭐ setBounds는 드래그/줌을 비활성화할 수 있으므로, 대신 center와 level 계산
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const centerLat = (sw.getLat() + ne.getLat()) / 2;
+  const centerLng = (sw.getLng() + ne.getLng()) / 2;
 
-  setTimeout(() => {
-    if (map) {
-      map.relayout();
-    }
-  }, 300);
+  // 거리에 따라 적절한 level 계산
+  const latDiff = ne.getLat() - sw.getLat();
+  const lngDiff = ne.getLng() - sw.getLng();
+  const maxDiff = Math.max(latDiff, lngDiff);
 
-  // ⭐ 마커 추가 후 + 전체 작업 완료 후 최종 relayout
-  setTimeout(() => {
-    if (map) {
-      map.relayout();
-      // 드래그/줌 기능 명시적 재활성화
-      map.setDraggable(true);
-      map.setZoomable(true);
-    }
-  }, 500);
+  let level = 5; // 기본값
+  if (maxDiff > 0.1) {
+    level = 4;
+  } else if (maxDiff > 0.05) {
+    level = 5;
+  } else if (maxDiff > 0.02) {
+    level = 6;
+  } else if (maxDiff > 0.01) {
+    level = 7;
+  } else {
+    level = 8;
+  }
+
+  // center와 level 설정 (setBounds 대신)
+  map.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
+  map.setLevel(level);
+
+  // ⭐ setLevel 호출 직후 드래그/줌 재활성화 (setLevel이 드래그/줌을 비활성화할 수 있음)
+  map.setDraggable(true);
+  map.setZoomable(true);
 }
 
 // Delete course
@@ -891,7 +925,7 @@ function bootstrapMap() {
       map.setZoomable(true);
     }
     loadCourseData();
-  }, 600);
+  }, 100);
 }
 
 // ==========================

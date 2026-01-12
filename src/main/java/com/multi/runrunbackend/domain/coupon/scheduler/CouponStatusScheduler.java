@@ -25,7 +25,7 @@ public class CouponStatusScheduler {
         int expired = couponStatusService.expire();
         int soldOut = couponStatusService.soldOut();
         int activated = couponStatusService.activate();
-
+        int expiredIssues = couponStatusService.expireCouponIssues();
         if (expired + soldOut + activated > 0) {
             log.info("[CouponStatusScheduler] status synced: expired={}, soldOut={}, activated={}",
                 expired, soldOut, activated);

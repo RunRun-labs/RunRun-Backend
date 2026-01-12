@@ -101,11 +101,16 @@ public class CourseController {
 
         @RequestParam(required = false)
         @Min(1) @Max(50)
-        Integer size
+        Integer size,
+
+        @RequestParam(required = false) Boolean myCourses,
+        @RequestParam(required = false) Boolean myLikedCourses,
+        @RequestParam(required = false) Boolean myFavoritedCourses
     ) {
         CourseListReqDto req = CourseListReqDto.fromParams(keyword, registerType, nearby, lat, lng,
             radiusM,
-            distanceBucket, sortType, cursor, size);
+            distanceBucket, sortType, cursor, size,
+            myCourses, myLikedCourses, myFavoritedCourses);
 
         return ResponseEntity.ok(
             ApiResponse.success("코스 목록 조회 성공", courseService.getCourseList(principal, req)));
