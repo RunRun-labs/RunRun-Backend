@@ -68,6 +68,17 @@ public class CouponIssueService {
 
         User user = userRepository.getReferenceById(userId);
 
+        // 거리 달성 쿠폰 중복 발급 방지: RUN_COUNT_REACHED이고 conditionValue가 있으면 이미 발급받았는지 확인
+        if (event == CouponTriggerEvent.RUN_COUNT_REACHED && conditionValue != null) {
+            boolean alreadyIssued = couponIssueRepository.existsByUserIdAndTriggerEventAndConditionValue(
+                userId, event, conditionValue);
+            if (alreadyIssued) {
+                log.info("[CouponAuto] already issued for distance. userId={} event={} conditionValue={}",
+                    userId, event, conditionValue);
+                return;
+            }
+        }
+
         List<CouponRole> roles = couponRoleRepository.findActiveRoles(event, conditionValue);
         if (roles.isEmpty()) {
             log.info("[CouponAuto] no active role. event={} cond={}", event, conditionValue);
@@ -81,6 +92,56 @@ public class CouponIssueService {
                 issueOneAuto(user, couponId, now);
             } catch (Exception e) {
                 log.error("[CouponAuto] fail userId={} couponId={}", userId, couponId, e);
+            }
+        }
+    }
+
+    /**
+     * 누적 거리 기준 거리 달성 쿠폰 발급
+     * - 사용자의 누적 거리가 쿠폰 조건값과 일치하는 모든 쿠폰을 발급
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void issueAutoForAccumulatedDistance(Long userId, int accumulatedDistanceMeters) {
+        User user = userRepository.getReferenceById(userId);
+
+        // 모든 활성 거리 달성 쿠폰 역할 조회
+        List<CouponRole> allRoles = couponRoleRepository.findAllActiveRolesByEvent(
+            CouponTriggerEvent.RUN_COUNT_REACHED);
+
+        if (allRoles.isEmpty()) {
+            log.debug("[CouponAuto] no active distance roles. userId={}", userId);
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 각 역할의 conditionValue가 누적 거리와 일치하는 경우 쿠폰 발급
+        for (CouponRole role : allRoles) {
+            Integer conditionValue = role.getConditionValue();
+            if (conditionValue == null) {
+                continue; // conditionValue가 없으면 건너뜀
+            }
+
+            // 누적 거리가 조건값과 정확히 일치하는 경우만 발급
+            if (accumulatedDistanceMeters == conditionValue) {
+                // 이미 발급받았는지 확인
+                boolean alreadyIssued = couponIssueRepository.existsByUserIdAndTriggerEventAndConditionValue(
+                    userId, CouponTriggerEvent.RUN_COUNT_REACHED, conditionValue);
+                if (alreadyIssued) {
+                    log.debug("[CouponAuto] already issued for accumulated distance. userId={} distance={}m",
+                        userId, conditionValue);
+                    continue;
+                }
+
+                Long couponId = role.getCoupon().getId();
+                try {
+                    issueOneAuto(user, couponId, now);
+                    log.info("[CouponAuto] issued coupon for accumulated distance. userId={} distance={}m couponId={}",
+                        userId, conditionValue, couponId);
+                } catch (Exception e) {
+                    log.error("[CouponAuto] fail userId={} couponId={} distance={}m", userId, couponId,
+                        conditionValue, e);
+                }
             }
         }
     }

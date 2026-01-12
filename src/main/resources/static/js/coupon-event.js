@@ -210,8 +210,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 혜택 단위
   function getBenefitUnit(type) {
-    if (type === "DISCOUNT") {
+    if (type === "RATE_DISCOUNT") {
       return "%";
+    } else if (type === "FIXED_DISCOUNT") {
+      return "원";
+    } else if (type === "EXPERIENCE") {
+      return "일";
     }
     return "";
   }

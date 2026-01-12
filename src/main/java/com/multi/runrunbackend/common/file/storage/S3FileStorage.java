@@ -4,15 +4,6 @@ import com.multi.runrunbackend.common.exception.custom.FileUploadException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.util.FileNameGenerator;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -22,14 +13,28 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 /**
  * @author : kyungsoo
- * @description : Please explain the class!!!
+ * @description : S3 기반 파일 업로드/삭제 구현체. - 저장 경로: uploads/{domainDir}/{refKey}/{yyyyMMdd}/{fileName} -
+ * refKey: refId(Long) 또는 refId가 없으면 UUID - uploadIfChanged: existingUrl이 있으면 existingUrl의 refKey를
+ * 우선 재사용(폴더 섞임 방지)
  * @filename : S3FileStorage
  * @since : 2025. 12. 24. Wednesday
  */
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -49,43 +54,10 @@ public class S3FileStorage implements FileStorage {
     @Override
     public String upload(MultipartFile file, FileDomainType domainType, Long refId) {
         try {
-            String fileName = FileNameGenerator.generate(file.getOriginalFilename());
-            String key = buildKey(domainType, refId, fileName);
-
-            // 작은 파일은 sha256 메타데이터까지 넣어두면 uploadIfChanged에 유리
-            if (file.getSize() <= hashMaxBytes) {
-                byte[] bytes = file.getBytes();
-                String sha256 = sha256Hex(bytes);
-
-                PutObjectRequest req = PutObjectRequest.builder()
-                        .bucket(bucket)
-                        .key(key)
-                        .contentType(safeContentType(file))
-                        .metadata(Map.of("sha256", sha256))
-                        .build();
-
-                s3.putObject(req, RequestBody.fromBytes(bytes));
-            } else {
-                // 큰 파일은 스트리밍 업로드(해시 비교 생략)
-                PutObjectRequest req = PutObjectRequest.builder()
-                        .bucket(bucket)
-                        .key(key)
-                        .contentType(safeContentType(file))
-                        .build();
-
-                try (InputStream in = file.getInputStream()) {
-                    s3.putObject(req, RequestBody.fromInputStream(in, file.getSize()));
-                }
-            }
-
-            return key;
-
-        } catch (IOException e) {
-            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
-        } catch (S3Exception e) {
-            log.warn("S3 업로드 실패: {}",
-                    e.awsErrorDetails() != null ? e.awsErrorDetails().errorMessage() : e.getMessage());
-            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
+            String refKey = (refId != null) ? String.valueOf(refId) : UUID.randomUUID().toString();
+            return uploadInternal(file, domainType, refKey);
+        } catch (FileUploadException e) {
+            throw e;
         } catch (Exception e) {
             throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
         }
@@ -93,7 +65,7 @@ public class S3FileStorage implements FileStorage {
 
     @Override
     public String uploadIfChanged(MultipartFile file, FileDomainType domainType, Long refId,
-                                  String existingUrl) {
+        String existingUrl) {
         if (file == null || file.isEmpty()) {
             return existingUrl;
         }
@@ -109,43 +81,47 @@ public class S3FileStorage implements FileStorage {
                 return upload(file, domainType, refId);
             }
 
-            // 새 파일 해시(작을 때만)
+            // ✅ 기존 key에서 refKey(UUID/adId)를 우선 추출해서 "그 폴더"에 업로드
+            String existingRefKey = extractRefKeyFromKey(existingKey, domainType);
+            if (existingRefKey == null || existingRefKey.isBlank()) {
+                // 파싱 실패 시 폴백
+                return upload(file, domainType, refId);
+            }
+
+            // 큰 파일은 비교 생략하고 업로드(다만 폴더는 기존 refKey 유지)
             if (file.getSize() > hashMaxBytes) {
-                // 큰 파일은 비교 생략하고 그냥 업로드(실무에서도 많이 이렇게 타협함)
-                String newUrl = upload(file, domainType, refId);
-                // 필요하면 기존 삭제(정책 선택)
+                String newKey = uploadInternal(file, domainType, existingRefKey);
                 safeDelete(existingKey);
-                return newUrl;
+                return newKey;
             }
 
             String newSha = sha256Hex(file.getBytes());
 
             // 기존 객체 메타데이터 sha256 조회
-            String oldSha = null;
+            String oldSha;
             try {
                 var head = s3.headObject(HeadObjectRequest.builder()
-                        .bucket(bucket)
-                        .key(existingKey)
-                        .build());
+                    .bucket(bucket)
+                    .key(existingKey)
+                    .build());
                 oldSha = head.metadata() != null ? head.metadata().get("sha256") : null;
             } catch (NoSuchKeyException e) {
-                return upload(file, domainType, refId);
+                return uploadInternal(file, domainType, existingRefKey);
             } catch (S3Exception e) {
-                // head 실패하면 안전하게 새로 업로드로 폴백
-                return upload(file, domainType, refId);
+                return uploadInternal(file, domainType, existingRefKey);
             }
 
             if (oldSha != null && oldSha.equals(newSha)) {
                 return existingUrl; // 변경 없음
             }
 
-            // 변경됨 → 업로드 후 기존 삭제(정책)
-            String newUrl = upload(file, domainType, refId);
+            // 변경됨 → 업로드 후 기존 삭제
+            String newKey = uploadInternal(file, domainType, existingRefKey);
             safeDelete(existingKey);
-            return newUrl;
+            return newKey;
 
         } catch (Exception e) {
-            // 비교 중 오류면 그냥 업로드로 폴백
+            // 비교 중 오류면 안전하게 폴백
             return upload(file, domainType, refId);
         }
     }
@@ -162,22 +138,89 @@ public class S3FileStorage implements FileStorage {
     private void safeDelete(String key) {
         try {
             s3.deleteObject(DeleteObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .build());
+                .bucket(bucket)
+                .key(key)
+                .build());
         } catch (S3Exception e) {
 
             throw new FileUploadException(ErrorCode.FILE_DELETE_FAILED);
         }
     }
 
-    private String buildKey(FileDomainType domainType, Long refId, String fileName) {
-        // uploads/{domainDir}/{refId}/{yyyyMMdd}/{fileName}
-        String date = DateTimeFormatter.ofPattern("yyyyMMdd")
-                .withZone(ZoneId.of("Asia/Seoul"))
-                .format(Instant.now());
+    private String uploadInternal(MultipartFile file, FileDomainType domainType, String refKey) {
+        try {
+            String fileName = FileNameGenerator.generate(file.getOriginalFilename());
+            String key = buildKey(domainType, refKey, fileName);
 
-        return "uploads/" + domainType.getDir() + "/" + refId + "/" + date + "/" + fileName;
+            // 작은 파일은 sha256 메타데이터까지 넣어두면 uploadIfChanged에 유리
+            if (file.getSize() <= hashMaxBytes) {
+                byte[] bytes = file.getBytes();
+                String sha256 = sha256Hex(bytes);
+
+                PutObjectRequest req = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(safeContentType(file))
+                    .metadata(Map.of("sha256", sha256))
+                    .build();
+
+                s3.putObject(req, RequestBody.fromBytes(bytes));
+            } else {
+                // 큰 파일은 스트리밍 업로드(해시 비교 생략)
+                PutObjectRequest req = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(safeContentType(file))
+                    .build();
+
+                try (InputStream in = file.getInputStream()) {
+                    s3.putObject(req, RequestBody.fromInputStream(in, file.getSize()));
+                }
+            }
+
+            // 기존 코드와 호환 위해 key 반환 (URL 저장 원하면 toHttpsUrl(key)로 바꿔도 됨)
+            return key;
+
+        } catch (IOException e) {
+            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
+        } catch (S3Exception e) {
+            log.warn("S3 업로드 실패: {}",
+                e.awsErrorDetails() != null ? e.awsErrorDetails().errorMessage() : e.getMessage());
+            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
+        } catch (Exception e) {
+            throw new FileUploadException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    private String buildKey(FileDomainType domainType, String refKey, String fileName) {
+
+        String date = DateTimeFormatter.ofPattern("yyyyMMdd")
+            .withZone(ZoneId.of("Asia/Seoul"))
+            .format(Instant.now());
+
+        return "uploads/" + domainType.getDir() + "/" + refKey + "/" + date + "/" + fileName;
+    }
+
+    /**
+     * ✅ existingKey (uploads/{domainDir}/{refKey}/...) 에서 refKey만 추출
+     */
+    private String extractRefKeyFromKey(String key, FileDomainType domainType) {
+        // expected: uploads/{domainDir}/{refKey}/yyyyMMdd/filename
+        if (key == null) {
+            return null;
+        }
+
+        String prefix = "uploads/" + domainType.getDir() + "/";
+        if (!key.startsWith(prefix)) {
+            return null;
+        }
+
+        String rest = key.substring(prefix.length()); // {refKey}/yyyyMMdd/filename
+        int slash = rest.indexOf('/');
+        if (slash < 0) {
+            return null;
+        }
+        return rest.substring(0, slash);
     }
 
     private String safeContentType(MultipartFile file) {
@@ -225,8 +268,8 @@ public class S3FileStorage implements FileStorage {
         // https URL
         try {
             URI uri = URI.create(clean);
-            String host = uri.getHost();          // runrun-uploads-bucket.s3.mx-central-1.amazonaws.com
-            String path = uri.getPath();          // /uploads/...
+            String host = uri.getHost();
+            String path = uri.getPath();
 
             if (host == null || path == null) {
                 return null;

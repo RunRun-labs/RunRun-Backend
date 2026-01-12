@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>RunRun Admin | 러닝 통계</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/admin-layout.css" th:href="@{/css/admin-layout.css}" />
+    <link rel="stylesheet" href="/css/coupon-detail.css" th:href="@{/css/coupon-detail.css}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+    <div th:replace="~{admin/layout :: adminLayout(~{::.running-stats-content})}">
+      <div class="running-stats-content coupon-detail-container">
+        <div class="coupon-detail-card">
+          <div class="page-header">
+            <h1 class="page-title">러닝 통계</h1>
+            <div style="display: flex; gap: 12px;">
+              <button type="button" class="create-button" style="background: var(--text-secondary);" onclick="window.location.href='/admin/dashboard'">
+                대시보드로
+              </button>
+            </div>
+          </div>
+
+          <!-- 기본 통계 -->
+          <div class="info-section">
+            <h2 class="section-title">기본 통계</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <label class="info-label">매칭 성공률</label>
+                <div class="info-value" id="matchSuccessRate">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">매칭 취소율</label>
+                <div class="info-value" id="matchCancelRate">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">러닝 중 이탈률</label>
+                <div class="info-value" id="runningDropoutRate">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">평균 매칭 시간</label>
+                <div class="info-value" id="avgMatchDuration">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">평균 러닝 거리</label>
+                <div class="info-value" id="avgRunningDistance">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">매칭 참여 비율</label>
+                <div class="info-value" id="matchParticipationRate">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 추가 기본 통계 -->
+          <div class="info-section">
+            <h2 class="section-title">추가 기본 통계</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <label class="info-label">총 뛴 거리</label>
+                <div class="info-value" id="totalRunningDistance">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">총 러닝 횟수</label>
+                <div class="info-value" id="totalRunningCount">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">총 러닝 시간</label>
+                <div class="info-value" id="totalRunningTime">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">최대 연속 러닝일</label>
+                <div class="info-value" id="maxConsecutiveDays">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 통계 차트 섹션 -->
+          <div class="stats-section">
+            <h2 class="section-title">통계 차트</h2>
+
+            <!-- 티어별 러닝량 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">티어별 러닝량</h3>
+              <canvas id="tierStatsChart"></canvas>
+            </div>
+
+            <!-- 러닝 타입별 분포 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">러닝 타입별 분포</h3>
+              <canvas id="typeBreakdownChart"></canvas>
+            </div>
+
+            <!-- 시간대별 러닝량 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">시간대별 러닝량</h3>
+              <canvas id="hourlyStatsChart"></canvas>
+            </div>
+
+            <!-- 티어별 평균 페이스 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">티어별 평균 페이스</h3>
+              <canvas id="tierPaceChart"></canvas>
+            </div>
+
+            <!-- 주별 추이 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">주별 추이 (거리, 시간, 횟수)</h3>
+              <canvas id="weeklyTrendChart"></canvas>
+            </div>
+
+            <!-- 월별 추이 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">월별 추이 (거리, 시간, 횟수)</h3>
+              <canvas id="monthlyTrendChart"></canvas>
+            </div>
+
+            <!-- 페이스 분포 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">유저 페이스 분포</h3>
+              <canvas id="paceDistributionChart"></canvas>
+            </div>
+
+            <!-- 코스별 통계 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">코스별 통계 (상위 20개)</h3>
+              <canvas id="courseStatsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/running-stats.js" th:src="@{/js/running-stats.js}"></script>
+  </body>
+</html>
+

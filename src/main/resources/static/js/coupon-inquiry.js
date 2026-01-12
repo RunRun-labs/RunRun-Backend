@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         return `
           <tr>
-            <td>${rowNumber}</td>
+            <td><a href="/admin/coupon/detail/${coupon.couponId}" class="table-link">${rowNumber}</a></td>
             <td>${escapeHtml(coupon.name || "-")}</td>
             <td>${coupon.quantity ?? "-"}</td>
             <td>${coupon.issuedCount ?? 0}</td>
@@ -169,16 +169,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 혜택 포맷
   function formatBenefit(benefitType, benefitValue) {
-    if (!benefitType || !benefitValue) return "-";
+    if (!benefitType || benefitValue === null || benefitValue === undefined) return "-";
 
-    const typeMap = {
-      DISCOUNT: "할인",
-      EXPERIENCE: "체험",
-      VOUCHER: "교환권",
-    };
+    let unit = "";
+    if (benefitType === "RATE_DISCOUNT") {
+      unit = "%";
+    } else if (benefitType === "FIXED_DISCOUNT") {
+      unit = "원";
+    } else if (benefitType === "EXPERIENCE") {
+      unit = "일";
+    }
 
-    const typeText = typeMap[benefitType] || benefitType;
-    return `${typeText} ${benefitValue}`;
+    return `${benefitValue}${unit}`;
   }
 
   // 날짜 포맷
