@@ -48,11 +48,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.currentUserId = currentUserId;
     }
 
+    if (currentUserId) {
+        await checkMyRole();
+    }
+
     await loadCrewData();
 
     if (currentUserId) {
-        await checkMyRole();
-        showActionButtons();  // 역할별 버튼 표시
+        showActionButtons();
     }
 
     initEventListeners();
@@ -485,12 +488,16 @@ function updateCrewUI(crew) {
             `;
 
                 // 크루장, 부크루장, 운영진만 클릭해서 수정 가능
+                console.log('활동 카드 생성 - currentUserRole:', currentUserRole, 'activityId:', activity.activityId);
+
                 if (currentUserRole === 'LEADER' || currentUserRole === 'SUB_LEADER' || currentUserRole === 'STAFF') {
                     activityCard.style.cursor = 'pointer';
                     activityCard.addEventListener('click', () => {
+                        console.log('활동 카드 클릭! 수정 페이지로 이동:', `/crews/${crewId}/activities/${activity.activityId}/edit`);
                         window.location.href = `/crews/${crewId}/activities/${activity.activityId}/edit`;
                     });
                 } else {
+                    console.log('권한 없음 - 클릭 불가');
                     activityCard.style.cursor = 'default';
                 }
 
