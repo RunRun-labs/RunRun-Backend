@@ -60,6 +60,10 @@ public class FeedPostService {
     ) {
         User user = getUserByPrincipal(principal);
 
+        if (req.getContent() == null || req.getContent().isBlank()) {
+            throw new InvalidRequestException(ErrorCode.FEED_CONTENT_REQUIRED);
+        }
+
         RunningResult runningResult =
                 runningResultRepository
                         .findByIdAndUserIdAndIsDeletedFalse(req.getRunningResultId(), user.getId())
