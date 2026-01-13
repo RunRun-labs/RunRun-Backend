@@ -86,45 +86,42 @@ body {
   text-align: center;
 }
 
-/* FAB Button - Fixed above bottom nav */
-.fab-button {
+/* 하단 고정 버튼 (FAB 대신) */
+.update-button-bottom {
   position: fixed;
-  bottom: 100px;
-  right: 20px;
-  width: 56px;
+  bottom: 86px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 68px);
+  max-width: 352px;
   height: 56px;
-  border-radius: 50%;
   background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
   border: none;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  border-radius: 12px;
+  font-family: "Nunito Sans", "Noto Sans KR", sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
   z-index: 100;
   transition: all 0.2s ease;
-  color: white;
 }
 
-/* 페이지 내부로 제한 */
-@media (min-width: 480px) {
-  .fab-button {
-    right: max(20px, calc(50vw - 210px + 20px));
-  }
-}
-
-.fab-button:hover {
-  transform: scale(1.05);
+.update-button-bottom:hover {
+  transform: translateX(-50%) scale(1.02);
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
 }
 
-.fab-button:active {
-  transform: scale(0.95);
+.update-button-bottom:active {
+  transform: translateX(-50%) scale(0.98);
 }
 
-.fab-button svg {
-  width: 24px;
-  height: 24px;
+/* 페이지 내부로 제한 (데스크톱) */
+@media (min-width: 480px) {
+  .update-button-bottom {
+    max-width: 352px;
+  }
 }
 
 /* Main Content */
@@ -231,13 +228,18 @@ body {
 .map-container {
   width: 100%;
   height: 300px;
-  border: 1px solid var(--primary);
-  border-radius: 10px;
-  overflow: hidden;
+  border-radius: 12px;
+  overflow: hidden !important;
+  border: 2px solid var(--primary-green);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
   position: relative;
   box-sizing: border-box;
   pointer-events: auto !important;
-  touch-action: pan-x pan-y pinch-zoom;
+  touch-action: pan-x pan-y pinch-zoom !important;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .map-container.compact {
@@ -248,7 +250,10 @@ body {
 .map-container > div {
   width: 100% !important;
   height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   pointer-events: auto !important;
+  touch-action: auto !important;
 }
 
 .route-launcher {

@@ -56,319 +56,317 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Slf4j
 public class CourseService {
 
-    private final WebClient tmapWebClient;
-    private final UserRepository userRepository;
-    private final CourseRepository courseRepository;
-    private final FileStorage s3FileStorage;
-    private final CourseRepositoryCustom courseRepositoryCustom;
-    private final GeometryParser geometryParser;
-    private final CoursePathProcessor pathProcessor;
-    private final CourseLikeRepository courseLikeRepository;
-    private final CourseFavoriteRepository courseFavoriteRepository;
-    private final CourseSirenRepository courseSirenRepository;
-    private final MapboxCourseThumbnailGenerator mapboxCourseThumbnailGenerator;
-    private final RoutePlanner routePlanner;
+  private final WebClient tmapWebClient;
+  private final UserRepository userRepository;
+  private final CourseRepository courseRepository;
+  private final FileStorage s3FileStorage;
+  private final CourseRepositoryCustom courseRepositoryCustom;
+  private final GeometryParser geometryParser;
+  private final CoursePathProcessor pathProcessor;
+  private final CourseLikeRepository courseLikeRepository;
+  private final CourseFavoriteRepository courseFavoriteRepository;
+  private final CourseSirenRepository courseSirenRepository;
+  private final MapboxCourseThumbnailGenerator mapboxCourseThumbnailGenerator;
+  private final RoutePlanner routePlanner;
 
-    @Transactional
-    public CourseCreateResDto createCourse(
-        CourseCreateReqDto req,
-        MultipartFile imageFile,
-        CustomUser principal
-    ) {
+  @Transactional
+  public CourseCreateResDto createCourse(
+      CourseCreateReqDto req,
+      MultipartFile imageFile,
+      CustomUser principal
+  ) {
 
-        User user = getUserOrThrow(principal);
+    User user = getUserOrThrow(principal);
 
-        LineString parsedPath = geometryParser.parseLineString(req.getPath());
-        LineString cleanedPath = pathProcessor.simplifyForStore(parsedPath);
+    LineString parsedPath = geometryParser.parseLineString(req.getPath());
+    LineString cleanedPath = pathProcessor.simplifyForStore(parsedPath);
 
-        String imageUrl = resolveImageUrl(imageFile, FileDomainType.COURSE_IMAGE, user.getId());
+    String imageUrl = resolveImageUrl(imageFile, FileDomainType.COURSE_IMAGE, user.getId());
 
-        String thumbnailUrl = mapboxCourseThumbnailGenerator.generateAndUpload(parsedPath,
-            user.getId());
-        if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
-            thumbnailUrl = (imageUrl != null) ? imageUrl : "";
-        }
-
-        Course course = Course.create(
-            user,
-            req,
-            cleanedPath,
-            imageUrl,
-            thumbnailUrl,
-            req.getCourseRegisterType()
-        );
-
-        Course saved = courseRepository.save(course);
-        return CourseCreateResDto.builder()
-            .id(saved.getId())
-            .build();
+    String thumbnailUrl = mapboxCourseThumbnailGenerator.generateAndUpload(parsedPath,
+        user.getId());
+    if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
+      thumbnailUrl = (imageUrl != null) ? imageUrl : "";
     }
 
-    @Transactional
-    public CourseUpdateResDto updateCourse(
-        CustomUser principal,
-        Long courseId,
-        CourseUpdateReqDto req,
-        MultipartFile imageFile
-    ) {
-        User user = getUserOrThrow(principal);
+    Course course = Course.create(
+        user,
+        req,
+        cleanedPath,
+        imageUrl,
+        thumbnailUrl,
+        req.getCourseRegisterType()
+    );
 
-        Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+    Course saved = courseRepository.save(course);
+    return CourseCreateResDto.builder()
+        .id(saved.getId())
+        .build();
+  }
 
-        if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new ForbiddenException(ErrorCode.COURSE_NOT_ACTIVE);
-        }
-        if (!course.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException(ErrorCode.COURSE_FORBIDDEN);
-        }
-        String imageUrl = resolveChangedImageUrl(imageFile, FileDomainType.COURSE_IMAGE,
-            user.getId(), course);
-        LineString cleanedPath = course.getPath();
-        String thumbnailUrl = course.getThumbnailUrl();
+  @Transactional
+  public CourseUpdateResDto updateCourse(
+      CustomUser principal,
+      Long courseId,
+      CourseUpdateReqDto req,
+      MultipartFile imageFile
+  ) {
+    User user = getUserOrThrow(principal);
 
-        boolean hasNewPath = (req.getPath() != null && !req.getPath().isBlank());
+    Course course = courseRepository.findById(courseId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
-        if (hasNewPath) {
-            LineString parsedPath = geometryParser.parseLineString(req.getPath());
-            cleanedPath = pathProcessor.simplifyForStore(parsedPath);
+    if (course.getStatus() != CourseStatus.ACTIVE) {
+      throw new ForbiddenException(ErrorCode.COURSE_NOT_ACTIVE);
+    }
+    if (!course.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException(ErrorCode.COURSE_FORBIDDEN);
+    }
+    String imageUrl = resolveChangedImageUrl(imageFile, FileDomainType.COURSE_IMAGE,
+        user.getId(), course);
+    LineString cleanedPath = course.getPath();
+    String thumbnailUrl = course.getThumbnailUrl();
 
-            thumbnailUrl = mapboxCourseThumbnailGenerator.generateAndUpload(parsedPath,
-                user.getId());
-        }
+    boolean hasNewPath = (req.getPath() != null && !req.getPath().isBlank());
 
-        if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
-            thumbnailUrl = (imageUrl != null) ? imageUrl : course.getThumbnailUrl();
-        }
+    if (hasNewPath) {
+      LineString parsedPath = geometryParser.parseLineString(req.getPath());
+      cleanedPath = pathProcessor.simplifyForStore(parsedPath);
 
-        course.update(
-            user,
-            req,
-            cleanedPath,
-            imageUrl,
-            thumbnailUrl,
-            req.getCourseRegisterType()
-        );
-
-        return CourseUpdateResDto.from(course);
+      thumbnailUrl = mapboxCourseThumbnailGenerator.generateAndUpload(parsedPath,
+          user.getId());
     }
 
-    @Transactional
-    public void deleteCourse(CustomUser principal, Long courseId) {
-        User user = getUserOrThrow(principal);
-
-        Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
-
-        if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new ForbiddenException(ErrorCode.COURSE_NOT_ACTIVE);
-        }
-        if (!course.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException(ErrorCode.COURSE_FORBIDDEN);
-        }
-        course.delete();
+    if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
+      thumbnailUrl = (imageUrl != null) ? imageUrl : course.getThumbnailUrl();
     }
 
-    @Transactional(readOnly = true)
-    public CourseDetailResDto getCourse(CustomUser principal, Long courseId) {
-        User user = getUserOrThrow(principal);
+    course.update(
+        user,
+        req,
+        cleanedPath,
+        imageUrl,
+        thumbnailUrl,
+        req.getCourseRegisterType()
+    );
 
-        Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+    return CourseUpdateResDto.from(course);
+  }
 
-        boolean isLiked = courseLikeRepository.existsByCourse_IdAndUser_Id(courseId, user.getId());
+  @Transactional
+  public void deleteCourse(CustomUser principal, Long courseId) {
+    User user = getUserOrThrow(principal);
 
-        boolean isFavorited = courseFavoriteRepository.existsByCourse_IdAndUser_Id(courseId,
-            user.getId());
-        course.resolveUrl(s3FileStorage.toHttpsUrl(course.getImageUrl()),
-            s3FileStorage.toHttpsUrl(course.getThumbnailUrl()));
+    Course course = courseRepository.findById(courseId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
-        return CourseDetailResDto.fromEntity(course, user, isLiked, isFavorited);
+    if (course.getStatus() != CourseStatus.ACTIVE) {
+      throw new ForbiddenException(ErrorCode.COURSE_NOT_ACTIVE);
+    }
+    if (!course.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException(ErrorCode.COURSE_FORBIDDEN);
+    }
+    course.delete();
+  }
+
+  @Transactional(readOnly = true)
+  public CourseDetailResDto getCourse(CustomUser principal, Long courseId) {
+    User user = getUserOrThrow(principal);
+
+    Course course = courseRepository.findById(courseId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+    boolean isLiked = courseLikeRepository.existsByCourse_IdAndUser_Id(courseId, user.getId());
+
+    boolean isFavorited = courseFavoriteRepository.existsByCourse_IdAndUser_Id(courseId,
+        user.getId());
+    course.resolveUrl(s3FileStorage.toHttpsUrl(course.getImageUrl()),
+        s3FileStorage.toHttpsUrl(course.getThumbnailUrl()));
+
+    return CourseDetailResDto.fromEntity(course, user, isLiked, isFavorited);
+  }
+
+
+  @Transactional(readOnly = true)
+  public CoursePathResDto getCoursePath(CustomUser principal, Long courseId) {
+
+    getUserOrThrow(principal);
+
+    Course course = courseRepository.findById(courseId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+    return CoursePathResDto.from(course);
+  }
+
+  @Transactional(readOnly = true)
+  public CursorPage<CourseListResDto> getCourseList(CustomUser principal, CourseListReqDto req) {
+    User user = getUserOrThrow(principal);
+
+    CursorPage<CourseListResDto> page = courseRepositoryCustom.searchCourses(req, user.getId());
+
+    page.setItems(
+        page.getItems().stream()
+            .map(dto -> {
+              dto.resolveThumbnailUrl(
+                  s3FileStorage.toHttpsUrl(dto.getThumbnailUrl()));
+              return dto;
+            })
+            .toList()
+    );
+    return page;
+
+  }
+
+  @Transactional
+  public void likeCourse(CustomUser principal, Long courseId) {
+
+    User user = getUserOrThrow(principal);
+
+    Course course = courseRepository.findById(courseId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+    if (course.getStatus() != CourseStatus.ACTIVE) {
+      throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
+    }
+    if (course.getUser().getId().equals(user.getId())) {
+      throw new BusinessException(ErrorCode.CANNOT_LIKE_OWN_COURSE);
     }
 
+    if (courseLikeRepository.existsByCourse_IdAndUser_Id(user.getId(), courseId)) {
+      throw new BusinessException(ErrorCode.ALREADY_LIKED_COURSE);
+    }
+    courseLikeRepository.save(CourseLike.create(user, course));
 
-    @Transactional(readOnly = true)
-    public CoursePathResDto getCoursePath(CustomUser principal, Long courseId) {
+    courseRepository.increaseLikeCount(courseId);
+  }
 
-        getUserOrThrow(principal);
+  @Transactional
+  public void unLikeCourse(CustomUser principal, Long courseId) {
+    User user = getUserOrThrow(principal);
 
-        Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+    Course course = courseRepository.findById(courseId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
-        return CoursePathResDto.from(course);
+    if (course.getStatus() != CourseStatus.ACTIVE) {
+      throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
     }
 
-    @Transactional(readOnly = true)
-    public CursorPage<CourseListResDto> getCourseList(CustomUser principal, CourseListReqDto req) {
-        User user = getUserOrThrow(principal);
+    int deleted = courseLikeRepository
+        .deleteByCourseIdAndUserId(courseId, user.getId());
 
-        CursorPage<CourseListResDto> page = courseRepositoryCustom.searchCourses(req, user.getId());
-
-        page.setItems(
-            page.getItems().stream()
-                .map(dto -> {
-                    dto.resolveThumbnailUrl(
-                        s3FileStorage.toHttpsUrl(dto.getThumbnailUrl()));
-                    return dto;
-                })
-                .toList()
-        );
-        return page;
-
+    if (deleted == 0) {
+      throw new BadRequestException(ErrorCode.NOT_LIKED);
     }
 
-    @Transactional
-    public void likeCourse(CustomUser principal, Long courseId) {
+    int updated = courseRepository.decreaseLikeCount(courseId);
 
-        User user = getUserOrThrow(principal);
-
-        Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
-        if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
-        }
-        if (course.getUser().getId().equals(user.getId())) {
-            throw new BusinessException(ErrorCode.CANNOT_LIKE_OWN_COURSE);
-        }
-
-        if (courseLikeRepository.existsByCourse_IdAndUser_Id(user.getId(), courseId)) {
-            throw new BusinessException(ErrorCode.ALREADY_LIKED_COURSE);
-        }
-        courseLikeRepository.save(CourseLike.create(user, course));
-
-        courseRepository.increaseLikeCount(courseId);
+    if (updated == 0) {
+      log.warn("likeCount already zero. courseId={}", courseId);
     }
 
-    @Transactional
-    public void unLikeCourse(CustomUser principal, Long courseId) {
-        User user = getUserOrThrow(principal);
+  }
 
-        Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+  @Transactional
+  public void favoriteCourse(CustomUser principal, Long courseId) {
+    User user = getUserOrThrow(principal);
 
-        if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
-        }
+    Course course = courseRepository.findById(courseId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
-        int deleted = courseLikeRepository
-            .deleteByCourseIdAndUserId(courseId, user.getId());
-
-        if (deleted == 0) {
-            throw new BadRequestException(ErrorCode.NOT_LIKED);
-        }
-
-        int updated = courseRepository.decreaseLikeCount(courseId);
-
-        if (updated == 0) {
-            log.warn("likeCount already zero. courseId={}", courseId);
-        }
-
+    if (course.getStatus() != CourseStatus.ACTIVE) {
+      throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
+    }
+    if (course.getUser().getId().equals(user.getId())) {
+      throw new BusinessException(ErrorCode.CANNOT_FAVORITE_OWN_COURSE);
     }
 
-    @Transactional
-    public void favoriteCourse(CustomUser principal, Long courseId) {
-        User user = getUserOrThrow(principal);
+    if (courseFavoriteRepository.existsByCourse_IdAndUser_Id(user.getId(), courseId)) {
+      throw new BusinessException(ErrorCode.ALREADY_FAVORITE_COURSE);
+    }
+    courseFavoriteRepository.save(CourseFavorite.create(user, course));
 
-        Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+    courseRepository.increaseFavoriteCount(courseId);
+  }
 
-        if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
-        }
-        if (course.getUser().getId().equals(user.getId())) {
-            throw new BusinessException(ErrorCode.CANNOT_FAVORITE_OWN_COURSE);
-        }
+  @Transactional
+  public void unFavoriteCourse(CustomUser principal, Long courseId) {
+    User user = getUserOrThrow(principal);
 
-        if (courseFavoriteRepository.existsByCourse_IdAndUser_Id(user.getId(), courseId)) {
-            throw new BusinessException(ErrorCode.ALREADY_FAVORITE_COURSE);
-        }
-        courseFavoriteRepository.save(CourseFavorite.create(user, course));
+    Course course = courseRepository.findById(courseId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
 
-        courseRepository.increaseFavoriteCount(courseId);
+    if (course.getStatus() != CourseStatus.ACTIVE) {
+      throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
     }
 
-    @Transactional
-    public void unFavoriteCourse(CustomUser principal, Long courseId) {
-        User user = getUserOrThrow(principal);
+    int deleted = courseFavoriteRepository
+        .deleteByCourseIdAndUserId(courseId, user.getId());
 
-        Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
-
-        if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
-        }
-
-        int deleted = courseFavoriteRepository
-            .deleteByCourseIdAndUserId(courseId, user.getId());
-
-        if (deleted == 0) {
-            throw new BadRequestException(ErrorCode.NOT_FAVORITE);
-        }
-
-        int updated = courseRepository.decreaseFavoriteCount(courseId);
-
-        if (updated == 0) {
-            log.warn("favoriteCount already zero. courseId={}", courseId);
-        }
-
+    if (deleted == 0) {
+      throw new BadRequestException(ErrorCode.NOT_FAVORITE);
     }
 
-    public void sirenCourse(CustomUser principal, Long courseId, CourseSirenReqDto req) {
-        User user = getUserOrThrow(principal);
+    int updated = courseRepository.decreaseFavoriteCount(courseId);
 
-        Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
-
-        if (course.getStatus() != CourseStatus.ACTIVE) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
-        }
-
-        if (course.getUser().getId().equals(user.getId())) {
-            throw new BusinessException(ErrorCode.CANNOT_SIREN_OWN_COURSE);
-        }
-
-        if (courseSirenRepository.existsByCourse_IdAndUser_Id(courseId, user.getId())) {
-            throw new BusinessException(ErrorCode.ALREADY_SIREN_COURSE);
-        }
-        courseSirenRepository.save(CourseSiren.create(user, course, req));
-
+    if (updated == 0) {
+      log.warn("favoriteCount already zero. courseId={}", courseId);
     }
 
-    public RouteResDto oneWay(RouteRequestDto req) {
-        return routePlanner.oneWay(req);
+  }
+
+  public void sirenCourse(CustomUser principal, Long courseId, CourseSirenReqDto req) {
+    User user = getUserOrThrow(principal);
+
+    Course course = courseRepository.findById(courseId)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.COURSE_NOT_FOUND));
+
+    if (course.getStatus() != CourseStatus.ACTIVE) {
+      throw new BusinessException(ErrorCode.COURSE_NOT_AVAILABLE);
     }
 
-    public RouteResDto roundTrip(RouteRequestDto req) {
-        return routePlanner.roundTrip(req);
+    if (course.getUser().getId().equals(user.getId())) {
+      throw new BusinessException(ErrorCode.CANNOT_SIREN_OWN_COURSE);
     }
 
+    if (courseSirenRepository.existsByCourse_IdAndUser_Id(courseId, user.getId())) {
+      throw new BusinessException(ErrorCode.ALREADY_SIREN_COURSE);
+    }
+    courseSirenRepository.save(CourseSiren.create(user, course, req));
 
-    private User getUserOrThrow(CustomUser principal) {
-        if (principal == null || principal.getLoginId() == null) {
-            throw new NotFoundException(ErrorCode.USER_NOT_FOUND);
-        }
-        return userRepository.findByLoginId(principal.getLoginId())
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  public RouteResDto oneWay(RouteRequestDto req) {
+    return routePlanner.oneWay(req);
+  }
+
+  public RouteResDto roundTrip(RouteRequestDto req) {
+    return routePlanner.roundTrip(req);
+  }
+
+
+  private User getUserOrThrow(CustomUser principal) {
+    if (principal == null || principal.getLoginId() == null) {
+      throw new NotFoundException(ErrorCode.USER_NOT_FOUND);
+    }
+    return userRepository.findByLoginId(principal.getLoginId())
+        .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  private String resolveImageUrl(MultipartFile file, FileDomainType domainType, Long refId) {
+    if (file == null) {
+      throw new FileUploadException(ErrorCode.FILE_REQUIRED);
+    }
+    if (file.isEmpty()) {
+      throw new FileUploadException(ErrorCode.FILE_EMPTY);
+    }
+    return s3FileStorage.upload(file, domainType, refId);
+  }
+
+  private String resolveChangedImageUrl(MultipartFile file, FileDomainType domainType,
+      Long refId, Course course) {
+    if (file == null || file.isEmpty()) {
+      return course.getImageUrl();
     }
 
-    private String resolveImageUrl(MultipartFile file, FileDomainType domainType, Long refId) {
-        if (file == null) {
-            throw new FileUploadException(ErrorCode.FILE_REQUIRED);
-        }
-        if (file.isEmpty()) {
-            throw new FileUploadException(ErrorCode.FILE_EMPTY);
-        }
-        return s3FileStorage.upload(file, domainType, refId);
-    }
-
-    private String resolveChangedImageUrl(MultipartFile file, FileDomainType domainType,
-        Long refId, Course course) {
-        if (file == null) {
-            throw new FileUploadException(ErrorCode.FILE_REQUIRED);
-        }
-        if (file.isEmpty()) {
-            throw new FileUploadException(ErrorCode.FILE_EMPTY);
-        }
-        return s3FileStorage.uploadIfChanged(file, domainType, refId, course.getImageUrl());
-    }
+    return s3FileStorage.uploadIfChanged(file, domainType, refId, course.getImageUrl());
+  }
 }
