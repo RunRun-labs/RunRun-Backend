@@ -362,8 +362,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let rankText = "";
     const ranking = record.ranking;
 
-    // 모든 순위를 서수 형식으로 표시
-    if (ranking === 1) {
+    // ranking이 0이면 "포기"로 표시
+    if (ranking === 0 || ranking === null || ranking === undefined) {
+      rankClass = "";
+      rankText = "포기";
+    } else if (ranking === 1) {
       rankClass = "first";
       rankText = "1st";
     } else if (ranking === 2) {
@@ -400,8 +403,9 @@ document.addEventListener("DOMContentLoaded", () => {
     card.className = cardClass;
 
     // 순위/참가자 수 표시
-    const rankParticipantsText = participants > 0
-        ? `${record.ranking} / ${participants}` : rankText;
+    const rankParticipantsText = (ranking === 0 || ranking === null || ranking === undefined)
+        ? rankText
+        : (participants > 0 ? `${record.ranking} / ${participants}` : rankText);
 
     card.innerHTML = `
       <div class="battle-card-header">
