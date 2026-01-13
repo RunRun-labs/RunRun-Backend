@@ -1,6 +1,6 @@
 /* ===== 기본 설정 ===== */
 :root {
-  --primary: #baff29;
+  --primary: #10b981;
   --primary-green: #10b981;
   --primary-green-light: #14b8a6;
   --text-strong: #111827;
@@ -492,8 +492,8 @@ body {
 }
 
 .card-badge.host {
-  background: var(--primary);
-  color: var(--text-strong);
+  background: var(--primary-green);
+  color: white;
   margin-left: 6px;
 }
 
@@ -607,7 +607,7 @@ body {
   margin: 0 auto;
   height: 76px;
   background: var(--bg-white);
-  border-top: 1px solid var(--primary);
+  border-top: 1px solid var(--stroke);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;

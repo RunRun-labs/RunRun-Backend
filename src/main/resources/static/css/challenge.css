@@ -292,8 +292,11 @@ body {
     color: var(--text-strong);
 }
 
+/* 챌린지 타입 뱃지 */
 .challenge-type-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     padding: 2px 8px;
     border-radius: 999px;
     background: var(--primary);
@@ -301,6 +304,37 @@ body {
     font-size: 9px;
     font-weight: 600;
     text-transform: uppercase;
+}
+
+.challenge-type-icon {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.type-icon-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    stroke: currentColor; /* 뱃지 텍스트 색상을 따름 */
+    fill: none;
+}
+
+/* 챌린지 타입 뱃지 배경색/텍스트색 */
+.challenge-type-badge[data-type="TIME"] {
+    background-color: #E0E7FF;
+    color: #3730A3;
+}
+
+.challenge-type-badge[data-type="DISTANCE"] {
+    background-color: #DCFCE7;
+    color: #166534;
+}
+
+.challenge-type-badge[data-type="COUNT"] {
+    background-color: #FEF3C7;
+    color: #92400E;
 }
 
 .challenge-empty {
@@ -516,5 +550,3 @@ body {
         height: 30px;
     }
 }
-
-

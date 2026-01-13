@@ -485,7 +485,7 @@ function setupEventListeners() {
   const rematchButton = document.getElementById('rematch-button');
   if (rematchButton) {
     rematchButton.addEventListener('click', () => {
-      window.location.href = '/match/select';
+      window.location.href = `/match/battleDetail/${SESSION_ID}`;
     });
   }
 }

@@ -18,7 +18,7 @@
         th:href="@{/css/notification-toast.css}">
   <script
       type="text/javascript"
-      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=8b23243ecce1d67f7d49784724586afa&libraries=services,clusterer">
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services,clusterer">
   </script>
 </head>
 <body>
@@ -26,11 +26,7 @@
   <!-- 헤더 -->
   <header class="header">
     <button type="button" id="backButton" class="back-button" aria-label="뒤로가기">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-           xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round"/>
-      </svg>
+      <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기">
     </button>
     <h1 class="header-title">모집글 상세보기</h1>
   </header>
