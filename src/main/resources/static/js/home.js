@@ -77,6 +77,51 @@ async function loadTodayStats() {
 let userWeightKg = null;
 
 /**
+ * 챌린지 인디케이터 업데이트
+ */
+function updateChallengeIndicators() {
+    const indicators = document.querySelectorAll('.challenge-indicator');
+    indicators.forEach((indicator, index) => {
+        if (index === currentSlideIndex) {
+            indicator.classList.add('active');
+        } else {
+            indicator.classList.remove('active');
+        }
+    });
+}
+
+/**
+ * 특정 슬라이드로 이동
+ */
+function navigateToSlide(index) {
+    if (allChallenges.length === 0) return;
+
+    // 자동 슬라이드 중지
+    if (challengeSlideInterval) {
+        clearInterval(challengeSlideInterval);
+        challengeSlideInterval = null;
+    }
+
+    currentSlideIndex = index;
+
+    // 슬라이더 이동
+    const slider = document.querySelector('[data-role="challenge-banner-slider"]');
+    if (slider) {
+        slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+    }
+
+    // 인디케이터 업데이트
+    updateChallengeIndicators();
+
+    // 5초 후 자동 슬라이드 재개
+    setTimeout(() => {
+        if (allChallenges.length > 1) {
+            startChallengeSlide(allChallenges.length);
+        }
+    }, 5000);
+}
+
+/**
  * 사용자 몸무게 정보 로드
  */
 async function loadUserWeightInfo() {
@@ -544,26 +589,31 @@ async function loadLatestChallengeForBanner() {
 
 function renderChallengeBanner(challenges) {
     const slider = document.querySelector('[data-role="challenge-banner-slider"]');
+    const indicatorsContainer = document.querySelector('[data-role="challenge-indicators"]');
     const container = document.querySelector('[data-role="challenge-banner-container"]');
     if (!slider) return;
 
     slider.innerHTML = "";
+    if (indicatorsContainer) indicatorsContainer.innerHTML = "";
 
     if (!Array.isArray(challenges) || challenges.length === 0) {
         const emptySlide = document.createElement("div");
         emptySlide.className = "challenge-banner-slide";
         emptySlide.innerHTML = `
-            <div style="width: 100%; height: 100%; background: #eef2f4; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-                진행중인 챌린지가 없습니다.
+            <div style="width: 100%; height: 100%; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); gap: 12px; padding: 40px;">
+                <div style="font-size: 48px;">🏆</div>
+                <div style="font-size: 16px; font-weight: 600;">진행중인 챌린지가 없습니다</div>
+                <div style="font-size: 13px;">곧 새로운 챌린지가 시작됩니다!</div>
             </div>
         `;
         slider.appendChild(emptySlide);
 
-        // 화살표 버튼 숨기기
+        // 화살표 버튼 및 인디케이터 숨기기
         const prevBtn = document.querySelector('[data-role="challenge-prev"]');
         const nextBtn = document.querySelector('[data-role="challenge-next"]');
         if (prevBtn) prevBtn.style.display = "none";
         if (nextBtn) nextBtn.style.display = "none";
+        if (indicatorsContainer) indicatorsContainer.style.display = "none";
         return;
     }
 
@@ -573,14 +623,24 @@ function renderChallengeBanner(challenges) {
     if (challenges.length > 1) {
         if (prevBtn) prevBtn.style.display = "flex";
         if (nextBtn) nextBtn.style.display = "flex";
+        if (indicatorsContainer) indicatorsContainer.style.display = "flex";
     } else {
         if (prevBtn) prevBtn.style.display = "none";
         if (nextBtn) nextBtn.style.display = "none";
+        if (indicatorsContainer) indicatorsContainer.style.display = "none";
     }
 
-    challenges.forEach((challenge) => {
+    challenges.forEach((challenge, index) => {
         const slide = document.createElement("div");
         slide.className = "challenge-banner-slide";
+
+        // 챌린지 상태에 따른 배지 추가
+        let badgeHtml = '';
+        if (challenge.status === 'ACTIVE' || challenge.status === 'IN_PROGRESS') {
+            badgeHtml = '<span class="challenge-badge">진행중</span>';
+        } else if (challenge.status === 'UPCOMING') {
+            badgeHtml = '<span class="challenge-badge" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">시작 예정</span>';
+        }
 
         slide.innerHTML = `
             <img
@@ -590,6 +650,7 @@ function renderChallengeBanner(challenges) {
                 onerror="this.src='/img/default-challenge.png'"
             />
             <div class="challenge-banner-overlay">
+                ${badgeHtml}
                 <h3 class="challenge-banner-title">${escapeHtml(challenge.title || "챌린지 제목")}</h3>
                 <button class="challenge-banner-button" type="button">상세보기</button>
             </div>
@@ -600,6 +661,18 @@ function renderChallengeBanner(challenges) {
         });
 
         slider.appendChild(slide);
+
+        // 인디케이터 추가
+        if (indicatorsContainer && challenges.length > 1) {
+            const indicator = document.createElement('div');
+            indicator.className = `challenge-indicator ${index === 0 ? 'active' : ''}`;
+            indicator.setAttribute('data-index', index);
+            indicator.addEventListener('click', (e) => {
+                e.stopPropagation();
+                navigateToSlide(index);
+            });
+            indicatorsContainer.appendChild(indicator);
+        }
     });
 
     if (challenges.length > 1) {
@@ -627,6 +700,7 @@ function startChallengeSlide(totalSlides) {
     challengeSlideInterval = setInterval(() => {
         currentSlideIndex = (currentSlideIndex + 1) % totalSlides;
         slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+        updateChallengeIndicators();
     }, 3000);
 }
 
@@ -679,6 +753,9 @@ function navigateChallenge(direction) {
     if (slider) {
         slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
     }
+
+    // 인디케이터 업데이트
+    updateChallengeIndicators();
 
     // 5초 후 자동 슬라이드 재개
     setTimeout(() => {
