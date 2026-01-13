@@ -7,6 +7,10 @@
     <link rel="stylesheet" th:href="@{/css/point.css}">
 </head>
 <body>
+
+<!-- 상단 네비게이션 -->
+<div th:replace="~{common/top-nav :: topNav}"></div>
+
 <div class="point-container">
     <!-- 포인트 카드 -->
     <div class="point-card">
@@ -28,28 +32,7 @@
 </div>
 
 <!-- 하단 네비게이션 -->
-<div class="bottom-nav">
-    <a href="/chat" class="nav-item">
-        <span class="icon">💬</span>
-        <span>chat</span>
-    </a>
-    <a href="/crews" class="nav-item">
-        <span class="icon">👥</span>
-        <span>crew</span>
-    </a>
-    <a href="/" class="nav-item">
-        <span class="icon">🏠</span>
-        <span>home</span>
-    </a>
-    <a href="/match" class="nav-item">
-        <span class="icon">🎯</span>
-        <span>match</span>
-    </a>
-    <a href="/mypage" class="nav-item active">
-        <span class="icon">👤</span>
-        <span>my</span>
-    </a>
-</div>
+<div th:replace="~{common/bottom-nav :: bottomNav}"></div>
 
 <script th:src="@{/js/point.js}"></script>
 <script>

@@ -45,8 +45,7 @@ public class JwtFilter extends OncePerRequestFilter {
       "/css/**",
       "/js/**",
       "/test/**",
-      "/crews/new",
-      "/crews/**"
+      "/favicon/**"
 
   };
 

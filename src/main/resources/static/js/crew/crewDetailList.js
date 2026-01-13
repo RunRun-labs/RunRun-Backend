@@ -44,11 +44,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentUserId = parseInt(localStorage.getItem('userId'));
 
-    await loadCrewData();
+    if (!window.currentUserId) {
+        window.currentUserId = currentUserId;
+    }
 
     if (currentUserId) {
         await checkMyRole();
-        showActionButtons();  // 역할별 버튼 표시
+    }
+
+    await loadCrewData();
+
+    if (currentUserId) {
+        showActionButtons();
     }
 
     initEventListeners();
@@ -223,8 +230,9 @@ async function loadCrewData() {
 async function checkMyRole() {
     try {
         const token = localStorage.getItem('accessToken');
+        const userId = parseInt(localStorage.getItem('userId'));  // ← 이 줄 추가
 
-        if (!token || !currentUserId) {
+        if (!token || !userId) {
             return;
         }
 
@@ -244,11 +252,13 @@ async function checkMyRole() {
         const members = result.data || result;
 
         // 내 정보 찾기
-        const myInfo = members.find(member => member.userId === currentUserId);
+        const myInfo = members.find(member => member.userId === userId);
 
         if (myInfo) {
             currentUserRole = myInfo.role;
-            console.log('내 역할:', currentUserRole);
+            console.log('✅ 내 역할:', currentUserRole);  // ← 로그 추가
+        } else {
+            console.log('❌ 내 정보를 찾을 수 없음');  // ← 로그 추가
         }
 
     } catch (error) {
@@ -272,6 +282,12 @@ function showActionButtons() {
     if (currentUserRole === 'LEADER') {
         showEditButton();
         console.log('크루장 - 수정 버튼 표시');
+    }
+
+    // 크루장, 부크루장, 운영진만 활동 추가 버튼 표시
+    if (currentUserRole === 'LEADER' || currentUserRole === 'SUB_LEADER' || currentUserRole === 'STAFF') {
+        showAddActivityButton();
+        console.log('관리자 - 활동 추가 버튼 표시');
     }
 
     // 모든 크루원에게 사람 아이콘 클릭 가능하게 만들기
@@ -466,10 +482,25 @@ function updateCrewUI(crew) {
                     : '';
 
                 activityCard.innerHTML = `
-                    <div class="activity-card__badge">러닝</div>
-                    <h4 class="activity-card__title">${escapeHtml(activity.activityName || '활동')}</h4>
-                    <p class="activity-card__date">${activityDate} ${activity.participantCount || 0}명 참여</p>
-                `;
+                <div class="activity-card__badge">러닝</div>
+                <h4 class="activity-card__title">${escapeHtml(activity.activityName || '활동')}</h4>
+                <p class="activity-card__date">${activityDate} ${activity.participantCount || 0}명 참여</p>
+            `;
+
+                // 크루장, 부크루장, 운영진만 클릭해서 수정 가능
+                console.log('활동 카드 생성 - currentUserRole:', currentUserRole, 'activityId:', activity.activityId);
+
+                if (currentUserRole === 'LEADER' || currentUserRole === 'SUB_LEADER' || currentUserRole === 'STAFF') {
+                    activityCard.style.cursor = 'pointer';
+                    activityCard.addEventListener('click', () => {
+                        console.log('활동 카드 클릭! 수정 페이지로 이동:', `/crews/${crewId}/activities/${activity.activityId}/edit`);
+                        window.location.href = `/crews/${crewId}/activities/${activity.activityId}/edit`;
+                    });
+                } else {
+                    console.log('권한 없음 - 클릭 불가');
+                    activityCard.style.cursor = 'default';
+                }
+
                 activityList.appendChild(activityCard);
             });
 
@@ -1039,3 +1070,39 @@ window.addEventListener('beforeunload', () => {
 });
 
 console.log('크루 상세 스크립트 로드 완료');
+
+// ========================================
+// 활동 추가 버튼 (크루장, 부크루장, 운영진)
+// ========================================
+function showAddActivityButton() {
+    const activitySection = document.querySelector('.crew-activities');
+
+    if (!activitySection) {
+        console.warn('활동 섹션을 찾을 수 없습니다.');
+        return;
+    }
+
+    // 이미 버튼이 있으면 종료
+    if (document.getElementById('btnAddActivity')) {
+        return;
+    }
+
+    // + 버튼 생성
+    const addButton = document.createElement('button');
+    addButton.id = 'btnAddActivity';
+    addButton.className = 'btn-add-activity';
+    addButton.setAttribute('aria-label', '활동 추가');
+    addButton.innerHTML = '+';
+    addButton.onclick = () => {
+        window.location.href = `/crews/${crewId}/activities/create`;
+    };
+
+    // 섹션 타이틀 옆에 추가
+    const sectionTitle = activitySection.querySelector('.section-title');
+    if (sectionTitle) {
+        sectionTitle.style.display = 'flex';
+        sectionTitle.style.alignItems = 'center';
+        sectionTitle.style.justifyContent = 'space-between';
+        sectionTitle.appendChild(addButton);
+    }
+}

@@ -138,5 +138,12 @@ public class Membership extends BaseEntity {
         this.endDate = endDate;
     }
 
-
+    /**
+     * @description : nextBillingDate 설정 (체험권용)
+     * @author : BoKyung
+     * @since : 25. 12. 30. 월요일
+     */
+    public void setNextBillingDate(LocalDateTime nextBillingDate) {
+        this.nextBillingDate = nextBillingDate;
+    }
 }

@@ -1,0 +1,24 @@
+/* ===== 기본 스타일 import ===== */
+@import url('./crewActivityCreate.css');
+
+/* ===== 삭제 버튼 ===== */
+.btn-delete {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background: var(--error);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-delete:hover {
+    opacity: 0.9;
+}
+
+.btn-delete:active {
+    transform: scale(0.98);
+}

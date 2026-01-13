@@ -29,27 +29,36 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
 
     // 해지 신청 상태 + 만료일이 지난 멤버십 찾기 (자동 처리용)
     List<Membership> findByMembershipStatusAndEndDateBefore(
-        MembershipStatus status,
-        LocalDateTime dateTime
+            MembershipStatus status,
+            LocalDateTime dateTime
     );
 
     /**
      * @description : 자동결제 대상 조회 (스케줄러용)
      */
     List<Membership> findByMembershipStatusAndNextBillingDateBetween(
-        MembershipStatus status,
-        LocalDateTime start,
-        LocalDateTime end
+            MembershipStatus status,
+            LocalDateTime start,
+            LocalDateTime end
     );
 
     /**
      * @description : 해지 신청 상태 + 만료일이 하루 후인 멤버십 찾기 (만료 전 알림용)
      */
     List<Membership> findByMembershipStatusAndEndDateBetween(
-        MembershipStatus status,
-        LocalDateTime startDateTime,
-        LocalDateTime endDateTime
+            MembershipStatus status,
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
     );
 
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    // 체험권 만료 예정 조회
+    List<Membership> findByMembershipStatusAndNextBillingDateIsNullAndEndDateBetween(
+            MembershipStatus status,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
+
+
 }

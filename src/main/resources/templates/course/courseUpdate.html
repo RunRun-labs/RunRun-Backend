@@ -25,36 +25,23 @@
     <header class="course-header">
       <button class="back-button" type="button" aria-label="뒤로가기" onclick="history.back()">
         <img
-            src="http://localhost:3845/assets/5d8e7700a6d94e6f5d3b62853522a7c52a457010.svg"
+            th:src="@{/img/icons/back.svg}"
+            src="/img/icons/back.svg"
             alt="뒤로가기 아이콘"
         />
       </button>
       <h1 class="page-title">코스 수정하기</h1>
     </header>
 
-    <!-- FAB Button (Fixed above bottom nav) -->
+    <!-- 하단 고정 버튼 (FAB 대신) -->
     <button
-      class="fab-button"
+      class="update-button-bottom"
       type="submit"
       id="stickyUpdateBtn"
       form="courseForm"
-      aria-label="코스 수정하기"
+      aria-label="수정 완료"
     >
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M12 5V19M5 12H19"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
+      수정 완료
     </button>
 
     <!-- Main Content -->
@@ -102,7 +89,7 @@
           <div class="route-summary" id="routeSummary">
             아직 선택된 코스가 없습니다.
           </div>
-          <div class="map-container compact" id="mapPreview"></div>
+          <div class="map-container compact" id="map"></div>
           <p class="field-error" data-error-for="path"></p>
           <input type="hidden" name="path" id="pathInput"/>
           <input type="hidden" name="distanceM" id="distanceMInput"/>
@@ -110,6 +97,15 @@
           <input type="hidden" name="startLng" id="startLngInput"/>
           <input type="hidden" name="address" id="addressInput"/>
           <input type="hidden" name="courseRegisterType" id="courseRegisterTypeInput"/>
+        </div>
+
+        <!-- 지도 모달 (visibility: hidden으로 DOM에 미리 렌더링) -->
+        <div class="map-modal-overlay" id="mapModal" style="visibility: hidden; opacity: 0;">
+          <div class="map-modal-content">
+            <div class="map-modal-body">
+              <div class="map-modal-container" id="mapModal-map"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Image Upload Section -->

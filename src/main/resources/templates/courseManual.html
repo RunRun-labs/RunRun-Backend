@@ -13,6 +13,7 @@
         --text: #1a1c1e;
         --muted: #6c7278;
         --danger: #ff3d00;
+        --active: #4CAF50;
       }
 
       * {
@@ -24,6 +25,7 @@
         background: var(--bg);
         color: var(--text);
         min-height: 100vh;
+        overflow: hidden;
       }
 
       .page {
@@ -32,6 +34,7 @@
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        width: 100%;
       }
 
       header {
@@ -44,7 +47,7 @@
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         position: sticky;
         top: 0;
-        z-index: 10;
+        z-index: 100;
       }
 
       header h1 {
@@ -55,81 +58,435 @@
         text-align: center;
       }
 
-      .icon-btn,
-      .primary-btn,
-      .chip-btn {
+      .icon-btn {
         border: none;
         border-radius: 999px;
-        padding: 10px 18px;
+        padding: 8px 16px;
         cursor: pointer;
         font-weight: 700;
         font-size: 13px;
-        transition: opacity 0.15s;
+        background: rgba(0, 0, 0, 0.05);
       }
 
-      .icon-btn {
-        background: rgba(0, 0, 0, 0.04);
-        padding: 8px 14px;
-      }
-
-      .primary-btn {
+      .apply-btn {
+        border: none;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
         background: var(--primary);
+        padding: 8px 20px;
         color: #000;
       }
 
-      .primary-btn:disabled {
+      .apply-btn:disabled {
         opacity: 0.4;
         cursor: not-allowed;
       }
 
-      .chip-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .chip-btn {
-        background: #fff;
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        color: #1f2329;
-      }
-
-      .chip-btn.active {
-        border-color: var(--primary);
-        box-shadow: 0 2px 8px rgba(186, 255, 41, 0.45);
-      }
-
-      .controls {
-        padding: 16px 18px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .info-card {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 14px 16px;
-        border-radius: 14px;
-        background: #fff;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-      }
-
-      .info-card strong {
-        display: block;
-        font-size: 16px;
-      }
-
       #map {
         flex: 1;
-        min-height: 420px;
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
       }
 
+      /* 검색 패널 */
+      .search-panel {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 180px);
+        max-width: 400px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 12;
+        overflow: visible;
+      }
+
+      .search-input-wrapper {
+        position: relative;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 16px 48px 16px 48px;
+        border: none;
+        font-size: 15px;
+        outline: none;
+        border-radius: 16px;
+      }
+
+      .search-input::placeholder {
+        color: #999;
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+        font-size: 18px;
+      }
+
+      .clear-icon {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #e0e0e0;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        color: #666;
+      }
+
+      .search-input:not(:placeholder-shown) ~ .clear-icon {
+        display: flex;
+      }
+
+      /* 검색 결과 리스트 */
+      .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 4px;
+        z-index: 1000;
+      }
+
+      .search-results.show {
+        display: block;
+      }
+
+      .search-result-item {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .search-result-item:hover {
+        background: #f8f8f8;
+      }
+
+      .search-result-item:last-child {
+        border-bottom: none;
+      }
+
+      .result-name {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 4px;
+        color: #000;
+      }
+
+      .result-address {
+        font-size: 13px;
+        color: #666;
+      }
+
+      .result-category {
+        font-size: 11px;
+        color: #999;
+        margin-top: 2px;
+      }
+
+      .no-results {
+        padding: 20px;
+        text-align: center;
+        color: #999;
+        font-size: 13px;
+      }
+
+      /* 왼쪽 컨트롤 패널 */
+      .control-panel {
+        position: fixed;
+        left: 20px;
+        top: 100px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 10;
+      }
+
+      /* 동그란 버튼 */
+      .round-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: none;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        transition: all 0.2s;
+        position: relative;
+      }
+
+      .round-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      }
+
+      .round-btn:active {
+        transform: scale(0.95);
+      }
+
+      .round-btn.active {
+        background: var(--active);
+        color: white;
+      }
+
+      .round-btn.danger {
+        background: var(--danger);
+        color: white;
+      }
+
+      /* 툴팁 */
+      .round-btn::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 70px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+
+      .round-btn:hover::after {
+        opacity: 1;
+      }
+
+      /* 경로 생성 버튼 */
+      .create-route-btn {
+        position: fixed;
+        bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 18px 48px;
+        background: var(--primary);
+        border: none;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        display: none;
+        box-shadow: 0 8px 24px rgba(186, 255, 41, 0.5);
+        transition: all 0.3s;
+        z-index: 15;
+        max-width: calc(100% - 40px);
+        white-space: nowrap;
+      }
+
+      .create-route-btn.show {
+        display: block;
+        animation: slideUp 0.3s ease-out;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+
+      .create-route-btn:hover {
+        transform: translateX(-50%) translateY(-2px);
+        box-shadow: 0 12px 32px rgba(186, 255, 41, 0.6);
+      }
+
+      .create-route-btn:active {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* 결과 모달 */
+      .result-modal {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 520px;
+        background: white;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 20;
+        display: none;
+        padding: 20px;
+        max-height: 40vh;
+        overflow-y: auto;
+      }
+
+      .result-modal.show {
+        display: block;
+      }
+
+      .modal-handle {
+        width: 40px;
+        height: 4px;
+        background: #ddd;
+        border-radius: 2px;
+        margin: 0 auto 16px;
+      }
+
+      .modal-title {
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 12px;
+      }
+
+      .modal-info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .modal-info-row:last-child {
+        border-bottom: none;
+      }
+
+      .modal-info-label {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .modal-info-value {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .modal-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      .modal-button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .modal-button.cancel {
+        background: #f0f0f0;
+        color: #666;
+      }
+
+      /* 로딩 오버레이 */
+      .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+
+      .loading-overlay.show {
+        display: flex;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f0f0f0;
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* 반응형 */
       @media (max-width: 520px) {
-        header h1 {
+        .control-panel {
+          left: 12px;
+          top: 90px;
+          gap: 10px;
+        }
+
+        .round-btn {
+          width: 50px;
+          height: 50px;
+          font-size: 20px;
+        }
+
+        .create-route-btn {
+          padding: 16px 40px;
           font-size: 15px;
         }
+
+        .distance-display {
+          right: 12px;
+          top: 90px;
+        }
+      }
+
+      /* 실시간 거리 표시 */
+      .distance-display {
+        position: fixed;
+        right: 20px;
+        top: 100px;
+        background: white;
+        padding: 16px 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10;
+        text-align: center;
+      }
+
+      .distance-value {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 4px;
+      }
+
+      .distance-label {
+        font-size: 12px;
+        color: var(--muted);
       }
     </style>
   </head>
@@ -139,81 +496,141 @@
         <button class="icon-btn" type="button" onclick="history.back()">
           뒤로
         </button>
-        <h1>수동 등록</h1>
-        <button class="primary-btn" type="button" id="saveBtn">
-          코스 적용
-        </button>
+        <h1>수동 경로 그리기</h1>
+        <button class="apply-btn" id="applyBtn" disabled>적용</button>
       </header>
 
-      <section class="controls">
-        <div class="chip-row">
-          <button type="button" id="startDrawBtn" class="chip-btn">
-            선 그리기 시작
-          </button>
-          <button type="button" id="stopDrawBtn" class="chip-btn">
-            선 그리기 종료
-          </button>
-          <button type="button" id="pointModeBtn" class="chip-btn">
-            점 찍기 모드 OFF
-          </button>
-          <button type="button" id="undoBtn" class="chip-btn">
-            한 점 되돌리기
-          </button>
-          <button type="button" id="clearBtn" class="chip-btn">
-            전체 지우기
-          </button>
-          <button type="button" id="clearPoiBtn" class="chip-btn">
-            찍은 점 지우기
-          </button>
-        </div>
-        <div class="chip-row">
-          <button type="button" id="generateFromPointsBtn" class="chip-btn">
-            경로 생성하기
-          </button>
-        </div>
-        <div class="info-card">
-          <div>
-            <span style="font-size: 12px; color: var(--muted)">현재 상태</span>
-            <strong id="info">좌표 0개 / 거리 0 km</strong>
-          </div>
-          <div style="text-align: right; font-size: 12px; color: var(--muted)">
-            마라톤 42.195km 초과 시 자동 초기화 됩니다.
+      <div id="map">
+        <!-- 검색 패널 -->
+        <div class="search-panel">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input
+              id="locationSearch"
+              class="search-input"
+              placeholder="시작 위치를 검색하세요"
+              autocomplete="off"
+            />
+            <button class="clear-icon" id="clearSearch">×</button>
+            <div class="search-results" id="searchResults"></div>
           </div>
         </div>
-      </section>
 
-      <div id="map"></div>
+        <!-- 왼쪽 컨트롤 패널 -->
+        <div class="control-panel">
+          <button class="round-btn" id="drawModeBtn" data-tooltip="선 그리기">
+            ✏️
+          </button>
+          <button class="round-btn" id="pointModeBtn" data-tooltip="점 찍기">
+            📍
+          </button>
+          <button class="round-btn" id="undoPointBtn" data-tooltip="한 점 되돌리기">
+            ↩️
+          </button>
+          <button class="round-btn" id="undoLineBtn" data-tooltip="한 선 되돌리기">
+            ⤴️
+          </button>
+          <button class="round-btn" id="roundTripBtn" data-tooltip="왕복 모드">
+            🔄
+          </button>
+          <button class="round-btn" id="clearPointsBtn" data-tooltip="찍은 점만 지우기">
+            🗑️
+          </button>
+          <button class="round-btn danger" id="clearAllBtn" data-tooltip="전체 지우기">
+            🚫
+          </button>
+        </div>
+
+        <!-- 실시간 거리 표시 -->
+        <div class="distance-display" id="distanceDisplay" style="display: none;">
+          <div class="distance-value" id="distanceValue">0.00 km</div>
+          <div class="distance-label">현재 거리</div>
+        </div>
+
+        <!-- 경로 생성 버튼 -->
+        <button class="create-route-btn" id="createRouteBtn">
+          🚀 경로 생성
+        </button>
+
+        <!-- 결과 모달 -->
+        <div class="result-modal" id="resultModal">
+          <div class="modal-handle"></div>
+          <div class="modal-title">경로 정보</div>
+          <div class="modal-info-row">
+            <span class="modal-info-label">거리</span>
+            <span class="modal-info-value" id="modalDistance">-</span>
+          </div>
+          <div class="modal-info-row">
+            <span class="modal-info-label">좌표 수</span>
+            <span class="modal-info-value" id="modalPoints">-</span>
+          </div>
+          <div class="modal-info-row">
+            <span class="modal-info-label">출발지</span>
+            <span class="modal-info-value" id="modalStart">-</span>
+          </div>
+          <div class="modal-buttons">
+            <button class="modal-button cancel" id="cancelBtn">다시 그리기</button>
+          </div>
+        </div>
+
+        <!-- 로딩 오버레이 -->
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner"></div>
+        </div>
+      </div>
     </div>
 
     <script th:inline="none">
-      const mapContainer = document.getElementById("map");
-      const map = new kakao.maps.Map(mapContainer, {
-        center: new kakao.maps.LatLng(37.5665, 126.978),
-        level: 5,
-      });
-      const geocoder = new kakao.maps.services.Geocoder();
-
-      const infoEl = document.getElementById("info");
-      const saveBtn = document.getElementById("saveBtn");
-
       const MAX_DISTANCE_M = 42195;
       const STORAGE_KEY = "courseDraft";
       const API_BASE = "";
 
+      const applyBtn = document.getElementById("applyBtn");
+      const drawModeBtn = document.getElementById("drawModeBtn");
+      const pointModeBtn = document.getElementById("pointModeBtn");
+      const undoPointBtn = document.getElementById("undoPointBtn");
+      const undoLineBtn = document.getElementById("undoLineBtn");
+      const roundTripBtn = document.getElementById("roundTripBtn");
+      const clearPointsBtn = document.getElementById("clearPointsBtn");
+      const clearAllBtn = document.getElementById("clearAllBtn");
+      const createRouteBtn = document.getElementById("createRouteBtn");
+      const resultModal = document.getElementById("resultModal");
+      const loadingOverlay = document.getElementById("loadingOverlay");
+      const cancelBtn = document.getElementById("cancelBtn");
+      const distanceDisplay = document.getElementById("distanceDisplay");
+      const distanceValue = document.getElementById("distanceValue");
+      const locationSearch = document.getElementById("locationSearch");
+      const searchResults = document.getElementById("searchResults");
+      const clearSearch = document.getElementById("clearSearch");
+
+      const map = new kakao.maps.Map(document.getElementById("map"), {
+        center: new kakao.maps.LatLng(37.5665, 126.978),
+        level: 5,
+        draggable: true,
+        scrollwheel: true,
+      });
+      const geocoder = new kakao.maps.services.Geocoder();
+      const ps = new kakao.maps.services.Places();
+
       let drawing = false;
       let pointMode = false;
+      let roundTripMode = false; // 왕복 모드
       let points = [];
+      let lineSegments = []; // 선분 기록 (한 선 되돌리기용)
       let poiMarkers = [];
-      let routeMarkers = [];
       let startMarker = null;
-      let polyline = new kakao.maps.Polyline({
-        map,
-        path: [],
-        strokeWeight: 5,
-        strokeColor: "#ff3d00",
-        strokeOpacity: 0.9,
-      });
+      let polyline = null;
       let startAddress = "";
+      let generatedLineString = null;
+      let totalDistanceM = 0;
+
+      function showLoading() {
+        loadingOverlay.classList.add("show");
+      }
+
+      function hideLoading() {
+        loadingOverlay.classList.remove("show");
+      }
 
       function haversine(a, b) {
         const R = 6371000;
@@ -228,9 +645,7 @@
       }
 
       function calcDistance(coords) {
-        if (!coords || coords.length < 2) {
-          return 0;
-        }
+        if (!coords || coords.length < 2) return 0;
         let sum = 0;
         for (let i = 1; i < coords.length; i++) {
           sum += haversine(coords[i - 1], coords[i]);
@@ -238,40 +653,33 @@
         return sum;
       }
 
-      function ensureClosedLoop(list) {
-        if (!list || list.length < 2) {
-          return list;
+      function updateDistanceDisplay() {
+        const distance = calcDistance(points);
+        if (points.length >= 2) {
+          distanceDisplay.style.display = "block";
+          distanceValue.textContent = (distance / 1000).toFixed(2) + " km";
+        } else {
+          distanceDisplay.style.display = "none";
         }
-        const first = list[0];
-        const last = list[list.length - 1];
-        const dist = haversine(first, last);
-        if (dist > 10) {
-          list.push({ ...first });
-        }
-        return list;
       }
 
-      function updateInfo() {
-        const dist = calcDistance(points);
-        infoEl.textContent = `좌표 ${points.length}개 / 거리 ${(
-          dist / 1000
-        ).toFixed(2)} km`;
-      }
-
-      function refreshPolyline() {
-        const path = points.map((p) => new kakao.maps.LatLng(p.lat, p.lng));
-        polyline.setPath(path);
-        routeMarkers.forEach((m) => m.setMap(null));
-        routeMarkers = [];
-        if (points.length) {
-          const bounds = new kakao.maps.LatLngBounds();
-          path.forEach((p) => bounds.extend(p));
-          map.setBounds(bounds);
+      function drawPolyline(coords) {
+        if (polyline) {
+          polyline.setMap(null);
         }
+        const path = coords.map((p) => new kakao.maps.LatLng(p.lat, p.lng));
+        polyline = new kakao.maps.Polyline({
+          path: path,
+          strokeWeight: 6,
+          strokeColor: "#ff3d00",
+          strokeOpacity: 0.8,
+        });
+        polyline.setMap(map);
+        // 지도 범위 조정 제거 - 사용자가 보고 있는 화면 유지
       }
 
       function clearPoiMarkers() {
-        poiMarkers.forEach((p) => p.setMap(null));
+        poiMarkers.forEach((m) => m.setMap(null));
         poiMarkers = [];
       }
 
@@ -291,201 +699,477 @@
         });
       }
 
+      function checkIfCanGenerate() {
+        const hasPoints = points.length >= 2;
+        const hasPoiMarkers = poiMarkers.length >= 2;
+        if (hasPoints || hasPoiMarkers) {
+          createRouteBtn.classList.add("show");
+        } else {
+          createRouteBtn.classList.remove("show");
+        }
+      }
+
+      // 검색 결과 표시
+      function showSearchResults(results) {
+        searchResults.innerHTML = "";
+        
+        if (!results || results.length === 0) {
+          searchResults.innerHTML = '<div class="no-results">검색 결과가 없습니다</div>';
+          searchResults.classList.add("show");
+          return;
+        }
+
+        results.forEach((place) => {
+          const item = document.createElement("div");
+          item.className = "search-result-item";
+          
+          const categoryText = place.category_name ? 
+            `<div class="result-category">${place.category_name}</div>` : '';
+          
+          item.innerHTML = `
+            <div class="result-name">${place.place_name}</div>
+            <div class="result-address">${
+              place.road_address_name || place.address_name
+            }</div>
+            ${categoryText}
+          `;
+          item.addEventListener("click", () => {
+            const lat = Number(place.y);
+            const lng = Number(place.x);
+            map.setCenter(new kakao.maps.LatLng(lat, lng));
+            map.setLevel(3);
+            locationSearch.value = place.place_name;
+            searchResults.classList.remove("show");
+          });
+          searchResults.appendChild(item);
+        });
+        searchResults.classList.add("show");
+      }
+
+      // 검색 함수
+      let searchTimeout = null;
+      function searchPlaces(keyword) {
+        if (!keyword || !keyword.trim()) {
+          searchResults.innerHTML = "";
+          searchResults.classList.remove("show");
+          return;
+        }
+        
+        ps.keywordSearch(keyword, (data, status) => {
+          if (status === kakao.maps.services.Status.OK) {
+            showSearchResults(data.slice(0, 10));
+          } else {
+            showSearchResults([]);
+          }
+        });
+      }
+
+      // 위치 검색 입력
+      locationSearch.addEventListener("input", (e) => {
+        const keyword = e.target.value.trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (!keyword) {
+          searchResults.innerHTML = "";
+          searchResults.classList.remove("show");
+          return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+          searchPlaces(keyword);
+        }, 200);
+      });
+
+      // 검색 지우기
+      clearSearch.addEventListener("click", () => {
+        locationSearch.value = "";
+        searchResults.innerHTML = "";
+        searchResults.classList.remove("show");
+      });
+
+      // 외부 클릭 시 검색 결과 닫기
+      document.addEventListener("click", (e) => {
+        if (!locationSearch.contains(e.target) && !searchResults.contains(e.target) && e.target !== clearSearch) {
+          searchResults.classList.remove("show");
+        }
+      });
+
+      // 지도 클릭 이벤트
       kakao.maps.event.addListener(map, "click", async (mouseEvent) => {
         const latlng = mouseEvent.latLng;
         const lat = latlng.getLat();
         const lng = latlng.getLng();
+
         if (pointMode) {
+          // 점 찍기 모드
           const marker = new kakao.maps.Marker({ position: latlng, map });
           poiMarkers.push(marker);
+          checkIfCanGenerate();
           return;
         }
+
         if (!drawing) {
           return;
         }
-        points.push({ lat, lng });
+
+        // 선 그리기 모드
+        const newPoint = { lat, lng };
+        
+        // lineSegments가 비어있거나 마지막 선분이 없으면 새 선분 시작
+        if (lineSegments.length === 0) {
+          lineSegments.push([newPoint]);
+        } else {
+          // 현재 선분에 점 추가
+          lineSegments[lineSegments.length - 1].push(newPoint);
+        }
+        
+        points.push(newPoint);
+
         if (points.length === 1) {
-          startMarker?.setMap(null);
+          // 첫 점 - 시작 마커
+          if (startMarker) startMarker.setMap(null);
           startMarker = new kakao.maps.Marker({ position: latlng, map });
           startAddress = await reverseGeocode(lat, lng);
         }
-        refreshPolyline();
-        updateInfo();
+
+        // 지도 중심 이동하지 않고 선만 그리기
+        if (polyline) {
+          polyline.setMap(null);
+        }
+        const path = points.map((p) => new kakao.maps.LatLng(p.lat, p.lng));
+        polyline = new kakao.maps.Polyline({
+          path: path,
+          strokeWeight: 6,
+          strokeColor: "#ff3d00",
+          strokeOpacity: 0.8,
+        });
+        polyline.setMap(map);
+        
+        console.log("Points:", points.length, "LineSegments:", lineSegments.map(s => s.length));
+        updateDistanceDisplay();
+        checkIfCanGenerate();
       });
 
-      document.getElementById("startDrawBtn").addEventListener("click", () => {
-        drawing = true;
-        alert("지도 위를 클릭해 경로를 그려주세요.");
+      // 선 그리기 모드 토글
+      drawModeBtn.addEventListener("click", () => {
+        drawing = !drawing;
+        if (drawing) {
+          drawModeBtn.classList.add("active");
+          pointMode = false;
+          pointModeBtn.classList.remove("active");
+          // 새로운 선분 시작 - 이전 점들이 있고 마지막 선분이 비어있지 않을 때만
+          if (points.length > 0 && lineSegments.length > 0) {
+            const lastSegment = lineSegments[lineSegments.length - 1];
+            if (lastSegment.length > 0) {
+              lineSegments.push([]);
+            }
+          }
+        } else {
+          drawModeBtn.classList.remove("active");
+        }
       });
 
-      document.getElementById("stopDrawBtn").addEventListener("click", () => {
-        drawing = false;
-        alert("선 그리기를 종료했습니다. 계속하려면 다시 시작을 눌러주세요.");
-      });
-
-      document.getElementById("pointModeBtn").addEventListener("click", (e) => {
+      // 점 찍기 모드
+      pointModeBtn.addEventListener("click", () => {
         pointMode = !pointMode;
-        e.currentTarget.textContent = pointMode
-          ? "점 찍기 모드 ON"
-          : "점 찍기 모드 OFF";
+        if (pointMode) {
+          pointModeBtn.classList.add("active");
+          drawing = false;
+          drawModeBtn.classList.remove("active");
+        } else {
+          pointModeBtn.classList.remove("active");
+        }
       });
 
-      document.getElementById("undoBtn").addEventListener("click", () => {
+      // 왕복 모드 토글
+      roundTripBtn.addEventListener("click", () => {
+        roundTripMode = !roundTripMode;
+        if (roundTripMode) {
+          roundTripBtn.classList.add("active");
+        } else {
+          roundTripBtn.classList.remove("active");
+        }
+      });
+
+      // 한 점 되돌리기
+      undoPointBtn.addEventListener("click", () => {
+        if (points.length === 0) return;
+        
         points.pop();
-        if (!points.length && startMarker) {
+        
+        // 현재 선분에서도 제거
+        if (lineSegments.length > 0) {
+          const currentSegment = lineSegments[lineSegments.length - 1];
+          if (currentSegment.length > 0) {
+            currentSegment.pop();
+            // 선분이 비었으면 제거
+            if (currentSegment.length === 0) {
+              lineSegments.pop();
+            }
+          }
+        }
+        
+        if (points.length === 0) {
+          if (startMarker) {
+            startMarker.setMap(null);
+            startMarker = null;
+          }
+          startAddress = "";
+          if (polyline) {
+            polyline.setMap(null);
+            polyline = null;
+          }
+          lineSegments = [];
+        } else {
+          // 지도 중심 이동 없이 선만 다시 그리기
+          if (polyline) {
+            polyline.setMap(null);
+          }
+          const path = points.map((p) => new kakao.maps.LatLng(p.lat, p.lng));
+          polyline = new kakao.maps.Polyline({
+            path: path,
+            strokeWeight: 6,
+            strokeColor: "#ff3d00",
+            strokeOpacity: 0.8,
+          });
+          polyline.setMap(map);
+        }
+        
+        updateDistanceDisplay();
+        checkIfCanGenerate();
+      });
+
+      // 한 선 되돌리기
+      undoLineBtn.addEventListener("click", () => {
+        if (lineSegments.length === 0) {
+          console.log("선분이 없습니다.");
+          return;
+        }
+        
+        console.log("Before undo - Points:", points.length, "LineSegments:", lineSegments.map(s => s.length));
+        
+        // 마지막 선분 제거
+        const lastSegment = lineSegments.pop();
+        console.log("Removing segment with", lastSegment.length, "points");
+        
+        // points에서도 해당 선분의 점들 제거
+        for (let i = 0; i < lastSegment.length; i++) {
+          points.pop();
+        }
+        
+        console.log("After undo - Points:", points.length, "LineSegments:", lineSegments.map(s => s.length));
+        
+        if (points.length === 0) {
+          if (startMarker) {
+            startMarker.setMap(null);
+            startMarker = null;
+          }
+          startAddress = "";
+          if (polyline) {
+            polyline.setMap(null);
+            polyline = null;
+          }
+          lineSegments = [];
+        } else {
+          // 지도 중심 이동 없이 선만 다시 그리기
+          if (polyline) {
+            polyline.setMap(null);
+          }
+          const path = points.map((p) => new kakao.maps.LatLng(p.lat, p.lng));
+          polyline = new kakao.maps.Polyline({
+            path: path,
+            strokeWeight: 6,
+            strokeColor: "#ff3d00",
+            strokeOpacity: 0.8,
+          });
+          polyline.setMap(map);
+        }
+        
+        updateDistanceDisplay();
+        checkIfCanGenerate();
+      });
+
+      // 찍은 점만 지우기
+      clearPointsBtn.addEventListener("click", () => {
+        clearPoiMarkers();
+        checkIfCanGenerate();
+      });
+
+      // 전체 지우기
+      clearAllBtn.addEventListener("click", () => {
+        points = [];
+        lineSegments = [];
+        clearPoiMarkers();
+        if (startMarker) {
           startMarker.setMap(null);
           startMarker = null;
-          startAddress = "";
         }
-        refreshPolyline();
-        updateInfo();
-      });
-
-      document.getElementById("clearBtn").addEventListener("click", () => {
-        points = [];
+        if (polyline) {
+          polyline.setMap(null);
+          polyline = null;
+        }
         startAddress = "";
-        startMarker?.setMap(null);
-        startMarker = null;
-        refreshPolyline();
-        updateInfo();
+        generatedLineString = null;
+        totalDistanceM = 0;
+        resultModal.classList.remove("show");
+        applyBtn.disabled = true;
+        updateDistanceDisplay();
+        checkIfCanGenerate();
       });
 
-      document.getElementById("clearPoiBtn").addEventListener("click", () => {
-        clearPoiMarkers();
-      });
+      // 경로 생성
+      createRouteBtn.addEventListener("click", async () => {
+        let source = [];
 
-      async function callApi(url, body) {
-        const headers = { "Content-Type": "application/json" };
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
+        // POI 마커가 있으면 우선 사용
+        if (poiMarkers.length >= 2) {
+          source = poiMarkers.map((m) => {
+            const pos = m.getPosition();
+            return { lat: pos.getLat(), lng: pos.getLng() };
+          });
+        } else if (points.length >= 2) {
+          source = [...points];
+        } else {
+          alert("최소 2개 이상의 점이 필요합니다.");
+          return;
         }
-        const res = await fetch(API_BASE + url, {
-          method: "POST",
-          headers,
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(
-            `HTTP ${res.status}: ${text || "요청에 실패했습니다."}`
-          );
-        }
-        return res.json();
-      }
 
-      document
-        .getElementById("generateFromPointsBtn")
-        .addEventListener("click", async () => {
-          let source = [];
-          if (poiMarkers.length >= 2) {
-            source = poiMarkers.map((m) => {
-              const pos = m.getPosition();
-              return { lat: pos.getLat(), lng: pos.getLng() };
+        // 왕복 모드일 경우에만 출발지를 마지막에 추가
+        if (roundTripMode) {
+          const startPoint = source[0];
+          const lastPoint = source[source.length - 1];
+          
+          // 마지막 점과 출발지가 10m 이상 떨어져 있으면 출발지 추가
+          const distToStart = haversine(lastPoint, startPoint);
+          if (distToStart > 10) {
+            source.push({ lat: startPoint.lat, lng: startPoint.lng });
+          }
+        }
+
+        showLoading();
+
+        try {
+          // 토큰 가져오기
+          const token = localStorage.getItem("accessToken");
+          const headers = {
+            "Content-Type": "application/json",
+          };
+
+          if (token) {
+            headers["Authorization"] = token.startsWith("Bearer ")
+              ? token
+              : `Bearer ${token}`;
+          }
+
+          const viaPoints = source.map((p) => ({ lat: p.lat, lng: p.lng }));
+          const payload = {
+            startLat: viaPoints[0].lat,
+            startLng: viaPoints[0].lng,
+            viaPoints: viaPoints,
+          };
+
+          const response = await fetch(API_BASE + "/api/courses/oneway", {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error("경로 생성에 실패했습니다.");
+          }
+
+          const data = await response.json();
+
+          if (!data?.lineString || data.lineString.length < 2) {
+            throw new Error("경로 데이터를 받지 못했습니다.");
+          }
+
+          generatedLineString = data.lineString;
+          totalDistanceM =
+            data.totalDistance ||
+            calcDistance(
+              generatedLineString.map(([lng, lat]) => ({ lat, lng }))
+            );
+
+          if (totalDistanceM > MAX_DISTANCE_M) {
+            alert(
+              "42.195km를 초과하는 코스는 만들 수 없습니다. 다른 경로를 선택해주세요."
+            );
+            generatedLineString = null;
+            totalDistanceM = 0;
+            applyBtn.disabled = true;
+            return;
+          }
+
+          // 생성된 경로를 points에 저장
+          points = generatedLineString.map(([lng, lat]) => ({ lat, lng }));
+
+          // 시작 주소 가져오기
+          if (points.length > 0) {
+            startAddress = await reverseGeocode(points[0].lat, points[0].lng);
+            if (startMarker) startMarker.setMap(null);
+            startMarker = new kakao.maps.Marker({
+              position: new kakao.maps.LatLng(points[0].lat, points[0].lng),
+              map: map,
             });
-          } else if (points.length >= 2) {
-            source = [...points];
-          } else {
-            alert("최소 두 점 이상 지정해 주세요.");
-            return;
           }
 
-          const working = ensureClosedLoop(source.map((p) => ({ ...p })));
-          const draftDistance = calcDistance(working);
-          if (draftDistance > MAX_DISTANCE_M) {
-            alert(
-              "42.195km를 초과하는 코스는 만들 수 없습니다. 다시 그려주세요."
-            );
-            points = [];
-            refreshPolyline();
-            updateInfo();
-            return;
-          }
+          // 경로 그리기
+          drawPolyline(points);
 
-          try {
-            const viaPoints = working.map((p) => ({ lat: p.lat, lng: p.lng }));
-            const payload = {
-              startLat: viaPoints[0].lat,
-              startLng: viaPoints[0].lng,
-              viaPoints,
-            };
-            const data = await callApi("/api/courses/oneway", payload);
-            if (!data?.lineString?.length) {
-              throw new Error("경로 데이터를 받지 못했습니다.");
-            }
-            const converted = data.lineString.map(([lng, lat]) => ({
-              lat,
-              lng,
-            }));
-            const distance =
-              typeof data.totalDistance === "number"
-                ? data.totalDistance
-                : calcDistance(converted);
-            if (distance > MAX_DISTANCE_M) {
-              alert(
-                "42.195km를 초과하는 코스는 만들 수 없습니다. 다시 그려주세요."
-              );
-              points = [];
-              refreshPolyline();
-              updateInfo();
-              return;
-            }
-            points = converted;
-            if (points.length) {
-              startAddress = await reverseGeocode(points[0].lat, points[0].lng);
-              startMarker?.setMap(null);
-              startMarker = new kakao.maps.Marker({
-                position: new kakao.maps.LatLng(points[0].lat, points[0].lng),
-                map,
-              });
-            }
-            refreshPolyline();
-            updateInfo();
-            alert(
-              "TMAP 경로를 생성했습니다. 필요하면 계속 수정 후 적용하세요."
-            );
-          } catch (err) {
-            console.error(err);
-            alert(err.message || "경로 생성 중 오류가 발생했습니다.");
-          }
-        });
+          // 적용 버튼 활성화
+          applyBtn.disabled = false;
 
-      async function saveCourse() {
-        if (points.length < 2) {
-          alert("최소 두 점 이상으로 코스를 만들어 주세요.");
+          // 결과 모달 표시
+          document.getElementById("modalDistance").textContent =
+            (totalDistanceM / 1000).toFixed(2) + " km";
+          document.getElementById("modalPoints").textContent =
+            points.length + "개";
+          document.getElementById("modalStart").textContent =
+            startAddress || "주소 정보 없음";
+          resultModal.classList.add("show");
+        } catch (error) {
+          console.error(error);
+          alert(error.message || "경로 생성 중 오류가 발생했습니다.");
+        } finally {
+          hideLoading();
+        }
+      });
+
+      // 다시 그리기
+      cancelBtn.addEventListener("click", () => {
+        resultModal.classList.remove("show");
+        generatedLineString = null;
+        totalDistanceM = 0;
+        applyBtn.disabled = true;
+      });
+
+      // 적용 버튼
+      applyBtn.addEventListener("click", () => {
+        if (!generatedLineString || points.length < 2) {
+          alert("경로 정보가 없습니다.");
           return;
         }
-        const distanceM = Math.round(calcDistance(points));
-        if (distanceM > MAX_DISTANCE_M) {
-          alert("42.195km 초과 코스는 저장할 수 없습니다.");
-          return;
-        }
-        if (!startAddress && points.length) {
-          startAddress = await reverseGeocode(points[0].lat, points[0].lng);
-        }
+
         const payload = {
           path: {
             type: "LineString",
-            coordinates: ensureClosedLoop([...points]).map((p) => [
-              p.lng,
-              p.lat,
-            ]),
+            coordinates: generatedLineString,
           },
-          distanceM,
+          distanceM: Math.round(totalDistanceM),
           startLat: points[0].lat,
           startLng: points[0].lng,
           address: startAddress || "",
           courseRegisterType: "MANUAL",
         };
+
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        // 저장된 returnPage가 있으면 그 페이지로, 없으면 기본값으로 courseCreate로
         const returnPage =
           sessionStorage.getItem("returnPage") || "/courseCreate";
-        sessionStorage.removeItem("returnPage"); // 사용 후 삭제
+        sessionStorage.removeItem("returnPage");
         window.location.href = returnPage;
-      }
-
-      saveBtn.addEventListener("click", saveCourse);
+      });
     </script>
   </body>
 </html>

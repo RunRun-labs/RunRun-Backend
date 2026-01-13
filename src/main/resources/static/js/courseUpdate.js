@@ -6,7 +6,7 @@ const stickyBtn = document.getElementById("stickyUpdateBtn");
 const autoRouteBtn = document.getElementById("autoRouteBtn");
 const manualRouteBtn = document.getElementById("manualRouteBtn");
 const summaryEl = document.getElementById("routeSummary");
-const mapPreviewEl = document.getElementById("mapPreview");
+const mapContainer = document.getElementById("map");
 
 const titleInput = form.querySelector('input[name="title"]');
 const descInput = form.querySelector('textarea[name="description"]');
@@ -27,8 +27,22 @@ const errorEls = {
   path: document.querySelector('[data-error-for="path"]'),
 };
 
-let previewMap = null;
-let previewPolyline = null;
+let map = null;
+let mapModal = null; // 모달 지도
+let polyline = null;
+let startMarker = null;
+let endMarker = null;
+let loopMarker = null;
+let startInfoWindow = null;
+let endInfoWindow = null;
+
+// 모달 마커 및 경로
+let modalPolyline = null;
+let modalStartMarker = null;
+let modalEndMarker = null;
+let modalStartInfoWindow = null;
+let modalEndInfoWindow = null;
+let isModalMapInitialized = false; // 모달 지도 초기화 여부
 
 // Get Course ID from Thymeleaf or URL
 function getCourseId() {
@@ -130,183 +144,302 @@ function anyInvalid() {
   return !ok;
 }
 
-let previewStartMarker = null;
-let previewEndMarker = null;
-let previewStartInfoWindow = null;
-let previewEndInfoWindow = null;
+// ==========================
+// Kakao Map (courseDetail.js와 동일)
+// ==========================
 
-function initMapPreview() {
-  if (previewMap || !mapPreviewEl || typeof kakao === "undefined") {
+// Initialize map
+function initMap() {
+  console.log("[MAP INIT] Starting map initialization...");
+  
+  if (!mapContainer) {
+    console.error("[MAP INIT ERROR] Map container not found!");
     return;
   }
+  console.log("[MAP INIT] Map container found:", mapContainer);
+  
+  if (typeof kakao === "undefined" || !kakao.maps) {
+    console.error("[MAP INIT ERROR] Kakao Maps SDK not loaded!");
+    return;
+  }
+  console.log("[MAP INIT] Kakao Maps SDK loaded successfully");
+
   const center = new kakao.maps.LatLng(37.5665, 126.978);
-  // ⭐ recruit-detail.js처럼 최소한의 옵션만 사용 (기본값이 draggable: true, scrollwheel: true)
-  previewMap = new kakao.maps.Map(mapPreviewEl, {
-    center,
-    level: 6,
+  console.log("[MAP INIT] Center position:", center);
+  
+  // 지도 생성 - 드래그와 줌 확실하게 활성화
+  const mapOptions = {
+    center: center,
+    level: 5,
     draggable: true,
     scrollwheel: true,
+    disableDoubleClick: false,
+    disableDoubleClickZoom: false,
+    keyboardShortcuts: true
+  };
+  console.log("[MAP INIT] Map options:", mapOptions);
+  
+  map = new kakao.maps.Map(mapContainer, mapOptions);
+  console.log("[MAP INIT] Map object created:", map);
+  console.log("[MAP INIT] Map draggable status:", map.getDraggable());
+  console.log("[MAP INIT] Map zoomable status:", map.getZoomable());
+
+  // 지도에 마우스 이벤트 리스너 추가 (드래그 테스트)
+  kakao.maps.event.addListener(map, 'dragstart', function() {
+    console.log("[MAP EVENT] Drag started!");
+  });
+  
+  kakao.maps.event.addListener(map, 'drag', function() {
+    console.log("[MAP EVENT] Dragging...");
+  });
+  
+  kakao.maps.event.addListener(map, 'dragend', function() {
+    console.log("[MAP EVENT] Drag ended!");
+  });
+  
+  kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+    console.log("[MAP EVENT] Map clicked at:", mouseEvent.latLng);
   });
 
-  // ⭐ 지도 초기화 직후 무조건 relayout (여러 번 호출하여 확실하게)
-  setTimeout(() => {
-    if (previewMap) {
-      previewMap.relayout();
-      previewMap.setDraggable(true);
-      previewMap.setZoomable(true);
+  // 지도 초기화 직후 여러 번 relayout 및 드래그 활성화
+  const enableMapInteraction = () => {
+    if (map) {
+      console.log("[MAP ENABLE] Enabling map interaction...");
+      map.relayout();
+      map.setDraggable(true);
+      map.setZoomable(true);
+      console.log("[MAP ENABLE] Map draggable:", map.getDraggable());
+      console.log("[MAP ENABLE] Map zoomable:", map.getZoomable());
+      
+      // DOM 요소 확인 및 touch-action 강제 변경
+      const allDivsInContainer = mapContainer.querySelectorAll('div');
+      let mapDiv = null;
+      
+      for (let i = 0; i < allDivsInContainer.length; i++) {
+        const div = allDivsInContainer[i];
+        if (!div.classList.contains('map-expand-overlay') && 
+            !div.classList.contains('map-expand-hint')) {
+          mapDiv = div;
+          break;
+        }
+      }
+      
+      console.log("[MAP ENABLE] Map div element:", mapDiv);
+      if (mapDiv) {
+        mapDiv.style.removeProperty('touch-action');
+        mapDiv.style.touchAction = 'auto';
+        mapDiv.style.setProperty('touch-action', 'auto', 'important');
+        
+        const allDivs = mapDiv.querySelectorAll('div');
+        allDivs.forEach(div => {
+          div.style.removeProperty('touch-action');
+          div.style.touchAction = 'auto';
+          div.style.setProperty('touch-action', 'auto', 'important');
+        });
+        
+        if (!mapDiv.hasAttribute('data-observer-attached')) {
+          const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                const target = mutation.target;
+                if (target.style.touchAction !== 'auto') {
+                  console.log("[MAP OBSERVER] Touch-action changed, fixing...");
+                  target.style.removeProperty('touch-action');
+                  target.style.touchAction = 'auto';
+                  target.style.setProperty('touch-action', 'auto', 'important');
+                }
+              }
+            });
+          });
+          
+          observer.observe(mapDiv, {
+            attributes: true,
+            attributeFilter: ['style'],
+            subtree: true
+          });
+          
+          mapDiv.setAttribute('data-observer-attached', 'true');
+          console.log("[MAP ENABLE] MutationObserver attached to map div");
+        }
+        
+        const computedStyle = window.getComputedStyle(mapDiv);
+        console.log("[MAP ENABLE] Map div touch-action AFTER fix:", computedStyle.touchAction);
+      }
     }
+  };
+
+  // 여러 타이밍에 활성화 호출
+  console.log("[MAP INIT] Setting up delayed enable calls...");
+  enableMapInteraction();
+  setTimeout(() => {
+    console.log("[MAP ENABLE] Timeout 0ms");
+    enableMapInteraction();
   }, 0);
-
   setTimeout(() => {
-    if (previewMap) {
-      previewMap.relayout();
-      previewMap.setDraggable(true);
-      previewMap.setZoomable(true);
-    }
+    console.log("[MAP ENABLE] Timeout 100ms");
+    enableMapInteraction();
   }, 100);
-
   setTimeout(() => {
-    if (previewMap) {
-      previewMap.relayout();
-      previewMap.setDraggable(true);
-      previewMap.setZoomable(true);
-    }
+    console.log("[MAP ENABLE] Timeout 300ms");
+    enableMapInteraction();
   }, 300);
-
   setTimeout(() => {
-    if (previewMap) {
-      previewMap.relayout();
-      previewMap.setDraggable(true);
-      previewMap.setZoomable(true);
-    }
+    console.log("[MAP ENABLE] Timeout 500ms");
+    enableMapInteraction();
   }, 500);
+  setTimeout(() => {
+    console.log("[MAP ENABLE] Timeout 1000ms");
+    enableMapInteraction();
+  }, 1000);
+  
+  console.log("[MAP INIT] Map initialization complete!");
 }
 
-function clearPreviewMarkers() {
-  if (previewStartMarker) {
-    previewStartMarker.setMap(null);
-    previewStartMarker = null;
-  }
-  if (previewEndMarker) {
-    previewEndMarker.setMap(null);
-    previewEndMarker = null;
-  }
-  if (previewStartInfoWindow) {
-    previewStartInfoWindow.close();
-    previewStartInfoWindow = null;
-  }
-  if (previewEndInfoWindow) {
-    previewEndInfoWindow.close();
-    previewEndInfoWindow = null;
-  }
-}
-
-function addPreviewMarker(lat, lng, labelText, variant = "default") {
+// Add marker
+function addMarker(lat, lng, labelText, variant = "default") {
   const latlng = new kakao.maps.LatLng(lat, lng);
 
-  // 기본 마커 생성
   const marker = new kakao.maps.Marker({
     position: latlng,
-    clickable: true, // 클릭 가능하도록 명시
+    clickable: true,
   });
+  marker.setMap(map);
 
-  marker.setMap(previewMap);
-
-  // InfoWindow 생성
   const infoContent = `<div style="padding:8px;font-size:13px;font-weight:bold;">${labelText}</div>`;
   const infoWindow = new kakao.maps.InfoWindow({
     content: infoContent,
-    removable: true, // 닫기 버튼 표시
+    removable: true,
   });
 
-  // variant에 따라 InfoWindow 저장 (이벤트 리스너 등록 전에 저장)
   if (variant === "start") {
-    previewStartInfoWindow = infoWindow;
+    startInfoWindow = infoWindow;
   } else if (variant === "end") {
-    previewEndInfoWindow = infoWindow;
+    endInfoWindow = infoWindow;
   }
 
-  // 마커 클릭 시 InfoWindow 표시
   kakao.maps.event.addListener(marker, "click", function () {
-    // 다른 InfoWindow 닫기
-    if (previewStartInfoWindow && previewStartInfoWindow !== infoWindow) {
-      previewStartInfoWindow.close();
+    if (startInfoWindow && startInfoWindow !== infoWindow) {
+      startInfoWindow.close();
     }
-    if (previewEndInfoWindow && previewEndInfoWindow !== infoWindow) {
-      previewEndInfoWindow.close();
+    if (endInfoWindow && endInfoWindow !== infoWindow) {
+      endInfoWindow.close();
     }
-
-    // 현재 InfoWindow 열기
-    infoWindow.open(previewMap, marker);
+    infoWindow.open(map, marker);
   });
 
   return marker;
 }
 
+// Clear marker
+function clearMarker(markerRef) {
+  if (markerRef) {
+    markerRef.setMap(null);
+  }
+}
+
+// Clear InfoWindows
+function clearInfoWindows() {
+  if (startInfoWindow) {
+    startInfoWindow.close();
+    startInfoWindow = null;
+  }
+  if (endInfoWindow) {
+    endInfoWindow.close();
+    endInfoWindow = null;
+  }
+}
+
+// Draw route
+function drawRoute(coords) {
+  if (polyline) {
+    polyline.setMap(null);
+  }
+
+  const path = coords.map((c) => new kakao.maps.LatLng(c[1], c[0]));
+
+  polyline = new kakao.maps.Polyline({
+    path: path,
+    strokeWeight: 5,
+    strokeColor: "#ff3d00",
+    strokeOpacity: 0.8,
+    strokeStyle: "solid",
+  });
+
+  polyline.setMap(map);
+
+  setTimeout(() => {
+    if (map) {
+      map.relayout();
+    }
+  }, 0);
+}
+
 function renderRouteOnMap(coords) {
   if (!coords || coords.length < 2) {
-    if (previewPolyline) {
-      previewPolyline.setMap(null);
-      previewPolyline = null;
+    if (polyline) {
+      polyline.setMap(null);
+      polyline = null;
     }
-    clearPreviewMarkers();
+    clearMarker(startMarker);
+    clearMarker(endMarker);
+    clearInfoWindows();
     return;
   }
-  initMapPreview();
-  const latLngs = coords.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
-  if (!previewMap) {
+  
+  if (!map) {
     return;
   }
 
+  const latLngs = coords.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
+
   // Clear existing polyline
-  if (previewPolyline) {
-    previewPolyline.setMap(null);
+  if (polyline) {
+    polyline.setMap(null);
   }
 
   // Draw route
-  previewPolyline = new kakao.maps.Polyline({
+  polyline = new kakao.maps.Polyline({
     path: latLngs,
     strokeWeight: 5,
     strokeColor: "#ff3d00",
     strokeOpacity: 0.9,
   });
-  previewPolyline.setMap(previewMap);
+  polyline.setMap(map);
 
-  // ⭐ 경로 그린 뒤에도 relayout 필수
   setTimeout(() => {
-    if (previewMap) {
-      previewMap.relayout();
+    if (map) {
+      map.relayout();
     }
   }, 0);
 
   // Clear existing markers
-  clearPreviewMarkers();
+  clearMarker(startMarker);
+  clearMarker(endMarker);
+  clearInfoWindows();
 
   // Add start and end markers
   const startCoord = latLngs[0];
   const endCoord = latLngs[latLngs.length - 1];
 
-  // Check if round trip (start and end are the same)
   const isRoundTrip =
       Math.abs(startCoord.getLat() - endCoord.getLat()) < 0.0001 &&
       Math.abs(startCoord.getLng() - endCoord.getLng()) < 0.0001;
 
   if (isRoundTrip) {
-    // 루프 코스일 때는 출발점만 표시
-    previewStartMarker = addPreviewMarker(
+    startMarker = addMarker(
         startCoord.getLat(),
         startCoord.getLng(),
         "📍 출발점",
         "start"
     );
   } else {
-    previewStartMarker = addPreviewMarker(
+    startMarker = addMarker(
         startCoord.getLat(),
         startCoord.getLng(),
         "📍 출발점",
         "start"
     );
-    previewEndMarker = addPreviewMarker(
+    endMarker = addMarker(
         endCoord.getLat(),
         endCoord.getLng(),
         "🏁 도착점",
@@ -317,18 +450,16 @@ function renderRouteOnMap(coords) {
   const bounds = new kakao.maps.LatLngBounds();
   latLngs.forEach((p) => bounds.extend(p));
 
-  // ⭐ setBounds는 드래그/줌을 비활성화할 수 있으므로, 대신 center와 level 계산
   const sw = bounds.getSouthWest();
   const ne = bounds.getNorthEast();
   const centerLat = (sw.getLat() + ne.getLat()) / 2;
   const centerLng = (sw.getLng() + ne.getLng()) / 2;
 
-  // 거리에 따라 적절한 level 계산
   const latDiff = ne.getLat() - sw.getLat();
   const lngDiff = ne.getLng() - sw.getLng();
   const maxDiff = Math.max(latDiff, lngDiff);
 
-  let level = 6; // 기본값
+  let level = 6;
   if (maxDiff > 0.1) {
     level = 4;
   } else if (maxDiff > 0.05) {
@@ -341,18 +472,15 @@ function renderRouteOnMap(coords) {
     level = 8;
   }
 
-  // center와 level 설정 (setBounds 대신)
-  previewMap.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
-  previewMap.setLevel(level);
+  map.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
+  map.setLevel(level);
   
-  // ⭐ setLevel 호출 직후 드래그/줌 재활성화 (setLevel이 드래그/줌을 비활성화할 수 있음)
-  previewMap.setDraggable(true);
-  previewMap.setZoomable(true);
+  map.setDraggable(true);
+  map.setZoomable(true);
 }
 
 function applyDraft(draft) {
   if (!draft || !draft.path) {
-    // 경로가 없을 때는 경로 관련 필드만 초기화 (제목, 설명, 이미지는 유지)
     summaryEl.textContent = "아직 선택된 코스가 없습니다.";
     pathInput.value = "";
     distanceMInput.value = "";
@@ -362,14 +490,12 @@ function applyDraft(draft) {
     courseTypeInput.value = "";
     renderRouteOnMap(null);
     validateRoute();
-    anyInvalid();
+    // anyInvalid() 호출은 loadCourseData 완료 후에 실행됨
     return;
   }
 
-  // Validate and normalize path
   let pathToStore = draft.path;
 
-  // If path is a string (WKT), reject it
   if (typeof pathToStore === "string") {
     console.error(
         "ERROR: draft.path is a string (WKT), not GeoJSON:",
@@ -380,7 +506,6 @@ function applyDraft(draft) {
     return;
   }
 
-  // Ensure it's a GeoJSON object with coordinates
   if (
       !pathToStore.coordinates ||
       !Array.isArray(pathToStore.coordinates) ||
@@ -391,12 +516,10 @@ function applyDraft(draft) {
     return;
   }
 
-  // Ensure type field exists
   if (!pathToStore.type) {
     pathToStore.type = "LineString";
   }
 
-  // 경로 관련 필드만 업데이트 (제목, 설명, 이미지는 유지)
   pathInput.value = JSON.stringify(pathToStore);
   if (draft.distanceM != null) {
     distanceMInput.value = draft.distanceM;
@@ -435,7 +558,7 @@ function applyDraft(draft) {
 
   renderRouteOnMap(pathToStore.coordinates);
   validateRoute();
-  anyInvalid();
+  // anyInvalid() 호출은 loadCourseData 완료 후에 실행됨 (bootstrapMap에서 호출)
 }
 
 // Load course data from API
@@ -443,11 +566,16 @@ async function loadCourseData() {
   const id = getCourseId();
   if (!id) {
     console.error("Course ID not found");
-    // 경로 수정 후 돌아온 경우 저장된 제목/설명 복원
     restoreFormData();
     hydrateFromStorage();
     anyInvalid();
     return;
+  }
+
+  // 데이터 로딩 중 버튼 비활성화
+  if (stickyBtn) {
+    stickyBtn.disabled = true;
+    stickyBtn.style.opacity = "0.5";
   }
 
   try {
@@ -487,7 +615,6 @@ async function loadCourseData() {
         typeof course.registerType
     );
 
-    // Fill form fields
     if (titleInput && course.title) {
       titleInput.value = course.title;
     }
@@ -506,17 +633,12 @@ async function loadCourseData() {
       }
     }
 
-    // Load path data
     if (course.path) {
-      // path는 이미 Map<String, Object> (GeoJSON) 형태로 올 것
       let pathObj = course.path;
 
-      // registerType은 enum이므로 문자열로 올 수 있음 ("AUTO", "MANUAL", "AI")
       let registerTypeValue = course.registerType;
       if (typeof registerTypeValue === "string") {
-        // 이미 문자열
       } else if (registerTypeValue && typeof registerTypeValue === "object") {
-        // 객체인 경우 name() 메서드나 toString() 사용
         registerTypeValue = registerTypeValue.name
             ? registerTypeValue.name()
             : String(registerTypeValue);
@@ -524,27 +646,21 @@ async function loadCourseData() {
         registerTypeValue = "AUTO";
       }
 
-      // path.coordinates 확인 및 GeoJSON 형식 보장
       if (
           pathObj &&
           pathObj.coordinates &&
           Array.isArray(pathObj.coordinates) &&
           pathObj.coordinates.length > 0
       ) {
-        // Ensure GeoJSON format: { type: "LineString", coordinates: [...] }
         if (!pathObj.type) {
           pathObj = {type: "LineString", coordinates: pathObj.coordinates};
         } else if (pathObj.type !== "LineString") {
           pathObj.type = "LineString";
         }
 
-        // ⭐ sessionStorage에 새로운 경로가 있으면 우선 적용, 없으면 API 데이터 적용
         const hasNewRoute = sessionStorage.getItem(STORAGE_KEY);
         if (hasNewRoute) {
-          // 새로운 경로가 있으면 나중에 hydrateFromStorage()에서 적용
-          // 여기서는 제목/설명/이미지만 설정
         } else {
-          // 새로운 경로가 없으면 API 데이터 적용
           applyDraft({
             path: pathObj,
             distanceM: course.distanceM,
@@ -556,7 +672,6 @@ async function loadCourseData() {
         }
       } else {
         console.warn("Path coordinates are invalid or empty");
-        // ⭐ sessionStorage에 새로운 경로가 있으면 우선 적용
         const hasNewRoute = sessionStorage.getItem(STORAGE_KEY);
         if (!hasNewRoute) {
           applyDraft(null);
@@ -564,52 +679,49 @@ async function loadCourseData() {
       }
     } else {
       console.warn("No path data in course");
-      // ⭐ sessionStorage에 새로운 경로가 있으면 우선 적용
       const hasNewRoute = sessionStorage.getItem(STORAGE_KEY);
       if (!hasNewRoute) {
         applyDraft(null);
       }
     }
 
-    // 경로 수정 후 돌아온 경우 저장된 제목/설명 복원
     restoreFormData();
 
-    // ⭐ 경로 수정 후 돌아온 경우 sessionStorage의 새로운 경로 데이터 우선 적용
-    // loadCourseData() 완료 후 hydrateFromStorage() 호출하여 새로운 경로 적용
     const hasNewRoute = sessionStorage.getItem(STORAGE_KEY);
     if (hasNewRoute) {
-      // sessionStorage에 새로운 경로가 있으면 우선 적용 (API 데이터를 덮어씀)
       hydrateFromStorage();
     }
 
-    // Trigger validation after data is loaded
     setTimeout(() => {
       validateTitle();
       validateDescription();
-      anyInvalid();
+      validateRoute();
+      anyInvalid(); // 이제 모든 데이터가 로드되었으므로 validation 실행
     }, 100);
   } catch (error) {
     console.error("Course loading error:", error);
     alert("코스 정보를 불러오는 중 오류가 발생했습니다: " + error.message);
     hydrateFromStorage();
     anyInvalid();
+  } finally {
+    // 데이터 로딩 완료 후 버튼 상태 업데이트
+    setTimeout(() => {
+      anyInvalid();
+    }, 200);
   }
 }
 
 function hydrateFromStorage() {
   const raw = sessionStorage.getItem(STORAGE_KEY);
   if (!raw) {
-    // 경로가 없으면 아무것도 하지 않음 (기존 입력값 유지)
     return;
   }
   try {
     const parsed = JSON.parse(raw);
 
-    // Validate that path is GeoJSON, not WKT string
     if (parsed.path && typeof parsed.path === "string") {
       console.error("ERROR: Stored path is WKT string, clearing storage");
       sessionStorage.removeItem(STORAGE_KEY);
-      // 경로만 초기화 (제목, 설명, 이미지는 유지)
       pathInput.value = "";
       distanceMInput.value = "";
       startLatInput.value = "";
@@ -622,15 +734,12 @@ function hydrateFromStorage() {
       return;
     }
 
-    // 경로 정보만 적용 (제목, 설명, 이미지는 유지)
     applyDraft(parsed);
 
-    // ⭐ 경로 적용 성공 후 sessionStorage 삭제
     sessionStorage.removeItem(STORAGE_KEY);
   } catch (err) {
     console.error("Failed to parse stored route", err);
     sessionStorage.removeItem(STORAGE_KEY);
-    // 경로만 초기화 (제목, 설명, 이미지는 유지)
     pathInput.value = "";
     distanceMInput.value = "";
     startLatInput.value = "";
@@ -675,7 +784,14 @@ descInput.addEventListener("input", () => {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  console.log("[SUBMIT] Form submitted");
+  console.log("[SUBMIT] pathInput.value:", pathInput.value ? "exists" : "empty");
+  console.log("[SUBMIT] distanceMInput.value:", distanceMInput.value);
+  console.log("[SUBMIT] courseTypeInput.value:", courseTypeInput.value);
+  console.log("[SUBMIT] addressInput.value:", addressInput.value);
+
   if (anyInvalid()) {
+    console.error("[SUBMIT] Validation failed");
     return;
   }
 
@@ -685,13 +801,11 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Get form values
   const titleValue = titleInput.value.trim();
   const descriptionValue = descInput.value.trim();
   const addressValue = addressInput.value.trim();
   const registerTypeValue = courseTypeInput.value || "AUTO";
 
-  // Get path - must be GeoJSON format: { type: "LineString", coordinates: [...] }
   let pathObj = null;
   if (pathInput.value) {
     try {
@@ -700,7 +814,6 @@ form.addEventListener("submit", async (e) => {
               ? JSON.parse(pathInput.value)
               : pathInput.value;
 
-      // Ensure it's in GeoJSON format
       if (!pathObj.type) {
         pathObj = {
           type: "LineString",
@@ -727,24 +840,20 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Ensure pathObj has type field
   if (!pathObj.type) {
     pathObj.type = "LineString";
   }
 
-  // Get distance
   const distanceM = distanceMInput.value
       ? Math.round(Number(distanceMInput.value))
       : null;
 
-  // Get coordinates
   const startLat = parseFloat(startLatInput.value) || null;
   const startLng = parseFloat(startLngInput.value) || null;
 
-  // Build DTO object with path as stringified JSON
   const dto = {
     title: titleValue,
-    description: descriptionValue,
+    description: descriptionValue || "", // 빈 문자열 허용
     path: JSON.stringify({
       type: "LineString",
       coordinates: pathObj.coordinates,
@@ -756,16 +865,21 @@ form.addEventListener("submit", async (e) => {
     courseRegisterType: registerTypeValue,
   };
 
-  // Create FormData
+  console.log("[SUBMIT] Sending DTO:", dto);
+  console.log("[SUBMIT] courseRegisterType value:", registerTypeValue);
+
   const formData = new FormData();
+  // File 객체로 변환하여 파일명 명시 (Spring이 @RequestPart로 제대로 파싱하도록)
   formData.append(
       "dto",
-      new Blob([JSON.stringify(dto)], {type: "application/json"})
+      new File([JSON.stringify(dto)], "dto.json", {type: "application/json"})
   );
 
-  // Add image file if selected
   if (imageInput && imageInput.files && imageInput.files.length > 0) {
     formData.append("imageFile", imageInput.files[0]);
+    console.log("[SUBMIT] Image file attached:", imageInput.files[0].name);
+  } else {
+    console.log("[SUBMIT] No image file attached");
   }
 
   try {
@@ -790,7 +904,6 @@ form.addEventListener("submit", async (e) => {
         const errorText = await response.text();
         console.error("Error response text:", errorText);
 
-        // Try to parse as JSON
         try {
           const errorData = JSON.parse(errorText);
           errorMessage =
@@ -800,7 +913,6 @@ form.addEventListener("submit", async (e) => {
               errorMessage;
           console.error("Error response (parsed):", errorData);
         } catch (parseError) {
-          // If not JSON, use the raw text
           errorMessage = errorText || errorMessage;
           console.error("Error response (raw):", errorText);
         }
@@ -818,16 +930,13 @@ form.addEventListener("submit", async (e) => {
     window.location.href = `/courseDetail/${id}`;
   } catch (error) {
     console.error("Course update error:", error);
-    // Network error or other errors
     const errorMessage = error.message || "알 수 없는 오류가 발생했습니다";
     alert("코스 수정 중 오류가 발생했습니다: " + errorMessage);
   }
 });
 
-// 제목/설명/이미지 저장 키
 const FORM_DATA_KEY = "courseFormData";
 
-// 현재 입력값 저장
 function saveFormData() {
   const formData = {
     title: titleInput.value.trim(),
@@ -836,7 +945,6 @@ function saveFormData() {
     imageUrl: null,
   };
 
-  // 이미지가 있으면 미리보기 URL 저장
   if (formData.hasImage && imagePreview) {
     const img = imagePreview.querySelector("img");
     if (img && img.src) {
@@ -847,7 +955,6 @@ function saveFormData() {
   sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(formData));
 }
 
-// 저장된 입력값 복원
 function restoreFormData() {
   const raw = sessionStorage.getItem(FORM_DATA_KEY);
   if (!raw) {
@@ -857,19 +964,16 @@ function restoreFormData() {
   try {
     const formData = JSON.parse(raw);
 
-    // 제목 복원
     if (formData.title && titleInput) {
       titleInput.value = formData.title;
       validateTitle();
     }
 
-    // 설명 복원
     if (formData.description !== undefined && descInput) {
       descInput.value = formData.description;
       validateDescription();
     }
 
-    // 복원 후 저장 데이터 삭제
     sessionStorage.removeItem(FORM_DATA_KEY);
   } catch (err) {
     console.error("Failed to restore form data:", err);
@@ -878,7 +982,7 @@ function restoreFormData() {
 }
 
 autoRouteBtn?.addEventListener("click", () => {
-  saveFormData(); // 현재 입력값 저장
+  saveFormData();
   const currentDraft = {
     path: pathInput.value ? JSON.parse(pathInput.value) : null,
     distanceM: distanceMInput.value || null,
@@ -890,7 +994,6 @@ autoRouteBtn?.addEventListener("click", () => {
   if (currentDraft.path) {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(currentDraft));
   }
-  // 현재 페이지 정보 저장 (코스 적용 후 돌아올 페이지)
   const courseId = getCourseId();
   if (courseId) {
     sessionStorage.setItem("returnPage", `/courseUpdate/${courseId}`);
@@ -901,7 +1004,7 @@ autoRouteBtn?.addEventListener("click", () => {
 });
 
 manualRouteBtn?.addEventListener("click", () => {
-  saveFormData(); // 현재 입력값 저장
+  saveFormData();
   const currentDraft = {
     path: pathInput.value ? JSON.parse(pathInput.value) : null,
     distanceM: distanceMInput.value || null,
@@ -913,7 +1016,6 @@ manualRouteBtn?.addEventListener("click", () => {
   if (currentDraft.path) {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(currentDraft));
   }
-  // 현재 페이지 정보 저장 (코스 적용 후 돌아올 페이지)
   const courseId = getCourseId();
   if (courseId) {
     sessionStorage.setItem("returnPage", `/courseUpdate/${courseId}`);
@@ -923,33 +1025,309 @@ manualRouteBtn?.addEventListener("click", () => {
   window.location.href = "/course_manual";
 });
 
-imageUploadArea?.addEventListener("click", () => imageInput?.click());
+// 이미지 업로드 처리 - 미리보기가 있으면 클릭 방지
+const uploadPlaceholder = document.getElementById("uploadPlaceholder");
+
+uploadPlaceholder?.addEventListener("click", () => {
+  imageInput?.click();
+});
+
 imageInput?.addEventListener("change", handleImageUpload);
 
-// Initialize on page load
-// 맵을 먼저 초기화하여 경로를 그리기 전에도 상호작용 가능하도록
-function initMapOnLoad() {
-  if (typeof kakao !== "undefined" && kakao.maps) {
-    initMapPreview();
-    // 맵 컨테이너에 pointer-events 확인
-    if (mapPreviewEl) {
-      mapPreviewEl.style.pointerEvents = "auto";
+// ==========================
+// Map Modal Functions
+// ==========================
+
+function openMapModal() {
+  console.log("[MAP MODAL] Opening map modal...");
+  const modal = document.getElementById("mapModal");
+  if (modal) {
+    modal.style.visibility = "visible";
+    modal.style.opacity = "1";
+    
+    if (!isModalMapInitialized) {
+      console.log("[MAP MODAL] First time opening, initializing...");
+      setTimeout(() => {
+        initModalMap();
+        const pathValue = pathInput.value;
+        if (pathValue) {
+          try {
+            const pathObj = typeof pathValue === "string" ? JSON.parse(pathValue) : pathValue;
+            if (pathObj && pathObj.coordinates) {
+              displayCourseOnModalMap(pathObj.coordinates);
+            }
+          } catch (e) {
+            console.error("[MAP MODAL] Error parsing path:", e);
+          }
+        }
+        isModalMapInitialized = true;
+      }, 100);
+    } else {
+      console.log("[MAP MODAL] Already initialized, just relayout...");
+      setTimeout(() => {
+        if (mapModal) {
+          mapModal.relayout();
+          mapModal.setDraggable(true);
+          mapModal.setZoomable(true);
+        }
+      }, 100);
     }
-  } else {
-    setTimeout(initMapOnLoad, 100);
   }
 }
 
-if (typeof kakao !== "undefined" && kakao.maps) {
-  initMapOnLoad();
-} else {
-  window.addEventListener("load", () => {
-    initMapOnLoad();
+function closeMapModal() {
+  console.log("[MAP MODAL] Closing map modal...");
+  const modal = document.getElementById("mapModal");
+  if (modal) {
+    modal.style.visibility = "hidden";
+    modal.style.opacity = "0";
+  }
+}
+
+function initModalMap() {
+  console.log("[MAP MODAL] Initializing modal map...");
+  
+  const modalMapContainer = document.getElementById("mapModal-map");
+  if (!modalMapContainer) {
+    console.error("[MAP MODAL ERROR] Modal map container not found!");
+    return;
+  }
+  
+  if (typeof kakao === "undefined" || !kakao.maps) {
+    console.error("[MAP MODAL ERROR] Kakao Maps SDK not loaded!");
+    return;
+  }
+
+  const center = new kakao.maps.LatLng(37.5665, 126.978);
+  
+  const mapOptions = {
+    center: center,
+    level: 5,
+    draggable: true,
+    scrollwheel: true,
+    disableDoubleClick: false,
+    disableDoubleClickZoom: false,
+    keyboardShortcuts: true
+  };
+  
+  mapModal = new kakao.maps.Map(modalMapContainer, mapOptions);
+  console.log("[MAP MODAL] Modal map created successfully");
+  console.log("[MAP MODAL] Modal map draggable:", mapModal.getDraggable());
+  console.log("[MAP MODAL] Modal map zoomable:", mapModal.getZoomable());
+  
+  setTimeout(() => {
+    if (mapModal) {
+      mapModal.relayout();
+      mapModal.setDraggable(true);
+      mapModal.setZoomable(true);
+      console.log("[MAP MODAL] Modal map re-enabled (100ms)");
+    }
+  }, 100);
+  
+  setTimeout(() => {
+    if (mapModal) {
+      mapModal.relayout();
+      mapModal.setDraggable(true);
+      mapModal.setZoomable(true);
+      console.log("[MAP MODAL] Modal map re-enabled (300ms)");
+    }
+  }, 300);
+  
+  setTimeout(() => {
+    if (mapModal) {
+      mapModal.relayout();
+      mapModal.setDraggable(true);
+      mapModal.setZoomable(true);
+      console.log("[MAP MODAL] Modal map re-enabled (500ms)");
+    }
+  }, 500);
+}
+
+function displayCourseOnModalMap(pathCoords) {
+  console.log("[MAP MODAL] Displaying course on modal map...");
+  
+  if (!mapModal) {
+    console.error("[MAP MODAL ERROR] Modal map not initialized!");
+    return;
+  }
+
+  if (!pathCoords || pathCoords.length === 0) {
+    console.warn("[MAP MODAL] No path coordinates found");
+    return;
+  }
+
+  const startCoord = pathCoords[0];
+  const endCoord = pathCoords[pathCoords.length - 1];
+  const startLat = startCoord[1];
+  const startLng = startCoord[0];
+  const endLat = endCoord[1];
+  const endLng = endCoord[0];
+
+  const isRoundTrip =
+    Math.abs(startLat - endLat) < 0.0001 &&
+    Math.abs(startLng - endLng) < 0.0001;
+
+  const displayStartLat = parseFloat(startLatInput.value) || startLat;
+  const displayStartLng = parseFloat(startLngInput.value) || startLng;
+
+  if (modalStartMarker) modalStartMarker.setMap(null);
+  if (modalEndMarker) modalEndMarker.setMap(null);
+  if (modalPolyline) modalPolyline.setMap(null);
+  if (modalStartInfoWindow) modalStartInfoWindow.close();
+  if (modalEndInfoWindow) modalEndInfoWindow.close();
+
+  const startLatLng = new kakao.maps.LatLng(displayStartLat, displayStartLng);
+  modalStartMarker = new kakao.maps.Marker({
+    position: startLatLng,
+    clickable: true,
+  });
+  modalStartMarker.setMap(mapModal);
+
+  modalStartInfoWindow = new kakao.maps.InfoWindow({
+    content: '<div style="padding:8px;font-size:13px;font-weight:bold;">📍 출발점</div>',
+    removable: true,
+  });
+
+  kakao.maps.event.addListener(modalStartMarker, "click", function () {
+    if (modalEndInfoWindow) modalEndInfoWindow.close();
+    modalStartInfoWindow.open(mapModal, modalStartMarker);
+  });
+
+  if (!isRoundTrip) {
+    const endLatLng = new kakao.maps.LatLng(endLat, endLng);
+    modalEndMarker = new kakao.maps.Marker({
+      position: endLatLng,
+      clickable: true,
+    });
+    modalEndMarker.setMap(mapModal);
+
+    modalEndInfoWindow = new kakao.maps.InfoWindow({
+      content: '<div style="padding:8px;font-size:13px;font-weight:bold;">🏁 도착점</div>',
+      removable: true,
+    });
+
+    kakao.maps.event.addListener(modalEndMarker, "click", function () {
+      if (modalStartInfoWindow) modalStartInfoWindow.close();
+      modalEndInfoWindow.open(mapModal, modalEndMarker);
+    });
+  }
+
+  const path = pathCoords.map((c) => new kakao.maps.LatLng(c[1], c[0]));
+  modalPolyline = new kakao.maps.Polyline({
+    path: path,
+    strokeWeight: 5,
+    strokeColor: "#ff3d00",
+    strokeOpacity: 0.8,
+    strokeStyle: "solid",
+  });
+  modalPolyline.setMap(mapModal);
+
+  const bounds = new kakao.maps.LatLngBounds();
+  path.forEach((p) => bounds.extend(p));
+
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const centerLat = (sw.getLat() + ne.getLat()) / 2;
+  const centerLng = (sw.getLng() + ne.getLng()) / 2;
+
+  const latDiff = ne.getLat() - sw.getLat();
+  const lngDiff = ne.getLng() - sw.getLng();
+  const maxDiff = Math.max(latDiff, lngDiff);
+
+  let level = 5;
+  if (maxDiff > 0.1) level = 4;
+  else if (maxDiff > 0.05) level = 5;
+  else if (maxDiff > 0.02) level = 6;
+  else if (maxDiff > 0.01) level = 7;
+  else level = 8;
+
+  mapModal.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
+  mapModal.setLevel(level);
+  
+  setTimeout(() => {
+    if (mapModal) {
+      mapModal.relayout();
+      mapModal.setDraggable(true);
+      mapModal.setZoomable(true);
+      console.log("[MAP MODAL] Modal map finalized");
+    }
+  }, 100);
+  
+  console.log("[MAP MODAL] Course displayed on modal map");
+}
+
+// Initialize on page load
+function bootstrapMap() {
+  console.log("[BOOTSTRAP] Starting map bootstrap...");
+  
+  if (!mapContainer) {
+    console.error("[BOOTSTRAP ERROR] Map container not found!");
+    return;
+  }
+  console.log("[BOOTSTRAP] Map container found:", mapContainer);
+
+  if (typeof kakao === "undefined" || !kakao.maps) {
+    console.log("[BOOTSTRAP] Waiting for Kakao Maps SDK to load...");
+    setTimeout(bootstrapMap, 100);
+    return;
+  }
+  console.log("[BOOTSTRAP] Kakao Maps SDK loaded!");
+
+  console.log("[BOOTSTRAP] Initializing map...");
+  initMap();
+
+  setTimeout(() => {
+    console.log("[BOOTSTRAP] Loading course data after 100ms...");
+    if (map) {
+      map.relayout();
+      map.setDraggable(true);
+      map.setZoomable(true);
+      console.log("[BOOTSTRAP] Map re-enabled before loading course");
+    }
+    loadCourseData();
+  }, 100);
+  
+  console.log("[BOOTSTRAP] Bootstrap complete!");
+}
+
+const closeMapModalBtn = document.getElementById("closeMapModal");
+const mapModalOverlay = document.getElementById("mapModal");
+
+if (closeMapModalBtn) {
+  closeMapModalBtn.addEventListener("click", closeMapModal);
+}
+
+if (mapModalOverlay) {
+  mapModalOverlay.addEventListener("click", (e) => {
+    if (e.target === mapModalOverlay) {
+      closeMapModal();
+    }
   });
 }
 
-// 기존 코스 데이터 로드 (완료 후 저장된 제목/설명 복원)
-setTimeout(() => {
-  loadCourseData();
-}, 600);
+if (mapContainer) {
+  mapContainer.addEventListener("click", () => {
+    if (pathInput.value) {
+      openMapModal();
+    }
+  });
+  mapContainer.style.cursor = "pointer";
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    if (typeof kakao !== "undefined" && kakao.maps) {
+      bootstrapMap();
+    } else {
+      window.addEventListener("load", bootstrapMap);
+    }
+  });
+} else {
+  if (typeof kakao !== "undefined" && kakao.maps) {
+    bootstrapMap();
+  } else {
+    window.addEventListener("load", bootstrapMap);
+  }
+}
+
 anyInvalid();
