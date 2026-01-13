@@ -189,6 +189,13 @@ function renderChallenges(sectionType, challenges) {
     });
 }
 
+// SVG 아이콘 정의
+const CHALLENGE_ICONS = {
+    COUNT: `<svg class="type-icon-svg" width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000"><path d="M15 4V2M15 4V6M15 4H10.5M3 10V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V10H3Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 10V6C3 4.89543 3.89543 4 5 4H7" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7 2V6" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M21 10V6C21 4.89543 20.1046 4 19 4H18.5" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>`,
+    DISTANCE: `<svg class="type-icon-svg" width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000"><path d="M15 7C16.1046 7 17 6.10457 17 5C17 3.89543 16.1046 3 15 3C13.8954 3 13 3.89543 13 5C13 6.10457 13.8954 7 15 7Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12.6133 8.26691L9.30505 12.4021L13.4403 16.5374L11.3727 21.0861" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.4104 9.5075L9.79728 6.19931L12.6132 8.26692L15.508 11.5752H19.2297" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.89152 15.7103L7.65095 16.5374H4.34277" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>`,
+    TIME: `<svg class="type-icon-svg" width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000"><path d="M9 2L15 2" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 10L12 14" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 22C16.4183 22 20 18.4183 20 14C20 9.58172 16.4183 6 12 6C7.58172 6 4 9.58172 4 14C4 18.4183 7.58172 22 12 22Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>`
+};
+
 function createChallengeCard(challenge, sectionType) {
     const card = document.createElement("div");
     card.className = "challenge-card";
@@ -230,9 +237,24 @@ function createChallengeCard(challenge, sectionType) {
 
     const typeRow = document.createElement("div");
     typeRow.className = "challenge-meta-row";
+
+    // 타입 뱃지 생성 (아이콘 + 텍스트)
     const typeBadge = document.createElement("span");
     typeBadge.className = "challenge-type-badge";
-    typeBadge.textContent = getChallengeTypeLabel(challenge.challengeType);
+    typeBadge.dataset.type = challenge.challengeType; // CSS 스타일링용 데이터 속성
+
+    // 아이콘 wrapper
+    const iconSpan = document.createElement("span");
+    iconSpan.className = "challenge-type-icon";
+    iconSpan.innerHTML = CHALLENGE_ICONS[challenge.challengeType] || '';
+
+    // 텍스트 wrapper
+    const textSpan = document.createElement("span");
+    textSpan.textContent = getChallengeTypeLabel(challenge.challengeType);
+
+    typeBadge.appendChild(iconSpan);
+    typeBadge.appendChild(textSpan);
+
     typeRow.appendChild(typeBadge);
 
     const participantRow = document.createElement("div");
