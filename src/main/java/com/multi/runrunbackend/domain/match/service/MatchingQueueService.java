@@ -4,6 +4,7 @@ import com.multi.runrunbackend.common.constant.DistanceType;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.match.constant.SessionStatus;
 import com.multi.runrunbackend.domain.match.dto.res.OnlineMatchStatusResDto;
 import com.multi.runrunbackend.domain.match.entity.SessionUser;
 import com.multi.runrunbackend.domain.match.repository.SessionUserRepository;
@@ -194,7 +195,7 @@ public class MatchingQueueService {
 
       if (activeSession.isEmpty() ||
           activeSession.get().getMatchSession().getStatus()
-              == com.multi.runrunbackend.domain.match.constant.SessionStatus.CANCELLED) {
+              == SessionStatus.CANCELLED) {
         // 세션이 취소되었거나 존재하지 않음 → Redis 키 삭제
         log.warn("Redis에 세션 ID가 있으나 실제 세션은 취소됨/없음 - User: {}, SessionID: {}",
             userId, sessionId);
