@@ -41,12 +41,13 @@
                 <img
                         class="avatar-img"
                         data-role="profile-preview"
+                        src="/img/default-profile.svg"
                         alt="프로필 이미지"
-                        hidden
                 />
                 <span
                         class="avatar-initial"
                         data-role="profile-initial"
+                        hidden
                 ></span>
             </div>
 
@@ -206,6 +207,23 @@
         <div class="run-list-empty" id="runListEmpty" hidden>
             <div class="empty-text-large">텅~</div>
             <div class="empty-text-small">이번 주 러닝 기록이 없어요</div>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="pagination" id="pagination" hidden>
+            <button class="pagination-button" id="paginationPrev" type="button" aria-label="이전 페이지">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="pagination-pages" id="paginationPages">
+                <!-- 페이지 버튼들은 JavaScript로 동적 생성 -->
+            </div>
+            <button class="pagination-button" id="paginationNext" type="button" aria-label="다음 페이지">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
     </section>
 </main>

@@ -1,11 +1,17 @@
 :root {
     --primary: #10b981;
-    --primary-light: #14b8a6;
-    --text-strong: #111827;
-    --text-muted: #6b7280;
-    --stroke: #e5e7eb;
-    --bg: #f9fafb;
-    --card-bg: #ffffff;
+    --primary-dark: #059669;
+    --primary-light: #d1fae5;
+    --accent: #3b82f6;
+    --text-dark: #111827;
+    --text-gray: #6b7280;
+    --text-light: #9ca3af;
+    --bg-gray: #f9fafb;
+    --bg-white: #ffffff;
+    --border: #e5e7eb;
+    --shadow: rgba(0, 0, 0, 0.1);
+    --shadow-md: rgba(0, 0, 0, 0.15);
+    --shadow-lg: rgba(0, 0, 0, 0.2);
 }
 
 *,
@@ -22,8 +28,10 @@ body {
 
 .mypage-body {
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text-strong);
+    background: var(--bg-gray);
+    color: var(--text-dark);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .page {
@@ -34,7 +42,7 @@ body {
     padding: 0;
     display: flex;
     flex-direction: column;
-    background: var(--card-bg);
+    background: var(--bg-white);
 }
 
 .mypage-page {
@@ -43,10 +51,11 @@ body {
     padding-bottom: 90px;
 }
 
+/* Header */
 .mypage-header {
-    background: var(--card-bg);
+    background: var(--bg-white);
     padding: 16px;
-    border-bottom: 1px solid var(--stroke);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -58,7 +67,7 @@ body {
     font-family: "Fugaz One", sans-serif;
     font-size: 24px;
     letter-spacing: 0.05em;
-    color: var(--text-strong);
+    color: var(--text-dark);
 }
 
 .icon-button {
@@ -89,55 +98,77 @@ body {
     height: 100%;
 }
 
+/* Profile Summary - 개선된 카드 디자인 */
 .profile-summary {
-    background: var(--card-bg);
-    padding: 24px 16px 20px;
-    border-bottom: 8px solid var(--bg);
+    background: var(--bg-white);
+    padding: 24px 20px;
 }
 
 .profile-row {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
+    gap: 20px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 2px 8px var(--shadow);
 }
 
 .profile-avatar {
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
-    background: #f5f5f5;
-    border: 3px solid var(--primary);
-    display: grid;
-    place-items: center;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    border: 4px solid white;
+    box-shadow: 0 4px 12px var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
     flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.profile-avatar:hover {
+    transform: scale(1.05);
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.avatar-img[hidden] {
+    display: none;
+}
+
+.avatar-img:not([src]),
+.avatar-img[src=""] {
+    display: none;
 }
 
 .avatar-initial {
-    font-family: "Fugaz One", "Inter", sans-serif;
-    font-size: 18px;
+    font-family: "Poppins", "Inter", sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: white;
+}
+
+.avatar-initial[hidden] {
+    display: none;
 }
 
 .profile-text {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-}
-
-.profile-name {
-    margin: 0;
-    font-weight: 600;
-    font-size: 13px;
-}
-
-.profile-meta {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.6;
-    display: flex;
-    flex-direction: column;
     gap: 8px;
+    flex: 1;
 }
 
 .profile-center {
@@ -145,119 +176,163 @@ body {
     align-items: flex-start;
 }
 
-.profile-actions {
+.profile-meta {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-
-.action-button-vertical {
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    background: var(--primary);
-    color: white;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.action-button-vertical:hover {
-    background: #059669;
-    transform: translateY(-1px);
-}
-
-.action-button-vertical.secondary {
-    background: var(--bg);
-    color: var(--text-strong);
-}
-
-.action-button-vertical.secondary:hover {
-    background: #e5e7eb;
-}
-
-/* 한 줄 배치용 버튼 스타일 */
-.action-button-horizontal {
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    background: var(--primary);
-    color: white;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.action-button-horizontal:hover {
-    background: #059669;
-    transform: translateY(-1px);
-}
-
-.action-button-horizontal.secondary {
-    background: var(--bg);
-    color: var(--text-strong);
-}
-
-.action-button-horizontal.secondary:hover {
-    background: #e5e7eb;
+    gap: 12px;
 }
 
 .tier-section,
 .rating-section,
 .point-section {
+    background: white;
+    padding: 8px;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+}
+
+.tier-section:hover,
+.rating-section:hover,
+.point-section:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow);
 }
 
 .tier-label,
 .rating-label,
 .point-label {
+    font-size: 10px;
+    color: var(--text-gray);
     font-weight: 600;
-    color: var(--text-strong);
-    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: block;
+    white-space: nowrap;
 }
 
 .tier-display {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
 }
 
-.tier-image {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
+.tier-text {
+    font-size: 24px;
+    line-height: 1;
 }
 
-.tier-text {
-    font-size: 16px;
-    color: var(--text-strong);
-    line-height: 1;
-    display: none;
+.tier-image {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
 }
 
 .rating-value,
 .point-value {
-    font-weight: 600;
-    color: var(--text-strong);
-    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 16px;
+    display: block;
+    white-space: nowrap;
 }
 
+/* Action Buttons - 개선된 버튼 디자인 */
+.profile-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.action-button-horizontal {
+    padding: 12px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: white;
+    color: var(--text-dark);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.action-button-horizontal:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.action-button-horizontal.secondary {
+    background: white;
+    color: var(--text-dark);
+    border-color: var(--border);
+}
+
+.action-button-horizontal.secondary:hover {
+    background: var(--bg-gray);
+    border-color: var(--primary);
+}
+
+.action-button-vertical {
+    padding: 12px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: white;
+    color: var(--text-dark);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.action-button-vertical:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.action-button-vertical.secondary {
+    background: white;
+    color: var(--text-dark);
+    border-color: var(--border);
+}
+
+.action-button-vertical.secondary:hover {
+    background: var(--bg-gray);
+    border-color: var(--primary);
+}
+
+/* My Content Section - 개선된 카드 */
 .my-content-section {
-    padding: 20px 16px;
-    background: var(--card-bg);
-    border-bottom: 8px solid var(--bg);
+    padding: 0 20px 24px;
+    background: var(--bg-white);
 }
 
 .my-content-buttons {
@@ -267,26 +342,28 @@ body {
 }
 
 .my-content-button {
-    height: 64px;
-    border-radius: 12px;
-    border: none;
-    background: var(--bg);
+    height: 80px;
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    background: white;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .my-content-button:hover:not(:disabled) {
-    background: #e5e7eb;
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px var(--shadow-md);
+    border-color: var(--primary);
 }
 
 .my-content-button:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(-2px);
 }
 
 .my-content-button:disabled {
@@ -295,17 +372,276 @@ body {
 }
 
 .my-content-button .button-icon {
-    font-size: 20px;
+    font-size: 32px;
     line-height: 1;
 }
 
 .my-content-button .button-text {
     font-size: 13px;
     font-weight: 600;
-    color: var(--text-strong);
+    color: var(--text-dark);
 }
 
-/* 코스 모달 */
+/* Run List Section */
+.run-list-section {
+    padding: 0 20px 24px;
+    background: var(--bg-white);
+}
+
+.run-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.run-list-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.date-search-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: white;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.date-search-button:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+.date-search-button svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-gray);
+}
+
+.run-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Run Card - 개선된 카드 디자인 */
+.run-card {
+    display: flex;
+    gap: 16px;
+    border-radius: 16px;
+    border: 2px solid transparent;
+    background: white;
+    padding: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.run-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 16px var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.run-thumb {
+    flex: 0 0 80px;
+    height: 80px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #d1d5db;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.run-thumb:hover {
+    transform: scale(1.05);
+}
+
+.run-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.run-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.run-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+
+.run-date {
+    font-weight: 600;
+    color: var(--text-gray);
+    font-size: 13px;
+}
+
+.run-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.run-type {
+    color: var(--text-gray);
+    font-weight: 600;
+}
+
+.run-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.run-status-badge.run-status-completed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.run-status-badge.run-status-time-out {
+    background-color: #fed7aa;
+    color: #9a3412;
+}
+
+.run-status-badge.run-status-give-up {
+    background-color: #fce4ec;
+    color: #c2185b;
+}
+
+.run-status-badge.run-status-in-progress {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.run-status-badge.run-status-cancelled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.run-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.run-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text-gray);
+}
+
+.run-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.run-icon {
+    font-size: 14px;
+}
+
+.run-pace {
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.run-pace-label {
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.run-pace-value {
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+.run-actions {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.run-share,
+.run-delete {
+    border: none;
+    background: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.run-share {
+    color: var(--accent);
+}
+
+.run-share:hover {
+    background: #dbeafe;
+}
+
+.run-delete {
+    color: #ef4444;
+}
+
+.run-delete:hover {
+    background: #fee2e2;
+}
+
+/* Empty State */
+.run-list-empty {
+    margin-top: 40px;
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-text-large {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-text-small {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-gray);
+    margin-bottom: 8px;
+}
+
+/* Course Modal */
 .course-modal {
     display: none;
     position: fixed;
@@ -337,7 +673,7 @@ body {
     width: min(90%, 400px);
     max-width: 400px;
     background: #ffffff;
-    border-radius: 16px;
+    border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     z-index: 1001;
     animation: modalSlideIn 0.3s ease;
@@ -358,41 +694,42 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 20px 16px;
-    border-bottom: 1px solid var(--stroke);
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid var(--border);
 }
 
 .course-modal-title {
     margin: 0;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
-    color: var(--text-strong);
+    color: var(--text-dark);
 }
 
 .course-modal-close {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border: none;
     background: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    color: var(--text-gray);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    padding: 0;
 }
 
 .course-modal-close:hover {
-    background: #f5f5f5;
-    color: var(--text-strong);
+    background: var(--bg-gray);
+    color: var(--text-dark);
 }
 
 .course-modal-options {
-    padding: 8px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
 }
 
 .course-modal-option {
@@ -405,297 +742,41 @@ body {
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     text-align: left;
 }
 
 .course-modal-option:hover {
-    background: #f8f9fa;
-}
-
-.course-modal-option:active {
-    background: #f0f0f0;
+    background: var(--bg-gray);
 }
 
 .course-modal-option .option-icon {
-    font-size: 24px;
+    font-size: 28px;
     line-height: 1;
     flex-shrink: 0;
 }
 
 .course-modal-option .option-text {
     flex: 1;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
-    color: var(--text-strong);
+    color: var(--text-dark);
 }
 
 .course-modal-option .option-arrow {
     flex-shrink: 0;
-    color: var(--text-muted);
+    color: var(--text-gray);
 }
 
-.run-list-section {
-    padding: 20px 16px;
-    background: var(--card-bg);
-}
-
-.run-list-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-}
-
-.run-list-title {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-strong);
-}
-
-.date-search-button {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border: 1px solid var(--stroke);
-    border-radius: 8px;
-    background: #ffffff;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-strong);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.date-search-button:hover {
-    background: #f8f9fa;
-    border-color: var(--primary);
-}
-
-.date-search-button svg {
-    width: 16px;
-    height: 16px;
-    color: var(--text-muted);
-}
-
-.run-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.run-card {
-    display: flex;
-    gap: 12px;
-    border-radius: 12px;
-    border: none;
-    background: var(--bg);
-    padding: 16px;
-    transition: all 0.2s;
-}
-
-.run-card:hover {
-    background: #e5e7eb;
-}
-
-.run-thumb {
-    flex: 0 0 80px;
-    height: 80px;
-    border-radius: 10px;
-    overflow: hidden;
-    background: #d1d5db;
-    cursor: pointer;
-    transition: opacity 0.15s ease;
-}
-
-.run-thumb:hover {
-    opacity: 0.9;
-}
-
-.run-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    pointer-events: none;
-}
-
-.run-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.run-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 6px;
-    font-size: 9px;
-}
-
-.run-date {
-    font-weight: 600;
-}
-
-.run-header-right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.run-type {
-    color: var(--text-muted);
-    text-align: right;
-    font-weight: 600;
-}
-
-.run-status-badge {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 8px;
-    font-weight: 600;
-    line-height: 1.2;
-}
-
-.run-status-badge.run-status-completed {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-}
-
-.run-status-badge.run-status-time-out {
-    background-color: #fff3e0;
-    color: #e65100;
-}
-
-.run-status-badge.run-status-give-up {
-    background-color: #fce4ec;
-    color: #c2185b;
-}
-
-.run-status-badge.run-status-in-progress {
-    background-color: #e3f2fd;
-    color: #1976d2;
-}
-
-.run-status-badge.run-status-cancelled {
-    background-color: #f5f5f5;
-    color: #616161;
-}
-
-.run-title {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.run-stats {
-    display: flex;
-    gap: 10px;
-    font-size: 10px;
-}
-
-.run-stat {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-}
-
-.run-icon {
-    font-size: 11px;
-}
-
-.run-pace {
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 10px;
-}
-
-.run-pace-label {
-    color: var(--text-muted);
-    font-weight: 400;
-}
-
-.run-pace-value {
-    color: var(--text-strong);
-    font-weight: 600;
-}
-
-/* 러닝 기록 빈 상태 */
-.run-list-empty {
-    margin-top: 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 60px 20px;
-}
-
-.empty-text-large {
-    font-size: 48px;
-    font-weight: 700;
-    color: var(--text-muted);
-    line-height: 1.2;
-}
-
-.empty-text-small {
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--text-muted);
-    line-height: 1.5;
-    text-align: center;
-}
-
-.run-actions {
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.run-share {
-    border: none;
-    background: none;
-    font-size: 9px;
-    text-decoration: underline;
-    cursor: pointer;
-    color: var(--text-strong);
-    padding: 0;
-}
-
-.run-delete {
-    border: none;
-    background: none;
-    font-size: 9px;
-    text-decoration: underline;
-    cursor: pointer;
-    color: #ff6b6b;
-    padding: 0;
-    transition: color 0.15s ease;
-}
-
-.run-delete:hover {
-    color: #ff4444;
-}
-
-/* 이미지 모달 스타일 */
+/* Image Modal */
 .image-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -721,37 +802,34 @@ body {
     max-width: 100%;
     max-height: 90vh;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 12px;
 }
 
 .image-modal-close {
     position: absolute;
-    top: -40px;
+    top: -50px;
     right: 0;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border: none;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    transition: background-color 0.15s ease;
+    transition: all 0.3s ease;
     z-index: 2001;
 }
 
 .image-modal-close:hover {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
 }
 
-.image-modal-close svg {
-    width: 20px;
-    height: 20px;
-}
-
-/* 삭제 확인 모달 스타일 */
+/* Delete Modal */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -759,6 +837,7 @@ body {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -774,32 +853,32 @@ body {
     width: 100%;
     max-width: 400px;
     background: #ffffff;
-    border-radius: 16px;
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
     max-height: 90vh;
     overflow: hidden;
+    box-shadow: 0 8px 32px var(--shadow-lg);
 }
 
 .modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: 1px solid #e1e4e8;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid var(--border);
 }
 
 .modal-title {
     margin: 0;
-    font-family: "Outfit", "Noto Sans KR", sans-serif;
     font-size: 20px;
-    font-weight: 600;
-    color: #000000;
+    font-weight: 700;
+    color: var(--text-dark);
 }
 
 .modal-close {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border: none;
     background: none;
     padding: 0;
@@ -807,90 +886,80 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #000000;
-    border-radius: 8px;
-    transition: background-color 0.15s ease;
+    color: var(--text-gray);
+    border-radius: 12px;
+    transition: all 0.3s ease;
 }
 
 .modal-close:hover {
-    background: #f5f5f5;
-}
-
-.modal-close svg {
-    width: 20px;
-    height: 20px;
+    background: var(--bg-gray);
+    color: var(--text-dark);
 }
 
 .modal-body {
-    padding: 24px;
+    padding: 32px 24px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
     overflow-y: auto;
 }
 
 .delete-confirm-message {
-    font-family: "Outfit", "Noto Sans KR", sans-serif;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
-    color: #000000;
+    color: var(--text-dark);
     margin: 0;
     text-align: center;
 }
 
 .delete-warning-message {
     font-size: 14px;
-    color: #6c7278;
+    color: var(--text-gray);
     margin: 0;
     text-align: center;
 }
 
 .modal-footer {
     padding: 16px 24px;
-    border-top: 1px solid #e1e4e8;
+    border-top: 1px solid var(--border);
     display: flex;
     justify-content: flex-end;
     gap: 12px;
 }
 
 .modal-cancel-button {
-    padding: 10px 24px;
-    border: 1px solid #e1e4e8;
+    padding: 12px 24px;
+    border: 2px solid var(--border);
     background: #ffffff;
-    color: #000000;
+    color: var(--text-dark);
     font-size: 14px;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.3s ease;
 }
 
 .modal-cancel-button:hover {
-    background: #fafafa;
-}
-
-.modal-cancel-button:active {
-    transform: scale(0.98);
+    background: var(--bg-gray);
+    border-color: var(--primary);
 }
 
 .modal-confirm-button {
-    padding: 10px 24px;
+    padding: 12px 24px;
     border: none;
-    background: #ff4444;
+    background: #ef4444;
     color: white;
     font-size: 14px;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.3s ease;
 }
 
 .modal-confirm-button:hover {
-    background: #e63333;
-}
-
-.modal-confirm-button:active {
-    transform: scale(0.98);
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 .modal-confirm-button:disabled {
@@ -898,6 +967,228 @@ body {
     cursor: not-allowed;
 }
 
+/* Calendar Modal */
+.calendar-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+    padding: 20px;
+}
+
+.calendar-modal-overlay[hidden] {
+    display: none !important;
+}
+
+.calendar-modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.calendar-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.calendar-modal-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.calendar-modal-close {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-gray);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.calendar-modal-close:hover {
+    background: var(--bg-gray);
+    color: var(--text-dark);
+}
+
+.calendar-container {
+    padding: 24px;
+}
+
+.calendar-month-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.calendar-nav-button {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.calendar-nav-button:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+.calendar-month-year {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-gray);
+    padding: 8px 0;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dark);
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    border: 2px solid transparent;
+}
+
+.calendar-day:hover:not(.calendar-day-other-month):not(.calendar-day-disabled) {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+.calendar-day-other-month {
+    color: var(--text-light);
+    opacity: 0.4;
+    cursor: default;
+}
+
+.calendar-day-disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.calendar-day-today {
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+}
+
+.calendar-day-selected {
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+    border-color: var(--primary-dark);
+}
+
+.calendar-day-has-record {
+    background: #fef3c7;
+    border-color: #fbbf24;
+    position: relative;
+}
+
+.calendar-day-has-record.calendar-day-selected {
+    background: var(--primary);
+    border-color: var(--primary-dark);
+}
+
+.calendar-day-has-record::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #f59e0b;
+}
+
+.calendar-day-has-record.calendar-day-selected::after {
+    background: white;
+}
+
+.calendar-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.calendar-reset-button {
+    padding: 10px 20px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.calendar-reset-button:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+/* Bottom Navigation */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -906,25 +1197,39 @@ body {
     max-width: 420px;
     margin: 0 auto;
     height: 76px;
-    border-top: 1px solid var(--primary);
-    background: #fff;
+    border-top: 1px solid var(--border);
+    background: white;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     align-items: center;
     padding: 8px 12px 6px;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-    z-index: 10;
+    box-shadow: 0 -2px 10px var(--shadow);
+    z-index: 100;
 }
 
 .nav-item {
     text-align: center;
     text-decoration: none;
-    color: #000;
-    font-family: "Fugaz One", "Inter", sans-serif;
-    font-size: 10px;
-    display: grid;
-    gap: 6px;
-    justify-items: center;
+    color: var(--text-gray);
+    font-family: "Poppins", "Inter", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.nav-item.active {
+    color: var(--primary);
 }
 
 .nav-item img {
@@ -932,6 +1237,16 @@ body {
     height: 28px;
 }
 
+/* Tier Rating Modal */
+.tier-rating-modal {
+    display: none;
+}
+
+.tier-rating-modal.active {
+    display: flex;
+}
+
+/* Responsive */
 @media (max-width: 480px) {
     .page {
         padding: 0 16px 110px;
@@ -940,26 +1255,24 @@ body {
     .mypage-page {
         padding-bottom: 120px;
     }
-}
 
-@media (max-width: 920px) and (max-height: 520px) {
-    .page {
-        width: min(420px, 100vw);
-        padding: 0 14px 100px;
+    .mypage-header {
+        padding: 20px 16px;
     }
 
-    .mypage-logo {
-        font-size: 26px;
+    .profile-summary {
+        padding: 20px 16px;
     }
 
-    .bottom-nav {
-        height: 68px;
-        padding: 6px 12px 6px;
+    .run-list-section {
+        padding: 0 16px 20px;
     }
 
-    .nav-item img {
-        width: 26px;
-        height: 26px;
+    .course-modal-content,
+    .modal-content,
+    .calendar-modal-content {
+        width: calc(100% - 32px);
+        margin: 16px;
     }
 }
 
@@ -982,305 +1295,11 @@ body {
     }
 
     .nav-item {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .nav-item img {
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
     }
 }
-
-/* `/css/mypage.css` */
-
-/* 아바타 원(컨테이너) */
-.profile-avatar {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    overflow: hidden; /* 원 밖으로 이미지가 삐져나오지 않게 */
-    flex: 0 0 88px; /* flex 레이아웃에서 줄어들지 않게 */
-    display: grid;
-    place-items: center;
-    background: #e9ecef; /* URL 없을 때 보이는 빈 원 배경 (원하면 투명으로) */
-}
-
-/* 실제 이미지: 컨테이너를 꽉 채우고 잘라내기 */
-.profile-avatar .avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block; /* img 아래 여백 제거 */
-}
-
-/* 이니셜도 중앙 정렬 */
-.profile-avatar .avatar-initial {
-    font-weight: 700;
-    font-size: 28px;
-    line-height: 1;
-}
-
-/* 달력 모달 스타일 */
-.calendar-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1500;
-    padding: 20px;
-}
-
-.calendar-modal-overlay[hidden] {
-    display: none !important;
-}
-
-.calendar-modal-content {
-    position: relative;
-    width: 100%;
-    max-width: 380px;
-    max-height: 90vh;
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.calendar-modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--stroke);
-}
-
-.calendar-modal-title {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-strong);
-}
-
-.calendar-modal-close {
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    padding: 0;
-}
-
-.calendar-modal-close:hover {
-    background: #f5f5f5;
-    color: var(--text-strong);
-}
-
-.calendar-container {
-    padding: 20px;
-}
-
-.calendar-month-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.calendar-nav-button {
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--stroke);
-    border-radius: 8px;
-    background: #ffffff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-strong);
-    transition: all 0.2s ease;
-    padding: 0;
-}
-
-.calendar-nav-button:hover {
-    background: #f8f9fa;
-    border-color: var(--primary);
-}
-
-.calendar-month-year {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-strong);
-}
-
-.calendar-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    margin-bottom: 12px;
-}
-
-.calendar-weekday {
-    text-align: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
-    padding: 8px 0;
-}
-
-.calendar-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-}
-
-.calendar-day {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-strong);
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    background: #ffffff;
-    border: 1px solid transparent;
-}
-
-.calendar-day:hover:not(.calendar-day-other-month):not(.calendar-day-disabled) {
-    background: #f8f9fa;
-    border-color: var(--primary);
-}
-
-.calendar-day-other-month {
-    color: var(--text-muted);
-    opacity: 0.4;
-    cursor: default;
-}
-
-.calendar-day-disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.calendar-day-today {
-    background: var(--primary);
-    color: #000000;
-    font-weight: 700;
-}
-
-.calendar-day-selected {
-    background: var(--primary);
-    color: #000000;
-    font-weight: 700;
-    border-color: var(--primary);
-}
-
-.calendar-day-has-record {
-    background: #fff3e0;
-    border-color: #ff9800;
-    position: relative;
-}
-
-.calendar-day-has-record.calendar-day-selected {
-    background: var(--primary);
-    border-color: var(--primary);
-}
-
-.calendar-day-has-record::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: #ff9800;
-}
-
-.calendar-day-has-record.calendar-day-selected::after {
-    background: #000000;
-}
-
-.calendar-modal-footer {
-    padding: 16px 24px;
-    border-top: 1px solid var(--stroke);
-    display: flex;
-    justify-content: flex-end;
-}
-
-.calendar-reset-button {
-    padding: 8px 16px;
-    border: 1px solid var(--stroke);
-    border-radius: 8px;
-    background: #ffffff;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-strong);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.calendar-reset-button:hover {
-    background: #f8f9fa;
-    border-color: var(--primary);
-}
-
-/* 모달 미디어 쿼리 */
-@media (max-width: 480px) {
-    .course-modal-content {
-        width: calc(100% - 32px);
-        margin: 16px;
-    }
-
-    .course-modal-header {
-        padding: 16px 16px 12px;
-    }
-
-    .course-modal-title {
-        font-size: 16px;
-    }
-
-    .course-modal-options {
-        padding: 4px;
-    }
-
-    .course-modal-option {
-        padding: 14px;
-    }
-
-    .course-modal-option .option-text {
-        font-size: 14px;
-    }
-
-    .calendar-modal-content {
-        max-width: calc(100vw - 32px);
-        margin: 16px;
-    }
-
-    .calendar-container {
-        padding: 16px;
-    }
-
-    .calendar-day {
-        font-size: 13px;
-    }
-}
-
-
