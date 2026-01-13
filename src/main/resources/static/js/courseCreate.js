@@ -102,10 +102,11 @@ function validateRoute() {
 function anyInvalid() {
   const checks = [validateTitle(), validateDescription(), validateRoute()];
   const ok = checks.every(Boolean);
-  if (stickyBtn) {
-    stickyBtn.disabled = !ok;
-    stickyBtn.style.opacity = ok ? "1" : "0.5";
-  }
+  // 버튼 상태는 항상 활성화 상태로 유지
+  // if (stickyBtn) {
+  //   stickyBtn.disabled = !ok;
+  //   stickyBtn.style.opacity = ok ? "1" : "0.5";
+  // }
   return !ok;
 }
 
@@ -382,19 +383,27 @@ function hydrateFromStorage() {
   }
 }
 
-function handleImageUpload() {
+function handleImageUpload(e) {
+  console.log('handleImageUpload called', imageInput?.files?.length);
+  
   if (!imageInput?.files?.length) {
     imagePreview.innerHTML = "";
     imageUploadArea?.classList.remove("has-preview");
     return;
   }
+  
   const [file] = imageInput.files;
+  console.log('Selected file:', file.name, file.type);
+  
   const frag = document.createDocumentFragment();
   const url = URL.createObjectURL(file);
   const img = document.createElement("img");
   img.src = url;
   img.alt = file.name;
-  img.onload = () => URL.revokeObjectURL(url);
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    console.log('Image loaded successfully');
+  };
   frag.appendChild(img);
   imagePreview.innerHTML = "";
   imagePreview.appendChild(frag);
@@ -717,8 +726,16 @@ manualRouteBtn?.addEventListener("click", () => {
   window.location.href = "/course_manual";
 });
 
-imageUploadArea?.addEventListener("click", () => imageInput?.click());
-imageInput?.addEventListener("change", handleImageUpload);
+// 이미지 업로드 이벤트 처리
+if (imageUploadArea && imageInput) {
+  // imageUploadArea 클릭 시 파일 선택 다이얼로그 열기
+  imageUploadArea.addEventListener("click", function() {
+    imageInput.click();
+  });
+  
+  // 파일 선택 시 미리보기 처리
+  imageInput.addEventListener("change", handleImageUpload);
+}
 
 // 페이지 로드 시: 먼저 저장된 입력값 복원, 그 다음 경로 정보 적용
 restoreFormData();
