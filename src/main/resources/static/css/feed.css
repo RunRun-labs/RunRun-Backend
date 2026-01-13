@@ -444,27 +444,25 @@ body {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--primary);
+    background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
     border: none;
-    box-shadow: 0 4px 12px rgba(186, 255, 41, 0.4);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 100;
     transition: all 0.2s ease;
-    color: #000;
+    color: white;
 }
 
 .fab-button:hover {
-    background: #a8e01f;
-    box-shadow: 0 6px 16px rgba(186, 255, 41, 0.5);
     transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
 }
 
 .fab-button:active {
     transform: scale(0.95);
-    box-shadow: 0 2px 8px rgba(186, 255, 41, 0.4);
 }
 
 .fab-button svg {
