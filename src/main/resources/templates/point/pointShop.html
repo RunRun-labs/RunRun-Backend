@@ -41,15 +41,34 @@
 </div>
 
 <!-- 상품 상세 모달 -->
-<div id="productModal" class="modal" style="display: none;" onclick="closeProductModal()">
+<div id="productModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeProductModal()"></div>
     <div class="modal-content" onclick="event.stopPropagation()">
-        <img id="modalImage" src="" alt="" class="modal-product-image">
-        <h2 id="modalProductName" class="modal-product-name"></h2>
-        <p id="modalProductDescription" class="modal-product-description"></p>
-        <div id="modalRequiredPoints" class="modal-required-points"></div>
-        <div class="modal-buttons">
-            <button class="btn-modal-cancel" onclick="closeProductModal()">취소</button>
-            <button id="btnExchange" class="btn-modal-exchange">교환</button>
+        <button class="modal-close" onclick="closeProductModal()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+        </button>
+        
+        <div class="modal-image-wrapper">
+            <img id="modalImage" src="" alt="" class="modal-product-image">
+        </div>
+        
+        <div class="modal-body">
+            <h2 id="modalProductName" class="modal-product-name"></h2>
+            <p id="modalProductDescription" class="modal-product-description"></p>
+            
+            <div class="modal-points-section">
+                <div class="points-info">
+                    <span class="points-label">필요 포인트</span>
+                    <span id="modalRequiredPoints" class="points-value"></span>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn-modal-cancel" onclick="closeProductModal()">취소</button>
+                <button id="btnExchange" class="btn-modal-exchange">교환하기</button>
+            </div>
         </div>
     </div>
 </div>
