@@ -334,13 +334,42 @@ function createFeedCard(feed) {
     loginId.className = "feed-user-login-id";
     loginId.textContent = feed.userLoginId || "-";
 
-    const location = document.createElement("div");
-    location.className = "feed-course-location";
-    // 코스 위치 정보는 feed 데이터에 없을 수 있으므로 임시로 빈 값
-    location.textContent = "";
+    const dateInfo = document.createElement("div");
+    dateInfo.className = "feed-date-info";
+    
+    // 러닝 날짜와 게시 날짜 모두 표시
+    const parts = [];
+    
+    // 러닝 날짜 (선택적 - 없을 수도 있음)
+    if (feed.startedAt) {
+        try {
+            const runDate = formatRunDate(feed.startedAt);
+            if (runDate && runDate !== '-') {
+                parts.push(`🏃 ${runDate}`);
+            }
+        } catch (error) {
+            console.error('러닝 날짜 포맷팅 에러:', error);
+        }
+    }
+    
+    // 게시 날짜 (필수)
+    if (feed.createdAt) {
+        try {
+            const postDate = formatRelativeTime(feed.createdAt);
+            if (postDate && postDate !== '-') {
+                parts.push(`${postDate} 게시`);
+            }
+        } catch (error) {
+            console.error('게시 날짜 포맷팅 에러:', error);
+            // 최종 fallback
+            parts.push(`게시: ${formatDate(feed.createdAt)}`);
+        }
+    }
+    
+    dateInfo.textContent = parts.length > 0 ? parts.join(' • ') : '';
 
     userInfo.appendChild(loginId);
-    userInfo.appendChild(location);
+    userInfo.appendChild(dateInfo);
     header.appendChild(profileImg);
     header.appendChild(userInfo);
 
