@@ -239,10 +239,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // splitPace 데이터 확인
     const splitPace = participant.splitPace || null;
 
+    // ranking이 0이거나 null이면 "포기"로 표시
+    const rankDisplay = (participant.ranking === 0 || participant.ranking === null || participant.ranking === undefined) ? '포기' : participant.ranking;
+
     row.innerHTML = `
       <div class="ranking-row-main" onclick="toggleRow('${rowId}')">
         <div class="rank-cell">
-          <span class="rank-number">${participant.ranking}</span>
+          <span class="rank-number">${rankDisplay}</span>
         </div>
         <div class="user-cell">
           <div class="user-info">
