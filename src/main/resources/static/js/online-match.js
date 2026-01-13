@@ -547,6 +547,11 @@ async function handleMatchStart() {
       if (startButton) {
         startButton.style.display = "none";
       }
+      // 헤더 숨기기
+      const header = document.querySelector(".header");
+      if (header) {
+        header.style.display = "none";
+      }
 
       // 2. resetMatchUI()를 호출해서 초기화한다
       resetMatchUI();
@@ -592,6 +597,11 @@ async function handleMatchStart() {
     // 매칭 시작 버튼 숨기기
     if (startButton) {
       startButton.style.display = "none";
+    }
+    // 헤더 숨기기
+    const header = document.querySelector(".header");
+    if (header) {
+      header.style.display = "none";
     }
     resetMatchUI();
 
@@ -1116,6 +1126,11 @@ function hideMatchingOverlay() {
   // 매칭 시작 버튼 다시 표시
   if (startButton) {
     startButton.style.display = "block";
+  }
+  // 헤더 다시 표시
+  const header = document.querySelector(".header");
+  if (header) {
+    header.style.display = "flex";
   }
   isMatching = false;
   matchStartTime = null; // ✅ 매칭 시작 시간 리셋

@@ -315,21 +315,21 @@ document.addEventListener("DOMContentLoaded", () => {
       return ages;
     }
 
-    // 0세~19세 -> 0
-    if (ageMin === 0 && ageMax >= 19) {
-      ages.push(0);
+    // 10대 (10-19세)
+    if (ageMin <= 10 && ageMax >= 19) {
+      ages.push(10);
     }
 
-    // 20대부터 60대까지
-    for (let age = 20; age <= 60; age += 10) {
+    // 20대부터 40대까지
+    for (let age = 20; age <= 40; age += 10) {
       if (ageMin <= age && ageMax >= age + 9) {
         ages.push(age);
       }
     }
 
-    // 70세 이상 -> 70
-    if (ageMax >= 70) {
-      ages.push(70);
+    // 50대 이상 (50-100세)
+    if (ageMin <= 50 && ageMax >= 50) {
+      ages.push(50);
     }
 
     return ages;
@@ -415,7 +415,8 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedTags.distance = data.targetDistance;
       }
       if (data.targetPace) {
-        selectedTags.pace = data.targetPace;
+        // 서버에서 받은 "3:00" 형식을 "3"으로 변환
+        selectedTags.pace = data.targetPace.split(':')[0];
       }
       if (data.ageMin !== null && data.ageMax !== null) {
         selectedTags.ages = convertAgeRangeToAges(data.ageMin, data.ageMax);
@@ -428,12 +429,13 @@ document.addEventListener("DOMContentLoaded", () => {
       // ✅ 코스가 선택된 상태면 출발지는 코스 출발지로 강제 + 잠금
       await applyCourseStartLocationIfNeeded();
 
-      // 러닝 조건
+      // 러닝 조건 (query param 적용 후 다시 설정)
       if (data.targetDistance) {
         selectedTags.distance = data.targetDistance;
       }
       if (data.targetPace) {
-        selectedTags.pace = data.targetPace;
+        // 서버에서 받은 "3:00" 형식을 "3"으로 변환
+        selectedTags.pace = data.targetPace.split(':')[0];
       }
       if (data.ageMin !== null && data.ageMax !== null) {
         selectedTags.ages = convertAgeRangeToAges(data.ageMin, data.ageMax);
@@ -979,7 +981,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const max = sorted[sorted.length - 1];
 
             // 나이대 순서 배열
-            const allAges = [0, 20, 30, 40, 50, 60, 70];
+            const allAges = [10, 20, 30, 40, 50];
 
             // 선택하려는 나이대가 범위 밖에 있는 경우, 사이의 모든 나이대 선택
             if (age < min) {
@@ -1116,21 +1118,15 @@ document.addEventListener("DOMContentLoaded", () => {
       if (selectedTags.pace) {
         const chip = document.createElement("div");
         chip.className = "condition-summary-chip";
-        const paceText = selectedTags.pace === "2:00" ? "2:00/km 이하" :
-            selectedTags.pace === "9:00" ? "9:00/km 이상" :
-                `${selectedTags.pace}/km`;
-        chip.textContent = paceText;
+        chip.textContent = `${selectedTags.pace}분대`;
         summaryChips.appendChild(chip);
       }
 
       if (selectedTags.ages.length > 0) {
         const sorted = [...selectedTags.ages].sort((a, b) => a - b);
         const ageTexts = sorted.map(age => {
-          if (age === 0) {
-            return "10대 이하";
-          }
-          if (age === 70) {
-            return "70대 이상";
+          if (age === 50) {
+            return "50대 이상";
           }
           return `${age}대`;
         });
@@ -1166,16 +1162,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let ageMin = sorted[0];
     let ageMax = sorted[sorted.length - 1] + 9;
 
-    if (sorted[0] === 0) {
-      ageMin = 0;
-      if (sorted.length === 1) {
-        ageMax = 19;
-      } else {
-        ageMax = sorted[sorted.length - 1] + 9;
-      }
-    }
-
-    if (sorted[sorted.length - 1] === 70) {
+    // 50대 이상인 경우 100세까지
+    if (sorted[sorted.length - 1] === 50) {
       ageMax = 100;
     }
 
@@ -1356,6 +1344,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // 형식: "YYYY-MM-DDTHH:mm:ss"
     const meetingAt = `${meetingDate}T${meetingTime}:00`;
 
+    // 페이스를 "분:초" 형식으로 변환 (예: "3" → "3:00")
+    const targetPace = `${selectedTags.pace}:00`;
+
     const requestData = {
       title: title,
       content: content,
@@ -1363,7 +1354,7 @@ document.addEventListener("DOMContentLoaded", () => {
       latitude: selectedLat,
       longitude: selectedLng,
       targetDistance: selectedTags.distance,
-      targetPace: selectedTags.pace,
+      targetPace: targetPace,
       maxParticipants: maxParticipants,
       ageMin: ageRange.ageMin,
       ageMax: ageRange.ageMax,
