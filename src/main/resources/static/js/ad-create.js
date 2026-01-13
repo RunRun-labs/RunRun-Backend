@@ -170,7 +170,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (result.success) {
         alert("광고가 생성되었습니다.");
-        window.location.href = "/admin/ad/inquiry";
+        const adId = result.data?.adId || result.data?.id;
+        if (adId) {
+          window.location.href = `/admin/ad/detail/${adId}`;
+        } else {
+          window.location.href = "/admin/ad/inquiry";
+        }
       } else {
         throw new Error(result.message || "생성에 실패했습니다.");
       }
