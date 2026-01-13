@@ -137,7 +137,7 @@ public class AdAdminService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.AD_NOT_FOUND));
 
         if (placementRepository.existsByAdId(adId)) {
-            throw new ForbiddenException(ErrorCode.AD_LOCKED_BY_PLACEMENT);
+            throw new ForbiddenException(ErrorCode.AD_DELETE_LOCKED_BY_PLACEMENT);
         }
 
         ad.delete();

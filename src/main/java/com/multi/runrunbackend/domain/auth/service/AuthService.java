@@ -96,7 +96,11 @@ public class AuthService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
         user.updateLastLogin(now());
 
-        return AuthSignInResDto.from(token, user);
+        // 관리자 여부 확인 (ROLE_ADMIN 또는 ADMIN)
+        Boolean isAdmin = roles.stream()
+            .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ADMIN"));
+
+        return AuthSignInResDto.from(token, user, isAdmin);
     }
 }
 

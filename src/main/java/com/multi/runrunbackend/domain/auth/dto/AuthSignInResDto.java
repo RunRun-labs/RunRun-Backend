@@ -21,11 +21,13 @@ public class AuthSignInResDto {
 
     private TokenDto token;
     private Long userId;
+    private Boolean isAdmin;
 
-    public static AuthSignInResDto from(TokenDto token, User user) {
+    public static AuthSignInResDto from(TokenDto token, User user, Boolean isAdmin) {
         return AuthSignInResDto.builder()
             .token(token)
             .userId(user.getId())
+            .isAdmin(isAdmin)
             .build();
     }
 
