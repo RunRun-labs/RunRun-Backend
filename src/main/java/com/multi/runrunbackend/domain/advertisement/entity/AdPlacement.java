@@ -126,7 +126,7 @@ public class AdPlacement extends BaseTimeEntity {
         if (startAt != null && now.isBefore(startAt)) {
             return false;
         }
-        if (endAt != null && now.isAfter(endAt)) {
+        if (endAt != null && now.toLocalDate().isAfter(endAt.toLocalDate())) {
             return false;
         }
         return true;
