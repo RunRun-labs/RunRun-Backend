@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const infoBoxTitle = document.getElementById("infoBoxTitle");
   const infoBoxText = document.getElementById("infoBoxText");
   const manualInputLabel = document.getElementById("manualInputLabel");
-  const courseModeNotice = document.getElementById("courseModeNotice");
   const courseInput = document.getElementById("course");
   const courseSection = document.querySelector(".course-section");
   const selectedCourseInfo = document.getElementById("selectedCourseInfo");
@@ -27,13 +26,29 @@ document.addEventListener("DOMContentLoaded", () => {
   let endMarker = null;
 
   // 코스 입력 필드 클릭 이벤트 (모집글 생성 페이지와 동일)
+  const courseInputWrapper = document.querySelector('.course-input-wrapper');
+  
+  const handleCourseClick = () => {
+    console.log('코스 선택 클릭됨');
+    const returnTo = window.location.pathname + window.location.search;
+    const targetUrl = `/course?selectMode=solo&returnTo=${encodeURIComponent(returnTo)}`;
+    console.log('이동할 URL:', targetUrl);
+    window.location.href = targetUrl;
+  };
+  
   if (courseInput) {
-    courseInput.addEventListener("click", () => {
-      const returnTo = window.location.pathname + window.location.search;
-      window.location.href = `/course?selectMode=solo&returnTo=${encodeURIComponent(
-        returnTo
-      )}`;
-    });
+    console.log('솔로런 코스 입력 필드 이벤트 리스너 등록됨');
+    courseInput.addEventListener("click", handleCourseClick);
+    courseInput.style.cursor = 'pointer';
+  } else {
+    console.error('코스 입력 필드를 찾을 수 없습니다!');
+  }
+  
+  // wrapper에도 클릭 이벤트 추가 (확실하게 하기 위해)
+  if (courseInputWrapper) {
+    console.log('코스 입력 wrapper 이벤트 리스너 등록됨');
+    courseInputWrapper.addEventListener("click", handleCourseClick);
+    courseInputWrapper.style.cursor = 'pointer';
   }
 
   // URL 파라미터 읽기 (코스 상세보기에서 확인 버튼 클릭 시 돌아온 경우)
@@ -82,10 +97,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (manualInputLabel) {
       manualInputLabel.textContent = "코스 지정 거리";
-    }
-
-    if (courseModeNotice) {
-      courseModeNotice.style.display = "block";
     }
 
     // 코스 정보 로드 및 표시

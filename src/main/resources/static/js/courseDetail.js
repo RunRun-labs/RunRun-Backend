@@ -422,11 +422,18 @@ async function loadCourseData() {
     initLikeButton(courseId, course);
     initFavoriteButton(courseId, course);
 
-    // Show/hide edit/delete buttons based on isOwner
+    // Show/hide edit/delete buttons based on isOwner AND select mode
     const courseActions = document.getElementById("courseActions");
     const editBtn = document.getElementById("editBtn");
+    const { isSelectMode } = getSelectModeParams();
 
-    if (course.isOwner && courseActions && editBtn) {
+    // 선택 모드일 때는 수정/삭제 버튼 숨기기
+    if (isSelectMode) {
+      if (courseActions) {
+        courseActions.style.display = "none";
+      }
+    } else if (course.isOwner && courseActions && editBtn) {
+      // 일반 모드일 때는 isOwner 기반으로 표시
       courseActions.style.display = "flex";
       editBtn.onclick = () => {
         window.location.href = `/courseUpdate/${courseId}`;

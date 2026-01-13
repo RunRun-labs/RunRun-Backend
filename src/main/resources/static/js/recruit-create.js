@@ -564,6 +564,19 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "/recruit";
   });
 
+  // URL 파라미터 확인: courseId가 없으면 초안 삭제 (처음 진입 시)
+  try {
+    const u = new URL(window.location.href);
+    const courseId = u.searchParams.get("courseId");
+    if (!courseId) {
+      // 코스 선택에서 돌아온 것이 아니면 초안 삭제
+      sessionStorage.removeItem(DRAFT_KEY);
+      console.log("초기 진입: 초안 삭제됨");
+    }
+  } catch (e) {
+    // ignore
+  }
+
   // (코스 선택에서 돌아온 경우/새로고침) 작성 중이던 초안 복원
   restoreDraft();
 
