@@ -92,6 +92,10 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                 "/coupon/event",
                 "/points/**",
 
+                "/actuator/health",
+                "/actuator/health/**",
+                "/actuator/prometheus",
+
                 "/api/admin/coupons/public/**",
                 "/admin/**"
             ).permitAll()
