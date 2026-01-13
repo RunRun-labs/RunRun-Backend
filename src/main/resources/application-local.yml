@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT}
+      database: 0
+      timeout: 2000ms
+
+  mongodb:
+    uri: mongodb://localhost:${MONGO_PORT}/${MONGO_DB}

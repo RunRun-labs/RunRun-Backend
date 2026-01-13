@@ -1,12 +1,6 @@
 spring:
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE}
-
-  datasource:
-    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:runrun}
-    username: ${POSTGRES_USER:runrun}
-    password: ${POSTGRES_PASSWORD:runrun123}
-    driver-class-name: org.postgresql.Driver
+    default: local
 
   jpa:
     hibernate:
@@ -18,14 +12,9 @@ spring:
         jdbc:
           time_zone: Asia/Seoul
 
-  data:
-    redis:
-      host: localhost
-      port: ${REDIS_PORT:6379}
-      database: 0
-      timeout: 2000ms
-  mongodb:
-    uri: mongodb://localhost:${MONGO_PORT:27017}/${MONGO_DB:runrun_chat}
+server:
+  port: 8080
+
 springdoc:
   group-configs:
     - group: all
@@ -36,8 +25,6 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expire-time: ${ACCESS_TOKEN_EXPIRE_TIME_MS}
   refresh-token-expire-time: ${REFRESH_TOKEN_EXPIRE_TIME_MS}
-server:
-  port: 8080
 
 aws:
   region: ${AWS_REGION}
@@ -49,6 +36,7 @@ file:
   allowed-content-types: ${FILE_ALLOWED_CONTENT_TYPES}
   hash-max-bytes: ${FILE_HASH_MAX_BYTES}
   upload-path: ${FILE_UPLOAD_PATH}
+
 tmap:
   app-key: ${TMAP_APP_KEY}
   base-url: ${TMAP_BASE_URL}
@@ -68,16 +56,15 @@ mapbox:
     response-ms: ${MAPBOX_RESPONSE_TIMEOUT_MS}
   response:
     max-bytes: ${MAPBOX_RESPONSE_MAX_BYTES}
+
 tts:
   presign:
     ttl-seconds: ${TTS_PRESIGN_TTL_SECONDS}
-
 
 coupon:
   code:
     single:
       length: ${COUPON_SINGLE_CODE_LENGTH}
-
 
 toss:
   payments:
