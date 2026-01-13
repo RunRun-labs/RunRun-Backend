@@ -100,15 +100,15 @@ function renderProfile(user) {
     // 프로필 이미지 렌더링
     renderProfileImage(user);
 
-    // 누적/랭킹 정보 (나중에 연동 예정)
-    const totalDistanceEl = document.getElementById("totalDistance");
-    const rankEl = document.getElementById("rank");
+    // 최근활동/총 러닝 횟수 정보 (나중에 연동 예정)
+    const lastActivityEl = document.getElementById("lastActivity");
+    const totalRunsEl = document.getElementById("totalRuns");
 
-    if (totalDistanceEl) {
-        totalDistanceEl.textContent = "-"; // TODO: API 연동 후 실제 데이터 표시
+    if (lastActivityEl) {
+        lastActivityEl.textContent = "오늘"; // TODO: API 연동 후 실제 데이터 표시
     }
-    if (rankEl) {
-        rankEl.textContent = "-"; // TODO: API 연동 후 실제 데이터 표시
+    if (totalRunsEl) {
+        totalRunsEl.textContent = "42"; // TODO: API 연동 후 실제 데이터 표시
     }
 }
 
@@ -1140,9 +1140,60 @@ function createRunCard(record) {
     // 페이스 포맷팅 (분/km)
     const paceStr = formatPace(record.avgPace);
 
-    // 코스 이미지 URL
-    const imageUrl = record.courseThumbnailUrl || null;
-    const courseTitle = record.courseTitle || '러닝';
+    // ✅ 실행 타입/썸네일 결정
+    const isGhostRun = record.runningType === 'GHOST';
+    const isOnlineBattle = record.runningType === 'ONLINEBATTLE';
+
+    const defaultGhostImageUrl = '/img/ghost-run.png';
+
+    // 온라인배틀 등수별 이미지 (1~4등 제공)
+    let onlineBattleRanking = (typeof record.onlineBattleRanking === 'number')
+        ? record.onlineBattleRanking
+        : (record.onlineBattleRanking ? Number(record.onlineBattleRanking) : null);
+
+    // 디버깅: 온라인배틀일 때 등수 확인
+    if (isOnlineBattle) {
+        console.log('온라인배틀 기록:', {
+            recordId: record.runningResultId,
+            onlineBattleRanking: record.onlineBattleRanking,
+            onlineBattleRankingType: typeof record.onlineBattleRanking,
+            converted: onlineBattleRanking
+        });
+        
+        // 등수 정보가 없으면 finalRank 필드 확인 (백엔드에서 다른 필드명 사용 가능성)
+        if (onlineBattleRanking === null || onlineBattleRanking === undefined) {
+            onlineBattleRanking = record.finalRank || record.rank || record.ranking || null;
+            console.log('대체 필드에서 등수 확인:', onlineBattleRanking);
+        }
+    }
+
+    const onlineBattleRankImageMap = {
+        1: '/img/online-1st.png',
+        2: '/img/online-2nd.png',
+        3: '/img/online-3rd.png',
+        4: '/img/online-4th.png'
+    };
+
+    const defaultOnlineBattleImageUrl = '/img/online-1st.png'; // fallback
+
+    // 썸네일 URL 우선순위:
+    // 1) 고스트런: 고정 이미지
+    // 2) 온라인배틀: 등수별 이미지
+    // 3) 일반: recordImageUrl
+    const imageUrl = isGhostRun
+        ? defaultGhostImageUrl
+        : (isOnlineBattle
+            ? (onlineBattleRankImageMap[onlineBattleRanking] || defaultOnlineBattleImageUrl)
+            : (record.recordImageUrl || null));
+
+    // ✅ 제목 결정 (우선순위: 고스트런 > 온라인배틀 > 일반)
+    const courseTitle = isGhostRun
+        ? '고스트런'
+        : (isOnlineBattle ? '온라인배틀' : (record.courseTitle || '러닝'));
+
+    const titleSuffix = (!isGhostRun && isOnlineBattle && onlineBattleRanking)
+        ? ` <span class="run-title-rank">#${onlineBattleRanking}</span>`
+        : '';
 
     // 러닝 타입 레이블
     const runningTypeLabel = getRunningTypeLabel(record.runningType);
@@ -1161,7 +1212,7 @@ function createRunCard(record) {
                 <span class="run-date">${formattedDate}</span>
                 <span class="run-type">${runningTypeLabel}</span>
             </div>
-            <p class="run-title">${courseTitle}</p>
+            <p class="run-title">${courseTitle}${titleSuffix}</p>
             <div class="run-stats">
                 <span class="run-stat">
                     <span class="run-icon">🏃‍♂️</span>

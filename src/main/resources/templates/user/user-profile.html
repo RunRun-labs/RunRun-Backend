@@ -41,23 +41,28 @@
         <img
             class="avatar-img"
             data-role="profile-preview"
+            src="/img/default-profile.svg"
             alt="프로필 이미지"
-            hidden
         />
         <span
             class="avatar-initial"
             data-role="profile-initial"
+            hidden
         ></span>
       </div>
 
-      <!-- 중앙: 누적/랭킹 정보 -->
+      <!-- 중앙: 최근활동/총 러닝 횟수 정보 -->
       <div class="profile-text profile-center">
-        <p class="profile-meta">
-          누적:
-          <span id="totalDistance">-</span><br/>
-          랭킹:
-          <span id="rank">-</span>
-        </p>
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <span class="profile-stat-icon">🏃</span>
+            <span class="profile-stat-text">최근 활동: <span class="profile-stat-value" id="lastActivity">-</span></span>
+          </div>
+          <div class="profile-stat">
+            <span class="profile-stat-icon">🏅</span>
+            <span class="profile-stat-text">총 <span class="profile-stat-value" id="totalRuns">-</span>회 러닝</span>
+          </div>
+        </div>
       </div>
 
       <!-- 우측: 친구신청/삭제 버튼 -->
