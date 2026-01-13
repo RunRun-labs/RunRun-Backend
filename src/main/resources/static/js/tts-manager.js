@@ -94,7 +94,11 @@
       c === "ARRIVED_DESTINATION" ||
       c === "END_RUN" ||
       c === "WEB_SOCKET_RECONNECTED" ||
-      c === "HOST_SIGNAL_RESUMED"
+      c === "HOST_SIGNAL_RESUMED" ||
+      c === "WIN" ||
+      c === "RANK_2" ||
+      c === "RANK_3" ||
+      c === "RANK_LAST"
     ) {
       return 2; // MID (queue)
     }
@@ -111,6 +115,7 @@
     if (c === "GPS_WEAK") return 30 * 1000;
     if (c.startsWith("WEB_SOCKET_")) return 15 * 1000;
     if (c.startsWith("HOST_SIGNAL_")) return 15 * 1000;
+    if (c === "GHOST_AHEAD" || c === "GHOST_BEHIND") return 15 * 1000;
     return 10 * 1000;
   }
 

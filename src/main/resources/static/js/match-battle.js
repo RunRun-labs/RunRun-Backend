@@ -141,6 +141,14 @@ let currentRankings = [];
 // ✅ 타임아웃 정보
 let timeoutInfo = null;  // { startTime, timeoutSeconds }
 
+// ==========================
+// TTS hooks
+// ==========================
+let ttsReady = false;
+let ttsRankTtsSpoken = false; // 순위 TTS 중복 방지
+let completedHandled = false; // 종료 TTS 후 TTS 중단 플래그
+let lastKmSpoken = 0; // 마지막으로 재생한 km (DIST_DONE용)
+
 // localStorage에서 userId 가져오기
 const storedUserId = localStorage.getItem('userId');
 if (storedUserId) {
@@ -175,6 +183,26 @@ document.addEventListener("DOMContentLoaded", () => {
 function init() {
   setupEventListeners();
   loadSessionData();
+  // TTS 미리 로드
+  ensureTtsOnce().catch(() => {
+    console.warn("TTS 로드 실패 (무시)");
+  });
+}
+
+/**
+ * TTS 초기화
+ */
+async function ensureTtsOnce() {
+  if (ttsReady) return true;
+  if (!window.TtsManager) return false;
+  try {
+    await window.TtsManager.ensureLoaded({ sessionId: SESSION_ID, mode: "ONLINE" });
+    ttsReady = true;
+    return true;
+  } catch (e) {
+    console.warn("TTS 로드 실패(무시):", e?.message || e);
+    return false;
+  }
 }
 
 /**
@@ -454,6 +482,9 @@ function showCountdown() {
   let count = 10;
   countdownNumber.textContent = count;
   
+  // TTS 로드 확인
+  ensureTtsOnce().catch(() => {});
+  
   countdownInterval = setInterval(() => {
     count--;
     
@@ -464,6 +495,8 @@ function showCountdown() {
       setTimeout(() => {
         countdownNumber.style.transform = 'scale(1)';
       }, 100);
+      
+      // 카운트다운 TTS 제거
     } else {
       clearInterval(countdownInterval);
       countdownNumber.textContent = 'START!';
@@ -471,6 +504,11 @@ function showCountdown() {
       
       // ✅ 카운트다운 완료 - sessionStorage에 저장
       sessionStorage.setItem('battle_countdown_' + SESSION_ID, 'true');
+      
+      // START_RUN TTS
+      if (ttsReady && window.TtsManager) {
+        window.TtsManager.speak("START_RUN", { priority: 2, cooldownMs: 0 });
+      }
       
       setTimeout(() => {
         document.body.removeChild(overlay);
@@ -662,6 +700,25 @@ function handleRankingUpdate(rankings) {
   
   // 페이스 비교 렌더링
   renderPaceComparison(rankings);
+  
+  // ✅ TTS: 거리/남은거리 (내 데이터 기준)
+  if (ttsReady && window.TtsManager && !completedHandled && !isFinished) {
+    const myData = rankings.find(r => r.userId === myUserId);
+    if (myData) {
+      const totalDistanceKm = (myData.totalDistance || 0) / 1000; // 미터 -> km
+      const remainingDistanceKm = (myData.remainingDistance || 0) / 1000; // 미터 -> km
+      
+      // DIST_DONE: km 단위 체크 (1km, 2km, 3km...)
+      const currentKm = Math.floor(totalDistanceKm);
+      if (currentKm > lastKmSpoken && currentKm >= 1 && currentKm <= 10) {
+        lastKmSpoken = currentKm;
+        window.TtsManager.speak(`DIST_DONE_${currentKm}KM`, { priority: 2, cooldownMs: 0 });
+      }
+      
+      // DIST_REMAIN: 남은 거리
+      window.TtsManager.onDistance(totalDistanceKm, remainingDistanceKm);
+    }
+  }
   
   // ✅ 모든 참가자 완주 확인 (매 순위 업데이트마다)
   checkAllFinishedAndRedirect(rankings);
@@ -1041,6 +1098,64 @@ function handleFinish() {
  * 완주 메시지 표시
  */
 function showFinishMessage() {
+  // ✅ 종료 이벤트 처리: TTS 즉시 중단, 큐 비우기, 순위 멘트 + 종료 멘트 재생, 이후 Lock
+  if (ttsReady && window.TtsManager && !completedHandled) {
+    // 1. 현재 재생 중인 TTS 즉시 중단
+    if (typeof window.TtsManager.stopAll === "function") {
+      window.TtsManager.stopAll();
+    } else if (typeof window.TtsManager.stop === "function") {
+      window.TtsManager.stop();
+    }
+    
+    // 2. 재생 대기 큐 비우기
+    if (typeof window.TtsManager.clearQueue === "function") {
+      window.TtsManager.clearQueue();
+    } else if (typeof window.TtsManager.clear === "function") {
+      window.TtsManager.clear();
+    }
+    
+    // 3. 순위별 TTS 재생
+    if (!ttsRankTtsSpoken) {
+      ttsRankTtsSpoken = true;
+      const myData = currentRankings.find(r => r.userId === myUserId);
+      if (myData && myData.rank > 0) {
+        const totalParticipants = currentRankings.filter(r => r.rank > 0).length;
+        if (myData.rank === 1) {
+          window.TtsManager.speak("WIN", { priority: 2 });
+        } else if (myData.rank === 2) {
+          window.TtsManager.speak("RANK_2", { priority: 2 });
+        } else if (myData.rank === 3) {
+          window.TtsManager.speak("RANK_3", { priority: 2 });
+        } else if (myData.rank === totalParticipants) {
+          window.TtsManager.speak("RANK_LAST", { priority: 2 });
+        }
+      }
+    }
+    
+    // 4. 종료 멘트('러닝이 종료되었습니다') 재생
+    const endRunPromise = window.TtsManager.speak("END_RUN", {
+      priority: 2,
+      cooldownMs: 0,
+    });
+    
+    if (endRunPromise && typeof endRunPromise.then === "function") {
+      endRunPromise
+        .then(() => {
+          // 5. 재생이 끝나면 TTS Lock(이후 어떤 TTS 요청도 무시)
+          completedHandled = true;
+        })
+        .catch(() => {
+          // 에러가 나도 Lock 설정
+          completedHandled = true;
+        });
+    } else {
+      // Promise를 지원하지 않는 경우를 대비한 fallback
+      setTimeout(() => {
+        completedHandled = true;
+      }, 3000);
+    }
+  }
+  
   const messageDiv = document.createElement('div');
   messageDiv.id = 'finish-message';
   messageDiv.style.cssText = `

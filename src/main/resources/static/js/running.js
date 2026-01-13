@@ -821,15 +821,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // ✅ 이전 세션의 localStorage 데이터 초기화 (캐시 문제 방지)
+  // ✅ 다른 세션으로 진입할 때만 이전 세션의 localStorage 데이터 초기화
   try {
-    const keys = Object.keys(localStorage);
-    keys.forEach((key) => {
-      if (key.startsWith(`running:${sessionId}:`)) {
-        localStorage.removeItem(key);
-      }
-    });
-    console.log("✅ 이전 세션 localStorage 데이터 초기화 완료");
+    const lastSessionId = localStorage.getItem("running:lastSessionId");
+    if (lastSessionId && lastSessionId !== String(sessionId)) {
+      // 이전 세션의 데이터 삭제
+      const keys = Object.keys(localStorage);
+      keys.forEach((key) => {
+        if (key.startsWith(`running:${lastSessionId}:`)) {
+          localStorage.removeItem(key);
+        }
+      });
+      console.log("✅ 이전 세션 localStorage 데이터 초기화 완료: sessionId=" + lastSessionId);
+    }
+    // 현재 세션 ID 저장
+    localStorage.setItem("running:lastSessionId", String(sessionId));
   } catch (e) {
     console.warn("localStorage 초기화 실패:", e);
   }
