@@ -96,10 +96,11 @@ document.addEventListener("DOMContentLoaded", function () {
           return;
         }
 
-        // 시작일이 지났는지 확인
+        // 비활성화 상태이거나 시작일이 시작되지 않았으면 슬롯/광고 변경 가능
         const now = new Date();
         const startAt = new Date(placement.startAt);
-        canChangeSlotAndAd = now < startAt;
+        // 비활성화 상태이거나 시작일 전이면 변경 가능
+        canChangeSlotAndAd = !placement.isActive || now < startAt;
 
         if (!canChangeSlotAndAd) {
           slotSelect.disabled = true;
@@ -303,7 +304,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (result.success) {
         alert("광고 배치가 수정되었습니다.");
-        window.location.href = "/admin/ad-placement/inquiry";
+        window.location.href = `/admin/ad-placement/detail/${placementId}`;
       } else {
         throw new Error(result.message || "수정에 실패했습니다.");
       }

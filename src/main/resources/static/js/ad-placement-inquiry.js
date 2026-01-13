@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <button 
                   type="button" 
                   class="action-btn edit-btn" 
-                  onclick="window.location.href='/admin/ad-placement/update/${placement.placementId}'"
+                  onclick="handleEditPlacement(${placement.placementId}, ${placement.isActive})"
                 >
                   수정
                 </button>
@@ -297,6 +297,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     loadPlacements(0);
   });
+
+  // 수정 버튼 클릭 핸들러
+  window.handleEditPlacement = function(placementId, isActive) {
+    if (isActive) {
+      alert("활성화된 배치는 수정할 수 없습니다. 먼저 비활성화해주세요.");
+      return;
+    }
+    window.location.href = `/admin/ad-placement/update/${placementId}`;
+  };
 
   // 상태 토글
   window.togglePlacementStatus = function(placementId, enabled) {
