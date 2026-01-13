@@ -7,7 +7,8 @@ let matchFoundTimeout = null;
 let countdownInterval = null;
 let currentSessionId = null; // 현재 매칭된 세션 ID 저장
 let fallbackCheckDone = false; // 폴백 체크 완료 플래그 (중복 처리 방지)
-let fallbackCheckInterval = null; // 주기적 폴백 체크 interval
+let fallbackCheckInterval = null; // 주기적 폴백 체크 interval (SSE 연결이 끊겼을 때만 실행)
+let sseCheckInterval = null; // SSE 연결 상태 확인 interval
 let matchStartTime = null; // 매칭 시작 시간 (오래된 알림 필터링용)
 
 // DOM 요소 참조 (나중에 초기화)
@@ -27,26 +28,20 @@ window.addEventListener('notification-received', async (event) => {
 
   console.log('[online-match] notification-received 이벤트 수신:', notification);
   console.log('[online-match] isMatching 상태:', isMatching);
-  console.log('[online-match] notificationType:',
-      notification.notificationType);
+  console.log('[online-match] notificationType:', notification.notificationType);
   console.log('[online-match] relatedId:', notification.relatedId);
 
-  // 매칭 중이 아니면 무시
-  if (!isMatching) {
-    console.log('[online-match] 매칭 중이 아니므로 무시');
-    return;
-  }
-
   // MATCH_FOUND 타입이고 relatedId(sessionId)가 있는 경우에만 처리
-  if (notification.notificationType === 'MATCH_FOUND'
-      && notification.relatedId) {
+  // ✅ isMatching 체크 제거: 매칭 상태와 관계없이 알림 처리 (모집글 매칭과 동일하게)
+  if (notification.notificationType === 'MATCH_FOUND' && notification.relatedId) {
     const sessionId = notification.relatedId;
 
     console.log('[online-match] 매칭 완료 알림 수신 - sessionId:', sessionId);
 
+    // ✅ 매칭 중이 아니어도 알림은 처리 (매칭 시작 전/후 알림도 처리)
     // ✅ 폴백 체크 플래그 설정 (중복 처리 방지)
     fallbackCheckDone = true;
-    isMatching = false;
+    isMatching = false; // 매칭 상태 종료
     matchStartTime = null; // ✅ 매칭 시작 시간 리셋
     
     try {
@@ -102,6 +97,10 @@ window.addEventListener('pageshow', async (e) => {
   if (fallbackCheckInterval) {
     clearInterval(fallbackCheckInterval);
     fallbackCheckInterval = null;
+  }
+  if (sseCheckInterval) {
+    clearInterval(sseCheckInterval);
+    sseCheckInterval = null;
   }
 
   try {
@@ -169,6 +168,10 @@ async function handleCancel() {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
     }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
+    }
     
     hideMatchingOverlay();
 
@@ -188,6 +191,10 @@ async function handleCancel() {
     if (fallbackCheckInterval) {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
+    }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
     }
     
     hideMatchingOverlay();
@@ -667,14 +674,18 @@ async function handleMatchStart() {
       }
     }
 
-    // 5. 폴백 체크: 주기적으로 매칭 상태 확인 (SSE 이벤트를 놓쳤을 수 있으므로 REST API로 정합성 확인)
+    // 5. 폴백 체크: SSE 연결이 끊겼을 때만 주기적으로 매칭 상태 확인
     // 기존 interval이 있으면 정리
     if (fallbackCheckInterval) {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
     }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
+    }
 
-    // 폴백 체크 함수
+    // 폴백 체크 함수 (SSE 연결이 끊겼을 때만 실행됨)
     const performFallbackCheck = async () => {
       // 매칭 중인 상태가 아니면 폴백 체크 중단
       if (!isMatching) {
@@ -695,7 +706,8 @@ async function handleMatchStart() {
         return;
       }
 
-      console.log('[online-match] 폴백 체크: 매칭 상태 확인 중...');
+      // SSE 연결이 끊겼을 때만 폴백 체크 실행
+      console.log('[online-match] 폴백 체크: SSE 연결 끊김 상태, 매칭 상태 확인 중...');
       try {
         // 방법 1: /api/match/online/status 사용 (더 정확)
         const statusResponse = await fetch("/api/match/online/status", {
@@ -783,18 +795,65 @@ async function handleMatchStart() {
           }
         }
 
-        console.log('[online-match] 폴백 체크: 매칭 대기 중 (SSE 이벤트 대기)');
+        console.log('[online-match] 폴백 체크: 매칭 대기 중');
       } catch (fallbackError) {
-        console.warn('[online-match] 폴백 체크 실패 (무시하고 SSE 이벤트 대기):', fallbackError);
-        // 폴백 체크 실패해도 SSE 이벤트를 기다림
+        console.warn('[online-match] 폴백 체크 실패 (무시하고 계속):', fallbackError);
       }
     };
 
-    // 첫 폴백 체크는 2초 후 실행, 이후 5초마다 주기적으로 실행
+    // SSE 연결 상태 모니터링 및 폴백 체크 관리
+    const checkSseAndStartFallback = () => {
+      // 매칭 중이 아니면 모니터링 중단
+      if (!isMatching) {
+        if (sseCheckInterval) {
+          clearInterval(sseCheckInterval);
+          sseCheckInterval = null;
+        }
+        if (fallbackCheckInterval) {
+          clearInterval(fallbackCheckInterval);
+          fallbackCheckInterval = null;
+        }
+        return;
+      }
+      
+      // 이미 매칭 완료되었으면 중단
+      if (fallbackCheckDone) {
+        if (sseCheckInterval) {
+          clearInterval(sseCheckInterval);
+          sseCheckInterval = null;
+        }
+        if (fallbackCheckInterval) {
+          clearInterval(fallbackCheckInterval);
+          fallbackCheckInterval = null;
+        }
+        return;
+      }
+      
+      // SSE 연결 상태 확인
+      const isConnected = typeof window.isSseConnected === 'function' && window.isSseConnected();
+      
+      if (!isConnected) {
+        // SSE 연결이 끊김 → 폴백 체크 시작
+        if (!fallbackCheckInterval) {
+          console.log('[online-match] SSE 연결 끊김 감지 - 폴백 체크 시작');
+          performFallbackCheck(); // 즉시 한 번 실행
+          fallbackCheckInterval = setInterval(performFallbackCheck, 5000);
+        }
+      } else {
+        // SSE 연결이 정상 → 폴백 체크 중단
+        if (fallbackCheckInterval) {
+          console.log('[online-match] SSE 연결 복구 감지 - 폴백 체크 중단');
+          clearInterval(fallbackCheckInterval);
+          fallbackCheckInterval = null;
+        }
+      }
+    };
+
+    // SSE 연결 상태를 주기적으로 확인 (2초마다)
+    // 연결이 끊겼을 때만 폴백 체크를 시작하고, 복구되면 중단
     setTimeout(() => {
-      performFallbackCheck();
-      // 주기적 폴백 체크 시작 (5초마다 - DB 부하 감소)
-      fallbackCheckInterval = setInterval(performFallbackCheck, 5000);
+      checkSseAndStartFallback(); // 즉시 한 번 실행
+      sseCheckInterval = setInterval(checkSseAndStartFallback, 2000); // 2초마다 SSE 상태 확인
     }, 2000);
 
     // SSE 이벤트를 기다림 (notification-received 이벤트 리스너가 처리)
@@ -843,6 +902,10 @@ function resetMatchUI() {
   if (fallbackCheckInterval) {
     clearInterval(fallbackCheckInterval);
     fallbackCheckInterval = null;
+  }
+  if (sseCheckInterval) {
+    clearInterval(sseCheckInterval);
+    sseCheckInterval = null;
   }
   
   // ✅ 폴백 체크 플래그 리셋
@@ -1255,6 +1318,10 @@ function hideMatchingOverlay() {
     clearInterval(fallbackCheckInterval);
     fallbackCheckInterval = null;
   }
+  if (sseCheckInterval) {
+    clearInterval(sseCheckInterval);
+    sseCheckInterval = null;
+  }
 }
 
 // 시작 버튼 활성화 상태 업데이트
@@ -1302,6 +1369,10 @@ async function handleCancel() {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
     }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
+    }
     
     hideMatchingOverlay();
 
@@ -1321,6 +1392,10 @@ async function handleCancel() {
     if (fallbackCheckInterval) {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
+    }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
     }
     
     hideMatchingOverlay();
