@@ -25,6 +25,7 @@ public class FeedPostResDto {
     private Long feedId;
     private String content;
     private LocalDateTime createdAt;
+    private LocalDateTime startedAt; // 러닝 시작 날짜
 
     // 작성자
     private Long userId;
@@ -68,6 +69,7 @@ public class FeedPostResDto {
                 .feedId(feedPost.getId())
                 .content(feedPost.getContent())
                 .createdAt(feedPost.getCreatedAt())
+                .startedAt(r.getStartedAt())
                 .userId(u.getId())
 //                .userName(u.getName())
                 .userLoginId(u.getLoginId())
