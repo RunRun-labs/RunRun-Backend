@@ -1,9 +1,11 @@
 :root {
-    --primary: #baff29;
-    --text-strong: #000000;
-    --text-muted: #6c7278;
-    --stroke: #e1e4e8;
-    --bg: #ffffff;
+    --primary: #10b981;
+    --primary-light: #14b8a6;
+    --text-strong: #111827;
+    --text-muted: #6b7280;
+    --stroke: #e5e7eb;
+    --bg: #f9fafb;
+    --card-bg: #ffffff;
 }
 
 *,
@@ -19,12 +21,7 @@ body {
 }
 
 .mypage-body {
-    font-family: "Inter",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: var(--bg);
     color: var(--text-strong);
 }
@@ -34,31 +31,34 @@ body {
     width: min(420px, 100vw);
     margin: 0 auto;
     min-height: 100vh;
-    padding: 0 20px 110px;
+    padding: 0;
     display: flex;
     flex-direction: column;
+    background: var(--card-bg);
 }
 
 .mypage-page {
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding-bottom: 130px;
+    padding-bottom: 90px;
 }
 
 .mypage-header {
-    position: relative;
-    padding: 18px 0 10px;
+    background: var(--card-bg);
+    padding: 16px;
+    border-bottom: 1px solid var(--stroke);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 
 .mypage-logo {
     margin: 0;
-    font-family: "Fugaz One", "Inter", sans-serif;
-    font-size: 28px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-family: "Fugaz One", sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.05em;
+    color: var(--text-strong);
 }
 
 .icon-button {
@@ -66,43 +66,52 @@ body {
     right: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     border: none;
     background: none;
-    padding: 0;
+    padding: 6px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+    color: #1e1e1e;
 }
 
-.icon-button img {
+.icon-button:hover {
+    background: #f5f5f5;
+}
+
+.icon-button svg {
     width: 100%;
     height: 100%;
-    object-fit: contain;
 }
 
 .profile-summary {
-    margin-top: 4px;
-    border-radius: 12px;
-    border: 1px solid var(--stroke);
-    background: #fdfdfd;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-    padding: 12px 12px 10px;
+    background: var(--card-bg);
+    padding: 24px 16px 20px;
+    border-bottom: 8px solid var(--bg);
 }
 
 .profile-row {
     display: flex;
     align-items: center;
     gap: 16px;
+    margin-bottom: 16px;
 }
 
 .profile-avatar {
-    width: 52px;
-    height: 52px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     background: #f5f5f5;
-    border: 2px solid var(--primary);
+    border: 3px solid var(--primary);
     display: grid;
     place-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
 .avatar-initial {
@@ -124,11 +133,11 @@ body {
 
 .profile-meta {
     margin: 0;
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.6;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .profile-center {
@@ -136,29 +145,71 @@ body {
     align-items: flex-start;
 }
 
-.profile-actions-vertical {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    align-items: flex-end;
+.profile-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
 }
 
 .action-button-vertical {
-    height: 26px;
-    width: 70px;
-    padding: 0;
-    border-radius: 999px;
+    padding: 10px;
+    border-radius: 10px;
     border: none;
     background: var(--primary);
-    font-size: 11px;
+    color: white;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(186, 255, 41, 0.6);
+    transition: all 0.2s;
     white-space: nowrap;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
+}
+
+.action-button-vertical:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.action-button-vertical.secondary {
+    background: var(--bg);
+    color: var(--text-strong);
+}
+
+.action-button-vertical.secondary:hover {
+    background: #e5e7eb;
+}
+
+/* 한 줄 배치용 버튼 스타일 */
+.action-button-horizontal {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-button-horizontal:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.action-button-horizontal.secondary {
+    background: var(--bg);
+    color: var(--text-strong);
+}
+
+.action-button-horizontal.secondary:hover {
+    background: #e5e7eb;
 }
 
 .tier-section,
@@ -203,54 +254,35 @@ body {
     font-size: 11px;
 }
 
-.profile-actions {
-    margin-top: 10px;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-}
-
-.action-pill {
-    height: 30px;
-    border-radius: 999px;
-    border: none;
-    background: var(--primary);
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(186, 255, 41, 0.6);
-}
-
 .my-content-section {
-    margin-top: 16px;
+    padding: 20px 16px;
+    background: var(--card-bg);
+    border-bottom: 8px solid var(--bg);
 }
 
 .my-content-buttons {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    gap: 16px;
 }
 
 .my-content-button {
-    height: 56px;
+    height: 64px;
     border-radius: 12px;
-    border: 1px solid var(--stroke);
-    background: #ffffff;
+    border: none;
+    background: var(--bg);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .my-content-button:hover:not(:disabled) {
-    background: #f8f9fa;
-    border-color: var(--primary);
+    background: #e5e7eb;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .my-content-button:active:not(:disabled) {
@@ -404,20 +436,20 @@ body {
 }
 
 .run-list-section {
-    margin-top: 12px;
+    padding: 20px 16px;
+    background: var(--card-bg);
 }
 
 .run-list-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
-    padding: 0 4px;
+    margin-bottom: 16px;
 }
 
 .run-list-title {
     margin: 0;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--text-strong);
 }
@@ -456,20 +488,24 @@ body {
 
 .run-card {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     border-radius: 12px;
-    border: 1px solid var(--stroke);
-    background: #ffffff;
-    padding: 8px 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    border: none;
+    background: var(--bg);
+    padding: 16px;
+    transition: all 0.2s;
+}
+
+.run-card:hover {
+    background: #e5e7eb;
 }
 
 .run-thumb {
-    flex: 0 0 76px;
-    height: 76px;
+    flex: 0 0 80px;
+    height: 80px;
     border-radius: 10px;
     overflow: hidden;
-    background: #eef2f4;
+    background: #d1d5db;
     cursor: pointer;
     transition: opacity 0.15s ease;
 }
