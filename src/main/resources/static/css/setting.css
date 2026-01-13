@@ -1,10 +1,11 @@
 :root {
-    --primary: #baff29;
-    --text-strong: #000000;
-    --text-muted: #6c7278;
-    --stroke: #e1e4e8;
+    --primary: #10b981;
+    --primary-light: #14b8a6;
+    --text-strong: #111827;
+    --text-muted: #6b7280;
+    --stroke: #e5e7eb;
     --bg: #ffffff;
-    --error: #ff4444;
+    --error: #ef4444;
 }
 
 *,
@@ -20,8 +21,8 @@ body {
 }
 
 .settings-body {
-    font-family: "Inter", "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--bg);
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f9fafb;
     color: var(--text-strong);
 }
 
@@ -30,109 +31,161 @@ body {
     width: min(420px, 100vw);
     margin: 0 auto;
     min-height: 100vh;
-    padding: 0 20px 110px;
+    background: var(--bg);
     display: flex;
     flex-direction: column;
+    padding-bottom: 90px;
 }
 
 .settings-page {
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding-bottom: 130px;
 }
 
+/* Header */
 .settings-header {
-    position: relative;
-    padding: 18px 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.back-button {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    height: 33px;
-    border: none;
-    background: none;
-    padding: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-strong);
-}
-
-.back-button svg {
-    width: 100%;
-    height: 100%;
-}
-
-.settings-title {
-    margin: 0;
-    font-family: "Outfit", "Noto Sans KR", sans-serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: #252525;
-    text-align: center;
-}
-
-.settings-menu {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-.settings-menu-item {
-    width: 100%;
-    height: 104px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: 16px;
+    border-bottom: 1px solid var(--stroke);
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 0 24px;
+    z-index: 100;
+}
+
+.back-button {
+    width: 32px;
+    height: 32px;
     border: none;
-    border-top: 1px solid var(--primary);
-    background: var(--bg);
+    background: none;
     cursor: pointer;
-    transition: background-color 0.15s ease;
-    text-align: left;
-}
-
-.settings-menu-item:first-child {
-    border-top: none;
-}
-
-.settings-menu-item:hover {
-    background: #fafafa;
-}
-
-.settings-menu-item:active {
-    background: #f5f5f5;
-}
-
-.menu-item-icon {
-    width: 45px;
-    height: 45px;
-    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 8px;
+    transition: background 0.2s;
+    padding: 0;
+    color: var(--text-strong);
+}
+
+.back-button:hover {
+    background: #f3f4f6;
+}
+
+.back-button img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.settings-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-strong);
+    margin: 0;
+}
+
+/* Menu */
+.settings-menu {
+    padding: 8px;
+}
+
+.settings-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 16px;
+    border: none;
+    background: var(--bg);
+    border-radius: 12px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    width: 100%;
+}
+
+.settings-menu-item:hover {
+    background: #f9fafb;
+    transform: translateX(2px);
+}
+
+.menu-item-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    flex-shrink: 0;
 }
 
 .menu-item-icon svg {
-    width: 100%;
-    height: 100%;
+    width: 26px;
+    height: 26px;
+}
+
+/* Icon backgrounds */
+.menu-item-icon.notification {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+}
+
+.menu-item-icon.security {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+}
+
+.menu-item-icon.users {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+}
+
+.menu-item-icon.logout {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+    color: #6b21a8;
+}
+
+.menu-item-icon.danger {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+}
+
+.menu-item-icon.document {
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    color: #3730a3;
+}
+
+.menu-item-icon.voice {
+    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+    color: #9f1239;
+}
+
+.menu-item-content {
+    flex: 1;
 }
 
 .menu-item-text {
-    font-family: "Outfit", "Noto Sans KR", sans-serif;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-strong);
-    flex: 1;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.menu-item-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.menu-item-arrow {
+    width: 20px;
+    height: 20px;
+    color: var(--text-muted);
+    flex-shrink: 0;
 }
 
 /* 모달 스타일 */
@@ -175,7 +228,6 @@ body {
 
 .modal-title {
     margin: 0;
-    font-family: "Outfit", "Noto Sans KR", sans-serif;
     font-size: 20px;
     font-weight: 600;
     color: var(--text-strong);
@@ -287,7 +339,7 @@ body {
 }
 
 .toggle-switch input:focus + .toggle-slider {
-    box-shadow: 0 0 0 3px rgba(186, 255, 41, 0.2);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
 .modal-footer {
@@ -302,7 +354,7 @@ body {
     padding: 10px 24px;
     border: none;
     background: var(--primary);
-    color: var(--text-strong);
+    color: white;
     font-size: 14px;
     font-weight: 600;
     border-radius: 8px;
@@ -311,7 +363,7 @@ body {
 }
 
 .modal-save-button:hover {
-    background: #a8e020;
+    background: #059669;
 }
 
 .modal-save-button:active {
@@ -363,7 +415,6 @@ body {
 }
 
 .radio-option-label {
-    font-family: "Outfit", "Noto Sans KR", sans-serif;
     font-size: 16px;
     font-weight: 600;
     color: var(--text-strong);
@@ -399,7 +450,7 @@ body {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: var(--text-strong);
+    background: white;
 }
 
 .radio-option-item input[type="radio"]:checked ~ .radio-checkmark:after {
@@ -434,7 +485,6 @@ body {
 }
 
 .terms-option-label {
-    font-family: "Outfit", "Noto Sans KR", sans-serif;
     font-size: 16px;
     font-weight: 600;
     color: var(--text-strong);
@@ -447,7 +497,6 @@ body {
 
 /* 계정 탈퇴 확인 모달 스타일 */
 .delete-confirm-message {
-    font-family: "Outfit", "Noto Sans KR", sans-serif;
     font-size: 18px;
     font-weight: 600;
     color: var(--text-strong);
@@ -495,7 +544,7 @@ body {
 }
 
 .modal-confirm-button:hover {
-    background: #e63333;
+    background: #dc2626;
 }
 
 .modal-confirm-button:active {
@@ -507,58 +556,59 @@ body {
     cursor: not-allowed;
 }
 
+/* TTS 보이스팩 리스트 */
+.tts-voice-pack-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 /* 하단 네비게이션 */
 .bottom-nav {
     position: fixed;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(420px, 100vw);
-    height: 80px;
-    background: var(--bg);
+    left: 0;
+    right: 0;
+    max-width: 420px;
+    margin: 0 auto;
+    height: 76px;
     border-top: 1px solid var(--primary);
-    display: flex;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     align-items: center;
-    justify-content: center;
-    gap: 40px;
-    padding: 16px 0;
-    z-index: 100;
+    padding: 8px 12px 6px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    z-index: 10;
 }
 
 .nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    text-align: center;
     text-decoration: none;
-    color: var(--text-strong);
-    transition: opacity 0.15s ease;
+    color: #000;
+    font-family: "Fugaz One", "Inter", sans-serif;
+    font-size: 10px;
+    display: grid;
+    gap: 6px;
+    justify-items: center;
 }
 
-.nav-item:hover {
-    opacity: 0.7;
+.nav-item.active {
+    font-weight: 700;
 }
 
 .nav-item img {
-    width: 30px;
-    height: 30px;
-    object-fit: contain;
-}
-
-.nav-item span {
-    font-family: "Fugaz One", sans-serif;
-    font-size: 10px;
-    text-transform: lowercase;
+    width: 28px;
+    height: 28px;
 }
 
 @media (max-width: 480px) {
-    .page {
-        padding: 0 16px 110px;
+    .settings-menu {
+        padding: 4px;
     }
 
     .settings-menu-item {
-        padding: 0 16px;
+        padding: 14px;
     }
 
     .modal-content {
@@ -566,3 +616,23 @@ body {
     }
 }
 
+@media (max-width: 920px) and (max-height: 520px) {
+    .page {
+        width: min(420px, 100vw);
+        padding: 0 14px 100px;
+    }
+
+    .bottom-nav {
+        height: 68px;
+        padding: 6px 12px 6px;
+    }
+
+    .nav-item {
+        font-size: 9px;
+    }
+
+    .nav-item img {
+        width: 26px;
+        height: 26px;
+    }
+}
