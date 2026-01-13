@@ -128,8 +128,9 @@ public class AdPlacementAdminService {
         AdPlacement p = adPlacementAdminRepository.findById(placementId)
             .orElseThrow(() -> new NotFoundException(ErrorCode.AD_PLACEMENT_NOT_FOUND));
 
-        // 운영 기간 밖이면 활성화 금지
-        if (!p.isWithinPeriod(now())) {
+        // 마감일이 지났으면 활성화 금지 (시작일 전에도 활성화는 가능)
+        LocalDateTime now = now();
+        if (p.getEndAt() != null && now.toLocalDate().isAfter(p.getEndAt().toLocalDate())) {
             throw new ForbiddenException(ErrorCode.AD_PLACEMENT_OUT_OF_PERIOD);
         }
 
