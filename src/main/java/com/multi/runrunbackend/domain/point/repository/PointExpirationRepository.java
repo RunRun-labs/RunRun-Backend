@@ -26,14 +26,6 @@ public interface PointExpirationRepository extends JpaRepository<PointExpiration
             "ORDER BY pe.earnedAt ASC")
     List<PointExpiration> findActivePointsByUserIdOrderByEarnedAt(@Param("userId") Long userId);
 
-    // 만료 예정 포인트 조회 (만료일 순으로 정렬 )
-    @Query("SELECT pe FROM PointExpiration pe " +
-            "WHERE pe.user.id = :userId " +
-            "AND pe.expirationStatus = 'ACTIVE' " +
-            "AND pe.remainingPoint > 0 " +
-            "ORDER BY pe.expiresAt ASC")
-    List<PointExpiration> findActivePointsByUserIdOrderByExpiresAt(@Param("userId") Long userId);
-
     // 만료 처리할 포인트 조회 (스케줄러용)
     @Query("SELECT pe FROM PointExpiration pe " +
             "WHERE pe.expirationStatus = 'ACTIVE' " +
@@ -52,4 +44,19 @@ public interface PointExpirationRepository extends JpaRepository<PointExpiration
             @Param("endDateTime") LocalDateTime endDateTime
     );
 
+    /**
+     * @description : 이번 달 만료 예정 포인트 조회
+     */
+    @Query("SELECT pe FROM PointExpiration pe " +
+            "WHERE pe.user.id = :userId " +
+            "AND pe.expirationStatus = 'ACTIVE' " +
+            "AND pe.remainingPoint > 0 " +
+            "AND pe.expiresAt >= :startOfMonth " +
+            "AND pe.expiresAt < :endOfMonth " +
+            "ORDER BY pe.expiresAt ASC")
+    List<PointExpiration> findExpiringThisMonth(
+            @Param("userId") Long userId,
+            @Param("startOfMonth") LocalDateTime startOfMonth,
+            @Param("endOfMonth") LocalDateTime endOfMonth
+    );
 }

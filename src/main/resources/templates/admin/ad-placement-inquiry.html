@@ -1,170 +1,170 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8"/>
     <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1"
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
     />
     <title>RunRun Admin | 광고 배치 조회</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
-      rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+            rel="stylesheet"
     />
     <link
-      rel="stylesheet"
-      href="/css/admin-layout.css"
-      th:href="@{/css/admin-layout.css}"
+            rel="stylesheet"
+            href="/css/admin-layout.css"
+            th:href="@{/css/admin-layout.css}"
     />
     <link
-      rel="stylesheet"
-      href="/css/ad-placement-inquiry.css"
-      th:href="@{/css/ad-placement-inquiry.css}"
+            rel="stylesheet"
+            href="/css/ad-placement-inquiry.css"
+            th:href="@{/css/ad-placement-inquiry.css}"
     />
-  </head>
-  <body>
-    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
-    <!-- 레이아웃 적용 -->
-    <div
-      th:replace="~{admin/layout :: adminLayout(~{::.ad-placement-inquiry-content})}"
-    >
-      <!-- 컨텐츠 영역 -->
-      <div class="ad-placement-inquiry-content ad-placement-inquiry-container">
+</head>
+<body>
+<script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+<!-- 레이아웃 적용 -->
+<div
+        th:replace="~{admin/layout :: adminLayout(~{::.ad-placement-inquiry-content})}"
+>
+    <!-- 컨텐츠 영역 -->
+    <div class="ad-placement-inquiry-content ad-placement-inquiry-container">
         <div class="ad-placement-inquiry-card">
-          <div class="page-header">
-            <h1 class="page-title">광고 배치 조회</h1>
-            <a href="/admin/ad-placement/create" class="create-button-link">
-              <button type="button" class="create-button">생성하기</button>
-            </a>
-          </div>
-
-          <!-- 필터 영역 -->
-          <div class="filter-section">
-            <div class="filter-row">
-              <div class="filter-group">
-                <label class="filter-label">활성 상태</label>
-                <div class="filter-checkbox-group">
-                  <label class="filter-checkbox-item">
-                    <input
-                      type="checkbox"
-                      value="true"
-                      class="filter-checkbox"
-                    />
-                    <span class="checkbox-label">활성</span>
-                  </label>
-                  <label class="filter-checkbox-item">
-                    <input
-                      type="checkbox"
-                      value="false"
-                      class="filter-checkbox"
-                    />
-                    <span class="checkbox-label">비활성</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="filter-group">
-                <label class="filter-label">슬롯 타입</label>
-                <div class="filter-checkbox-group">
-                  <label class="filter-checkbox-item">
-                    <input
-                      type="checkbox"
-                      value="FEED_LIST_ITEM"
-                      class="filter-checkbox"
-                    />
-                    <span class="checkbox-label">피드 리스트</span>
-                  </label>
-                  <label class="filter-checkbox-item">
-                    <input
-                      type="checkbox"
-                      value="RUN_END_BANNER"
-                      class="filter-checkbox"
-                    />
-                    <span class="checkbox-label">러닝 종료 배너</span>
-                  </label>
-                  <label class="filter-checkbox-item">
-                    <input
-                      type="checkbox"
-                      value="HOME_TOP_BANNER"
-                      class="filter-checkbox"
-                    />
-                    <span class="checkbox-label">홈 상단 배너</span>
-                  </label>
-                  <label class="filter-checkbox-item">
-                    <input
-                      type="checkbox"
-                      value="COUPON_LIST_BANNER"
-                      class="filter-checkbox"
-                    />
-                    <span class="checkbox-label">쿠폰 리스트 배너</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="filter-group filter-group-full">
-                <label class="filter-label">검색어</label>
-                <input
-                  type="text"
-                  id="keywordFilter"
-                  class="filter-input"
-                  placeholder="광고명 또는 슬롯명으로 검색..."
-                />
-              </div>
+            <div class="page-header">
+                <h1 class="page-title">광고 배치 조회</h1>
+                <a href="/admin/ad-placement/create" class="create-button-link">
+                    <button type="button" class="create-button">생성하기</button>
+                </a>
             </div>
 
-            <div class="filter-actions">
-              <button type="button" class="filter-btn" id="applyFilterBtn">
-                필터 적용
-              </button>
-              <button
-                type="button"
-                class="filter-btn filter-btn-reset"
-                id="resetFilterBtn"
-              >
-                초기화
-              </button>
+            <!-- 필터 영역 -->
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label class="filter-label">활성 상태</label>
+                        <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input
+                                        type="checkbox"
+                                        value="true"
+                                        class="filter-checkbox"
+                                />
+                                <span class="checkbox-label">활성</span>
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input
+                                        type="checkbox"
+                                        value="false"
+                                        class="filter-checkbox"
+                                />
+                                <span class="checkbox-label">비활성</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">슬롯 타입</label>
+                        <div class="filter-checkbox-group">
+                            <label class="filter-checkbox-item">
+                                <input
+                                        type="checkbox"
+                                        value="FEED_LIST_ITEM"
+                                        class="filter-checkbox"
+                                />
+                                <span class="checkbox-label">피드 리스트</span>
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input
+                                        type="checkbox"
+                                        value="RUN_END_BANNER"
+                                        class="filter-checkbox"
+                                />
+                                <span class="checkbox-label">러닝 종료 배너</span>
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input
+                                        type="checkbox"
+                                        value="HOME_TOP_BANNER"
+                                        class="filter-checkbox"
+                                />
+                                <span class="checkbox-label">홈 상단 배너</span>
+                            </label>
+                            <label class="filter-checkbox-item">
+                                <input
+                                        type="checkbox"
+                                        value="COUPON_LIST_BANNER"
+                                        class="filter-checkbox"
+                                />
+                                <span class="checkbox-label">쿠폰 리스트 배너</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="filter-group filter-group-full">
+                        <label class="filter-label">검색어</label>
+                        <input
+                                type="text"
+                                id="keywordFilter"
+                                class="filter-input"
+                                placeholder="광고명 또는 슬롯명으로 검색"
+                        />
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="button" class="filter-btn" id="applyFilterBtn">
+                        필터 적용
+                    </button>
+                    <button
+                            type="button"
+                            class="filter-btn filter-btn-reset"
+                            id="resetFilterBtn"
+                    >
+                        초기화
+                    </button>
+                </div>
             </div>
-          </div>
 
-          <!-- 테이블 영역 -->
-          <div class="table-container">
-            <table class="ad-placement-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>슬롯명</th>
-                  <th>광고명</th>
-                  <th>가중치</th>
-                  <th>시작일</th>
-                  <th>종료일</th>
-                  <th>노출 수</th>
-                  <th>클릭 수</th>
-                  <th>상태</th>
-                  <th>액션</th>
-                </tr>
-              </thead>
-              <tbody id="adPlacementTableBody">
-                <!-- 데이터가 여기에 동적으로 로드됩니다 -->
-                <tr class="loading-row">
-                  <td colspan="10" class="loading-message">로딩 중...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+            <!-- 테이블 영역 -->
+            <div class="table-container">
+                <table class="ad-placement-table">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>슬롯명</th>
+                        <th>광고명</th>
+                        <th>가중치</th>
+                        <th>시작일</th>
+                        <th>종료일</th>
+                        <th>노출 수</th>
+                        <th>클릭 수</th>
+                        <th>상태</th>
+                        <th>액션</th>
+                    </tr>
+                    </thead>
+                    <tbody id="adPlacementTableBody">
+                    <!-- 데이터가 여기에 동적으로 로드됩니다 -->
+                    <tr class="loading-row">
+                        <td colspan="10" class="loading-message">로딩 중...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
-          <!-- 페이지네이션 영역 -->
-          <div class="pagination-container" id="paginationContainer">
-            <!-- 페이지네이션이 여기에 동적으로 생성됩니다 -->
-          </div>
+            <!-- 페이지네이션 영역 -->
+            <div class="pagination-container" id="paginationContainer">
+                <!-- 페이지네이션이 여기에 동적으로 생성됩니다 -->
+            </div>
         </div>
-      </div>
     </div>
+</div>
 
-    <script
-      src="/js/ad-placement-inquiry.js"
-      th:src="@{/js/ad-placement-inquiry.js}"
-    ></script>
-  </body>
+<script
+        src="/js/ad-placement-inquiry.js"
+        th:src="@{/js/ad-placement-inquiry.js}"
+></script>
+</body>
 </html>
