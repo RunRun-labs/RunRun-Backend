@@ -7,7 +7,9 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     background-color: #f5f5f5;
-    padding-bottom: 80px;
+    padding-bottom: 0;
+    overflow-y: scroll;
+    height: 100vh;
 }
 
 html, body {
@@ -15,13 +17,11 @@ html, body {
     padding: 0;
     height: 100%;
     overflow-x: hidden;
-    overflow-y: auto;
 }
 
 /* 헤더 */
 .header {
-    background-color: white;
-    border-bottom: 1px solid #e0e0e0;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     position: fixed;
     top: 0;
     left: 0;
@@ -29,29 +29,33 @@ html, body {
     z-index: 100;
     display: flex;
     align-items: center;
-    padding: 15px 20px;
+    padding: 16px 20px;
     gap: 15px;
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.2);
 }
 
 .btn-back {
-    background: none;
+    background: rgba(255, 255, 255, 0.2);
     border: none;
     cursor: pointer;
-    padding: 5px;
+    padding: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #333;
+    color: white;
+    border-radius: 10px;
+    transition: all 0.2s;
 }
 
 .btn-back:hover {
-    opacity: 0.7;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
 }
 
 .header-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
-    color: #333;
+    color: white;
     flex: 1;
 }
 
@@ -59,128 +63,175 @@ html, body {
 .container {
     max-width: 768px;
     margin: 0 auto;
-    padding: 70px 20px 20px;
-    overflow-y: auto;
-    height: auto;
+    padding: 80px 20px 150px;
+    overflow-y: visible;
 }
 
 /* 사용 가능 포인트 카드 */
 .available-points-section {
-    margin-bottom: 25px;
+    margin-bottom: 32px;
 }
 
 .points-card {
-    background: linear-gradient(135deg, #d4f563 0%, #c4e538 100%);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.points-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
 }
 
 .points-label {
     font-size: 14px;
-    color: #333;
-    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 12px;
     font-weight: 500;
+    position: relative;
+    z-index: 1;
 }
 
 .points-amount {
     font-size: 48px;
     font-weight: 700;
-    color: #000;
+    color: white;
+    position: relative;
+    z-index: 1;
 }
 
 /* 이번 달 포인트 */
 .monthly-points-section {
-    margin-bottom: 25px;
+    margin-bottom: 32px;
 }
 
 .section-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
-    color: #333;
-    margin-bottom: 15px;
+    color: #1a1a1a;
+    margin-bottom: 16px;
 }
 
 .monthly-points-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 16px;
 }
 
 .monthly-point-card {
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.monthly-point-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .monthly-point-card.earned {
-    background-color: #e3f2fd;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.monthly-point-card.earned:hover {
+    border-color: #10b981;
 }
 
 .monthly-point-card.used {
-    background-color: #ffebee;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.monthly-point-card.used:hover {
+    border-color: #ef4444;
+}
+
+.monthly-point-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
 }
 
 .monthly-point-label {
-    font-size: 14px;
+    font-size: 13px;
     color: #666;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    font-weight: 500;
 }
 
 .monthly-point-amount {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
 }
 
 .monthly-point-card.earned .monthly-point-amount {
-    color: #0066ff;
+    color: #10b981;
 }
 
 .monthly-point-card.used .monthly-point-amount {
-    color: #f44336;
+    color: #ef4444;
 }
 
 /* 소멸 예정 포인트 */
 .expiry-section {
-    margin-bottom: 25px;
+    margin-bottom: 32px;
 }
 
 .expiry-card {
-    background: linear-gradient(135deg, #d4f563 0%, #c4e538 100%);
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 2px solid rgba(245, 158, 11, 0.2);
+    transition: all 0.3s;
+}
+
+.expiry-card:hover {
+    border-color: #f59e0b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .expiry-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .expiry-icon {
-    font-size: 18px;
+    font-size: 24px;
 }
 
 .expiry-title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
-    color: #333;
+    color: #1a1a1a;
 }
 
 .expiry-info {
-    font-size: 13px;
+    font-size: 14px;
     color: #666;
-    padding-left: 28px;
+    padding-left: 36px;
+    line-height: 1.6;
 }
 
 /* 포인트 상세 */
 .point-detail-section {
     background-color: white;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .detail-header {
@@ -193,32 +244,38 @@ html, body {
 .btn-history {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 8px 15px;
-    border: 1px solid #c4e538;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 2px solid #10b981;
     background-color: transparent;
-    color: #333;
-    border-radius: 20px;
+    color: #10b981;
+    border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
 }
 
 .btn-history:hover {
-    background-color: #c4e538;
+    background-color: #10b981;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.btn-history-icon {
-    font-size: 18px;
-    font-weight: 300;
+.btn-history svg {
+    transition: transform 0.2s;
+}
+
+.btn-history:hover svg {
+    transform: translateX(3px);
 }
 
 .detail-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 0;
+    padding: 16px 0;
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -229,75 +286,101 @@ html, body {
 .detail-label {
     font-size: 14px;
     color: #666;
+    font-weight: 500;
 }
 
 .detail-value {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
-    color: #333;
+    color: #10b981;
 }
 
 /* 반응형 디자인 */
 @media (max-width: 480px) {
     .container {
-        padding: 70px 15px 20px;
+        padding: 80px 16px 150px;
     }
 
     .points-card {
-        padding: 25px 20px;
+        padding: 28px 24px;
     }
 
     .points-amount {
-        font-size: 40px;
+        font-size: 42px;
     }
 
     .monthly-points-grid {
-        gap: 10px;
+        gap: 12px;
     }
 
     .monthly-point-card {
-        padding: 15px;
+        padding: 20px;
     }
-
-    /* 하단 네비게이션 */
-    .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: white;
-        border-top: 1px solid #e0e0e0;
-        display: flex;
-        justify-content: space-around;
-        padding: 10px 0;
-        z-index: 100;
-    }
-
-    .nav-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        text-decoration: none;
-        color: #999;
-        font-size: 12px;
-        transition: all 0.3s;
-    }
-
-    .nav-item.active {
-        color: #c4e538;
-    }
-
-    .nav-icon {
+    
+    .monthly-point-icon {
         font-size: 24px;
     }
-
-    .nav-label {
-        font-weight: 500;
+    
+    .monthly-point-amount {
+        font-size: 24px;
     }
-
-    .nav-item:hover {
-        color: #c4e538;
+    
+    .section-title {
+        font-size: 18px;
     }
+}
 
+@media (min-width: 481px) and (max-width: 768px) {
+    .container {
+        padding: 80px 20px 150px;
+    }
+}
+
+@media (min-width: 769px) {
+    .container {
+        padding: 80px 32px 150px;
+    }
+    
+    .header {
+        padding: 20px 32px;
+    }
+}
+
+/* 하단 내비게이션 */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 420px;
+    margin: 0 auto;
+    height: 76px;
+    border-top: 1px solid var(--primary, #baff29);
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+    padding: 8px 12px 6px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+.nav-item {
+    text-align: center;
+    text-decoration: none;
+    color: #000;
+    font-family: "Fugaz One", "Inter", sans-serif;
+    font-size: 10px;
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+}
+
+.nav-item.active {
+    font-weight: 700;
+}
+
+.nav-item img {
+    width: 28px;
+    height: 28px;
 }

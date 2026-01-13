@@ -120,6 +120,30 @@
       <div id="map" class="map-container"></div>
     </section>
 
+    <!-- 선택된 코스 상세 정보 (코스 선택 시 표시) -->
+    <section class="course-detail-section" id="courseDetailSection" style="display: none;">
+      <div class="course-detail-card">
+        <div class="course-detail-header">
+          <h3 class="course-detail-title" id="courseDetailName">코스 이름</h3>
+          <span class="course-detail-badge" id="courseDetailBadge">수동 등록</span>
+        </div>
+        <div class="course-detail-info">
+          <div class="course-detail-item">
+            <svg class="course-detail-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.5 2C13.5 2.44425 13.3069 2.84339 13 3.11805V5H18C19.6569 5 21 6.34315 21 8V11.5H19V8C19 7.44772 18.5523 7 18 7H13V8.88195C13.3069 9.15661 13.5 9.55575 13.5 10C13.5 10.8284 12.8284 11.5 12 11.5C11.1716 11.5 10.5 10.8284 10.5 10C10.5 9.55575 10.6931 9.15661 11 8.88195V7H6C5.44772 7 5 7.44772 5 8V16C5 16.5523 5.44772 17 6 17H11V15.118C10.6931 14.8434 10.5 14.4443 10.5 14C10.5 13.1716 11.1716 12.5 12 12.5C12.8284 12.5 13.5 13.1716 13.5 14C13.5 14.4443 13.3069 14.8434 13 15.118V17H18C18.5523 17 19 16.5523 19 16V13H21V16C21 17.6569 19.6569 19 18 19H13V20.882C13.3069 21.1566 13.5 21.5558 13.5 22C13.5 22.8284 12.8284 23.5 12 23.5C11.1716 23.5 10.5 22.8284 10.5 22C10.5 21.5558 10.6931 21.1566 11 20.882V19H6C4.34315 19 3 17.6569 3 16V8C3 6.34315 4.34315 5 6 5H11V3.11805C10.6931 2.84339 10.5 2.44425 10.5 2C10.5 1.17157 11.1716 0.5 12 0.5C12.8284 0.5 13.5 1.17157 13.5 2Z" fill="currentColor"/>
+            </svg>
+            <span class="course-detail-value" id="courseDetailDistance">0 km</span>
+          </div>
+          <div class="course-detail-item">
+            <svg class="course-detail-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
+            </svg>
+            <span class="course-detail-value" id="courseDetailAddress">주소</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 거리 입력 섹션 -->
     <section class="distance-section" id="distanceSection" style="display: none;">
       <!-- 직접 입력 섹션 -->
@@ -139,12 +163,14 @@
           <span class="manual-input-unit">km</span>
         </div>
         <p class="manual-input-error" id="manualDistanceError"></p>
-        <p class="course-mode-notice" id="courseModeNotice" style="display: none;">
-          코스 지정 거리입니다
-        </p>
       </div>
     </section>
   </main>
+
+  <!-- 하단 고정 버튼 -->
+  <button type="button" id="startButton" class="start-button" disabled>
+    솔로런 시작하기
+  </button>
 </div>
 
 <div

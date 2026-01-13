@@ -214,8 +214,20 @@ function createCourseCard(course) {
   card.className = "recruit-card";
   card.style.cursor = "pointer";
   card.setAttribute("data-course-id", course.id);
+  
+  // URL 파라미터에서 선택 모드 확인
+  const urlParams = new URLSearchParams(window.location.search);
+  const selectMode = urlParams.get('selectMode');
+  const returnTo = urlParams.get('returnTo');
+  
   card.addEventListener("click", () => {
-    window.location.href = `/courseDetail/${course.id}`;
+    // 선택 모드일 때: 상세페이지로 이동하되 선택 모드 파라미터 유지
+    if ((selectMode === 'recruit' || selectMode === 'solo') && returnTo) {
+      window.location.href = `/courseDetail/${course.id}?selectMode=${selectMode}&returnTo=${encodeURIComponent(returnTo)}`;
+    } else {
+      // 일반 모드: 상세 페이지로 이동
+      window.location.href = `/courseDetail/${course.id}`;
+    }
   });
 
   // Format course distance (코스 길이)
@@ -813,6 +825,23 @@ function init() {
   // Initialize filter and sort options
   initFilterOptions();
   initSortOptions();
+  
+  // URL 파라미터에서 필터 정보 읽기
+  const urlParams = new URLSearchParams(window.location.search);
+  const filter = urlParams.get('filter');
+  
+  // 필터 파라미터가 있으면 해당 필터 활성화
+  if (filter === 'liked') {
+    currentFilters.myLikedCourses = true;
+    console.log('좋아요 한 코스 필터 활성화');
+  } else if (filter === 'favorited') {
+    currentFilters.myFavoritedCourses = true;
+    console.log('즐겨찾기 한 코스 필터 활성화');
+  } else if (filter === 'my') {
+    currentFilters.myCourses = true;
+    console.log('내가 등록한 코스 필터 활성화');
+  }
+  
   updateFilterUI();
 
   loadCourseList(true);

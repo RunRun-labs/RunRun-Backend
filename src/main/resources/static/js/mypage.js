@@ -249,39 +249,36 @@ function renderProfileImage(user) {
 
     const url = user?.profileImageUrl;
 
+    // 프로필 이미지가 없으면 default-profile.svg 사용 (이미 설정되어 있음)
     if (!url) {
-
-        imgEl.removeAttribute("src");
-        imgEl.hidden = true;
+        // 기본 이미지가 이미 설정되어 있으므로 src를 변경할 필요 없음
+        if (!imgEl.src.includes('default-profile.svg')) {
+            imgEl.src = "/img/default-profile.svg";
+        }
+        imgEl.alt = "기본 프로필 이미지";
+        imgEl.removeAttribute('hidden');
 
         if (initialEl) {
             initialEl.textContent = "";
-            initialEl.hidden = true;
+            initialEl.setAttribute('hidden', 'hidden');
         }
         return;
     }
 
-
+    // 프로필 이미지가 있으면 해당 URL 사용
     imgEl.src = url;
     imgEl.alt = "프로필 이미지";
-    imgEl.decoding = "async";
-    imgEl.loading = "lazy";
-    imgEl.hidden = false;
+    imgEl.removeAttribute('hidden');
 
     if (initialEl) {
         initialEl.textContent = "";
-        initialEl.hidden = true;
+        initialEl.setAttribute('hidden', 'hidden');
     }
 
-
+    // 이미지 로드 실패 시 default-profile.svg로 대체
     imgEl.addEventListener("error", () => {
-        imgEl.removeAttribute("src");
-        imgEl.hidden = true;
-
-        if (initialEl) {
-            initialEl.textContent = "";
-            initialEl.hidden = true;
-        }
+        imgEl.src = "/img/default-profile.svg";
+        imgEl.alt = "기본 프로필 이미지";
     }, {once: true});
 }
 
@@ -593,9 +590,25 @@ function createRunCard(record) {
     const defaultGhostImageUrl = '/img/ghost-run.png';
 
     // 온라인배틀 등수별 이미지 (1~4등 제공)
-    const onlineBattleRanking = (typeof record.onlineBattleRanking === 'number')
+    let onlineBattleRanking = (typeof record.onlineBattleRanking === 'number')
         ? record.onlineBattleRanking
         : (record.onlineBattleRanking ? Number(record.onlineBattleRanking) : null);
+
+    // 디버깅: 온라인배틀일 때 등수 확인
+    if (isOnlineBattle) {
+        console.log('온라인배틀 기록:', {
+            recordId: record.runningResultId,
+            onlineBattleRanking: record.onlineBattleRanking,
+            onlineBattleRankingType: typeof record.onlineBattleRanking,
+            converted: onlineBattleRanking
+        });
+        
+        // 등수 정보가 없으면 finalRank 필드 확인 (백엔드에서 다른 필드명 사용 가능성)
+        if (onlineBattleRanking === null || onlineBattleRanking === undefined) {
+            onlineBattleRanking = record.finalRank || record.rank || record.ranking || null;
+            console.log('대체 필드에서 등수 확인:', onlineBattleRanking);
+        }
+    }
 
     const onlineBattleRankImageMap = {
         1: '/img/online-1st.png',
@@ -609,12 +622,12 @@ function createRunCard(record) {
     // 썸네일 URL 우선순위:
     // 1) 고스트런: 고정 이미지
     // 2) 온라인배틀: 등수별 이미지
-    // 3) 일반: courseThumbnailUrl
+    // 3) 일반: recordImageUrl (코스 썰네일 대신 런닝 기록 이미지 사용)
     const imageUrl = isGhostRun
         ? defaultGhostImageUrl
         : (isOnlineBattle
             ? (onlineBattleRankImageMap[onlineBattleRanking] || defaultOnlineBattleImageUrl)
-            : (record.courseThumbnailUrl || null));
+            : (record.recordImageUrl || null));
 
     // ✅ 제목 결정 (우선순위: 고스트런 > 온라인배틀 > 일반)
     const courseTitle = isGhostRun

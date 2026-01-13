@@ -301,7 +301,6 @@ document.addEventListener("DOMContentLoaded", function () {
           
           <div class="coupon-benefit-section">
             <div class="coupon-benefit-value">${benefitValue}${getBenefitUnit(coupon.benefitType)}</div>
-            <div class="coupon-benefit-type">${benefitTypeText}</div>
           </div>
 
           <div class="coupon-details">

@@ -21,6 +21,7 @@ import com.multi.runrunbackend.domain.user.repository.UserBlockRepository;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import com.multi.runrunbackend.domain.user.repository.UserSettingRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
  * @filename : ProfileRunningHistoryService
  * @since : 26. 1. 4. 오후 7:29 일요일
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProfileRunningHistoryService {
@@ -151,17 +153,36 @@ public class ProfileRunningHistoryService {
             Long recordId,
             CustomUser principal
     ) {
+        log.info("[RANKING] getRunningRecordDetail 호출 - recordId: {}", recordId);
+        
         User me = getUserByPrincipal(principal);
 
         RunningResult result = runningResultRepository.findByIdAndIsDeletedFalse(recordId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND));
 
+        log.info("[RANKING] RunningResult 조회 성공 - runningType: {}", result.getRunningType());
 
         if (!result.getUser().getId().equals(me.getId())) {
             throw new ForbiddenException(ErrorCode.RUNNING_RESULT_FORBIDDEN);
         }
 
-        return ProfileRunningHistoryResDto.from(result, fileStorage);
+        // 온라인 배틀인 경우 랭킹도 조회
+        Integer ranking = null;
+        if (result.getRunningType() == RunningType.ONLINEBATTLE) {
+            log.info("[RANKING] 온라인 배틀 감지 - BattleResult에서 랭킹 조회 시도");
+            
+            List<Object[]> rankingResults = battleResultRepository.findRankingByRunningResultIds(Set.of(recordId));
+            log.info("[RANKING] 랭킹 조회 결과 개수: {}", rankingResults.size());
+            
+            if (!rankingResults.isEmpty()) {
+                ranking = (Integer) rankingResults.get(0)[1];
+                log.info("[RANKING] 랭킹 조회 성공: {}", ranking);
+            } else {
+                log.warn("[RANKING] BattleResult에 해당 runningResultId가 없음: {}", recordId);
+            }
+        }
+
+        return ProfileRunningHistoryResDto.from(result, fileStorage, ranking);
     }
 
     /**
@@ -237,21 +258,29 @@ public class ProfileRunningHistoryService {
     }
 
     private Slice<ProfileRunningHistoryResDto> mapSliceWithOnlineBattleRanking(Slice<RunningResult> slice) {
+        log.info("[RANKING] mapSliceWithOnlineBattleRanking 호출 - 전체 기록 수: {}", slice.getContent().size());
+        
         // ONLINEBATTLE 기록들만 runningResultId 수집
         Set<Long> onlineBattleIds = slice.getContent().stream()
                 .filter(r -> r.getRunningType() == RunningType.ONLINEBATTLE)
                 .map(RunningResult::getId)
                 .collect(Collectors.toSet());
 
+        log.info("[RANKING] 온라인 배틀 기록 ID 목록: {}", onlineBattleIds);
+
         Map<Long, Integer> rankingByRunningResultId = Map.of();
         if (!onlineBattleIds.isEmpty()) {
-            rankingByRunningResultId = battleResultRepository.findRankingByRunningResultIds(onlineBattleIds)
-                    .stream()
+            List<Object[]> rankingResults = battleResultRepository.findRankingByRunningResultIds(onlineBattleIds);
+            log.info("[RANKING] BattleResult에서 조회된 랭킹 결과 개수: {}", rankingResults.size());
+            
+            rankingByRunningResultId = rankingResults.stream()
                     .collect(Collectors.toMap(
                             row -> (Long) row[0],
                             row -> (Integer) row[1],
                             (a, b) -> a
                     ));
+            
+            log.info("[RANKING] 최종 랭킹 맵: {}", rankingByRunningResultId);
         }
 
         final Map<Long, Integer> finalRankingMap = rankingByRunningResultId;
@@ -260,6 +289,10 @@ public class ProfileRunningHistoryService {
             Integer rank = (r.getRunningType() == RunningType.ONLINEBATTLE)
                     ? finalRankingMap.get(r.getId())
                     : null;
+
+            if (r.getRunningType() == RunningType.ONLINEBATTLE) {
+                log.info("[RANKING] RunningResult ID: {}, 조회된 랭킹: {}", r.getId(), rank);
+            }
 
             return ProfileRunningHistoryResDto.from(r, fileStorage, rank);
         });

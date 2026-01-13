@@ -138,7 +138,7 @@ body {
 /* Like/Favorite Actions */
 .course-like-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
   gap: 16px;
   margin-top: 20px;
   padding: 20px 0;
@@ -186,6 +186,12 @@ body {
 .siren-icon {
   margin-left: 0;
   flex-shrink: 0;
+}
+
+.siren-icon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .siren-icon span {
@@ -762,17 +768,6 @@ body {
 
   .page-title {
     font-size: 20px;
-  }
-
-  .course-like-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .action-icon {
-    width: 100%;
-    justify-content: flex-start;
   }
 }
 

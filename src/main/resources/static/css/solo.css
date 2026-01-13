@@ -842,3 +842,69 @@ body {
 .toast.success {
   background: #34c759;
 }
+
+/* 코스 상세 정보 카드 */
+.course-detail-section {
+  padding: 0 20px 20px;
+  margin-top: 20px;
+}
+
+.course-detail-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.course-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.course-detail-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1c1e;
+  margin: 0;
+  flex: 1;
+}
+
+.course-detail-badge {
+  display: inline-flex;
+  padding: 6px 12px;
+  background: #f0f9ff;
+  color: #0284c7;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.course-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.course-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.course-detail-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+.course-detail-value {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}

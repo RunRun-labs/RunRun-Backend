@@ -44,10 +44,12 @@ public class ProfileRunningHistoryResDto {
     public static ProfileRunningHistoryResDto from(RunningResult r, FileStorage fileStorage) {
         String thumbnailUrl = null;
         Course c = r.getCourse();
+        
+        // 고스트런과 온라인배틀은 코스 섬네일 대신 특별 이미지 사용
+        // JavaScript에서 처리하므로 null로 설정
         if (r.getRunningType().equals(RunningType.GHOST) || r.getRunningType().equals(RunningType.ONLINEBATTLE)) {
-            thumbnailUrl = "";
+            thumbnailUrl = null;
         } else {
-
             if (c != null && c.getThumbnailUrl() != null) {
                 thumbnailUrl = fileStorage.toHttpsUrl(c.getThumbnailUrl());
             }
