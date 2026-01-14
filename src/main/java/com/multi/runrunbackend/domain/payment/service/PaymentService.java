@@ -1,10 +1,6 @@
 package com.multi.runrunbackend.domain.payment.service;
 
-import com.multi.runrunbackend.common.exception.custom.BadRequestException;
-import com.multi.runrunbackend.common.exception.custom.BusinessException;
-import com.multi.runrunbackend.common.exception.custom.ExternalApiException;
-import com.multi.runrunbackend.common.exception.custom.ForbiddenException;
-import com.multi.runrunbackend.common.exception.custom.NotFoundException;
+import com.multi.runrunbackend.common.exception.custom.*;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.coupon.constant.CouponBenefitType;
@@ -20,29 +16,22 @@ import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.payment.client.TossPaymentClient;
 import com.multi.runrunbackend.domain.payment.constant.PaymentMethod;
 import com.multi.runrunbackend.domain.payment.constant.PaymentStatus;
-import com.multi.runrunbackend.domain.payment.dto.req.BillingFirstPaymentConfirmReqDto;
-import com.multi.runrunbackend.domain.payment.dto.req.PaymentApproveReqDto;
-import com.multi.runrunbackend.domain.payment.dto.req.PaymentRequestReqDto;
-import com.multi.runrunbackend.domain.payment.dto.req.TossBillingKeyIssueReqDto;
-import com.multi.runrunbackend.domain.payment.dto.req.TossBillingPaymentReqDto;
-import com.multi.runrunbackend.domain.payment.dto.res.PaymentApproveResDto;
-import com.multi.runrunbackend.domain.payment.dto.res.PaymentHistoryResDto;
-import com.multi.runrunbackend.domain.payment.dto.res.PaymentRequestResDto;
-import com.multi.runrunbackend.domain.payment.dto.res.TossBillingKeyResDto;
-import com.multi.runrunbackend.domain.payment.dto.res.TossPaymentResDto;
+import com.multi.runrunbackend.domain.payment.dto.req.*;
+import com.multi.runrunbackend.domain.payment.dto.res.*;
 import com.multi.runrunbackend.domain.payment.entity.Payment;
 import com.multi.runrunbackend.domain.payment.repository.PaymentRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * @author : BoKyung
@@ -226,9 +215,18 @@ public class PaymentService {
 
             // 빌링키 추출 (자동결제용) - 일단 null
             String billingKey = null;
+            if (tossResponse.getCard() != null && tossResponse.getCard().getBillingKey() != null) {
+                billingKey = tossResponse.getCard().getBillingKey();
+            }
+
+            // 카드번호 추출
+            String cardNumber = null;
+            if (tossResponse.getCard() != null && tossResponse.getCard().getNumber() != null) {
+                cardNumber = tossResponse.getCard().getNumber();
+            }
 
             // Payment 완료 처리
-            payment.complete(tossResponse.getPaymentKey(), paymentMethod, billingKey);
+            payment.complete(tossResponse.getPaymentKey(), paymentMethod, billingKey, cardNumber);
 
             // 쿠폰 사용 처리
             if (payment.getCouponIssue() != null) {
@@ -309,6 +307,7 @@ public class PaymentService {
 
         return switch (tossMethod.toUpperCase()) {
             case "CARD", "카드" -> PaymentMethod.CARD;
+            case "TOSSPAY", "토스페이" -> PaymentMethod.TOSSPAY;
             case "VIRTUAL_ACCOUNT", "가상계좌" -> PaymentMethod.VIRTUAL_ACCOUNT;
             case "TRANSFER", "계좌이체" -> PaymentMethod.TRANSFER;
             case "MOBILE_PHONE", "휴대폰" -> PaymentMethod.MOBILE_PHONE;
@@ -382,32 +381,38 @@ public class PaymentService {
             // 결제수단 매핑
             PaymentMethod paymentMethod = mapPaymentMethod(tossResponse.getMethod());
 
+            // 카드번호 추출
+            String cardNumber = null;
+            if (tossResponse.getCard() != null && tossResponse.getCard().getNumber() != null) {
+                cardNumber = tossResponse.getCard().getNumber();
+            }
+
             // Payment 완료 처리
-            payment.complete(tossResponse.getPaymentKey(), paymentMethod, billingKey);
+            payment.complete(tossResponse.getPaymentKey(), paymentMethod, billingKey, cardNumber);
 
             // Membership 갱신
             membership.renew();
 
             log.info("자동결제 성공 - userId: {}, amount: {}원", user.getId(), originalAmount);
 
-      try {
-        notificationService.create(
-            user,
-            "멤버십 자동결제 완료",
-            "멤버십 자동결제가 완료되었습니다.",
-            NotificationType.MEMBERSHIP,
-            RelatedType.MEMBERSHIP,
-            membership.getId()
-        );
-        log.info("자동결제 성공 알림 발송 완료 - userId: {}, membershipId: {}",
-            user.getId(), membership.getId());
-      } catch (Exception notifyEx) {
-        log.error("자동결제 성공 알림 발송 실패 - userId: {}, membershipId: {}",
-            user.getId(), membership.getId(), notifyEx);
-      }
+            try {
+                notificationService.create(
+                        user,
+                        "멤버십 자동결제 완료",
+                        "멤버십 자동결제가 완료되었습니다.",
+                        NotificationType.MEMBERSHIP,
+                        RelatedType.MEMBERSHIP,
+                        membership.getId()
+                );
+                log.info("자동결제 성공 알림 발송 완료 - userId: {}, membershipId: {}",
+                        user.getId(), membership.getId());
+            } catch (Exception notifyEx) {
+                log.error("자동결제 성공 알림 발송 실패 - userId: {}, membershipId: {}",
+                        user.getId(), membership.getId(), notifyEx);
+            }
 
-    } catch (Exception e) {
-      payment.fail();
+        } catch (Exception e) {
+            payment.fail();
 
             // 멤버십 만료 처리
             membership.expire();
@@ -445,7 +450,7 @@ public class PaymentService {
         }
 
         // 무료 결제 완료 처리 (토스 API 호출 없음)
-        payment.complete("FREE_" + orderId, PaymentMethod.CARD, null);
+        payment.complete("FREE_" + orderId, PaymentMethod.CARD, null, null);
 
         // 쿠폰 사용 처리
         if (payment.getCouponIssue() != null) {
@@ -546,7 +551,14 @@ public class PaymentService {
 
             // DB payment 완료 처리 -> approvedAt 생김
             PaymentMethod paymentMethod = mapPaymentMethod(payRes.getMethod());
-            payment.complete(payRes.getPaymentKey(), paymentMethod, billingKey);
+
+            // 카드번호 추출
+            String cardNumber = null;
+            if (payRes.getCard() != null && payRes.getCard().getNumber() != null) {
+                cardNumber = payRes.getCard().getNumber();
+            }
+
+            payment.complete(payRes.getPaymentKey(), paymentMethod, billingKey, cardNumber);
 
             // 쿠폰 사용 처리 추가
             if (payment.getCouponIssue() != null) {
