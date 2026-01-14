@@ -777,6 +777,26 @@ public class MatchSessionService {
     log.info(" 활성 세션 발견 - sessionId: {}, status: {}, type: {}",
         sessionId, status, type);
 
+    if (type == SessionType.OFFLINE) {
+      Recruit recruit = session.getRecruit();
+      if (recruit == null || recruit.getMeetingAt() == null) {
+        log.info(
+            " 오프라인 세션이지만 Recruit 또는 meetingAt 이 없어 활성 세션으로 간주하지 않음 - userId: {}, sessionId: {}",
+            userId, sessionId);
+        return null;
+      }
+
+      LocalDateTime now = LocalDateTime.now();
+      LocalDateTime meetingAt = recruit.getMeetingAt();
+
+      if (now.isBefore(meetingAt.minusHours(1))) {
+        log.info(
+            " 오프라인 세션이지만 모임 1시간 전 이전이므로 활성 세션으로 간주하지 않음 - userId: {}, sessionId: {}, now: {}, meetingAt: {}",
+            userId, sessionId, now, meetingAt);
+        return null;
+      }
+    }
+
     String redirectUrl;
     if (status == SessionStatus.STANDBY) {
       if (type == SessionType.ONLINE) {
@@ -803,8 +823,7 @@ public class MatchSessionService {
         redirectUrl = "/running/" + sessionId;
       }
     } else {
-      log.warn(" 예상치 못한 세션 상태 - sessionId: {}, status: {}", sessionId, status);
-      return null; // 예상치 못한 상태
+      return null;
     }
 
     log.info(" 활성 세션 조회 성공 - userId: {}, sessionId: {}, status: {}, redirectUrl: {}",
