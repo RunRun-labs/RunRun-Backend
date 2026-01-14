@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>결제 내역</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+        rel="stylesheet"
+    />
     <style>
         * {
             margin: 0;
@@ -174,30 +180,39 @@
             cursor: pointer;
         }
 
+        /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: white;
-            border-top: 1px solid #e0e0e0;
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 0;
+            max-width: 420px;
+            margin: 0 auto;
+            height: 76px;
+            border-top: 1px solid #baff29;
+            background: #fff;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            align-items: center;
+            padding: 8px 12px 6px;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+            z-index: 100;
         }
 
         .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            text-align: center;
             text-decoration: none;
-            color: #666;
-            font-size: 12px;
+            color: #000;
+            font-family: "Fugaz One", "Inter", sans-serif;
+            font-size: 10px;
+            display: grid;
+            gap: 6px;
+            justify-items: center;
         }
 
-        .nav-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
+        .nav-item img {
+            width: 28px;
+            height: 28px;
         }
     </style>
 </head>
@@ -219,28 +234,7 @@
 </div>
 
 <!-- 하단 네비게이션 -->
-<div class="bottom-nav">
-    <a href="/chat" class="nav-item">
-        <div class="nav-icon">💬</div>
-        <div>chat</div>
-    </a>
-    <a href="/crews" class="nav-item">
-        <div class="nav-icon">👥</div>
-        <div>crew</div>
-    </a>
-    <a href="/" class="nav-item">
-        <div class="nav-icon">🏠</div>
-        <div>home</div>
-    </a>
-    <a href="/match/select" class="nav-item">
-        <div class="nav-icon">⚡</div>
-        <div>match</div>
-    </a>
-    <a href="/myPage" class="nav-item">
-        <div class="nav-icon">👤</div>
-        <div>my</div>
-    </a>
-</div>
+<div th:replace="~{common/bottom-nav :: bottomNav}"></div>
 
 <script th:inline="javascript">
     /*<![CDATA[*/

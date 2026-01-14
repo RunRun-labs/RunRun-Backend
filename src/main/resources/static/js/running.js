@@ -104,6 +104,7 @@ function getUserId() {
 // ==========================
 let map = null;
 let geocoder = null;
+let resolvedStartAddress = null; // ✅ 시작 위치 주소 (러닝 시작 시 미리 변환해서 저장)
 let coursePolyline = null;
 let userMarker = null;
 let startMarker = null;
@@ -355,6 +356,51 @@ function startPreviewOnlyTracking() {
   );
 }
 
+/**
+ * 시작 위치 주소를 비동기로 변환해서 저장
+ */
+async function convertStartAddressAsync(lat, lng) {
+  if (resolvedStartAddress) {
+    // 이미 변환된 주소가 있으면 스킵
+    return;
+  }
+
+  try {
+    // geocoder가 없으면 대기
+    if (!geocoder) {
+      for (let i = 0; i < 30; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        if (geocoder) break;
+      }
+    }
+
+    if (geocoder) {
+      console.log("✅ 시작 위치 주소 변환 시도:", { lat, lng });
+      resolvedStartAddress = await new Promise((resolve) => {
+        geocoder.coord2Address(lng, lat, (result, status) => {
+          if (status === kakao.maps.services.Status.OK && result?.[0]) {
+            const address =
+              result[0].road_address?.address_name ??
+              result[0].address?.address_name ??
+              "";
+            console.log("✅ 시작 위치 주소 변환 성공:", address);
+            resolve(address);
+          } else {
+            console.warn("❌ 시작 위치 주소 변환 실패:", status);
+            resolve(null);
+          }
+        });
+      });
+    } else {
+      console.warn("❌ geocoder가 초기화되지 않음");
+      resolvedStartAddress = null;
+    }
+  } catch (e) {
+    console.warn("❌ 시작 위치 주소 변환 예외:", e);
+    resolvedStartAddress = null;
+  }
+}
+
 function stopPreviewOnlyTracking() {
   try {
     if (previewWatchId != null && navigator.geolocation) {
@@ -412,7 +458,7 @@ function setGlobalLoading(show, text) {
   else globalLoadingOverlayEl.classList.remove("show");
 }
 
-function openFreeRunCourseModal(preview) {
+async function openFreeRunCourseModal(preview) {
   if (!freeRunCourseModalEl) return;
   freeRunPreview = preview;
 
@@ -426,66 +472,7 @@ function openFreeRunCourseModal(preview) {
       )}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
     if (freeRunCourseDescInput) freeRunCourseDescInput.value = "";
-    // ✅ 주소 자동 입력: preview.startLat/startLng로 역지오코딩
-    if (
-      freeRunCourseAddressInput &&
-      preview?.startLat != null &&
-      preview?.startLng != null
-    ) {
-      // geocoder가 없으면 초기화 대기
-      if (!geocoder) {
-        setTimeout(() => {
-          if (
-            geocoder &&
-            preview?.startLat != null &&
-            preview?.startLng != null &&
-            freeRunCourseAddressInput
-          ) {
-            geocoder.coord2Address(
-              preview.startLng,
-              preview.startLat,
-              (result, status) => {
-                if (
-                  status === kakao.maps.services.Status.OK &&
-                  result?.[0] &&
-                  freeRunCourseAddressInput
-                ) {
-                  const addr =
-                    result[0].road_address?.address_name ??
-                    result[0].address?.address_name ??
-                    "";
-                  freeRunCourseAddressInput.value = addr;
-                }
-              }
-            );
-          }
-        }, 100);
-      } else {
-        // ✅ 역지오코딩으로 주소 자동 채우기 (솔로런/오프라인 코스 없이 뛸 때)
-        geocoder.coord2Address(
-          preview.startLng,
-          preview.startLat,
-          (result, status) => {
-            if (
-              status === kakao.maps.services.Status.OK &&
-              result?.[0] &&
-              freeRunCourseAddressInput
-            ) {
-              const addr =
-                result[0].road_address?.address_name ??
-                result[0].address?.address_name ??
-                "";
-              freeRunCourseAddressInput.value = addr;
-            }
-          }
-        );
-      }
-    } else if (freeRunCourseAddressInput && sessionDataCache?.meetingPlace) {
-      // ✅ meetingPlace가 있으면 그것을 사용 (오프라인 자유러닝)
-      freeRunCourseAddressInput.value = sessionDataCache.meetingPlace;
-    } else if (freeRunCourseAddressInput) {
-      freeRunCourseAddressInput.value = "";
-    }
+
     if (freeRunCourseDistanceInput && preview?.distanceM != null) {
       freeRunCourseDistanceInput.value = String(preview.distanceM);
       // ✅ 거리 입력 필드를 readonly로 설정 (본인이 뛴 거리 고정)
@@ -516,6 +503,98 @@ function openFreeRunCourseModal(preview) {
     // ignore
   }
 
+  // ✅ 주소 자동 입력: resolvedStartAddress 우선 사용 (첫 GPS 주소 변환 결과)
+  let resolvedAddress = "";
+  if (freeRunCourseAddressInput && sessionDataCache?.meetingPlace) {
+    // ✅ meetingPlace가 있으면 그것을 사용 (오프라인 자유러닝)
+    resolvedAddress = sessionDataCache.meetingPlace;
+  } else if (freeRunCourseAddressInput) {
+    // ✅ 무조건 resolvedStartAddress 우선 사용 (첫 GPS 주소 변환 결과)
+    if (resolvedStartAddress) {
+      resolvedAddress = resolvedStartAddress;
+      console.log("✅ 미리 변환된 시작 주소 사용:", resolvedAddress);
+    } else {
+      // ✅ resolvedStartAddress가 없으면 preview.startLat/startLng로 역지오코딩 (fallback)
+      let targetLat = preview?.startLat;
+      let targetLng = preview?.startLng;
+
+      // ✅ preview 좌표도 없으면 latestPosition 사용
+      if (targetLat == null || targetLng == null) {
+        if (latestPosition?.coords) {
+          targetLat = latestPosition.coords.latitude;
+          targetLng = latestPosition.coords.longitude;
+          console.log("✅ preview 좌표 없음, latestPosition 사용:", {
+            lat: targetLat,
+            lng: targetLng,
+          });
+        }
+      }
+
+      if (targetLat != null && targetLng != null) {
+        try {
+          // geocoder가 없으면 대기
+          if (!geocoder) {
+            // 최대 3000ms 대기 (100ms 간격으로 30번 체크)
+            for (let i = 0; i < 30; i++) {
+              await new Promise((resolve) => setTimeout(resolve, 100));
+              if (geocoder) break;
+            }
+          }
+
+          if (geocoder) {
+            console.log("✅ 주소 변환 시도:", {
+              lat: targetLat,
+              lng: targetLng,
+            });
+            resolvedAddress = await new Promise((resolve) => {
+              geocoder.coord2Address(targetLng, targetLat, (result, status) => {
+                if (status === kakao.maps.services.Status.OK && result?.[0]) {
+                  const address =
+                    result[0].road_address?.address_name ??
+                    result[0].address?.address_name ??
+                    "";
+                  console.log("✅ 주소 변환 성공:", address);
+                  resolve(address);
+                } else {
+                  console.warn(
+                    "❌ 주소 변환 실패 - status:",
+                    status,
+                    "result:",
+                    result
+                  );
+                  resolve("");
+                }
+              });
+            });
+          } else {
+            console.warn("❌ geocoder가 초기화되지 않음");
+          }
+        } catch (e) {
+          console.warn("❌ 주소 변환 예외:", e);
+          resolvedAddress = "";
+        }
+      } else {
+        console.warn(
+          "❌ 주소 변환할 좌표가 없음 (resolvedStartAddress, preview, latestPosition 모두 없음)"
+        );
+      }
+    }
+  }
+
+  // 주소 설정 (값이 있을 때만 readonly 설정)
+  if (freeRunCourseAddressInput) {
+    freeRunCourseAddressInput.value = resolvedAddress || "";
+    if (resolvedAddress) {
+      freeRunCourseAddressInput.readOnly = true;
+      freeRunCourseAddressInput.style.backgroundColor = "#f3f4f6";
+      freeRunCourseAddressInput.style.cursor = "not-allowed";
+    } else {
+      freeRunCourseAddressInput.readOnly = false;
+      freeRunCourseAddressInput.style.backgroundColor = "";
+      freeRunCourseAddressInput.style.cursor = "";
+    }
+  }
+
   // 지도에 프리뷰 경로 표시 (수정 불가)
   try {
     if (map && preview?.path) {
@@ -542,6 +621,7 @@ function openFreeRunCourseModal(preview) {
   }
 
   if (freeRunCourseSaveBtn) freeRunCourseSaveBtn.disabled = false;
+  // ✅ 주소 변환이 완료된 후에만 모달 표시
   freeRunCourseModalEl.classList.add("show");
 
   // ✅ 코스 제목/설명 validation 초기화
@@ -879,25 +959,16 @@ function adjustSoloRunLayout(isInProgress) {
   if (!isSoloRun) return;
 
   const statsOverlay = document.querySelector(".stats-overlay");
-  const locateBtn = document.getElementById("locateButton");
 
   if (isInProgress) {
-    // IN_PROGRESS: 통계 오버레이 아래로, GPS 버튼 위로
+    // IN_PROGRESS: 통계 오버레이 아래로
     if (statsOverlay) {
       statsOverlay.style.bottom = "120px"; // 채팅방 버튼 위치
     }
-    if (locateBtn) {
-      locateBtn.style.bottom =
-        "calc(200px + 80px + env(safe-area-inset-bottom))"; // 통계 오버레이 위
-    }
   } else {
-    // STANDBY: 통계 오버레이 위로, GPS 버튼 아래로
+    // STANDBY: 통계 오버레이 위로
     if (statsOverlay) {
       statsOverlay.style.bottom = "200px"; // 기본 위치
-    }
-    if (locateBtn) {
-      locateBtn.style.bottom =
-        "calc(16px + 80px + env(safe-area-inset-bottom))"; // 기본 위치
     }
   }
 }
@@ -1388,30 +1459,29 @@ async function showRunningResultModalWithRetry(loadingText) {
   if (resultLoadingEl) resultLoadingEl.classList.add("show");
   if (resultSegmentsEl) resultSegmentsEl.innerHTML = "";
 
+  // ✅ 광고 미리 로드 시작 (비동기, 결과 로드와 병렬 진행)
+  let adLoadPromise = Promise.resolve(null);
+  if (typeof loadAd === "function" && typeof createAdPopup === "function") {
+    adLoadPromise = loadAd("RUN_END_BANNER").catch((e) => {
+      console.warn("광고 미리 로드 실패 (무시):", e);
+      return null;
+    });
+  }
+
   let lastErr = null;
+  let resultData = null;
   for (let i = 0; i < 8; i++) {
     try {
-      const data = await fetchRunningResult();
-      renderRunningResult(data);
+      resultData = await fetchRunningResult();
+      renderRunningResult(resultData);
       if (resultLoadingEl) resultLoadingEl.classList.remove("show");
 
-      // ✅ 러닝 결과 모달 표시 후 광고 팝업 표시
-      setTimeout(async () => {
-        try {
-          if (
-            typeof loadAd === "function" &&
-            typeof createAdPopup === "function"
-          ) {
-            const adData = await loadAd("RUN_END_BANNER");
-            if (adData) {
-              const adPopup = createAdPopup(adData);
-              document.body.appendChild(adPopup);
-            }
-          }
-        } catch (error) {
-          console.warn("러닝 결과 광고 로드 실패:", error);
-        }
-      }, 1000);
+      // ✅ 결과 로드 완료 후 광고 표시 (이미 로드된 광고가 있으면 즉시 표시)
+      const adData = await adLoadPromise;
+      if (adData) {
+        const adPopup = createAdPopup(adData);
+        document.body.appendChild(adPopup);
+      }
 
       return;
     } catch (e) {
@@ -1419,11 +1489,20 @@ async function showRunningResultModalWithRetry(loadingText) {
       await new Promise((r) => setTimeout(r, 1200));
     }
   }
+
+  // ✅ 결과 로드 실패해도 광고는 표시 시도
   console.warn("러닝 결과 조회 실패:", lastErr?.message || lastErr);
   if (resultLoadingEl) resultLoadingEl.classList.remove("show");
   if (resultSegmentsEl) {
     resultSegmentsEl.innerHTML =
       '<div style="text-align:center;color:#ef4444;padding:16px;font-size:12px;font-weight:900;">러닝 결과를 불러올 수 없습니다.</div>';
+  }
+
+  // 결과 로드 실패해도 광고 표시
+  const adData = await adLoadPromise;
+  if (adData) {
+    const adPopup = createAdPopup(adData);
+    document.body.appendChild(adPopup);
   }
 }
 
@@ -3084,7 +3163,7 @@ async function handleCompletedOnce(stats) {
       setGlobalLoading(true, "코스 생성중입니다…");
       const preview = await fetchFreeRunCoursePreview();
       setGlobalLoading(false);
-      openFreeRunCourseModal(preview);
+      await openFreeRunCourseModal(preview);
       return; // 결과 모달은 "코스 저장 + finish" 이후에 띄운다 (시스템 메시지 수신 시)
     } catch (e) {
       setGlobalLoading(false);
@@ -3241,6 +3320,23 @@ async function startSoloRunning() {
       }
     }
     // 코스가 없는 자유러닝은 출발점 게이트 적용하지 않음
+    // ✅ 코스가 없을 때는 현재 위치를 가져와서 주소 변환에 사용
+    if (!sessionCourseId) {
+      try {
+        const pos = await getCurrentPositionOnce({
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 0,
+        });
+        if (pos?.coords) {
+          latestPosition = pos;
+          // ✅ 시작 위치 주소 변환
+          convertStartAddressAsync(pos.coords.latitude, pos.coords.longitude);
+        }
+      } catch (e) {
+        console.warn("자유러닝 시작 위치 가져오기 실패:", e);
+      }
+    }
 
     // 코스가 있는 세션이면 반드시 출발점 게이트 적용
     let pos = null;
@@ -3497,6 +3593,14 @@ function startRunning() {
       updateGpsAccuracyBadge(lastGpsAccuracyM);
       latestPosition = position;
 
+      // ✅ 첫 GPS 위치에서 주소 변환 (아직 변환되지 않았을 때만)
+      if (!resolvedStartAddress) {
+        convertStartAddressAsync(
+          position.coords.latitude,
+          position.coords.longitude
+        );
+      }
+
       // ✅ 내 방향 표시 (heading 우선, 없으면 트래커가 계산한 heading을 payload에 포함)
       const heading =
         position.coords.heading != null
@@ -3550,6 +3654,14 @@ function startRunning() {
       // 서버(Redis latest hostMatchedDistM) 기준으로 "통계(stats)"를 통해서만 동일하게 트리밍한다.
     }
   };
+
+  // ✅ 러닝 시작 시 첫 GPS 위치에서 주소 변환
+  if (latestPosition?.coords) {
+    convertStartAddressAsync(
+      latestPosition.coords.latitude,
+      latestPosition.coords.longitude
+    );
+  }
 
   runningTracker.startTracking();
 }

@@ -133,7 +133,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 24px;
-    padding-bottom: 100px;
+    padding-bottom: 120px; /* 76px (bottom-nav) + 추가 여유 */
     -webkit-overflow-scrolling: touch;
     background: #f5f5f5;
 }
@@ -141,7 +141,7 @@ body {
 /* 광고 배너 컨테이너 - 양옆에 딱 붙게 */
 #coupon-top-ad {
     width: calc(100% + 40px);
-    margin: 0 -20px;
+    margin: 0 -20px 20px -20px; /* 하단 마진 추가 */
 }
 
 /* Coupon Code Input Section */
@@ -482,6 +482,12 @@ body {
     .coupon-content {
         padding: 16px;
         gap: 20px;
+        padding-bottom: 110px; /* 모바일에서 더 많은 여유 공간 */
+    }
+
+    #coupon-top-ad {
+        width: calc(100% + 32px);
+        margin: 0 -16px 16px -16px;
     }
 
     .coupon-input-section {

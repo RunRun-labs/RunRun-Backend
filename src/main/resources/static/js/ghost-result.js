@@ -40,6 +40,24 @@ async function init() {
     return;
   }
 
+  // ✅ TTS 초기화 및 END_RUN 재생
+  if (window.TtsManager) {
+    try {
+      // TTS batch 로드 (mode는 SOLO로 설정 - 고스트런은 SOLO와 유사)
+      await window.TtsManager.ensureLoaded({ sessionId: SESSION_ID, mode: "SOLO" });
+      console.log('[ghost-result] TTS batch loaded');
+      
+      // ✅ 러닝 종료 TTS 재생 (고스트런 결과 페이지에서)
+      setTimeout(() => {
+        if (window.TtsManager) {
+          window.TtsManager.speak("END_RUN", { priority: 2, cooldownMs: 0 });
+        }
+      }, 500); // 페이지 로드 후 0.5초 후 재생
+    } catch (e) {
+      console.warn('[ghost-result] TTS 초기화 실패 (무시):', e?.message || e);
+    }
+  }
+
   await loadResults();
 }
 
@@ -85,13 +103,13 @@ async function loadResults() {
 
     updateUI();
     
-    // ✅ 러닝 결과 로드 후 광고 팝업 표시
+    // ✅ 러닝 결과 로드 후 광고 팝업 표시 (큰 사이즈 함수 사용)
     setTimeout(async () => {
       try {
-        if (typeof loadAd === 'function' && typeof createAdPopup === 'function') {
+        if (typeof loadAd === 'function' && typeof createAdPopupForRunningResult === 'function') {
           const adData = await loadAd('RUN_END_BANNER');
           if (adData) {
-            const adPopup = createAdPopup(adData);
+            const adPopup = createAdPopupForRunningResult(adData);
             document.body.appendChild(adPopup);
           }
         }

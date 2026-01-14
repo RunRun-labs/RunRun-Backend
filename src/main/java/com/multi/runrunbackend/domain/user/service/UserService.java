@@ -1,22 +1,29 @@
 package com.multi.runrunbackend.domain.user.service;
 
-import com.multi.runrunbackend.common.exception.custom.DuplicateException;
-import com.multi.runrunbackend.common.exception.custom.FileUploadException;
-import com.multi.runrunbackend.common.exception.custom.NotFoundException;
-import com.multi.runrunbackend.common.exception.custom.TokenException;
+import com.multi.runrunbackend.common.exception.custom.*;
 import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.common.file.FileDomainType;
 import com.multi.runrunbackend.common.file.storage.FileStorage;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.point.service.PointService;
 import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
+import com.multi.runrunbackend.domain.user.dto.res.AttendanceCheckResDto;
+import com.multi.runrunbackend.domain.user.dto.res.AttendanceStatusResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserProfileResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
 import com.multi.runrunbackend.domain.user.entity.User;
+import com.multi.runrunbackend.domain.user.entity.UserAttendance;
+import com.multi.runrunbackend.domain.user.repository.UserAttendanceRepository;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -28,12 +35,15 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
     private final UserBlockService userBlockService;
     private final FileStorage fileStorage;
     private static final long MAX_PROFILE_IMAGE_SIZE = 1L * 1024 * 1024;
+    private final UserAttendanceRepository userAttendanceRepository;
+    private final PointService pointService;
 
 
     @Transactional(readOnly = true)
@@ -44,14 +54,14 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserProfileResDto getUserProfile(
-        Long targetUserId,
-        CustomUser principal
+            Long targetUserId,
+            CustomUser principal
     ) {
 
         userBlockService.validateUserBlockStatus(targetUserId, principal);
 
         User target = userRepository.findById(targetUserId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
         return UserProfileResDto.from(target);
     }
@@ -83,7 +93,7 @@ public class UserService {
         String loginId = principal.getLoginId();
 
         return userRepository.findByLoginId(loginId)
-            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     }
 
 
@@ -134,5 +144,87 @@ public class UserService {
         if (file.getSize() > MAX_PROFILE_IMAGE_SIZE) {
             throw new FileUploadException(ErrorCode.FILE_SIZE_EXCEEDED);
         }
+    }
+
+    /**
+     * @author : BoKyung
+     * @description : 사용자 출석 관련 추가
+     * @since : 2026. 01. 09. 금요일
+     */
+
+    @Transactional
+    public AttendanceCheckResDto checkAttendance(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        LocalDate today = LocalDate.now();
+
+        // 이미 오늘 출석했는지 확인
+        if (userAttendanceRepository.existsByUserAndAttendanceDate(user, today)) {
+            throw new BusinessException(ErrorCode.ALREADY_ATTENDED_TODAY);
+        }
+
+        // 출석 기록 저장
+        UserAttendance attendance = UserAttendance.create(user, today);
+        userAttendanceRepository.save(attendance);
+
+        // 포인트 적립
+        pointService.earnPointsForAttendance(userId);
+
+        // 이번 달 출석 일수 조회
+        int monthlyCount = userAttendanceRepository.countMonthlyAttendance(
+                user,
+                today.getYear(),
+                today.getMonthValue()
+        );
+
+        log.info("출석 체크 완료: userId={}, date={}, monthlyCount={}",
+                userId, today, monthlyCount);
+
+        return AttendanceCheckResDto.builder()
+                .attendanceDate(today)
+                .pointsEarned(50)
+                .monthlyCount(monthlyCount)
+                .message("출석 완료! 50P가 적립되었습니다.")
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public AttendanceStatusResDto getAttendanceStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        LocalDate today = LocalDate.now();
+
+        // 오늘 출석 여부
+        boolean attendedToday = userAttendanceRepository.existsByUserAndAttendanceDate(user, today);
+
+        // 이번 달 출석 일수
+        int monthlyCount = userAttendanceRepository.countMonthlyAttendance(
+                user,
+                today.getYear(),
+                today.getMonthValue()
+        );
+
+        // 이번 달 출석한 날짜 목록
+        List<LocalDate> attendedDates = userAttendanceRepository.findMonthlyAttendanceDates(
+                user,
+                today.getYear(),
+                today.getMonthValue()
+        );
+
+        // LocalDate를 day 숫자로 변환
+        List<Integer> attendedDays = attendedDates.stream()
+                .map(LocalDate::getDayOfMonth)
+                .collect(Collectors.toList());
+
+        return AttendanceStatusResDto.builder()
+                .attendedToday(attendedToday)
+                .monthlyCount(monthlyCount)
+                .attendedDays(attendedDays)
+                .todayDate(today)
+                .currentYear(today.getYear())
+                .currentMonth(today.getMonthValue())
+                .build();
     }
 }
