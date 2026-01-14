@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    <title>RUNRUN | 출석 이벤트</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+          rel="stylesheet"/>
+
+    <link rel="stylesheet" href="/css/attendance-event.css" th:href="@{/css/attendance-event.css}"/>
+</head>
+
+<body>
+<div class="header">
+    <button class="btn-back" onclick="history.back()" aria-label="뒤로 가기">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+    </button>
+    <h1 class="header-title">출석 이벤트</h1>
+</div>
+
+<div class="container">
+
+    <!-- 이벤트 안내 -->
+    <section class="event-info-section">
+        <div class="event-banner">
+            <div class="event-badge">🎁 출석체크 EVENT !</div>
+            <h2 class="event-heading">매일 출석하고<br/>포인트 받아가세요!</h2>
+            <div class="event-rules">
+                <p class="rule-item">✨ 출석 시 마다, <strong>매일 50P 지급!</strong></p>
+                <p class="rule-item">📅 하루에 한 번만 출석 가능합니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="calendar-section">
+        <div class="calendar-header">
+            <h3 class="calendar-month" data-role="calendar-month">1월</h3>
+            <p class="attendance-count">이번 달 출석: <span data-role="monthly-count">0</span>회</p>
+        </div>
+
+        <div class="calendar-grid">
+            <div class="calendar-weekdays">
+                <div class="weekday">일</div>
+                <div class="weekday">월</div>
+                <div class="weekday">화</div>
+                <div class="weekday">수</div>
+                <div class="weekday">목</div>
+                <div class="weekday">금</div>
+                <div class="weekday">토</div>
+            </div>
+            <div class="calendar-days" data-role="calendar-days">
+            </div>
+        </div>
+    </section>
+
+    <section class="attendance-button-section">
+        <button
+                class="attendance-button"
+                type="button"
+                data-role="attendance-button"
+                aria-label="출석하기"
+        >
+            출석하기
+        </button>
+    </section>
+
+</div>
+
+<div id="bottomNavMount" th:replace="~{common/bottom-nav :: bottomNav}"></div>
+
+<div class="popup-overlay" data-role="popup-overlay" hidden>
+    <div class="popup-container">
+        <div class="popup-icon">🎉</div>
+        <h3 class="popup-title" data-role="popup-title">출석 완료!</h3>
+        <p class="popup-message" data-role="popup-message">50P가 적립되었습니다.</p>
+        <button class="popup-button" type="button" data-role="popup-close">확인</button>
+    </div>
+</div>
+
+<script src="/js/attendance-event.js" th:src="@{/js/attendance-event.js}"></script>
+</body>
+</html>
