@@ -125,12 +125,13 @@
     // 10분 이상
     if (p >= 10.0) return "PACE_10M_PLUS";
 
-    // 1:00 ~ 9:30 (30초 단위 버킷)
+    // ✅ 3분대: 3:00~3:29, 3분30초대: 3:30~3:59 등
     // minutes: 1..9, secBucket: 0 or 30
     const totalSec = Math.round(p * 60);
     const min = Math.floor(totalSec / 60);
     const sec = totalSec % 60;
-    const bucketSec = sec < 15 ? 0 : sec < 45 ? 30 : 0; // 0/30 라운딩(근사)
+    // 0~29초는 0, 30~59초는 30
+    const bucketSec = sec < 30 ? 0 : 30;
     const normalizedMin = clamp(min, 1, 9);
     if (normalizedMin === 9 && bucketSec === 30) return "PACE_9M30";
     return `PACE_${normalizedMin}M${bucketSec === 0 ? "00" : "30"}`;
@@ -356,14 +357,19 @@
           { m: 300, cue: "DIST_REMAIN_300M" },
           { m: 100, cue: "DIST_REMAIN_100M" },
         ];
-        thresholds.forEach((t) => {
+        // ✅ 작은 값부터 정렬하여 가장 가까운 임계값 하나만 재생
+        // 예: 100m 남았으면 100m만 재생 (500m, 300m는 이미 지나감)
+        thresholds.sort((a, b) => a.m - b.m);
+        for (const t of thresholds) {
           const key = `remain:${t.m}`;
+          // 현재 남은 거리가 임계값보다 작거나 같고, 아직 말하지 않았으면 재생
           if (m <= t.m && !this._remainingSpoken.has(key)) {
             this._remainingSpoken.add(key);
             this._saveRunState();
             this.speak(t.cue, { priority: 2, cooldownMs: 0 });
+            break; // 가장 작은 임계값 하나만 재생하고 종료
           }
-        });
+        }
       }
     }
 

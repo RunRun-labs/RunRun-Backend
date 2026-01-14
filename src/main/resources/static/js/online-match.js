@@ -572,6 +572,13 @@ async function showMatchFound(sessionId) {
 
   const finalSessionId = matchData?.sessionId || sessionId;
   currentSessionId = finalSessionId;
+  
+  // ✅ 매칭 잡히면 바로 TTS batch 준비
+  if (window.TtsManager) {
+    window.TtsManager.ensureLoaded({ sessionId: finalSessionId, mode: "ONLINE" }).catch(() => {
+      console.warn("온라인 런 TTS 로드 실패 (무시)");
+    });
+  }
 
   if (statusTitle) {
     statusTitle.textContent = "";
