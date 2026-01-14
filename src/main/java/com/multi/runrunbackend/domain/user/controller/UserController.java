@@ -3,6 +3,8 @@ package com.multi.runrunbackend.domain.user.controller;
 import com.multi.runrunbackend.common.response.ApiResponse;
 import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.user.dto.req.UserUpdateReqDto;
+import com.multi.runrunbackend.domain.user.dto.res.AttendanceCheckResDto;
+import com.multi.runrunbackend.domain.user.dto.res.AttendanceStatusResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserProfileResDto;
 import com.multi.runrunbackend.domain.user.dto.res.UserResDto;
 import com.multi.runrunbackend.domain.user.service.UserService;
@@ -75,4 +77,27 @@ public class UserController {
         );
     }
 
+    /**
+     * @author : BoKyung
+     * @description : 사용자 출석 관련 추가
+     * @since : 2026. 01. 09. 금요일
+     */
+
+    @PostMapping("/attendance")
+    @ResponseBody
+    public ResponseEntity<AttendanceCheckResDto> checkAttendance(
+            @AuthenticationPrincipal CustomUser customUser
+    ) {
+        AttendanceCheckResDto result = userService.checkAttendance(customUser.getUserId());
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/attendance/status")
+    @ResponseBody
+    public ResponseEntity<AttendanceStatusResDto> getAttendanceStatus(
+            @AuthenticationPrincipal CustomUser customUser
+    ) {
+        AttendanceStatusResDto result = userService.getAttendanceStatus(customUser.getUserId());
+        return ResponseEntity.ok(result);
+    }
 }
