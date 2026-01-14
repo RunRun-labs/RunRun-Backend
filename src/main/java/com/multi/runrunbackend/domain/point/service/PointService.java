@@ -83,14 +83,14 @@ public class PointService {
                         .earnAmount(50)
                         .build(),
                 PointMainResDto.PointEarnMethod.builder()
+                        .methodName("챌린지 달성")
+                        .description("챌린지 성공 시")
+                        .earnAmount(100)
+                        .build(),
+                PointMainResDto.PointEarnMethod.builder()
                         .methodName("친구 추천")
                         .description("친구 초대 성공 시")
                         .earnAmount(2000)
-                        .build(),
-                PointMainResDto.PointEarnMethod.builder()
-                        .methodName("주간 미션")
-                        .description("미션 완료 시")
-                        .earnAmount(100)
                         .build()
         );
 
