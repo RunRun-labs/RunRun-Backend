@@ -1141,9 +1141,13 @@ function createRunCard(record) {
     const paceStr = formatPace(record.avgPace);
 
     // ✅ 실행 타입/썸네일 결정
+    const isSoloRun = record.runningType === 'SOLO';
+    const isOfflineRun = record.runningType === 'OFFLINE';
     const isGhostRun = record.runningType === 'GHOST';
     const isOnlineBattle = record.runningType === 'ONLINEBATTLE';
 
+    const defaultSoloImageUrl = '/img/Solo-Run.png';
+    const defaultOfflineImageUrl = '/img/offline-run.png';
     const defaultGhostImageUrl = '/img/ghost-run.png';
 
     // 온라인배틀 등수별 이미지 (1~4등 제공)
@@ -1168,23 +1172,29 @@ function createRunCard(record) {
     }
 
     const onlineBattleRankImageMap = {
-        1: '/img/online-1st.png',
-        2: '/img/online-2nd.png',
-        3: '/img/online-3rd.png',
-        4: '/img/online-4th.png'
+        1: '/img/online-battle.png',
+        2: '/img/online-battle.png',
+        3: '/img/online-battle.png',
+        4: '/img/online-battle.png'
     };
 
-    const defaultOnlineBattleImageUrl = '/img/online-1st.png'; // fallback
+    const defaultOnlineBattleImageUrl = '/img/online-battle.png'; // fallback
 
     // 썸네일 URL 우선순위:
     // 1) 고스트런: 고정 이미지
     // 2) 온라인배틀: 등수별 이미지
-    // 3) 일반: recordImageUrl
+    // 3) 솔로런: 고정 이미지
+    // 4) 오프라인: 고정 이미지
+    // 5) 일반: recordImageUrl
     const imageUrl = isGhostRun
         ? defaultGhostImageUrl
         : (isOnlineBattle
             ? (onlineBattleRankImageMap[onlineBattleRanking] || defaultOnlineBattleImageUrl)
-            : (record.recordImageUrl || null));
+            : (isSoloRun
+                ? defaultSoloImageUrl
+                : (isOfflineRun
+                    ? defaultOfflineImageUrl
+                    : (record.recordImageUrl || null))));
 
     // ✅ 제목 결정 (우선순위: 고스트런 > 온라인배틀 > 일반)
     const courseTitle = isGhostRun
