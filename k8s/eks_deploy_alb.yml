@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: runrun
-          image: ${ECR_REPO_URI}:latest
+          image: ${ECR_REPO_URI}:${IMAGE_TAG}
           envFrom:
             - secretRef:
                 name: runrun-env
@@ -77,16 +77,26 @@ metadata:
     kubernetes.io/ingress.class: "alb"                                 # ingressClassName 대신 안전하게 지정
     alb.ingress.kubernetes.io/scheme: internet-facing                    # internet-facing 또는 internal
     alb.ingress.kubernetes.io/target-type: ip                            # ip -> pod IP를 타깃으로 등록 (노드 대신)
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'              # HTTP 포트 설정
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'              # HTTP/HTTPS 포트 설정
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:mx-central-1:118320467932:certificate/3fddc5dc-9edd-4506-84b1-25caeda906ef"
+    alb.ingress.kubernetes.io/actions.ssl-redirect: >-
+      {"Type":"redirect","RedirectConfig":{"Protocol":"HTTPS","Port":"443","StatusCode":"HTTP_301"}}
     alb.ingress.kubernetes.io/healthcheck-path: "/actuator/health"                      # ALB 헬스체크 경로 (서비스에 맞게 조정) 앱에서 인증 없이 200을 반환하는 헬스 엔드포인트(예: /actuator/health)를 추가 시큐리티랑 필터에추가
     alb.ingress.kubernetes.io/healthcheck-port: "traffic-port"  #port: 80 targetPort: 8090 이므로 ALB가 Service→Pod로 보낼 때 내부적으로 올바른 포트(=8090)로 전달되도록 컨트롤러가 처리
     alb.ingress.kubernetes.io/success-codes: "200-399"
     # 필요 시 세부 설정 추가 (예: 인증, WAF, stickiness 등)
 spec:
   rules:
-    #    - host: example.yourdomain.com    # 실제 도메인으로 교체.
-    - http:
+    - host: api.runrunmatch.cloud
+      http:
         paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ssl-redirect
+                port:
+                  name: use-annotation
           - path: /
             pathType: Prefix
             backend:

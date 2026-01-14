@@ -4,6 +4,8 @@ metadata:
   name: runrun-ingress
   namespace: default
   annotations:
+    # NOTE: This Ingress is a legacy manifest. If you deploy via `k8s/eks_deploy_alb.yml`,
+    # do not apply this file to avoid creating/updating a separate ALB configuration.
     kubernetes.io/ingress.class: "alb"
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
