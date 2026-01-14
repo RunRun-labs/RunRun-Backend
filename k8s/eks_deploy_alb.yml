@@ -14,12 +14,12 @@ spec:
       labels:
         app: runrun
     spec:
-      envFrom:
-        - secretRef:
-            name: runrun-env
       containers:
         - name: runrun
           image: ${ECR_REPO_URI}:latest
+          envFrom:
+            - secretRef:
+                name: runrun-env
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
@@ -84,7 +84,7 @@ metadata:
     # 필요 시 세부 설정 추가 (예: 인증, WAF, stickiness 등)
 spec:
   rules:
-#    - host: example.yourdomain.com    # 실제 도메인으로 교체.
+    #    - host: example.yourdomain.com    # 실제 도메인으로 교체.
     - http:
         paths:
           - path: /
