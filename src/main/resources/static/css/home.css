@@ -702,6 +702,70 @@ body {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
+/* ========================================
+   출석 이벤트 배너
+   ======================================== */
+.attendance-event-banner {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.event-banner-link {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    text-decoration: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.event-banner-link:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.event-banner-link:active {
+    transform: translateY(-2px);
+}
+
+.event-banner-img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 100px;
+    object-fit: contain;
+    display: block;
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
+}
+
+/* 반응형 - 작은 화면 */
+@media (max-width: 360px) {
+    .event-banner-img {
+        max-height: 80px;
+    }
+}
+
+/* 반응형 - 중간 화면 */
+@media (min-width: 480px) and (max-width: 899px) {
+    .event-banner-img {
+        max-height: 110px;
+    }
+}
+
+/* 반응형 - 큰 화면 */
+@media (min-width: 900px) {
+    .attendance-event-banner {
+        max-width: 700px;
+        margin: 0 auto 24px;
+    }
+
+    .event-banner-img {
+        max-height: 120px;
+    }
+}
+
 /* 하단 네비게이션 */
 .bottom-nav {
     position: fixed;

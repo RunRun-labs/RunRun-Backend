@@ -2,6 +2,7 @@ package com.multi.runrunbackend.domain.recruit.repository;
 
 import com.multi.runrunbackend.domain.recruit.constant.RecruitStatus;
 import com.multi.runrunbackend.domain.recruit.entity.Recruit;
+import com.multi.runrunbackend.domain.user.entity.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
@@ -67,4 +68,19 @@ public interface RecruitRepository extends JpaRepository<Recruit, Long> {
   );
 
   List<Recruit> findAllByStatusAndMeetingAtBefore(RecruitStatus status, LocalDateTime time);
+
+  /**
+   * 특정 사용자가 해당 날짜(하루)에 방장으로 생성한 모집글이 이미 있는지 확인
+   * (RECRUITING 또는 MATCHED 상태만 체크)
+   */
+  @Query("SELECT COUNT(r) > 0 FROM Recruit r " +
+         "WHERE r.user = :user " +
+         "AND r.meetingAt BETWEEN :startOfDay AND :endOfDay " +
+         "AND r.status IN :statuses")
+  boolean existsByUserAndMeetingAtBetween(
+      @Param("user") User user,
+      @Param("startOfDay") LocalDateTime startOfDay,
+      @Param("endOfDay") LocalDateTime endOfDay,
+      @Param("statuses") List<RecruitStatus> statuses
+  );
 }
