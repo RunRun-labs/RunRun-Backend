@@ -602,7 +602,7 @@ function createRunCard(record) {
             onlineBattleRankingType: typeof record.onlineBattleRanking,
             converted: onlineBattleRanking
         });
-        
+
         // 등수 정보가 없으면 finalRank 필드 확인 (백엔드에서 다른 필드명 사용 가능성)
         if (onlineBattleRanking === null || onlineBattleRanking === undefined) {
             onlineBattleRanking = record.finalRank || record.rank || record.ranking || null;
@@ -1653,7 +1653,7 @@ function attachPointClickHandler() {
     if (!pointSection) return;
 
     pointSection.addEventListener("click", () => {
-        window.location.href = "/point";
+        window.location.href = "/points";
     });
 }
 

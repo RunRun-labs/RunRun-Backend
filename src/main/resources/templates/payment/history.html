@@ -84,12 +84,53 @@
             font-size: 14px;
         }
 
+        .payment-detail {
+            color: #666;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .coupon-info {
+            color: #4caf50;
+            font-size: 14px;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .discount-amount {
+            color: #f44336;
+            font-size: 14px;
+        }
+
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
             border-radius: 12px;
             font-size: 12px;
             font-weight: bold;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .final-price {
+            color: #000;
+            font-weight: bold;
+        }
+
+        .free-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
         }
 
         .status-done {
@@ -257,27 +298,59 @@
             'DONE': 'status-done',
             'PENDING': 'status-pending',
             'FAILED': 'status-failed',
-            'CANCELLED': 'status-failed'
+            'CANCELLED': 'status-failed',
+            'CANCELED': 'status-failed'
         }[payment.paymentStatus] || 'status-pending';
 
         const statusText = {
             'DONE': '결제완료',
             'PENDING': '대기중',
             'FAILED': '실패',
-            'CANCELLED': '취소'
+            'CANCELLED': '취소',
+            'CANCELED': '취소',
+            'READY': '대기중'
         }[payment.paymentStatus] || payment.paymentStatus;
 
-        const methodText = payment.paymentMethod || '토스페이';
+        // 금액 정보 구성
+        let amountHtml = '';
+        if (payment.discountAmount && payment.discountAmount > 0) {
+            const originalPrice = payment.finalAmount + payment.discountAmount;
+            amountHtml = `
+    <div class="payment-amount">
+        <span class="original-price">${originalPrice.toLocaleString()}원</span>
+        <span class="final-price">${payment.finalAmount.toLocaleString()}원</span>
+    </div>
+`;
+        } else {
+            amountHtml = `<div class="payment-amount">${payment.finalAmount.toLocaleString()}원</div>`;
+        }
+
+        // 쿠폰 정보 구성
+        let couponHtml = '';
+        if (payment.couponInfo) {
+            couponHtml = `
+            <div class="coupon-info">
+                🎟️ ${payment.couponInfo.couponName} (${payment.couponInfo.couponCode})
+            </div>
+        `;
+        }
+
+        // 카드 정보 구성
+        let cardInfoHtml = '';
+        if (payment.cardInfo) {
+            cardInfoHtml = `<div class="payment-detail">💳 ${payment.cardInfo}</div>`;
+        }
 
         card.innerHTML = `
-            <div class="payment-header">
-                <div class="payment-name">${payment.membershipGrade || '프리미엄 플랜'}</div>
-                <span class="status-badge ${statusClass}">${statusText}</span>
-            </div>
-            <div class="payment-amount">${payment.finalAmount.toLocaleString()}원</div>
-            <div class="payment-date">${formatDate(payment.approvedAt || payment.createdAt)}</div>
-            <div class="payment-method">결제수단: ${methodText}</div>
-        `;
+        <div class="payment-header">
+            <div class="payment-name">${payment.orderName || '프리미엄 플랜'}</div>
+            <span class="status-badge ${statusClass}">${statusText}</span>
+        </div>
+        ${amountHtml}
+        <div class="payment-date">${formatDate(payment.approvedAt || payment.createdAt)}</div>
+        ${couponHtml}
+        ${cardInfoHtml}
+    `;
 
         return card;
     }

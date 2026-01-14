@@ -71,6 +71,9 @@ public class Payment extends BaseCreatedEntity {
 
     private Boolean isAutoPayment = false;
 
+    @Column(name = "card_number", length = 20)
+    private String cardNumber;
+
     private LocalDateTime approvedAt;
 
     private LocalDateTime canceledAt;
@@ -150,16 +153,20 @@ public class Payment extends BaseCreatedEntity {
     /**
      * @description : 결제 완료 처리
      */
-    public void complete(String paymentKey, PaymentMethod paymentMethod, String billingKey) {
+    public void complete(String paymentKey, PaymentMethod paymentMethod, String billingKey, String cardNumber) {
         this.paymentStatus = PaymentStatus.DONE;
         this.paymentKey = paymentKey;
         this.paymentMethod = paymentMethod;
-        this.billingKey = billingKey;
         this.approvedAt = LocalDateTime.now();
 
         // 빌링키가 있으면 저장
         if (billingKey != null && !billingKey.isBlank()) {
             this.billingKey = billingKey;
+        }
+
+        // 카드번호가 있으면 저장
+        if (cardNumber != null && !cardNumber.isBlank()) {
+            this.cardNumber = cardNumber;
         }
     }
 

@@ -484,6 +484,11 @@
         });
     };
 
+    // ✅ SSE 연결 상태 확인 함수
+    window.isSseConnected = function () {
+        return isConnected && globalEventSource && globalEventSource.readyState === 1;
+    };
+
     // ============== BFCache 대응 ==============
     window.addEventListener('pageshow', (event) => {
         console.log('[SSE] 🔄 pageshow 이벤트 발생 - persisted:', event.persisted, ', pathname:', window.location.pathname);

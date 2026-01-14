@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum PaymentMethod {
     CARD,  // 카드
+    TOSSPAY, // 토스페이
     VIRTUAL_ACCOUNT,  // 가상계좌
     TRANSFER,  // 계좌이체
     MOBILE_PHONE,  // 휴대폰
