@@ -223,7 +223,14 @@ public class DistanceRatingService {
 
     //  완주자 보호: 완주자는 포기자 패널티(-10점)보다 항상 유리
     if (isCompleted) {
-      int giveUpPenalty = 10;  // 포기자 최소 패널티
+      int giveUpPenalty = 10;
+      if (delta < -giveUpPenalty + 1) {
+        delta = -giveUpPenalty + 1;
+      }
+    }
+
+    if (!isCompleted) {
+      int giveUpPenalty = 10;
       if (delta < -giveUpPenalty + 1) {
         delta = -giveUpPenalty + 1;  // 포기자보다 1점이라도 유리 (최소 -9점)
       }
