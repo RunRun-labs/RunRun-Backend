@@ -25,7 +25,9 @@ import com.multi.runrunbackend.domain.recruit.repository.RecruitRepository;
 import com.multi.runrunbackend.domain.recruit.repository.RecruitUserRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,11 +83,16 @@ public class RecruitService {
         recruitRepository.existsByUserAndMeetingAtBetween(
             user,
             meetingDate.atStartOfDay(),
-            meetingDate.atTime(23, 59, 59)
+            meetingDate.atTime(23, 59, 59),
+            List.of(RecruitStatus.RECRUITING, RecruitStatus.MATCHED)
         );
 
     boolean hasJoinedRecruitThatDay =
-        recruitUserRepository.existsByUserAndMeetingDate(user, meetingDate);
+        recruitUserRepository.existsByUserAndMeetingDate(
+            user,
+            meetingDate,
+            List.of(RecruitStatus.RECRUITING, RecruitStatus.MATCHED)
+        );
 
     if (hasHostedRecruitThatDay || hasJoinedRecruitThatDay) {
       throw new ValidationException(ErrorCode.ALREADY_PARTICIPATED_SAME_DAY);
@@ -232,6 +239,27 @@ public class RecruitService {
 
     if (recruitUserRepository.existsByRecruitAndUser(recruit, user)) {
       throw new ValidationException(ErrorCode.ALREADY_PARTICIPATED);
+    }
+
+    LocalDate meetingDate = recruit.getMeetingAt().toLocalDate();
+
+    boolean hasHostedRecruitThatDay =
+        recruitRepository.existsByUserAndMeetingAtBetween(
+            user,
+            meetingDate.atStartOfDay(),
+            meetingDate.atTime(23, 59, 59),
+            List.of(RecruitStatus.RECRUITING, RecruitStatus.MATCHED)
+        );
+
+    boolean hasJoinedRecruitThatDay =
+        recruitUserRepository.existsByUserAndMeetingDate(
+            user,
+            meetingDate,
+            List.of(RecruitStatus.RECRUITING, RecruitStatus.MATCHED)
+        );
+
+    if (hasHostedRecruitThatDay || hasJoinedRecruitThatDay) {
+      throw new ValidationException(ErrorCode.ALREADY_PARTICIPATED_SAME_DAY);
     }
 
     if (recruit.getCurrentParticipants() >= recruit.getMaxParticipants()) {
