@@ -31,12 +31,38 @@ document.addEventListener("DOMContentLoaded", () => {
   
   console.log('📍 Session ID:', SESSION_ID);
   
+  // ✅ TTS 초기화 및 타임아웃된 사람을 위한 END_RUN 재생
+  initTtsForTimeout();
+  
   // 결과 데이터 로드
   loadResultData();
   
   // 이벤트 리스너 설정
   setupEventListeners();
 });
+
+/**
+ * ✅ 타임아웃된 사람을 위한 TTS 초기화
+ */
+async function initTtsForTimeout() {
+  if (window.TtsManager) {
+    try {
+      // TTS batch 로드 (mode는 ONLINE으로 설정)
+      await window.TtsManager.ensureLoaded({ sessionId: SESSION_ID, mode: "ONLINE" });
+      console.log('[match-result] TTS batch loaded');
+      
+      // ✅ 타임아웃된 사람은 결과 페이지에서 END_RUN 재생
+      // (완주한 사람은 이미 handleFinish에서 재생했으므로 여기서는 타임아웃된 사람만)
+      setTimeout(() => {
+        if (window.TtsManager) {
+          window.TtsManager.speak("END_RUN", { priority: 2, cooldownMs: 0 });
+        }
+      }, 500); // 페이지 로드 후 0.5초 후 재생
+    } catch (e) {
+      console.warn('[match-result] TTS 초기화 실패 (무시):', e?.message || e);
+    }
+  }
+}
 
 /**
  * 결과 데이터 로드
