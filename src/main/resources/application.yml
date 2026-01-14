@@ -2,6 +2,11 @@ spring:
   profiles:
     default: local
 
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE}
+
   jpa:
     hibernate:
       ddl-auto: update

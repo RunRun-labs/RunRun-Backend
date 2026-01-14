@@ -9,8 +9,10 @@ import com.multi.runrunbackend.domain.auth.dto.CustomUser;
 import com.multi.runrunbackend.domain.friend.entity.Friend;
 import com.multi.runrunbackend.domain.friend.repository.FriendRepository;
 import com.multi.runrunbackend.domain.match.constant.RunStatus;
+import com.multi.runrunbackend.domain.match.constant.RunningType;
 import com.multi.runrunbackend.domain.match.dto.res.ProfileRunningHistoryResDto;
 import com.multi.runrunbackend.domain.match.entity.RunningResult;
+import com.multi.runrunbackend.domain.match.repository.BattleResultRepository;
 import com.multi.runrunbackend.domain.match.repository.RunningResultRepository;
 import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -19,15 +21,17 @@ import com.multi.runrunbackend.domain.user.repository.UserBlockRepository;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import com.multi.runrunbackend.domain.user.repository.UserSettingRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -36,6 +40,7 @@ import java.util.List;
  * @filename : ProfileRunningHistoryService
  * @since : 26. 1. 4. 오후 7:29 일요일
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProfileRunningHistoryService {
@@ -46,6 +51,7 @@ public class ProfileRunningHistoryService {
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
     private final FileStorage fileStorage;
+    private final BattleResultRepository battleResultRepository;
 
     private static final List<RunStatus> VISIBLE_STATUSES = List.of(RunStatus.COMPLETED, RunStatus.TIME_OUT);
 
@@ -64,28 +70,23 @@ public class ProfileRunningHistoryService {
         java.time.LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
         java.time.LocalDateTime end = (endDate != null) ? endDate.atTime(java.time.LocalTime.MAX) : null;
 
-        // 날짜 필터가 있는 경우 날짜 필터링 쿼리 사용, 없으면 기본 쿼리 사용
-        if (start != null || end != null) {
-            return runningResultRepository
-                    .findMyRecordsByStatuses(
-                            me.getId(),
-                            VISIBLE_STATUSES,
-                            null, // minDistance
-                            null, // maxDistance
-                            start,
-                            end,
-                            pageable
-                    )
-                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
-        } else {
-            return runningResultRepository
-                    .findByUserAndRunStatusInAndIsDeletedFalse(
-                            me,
-                            VISIBLE_STATUSES,
-                            pageable
-                    )
-                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
-        }
+        Slice<RunningResult> slice = (start != null || end != null)
+                ? runningResultRepository.findMyRecordsByStatuses(
+                me.getId(),
+                VISIBLE_STATUSES,
+                null,
+                null,
+                start,
+                end,
+                pageable
+        )
+                : runningResultRepository.findByUserAndRunStatusInAndIsDeletedFalse(
+                me,
+                VISIBLE_STATUSES,
+                pageable
+        );
+
+        return mapSliceWithOnlineBattleRanking(slice);
     }
 
     /**
@@ -110,27 +111,23 @@ public class ProfileRunningHistoryService {
         java.time.LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
         java.time.LocalDateTime end = (endDate != null) ? endDate.atTime(java.time.LocalTime.MAX) : null;
 
-        // 날짜 필터가 있는 경우 날짜 필터링 쿼리 사용, 없으면 기본 쿼리 사용
-        if (start != null || end != null) {
-            return runningResultRepository
-                    .findMyRecordsByStatuses(
-                            target.getId(),
-                            VISIBLE_STATUSES,
-                            null, // minDistance
-                            null, // maxDistance
-                            start,
-                            end,
-                            pageable
-                    )
-                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
-        } else {
-            return runningResultRepository
-                    .findByUserAndRunStatusInAndIsDeletedFalse(
-                            target,
-                            VISIBLE_STATUSES,
-                            pageable)
-                    .map(r -> ProfileRunningHistoryResDto.from(r, fileStorage));
-        }
+        Slice<RunningResult> slice = (start != null || end != null)
+                ? runningResultRepository.findMyRecordsByStatuses(
+                target.getId(),
+                VISIBLE_STATUSES,
+                null,
+                null,
+                start,
+                end,
+                pageable
+        )
+                : runningResultRepository.findByUserAndRunStatusInAndIsDeletedFalse(
+                target,
+                VISIBLE_STATUSES,
+                pageable
+        );
+
+        return mapSliceWithOnlineBattleRanking(slice);
     }
 
     /**
@@ -156,17 +153,36 @@ public class ProfileRunningHistoryService {
             Long recordId,
             CustomUser principal
     ) {
+        log.info("[RANKING] getRunningRecordDetail 호출 - recordId: {}", recordId);
+        
         User me = getUserByPrincipal(principal);
 
         RunningResult result = runningResultRepository.findByIdAndIsDeletedFalse(recordId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.RUNNING_RESULT_NOT_FOUND));
 
+        log.info("[RANKING] RunningResult 조회 성공 - runningType: {}", result.getRunningType());
 
         if (!result.getUser().getId().equals(me.getId())) {
             throw new ForbiddenException(ErrorCode.RUNNING_RESULT_FORBIDDEN);
         }
 
-        return ProfileRunningHistoryResDto.from(result, fileStorage);
+        // 온라인 배틀인 경우 랭킹도 조회
+        Integer ranking = null;
+        if (result.getRunningType() == RunningType.ONLINEBATTLE) {
+            log.info("[RANKING] 온라인 배틀 감지 - BattleResult에서 랭킹 조회 시도");
+            
+            List<Object[]> rankingResults = battleResultRepository.findRankingByRunningResultIds(Set.of(recordId));
+            log.info("[RANKING] 랭킹 조회 결과 개수: {}", rankingResults.size());
+            
+            if (!rankingResults.isEmpty()) {
+                ranking = (Integer) rankingResults.get(0)[1];
+                log.info("[RANKING] 랭킹 조회 성공: {}", ranking);
+            } else {
+                log.warn("[RANKING] BattleResult에 해당 runningResultId가 없음: {}", recordId);
+            }
+        }
+
+        return ProfileRunningHistoryResDto.from(result, fileStorage, ranking);
     }
 
     /**
@@ -239,5 +255,46 @@ public class ProfileRunningHistoryService {
 
         return userRepository.findByLoginId(principal.getLoginId())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private Slice<ProfileRunningHistoryResDto> mapSliceWithOnlineBattleRanking(Slice<RunningResult> slice) {
+        log.info("[RANKING] mapSliceWithOnlineBattleRanking 호출 - 전체 기록 수: {}", slice.getContent().size());
+        
+        // ONLINEBATTLE 기록들만 runningResultId 수집
+        Set<Long> onlineBattleIds = slice.getContent().stream()
+                .filter(r -> r.getRunningType() == RunningType.ONLINEBATTLE)
+                .map(RunningResult::getId)
+                .collect(Collectors.toSet());
+
+        log.info("[RANKING] 온라인 배틀 기록 ID 목록: {}", onlineBattleIds);
+
+        Map<Long, Integer> rankingByRunningResultId = Map.of();
+        if (!onlineBattleIds.isEmpty()) {
+            List<Object[]> rankingResults = battleResultRepository.findRankingByRunningResultIds(onlineBattleIds);
+            log.info("[RANKING] BattleResult에서 조회된 랭킹 결과 개수: {}", rankingResults.size());
+            
+            rankingByRunningResultId = rankingResults.stream()
+                    .collect(Collectors.toMap(
+                            row -> (Long) row[0],
+                            row -> (Integer) row[1],
+                            (a, b) -> a
+                    ));
+            
+            log.info("[RANKING] 최종 랭킹 맵: {}", rankingByRunningResultId);
+        }
+
+        final Map<Long, Integer> finalRankingMap = rankingByRunningResultId;
+
+        return slice.map(r -> {
+            Integer rank = (r.getRunningType() == RunningType.ONLINEBATTLE)
+                    ? finalRankingMap.get(r.getId())
+                    : null;
+
+            if (r.getRunningType() == RunningType.ONLINEBATTLE) {
+                log.info("[RANKING] RunningResult ID: {}, 조회된 랭킹: {}", r.getId(), rank);
+            }
+
+            return ProfileRunningHistoryResDto.from(r, fileStorage, rank);
+        });
     }
 }

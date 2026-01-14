@@ -174,7 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (adId) {
           window.location.href = `/admin/ad/detail/${adId}`;
         } else {
-          window.location.href = "/admin/ad/inquiry";
+        window.location.href = "/admin/ad/inquiry";
         }
       } else {
         throw new Error(result.message || "생성에 실패했습니다.");

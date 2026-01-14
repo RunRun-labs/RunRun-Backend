@@ -39,6 +39,8 @@ import org.hibernate.annotations.SQLRestriction;
       (benefit_type = 'FIXED_DISCOUNT' AND benefit_value BETWEEN 1000 AND 9900 AND MOD(benefit_value, 1000) = 0)
       OR
       (benefit_type = 'RATE_DISCOUNT' AND benefit_value BETWEEN 1 AND 100)
+      OR 
+      (benefit_type = 'EXPERIENCE' AND benefit_value BETWEEN 1 AND 30)
     )
     """)
 @Table(

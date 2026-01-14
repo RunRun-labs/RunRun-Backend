@@ -31,6 +31,9 @@
         <h1 class="home-logo">RUNRUN</h1>
     </header>
 
+    <!-- 광고 배너 (홈 상단) -->
+    <div id="home-top-ad"></div>
+
     <!-- 오늘의 러닝 통계 배너 -->
     <section class="today-stats-section">
         <div class="today-stats-header">
@@ -129,6 +132,10 @@
 
     <!-- 진행중인 챌린지 홍보 배너 -->
     <section class="challenge-banner-section">
+        <div class="challenge-section-header">
+            <h2 class="challenge-section-title">🏆 진행중인 챌린지</h2>
+            <p class="challenge-section-subtitle">도전하고 보상을 받아보세요</p>
+        </div>
         <div class="challenge-banner-container" data-role="challenge-banner-container">
             <button class="challenge-nav-button challenge-nav-prev" type="button" data-role="challenge-prev" aria-label="이전 챌린지">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -143,6 +150,9 @@
                     <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
+        </div>
+        <div class="challenge-indicators" data-role="challenge-indicators">
+            <!-- JS로 동적 생성 -->
         </div>
     </section>
 </main>
@@ -198,6 +208,26 @@
 ></div>
 
 <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+<script src="/js/ad-common.js" th:src="@{/js/ad-common.js}"></script>
 <script src="/js/home.js" th:src="@{/js/home.js}"></script>
+<script>
+  // 홈 페이지 로드 시 상단 광고 표시
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      if (typeof loadAd === 'function' && typeof createAdBanner === 'function') {
+        const adData = await loadAd('HOME_TOP_BANNER');
+        if (adData) {
+          const adContainer = document.getElementById('home-top-ad');
+          if (adContainer) {
+            const adBanner = createAdBanner(adData);
+            adContainer.appendChild(adBanner);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('홈 페이지 광고 로드 실패:', error);
+    }
+  });
+</script>
 </body>
 </html>

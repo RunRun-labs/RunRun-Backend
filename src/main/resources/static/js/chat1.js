@@ -2913,6 +2913,19 @@ function showRunningResultModal() {
           }
         }
 
+        // ✅ 러닝 결과 모달 표시 후 광고 팝업 표시
+        setTimeout(async () => {
+          try {
+            const adData = await loadAd('RUN_END_BANNER');
+            if (adData) {
+              const adPopup = createAdPopup(adData);
+              document.body.appendChild(adPopup);
+            }
+          } catch (error) {
+            console.warn('러닝 결과 광고 로드 실패:', error);
+          }
+        }, 1000);
+
         return;
       } catch (e) {
         lastErr = e;

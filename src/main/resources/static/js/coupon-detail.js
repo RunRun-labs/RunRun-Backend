@@ -1,5 +1,7 @@
+// 전역 변수로 couponId 선언 (HTML의 onclick에서 접근 가능하도록)
+let couponId = null;
+
 document.addEventListener("DOMContentLoaded", function () {
-  let couponId = null;
   let dailyTrendChart = null;
   let statusChart = null;
 
@@ -272,3 +274,32 @@ document.addEventListener("DOMContentLoaded", function () {
   loadStats("D30");
 });
 
+// 삭제 함수 (전역)
+window.deleteCoupon = function() {
+  if (!confirm("정말 삭제하시겠습니까?")) {
+    return;
+  }
+
+  fetch(`/api/admin/coupons/${couponId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => Promise.reject(err));
+      }
+      return response.json();
+    })
+    .then((result) => {
+      if (result.success) {
+        alert("쿠폰이 삭제되었습니다.");
+        window.location.href = "/admin/coupon/inquiry";
+      } else {
+        throw new Error(result.message || "삭제 실패");
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      alert(error.message || "삭제 중 오류가 발생했습니다.");
+    });
+};

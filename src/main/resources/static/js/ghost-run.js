@@ -41,6 +41,13 @@ let isRunning = false;
 let isPaused = false;
 let isFinished = false;
 
+// 속도 제한(경고용)
+let tooFastHardMps = 8.5; // 하드: 8.5m/s(30.6km/h) 이상은 거의 GPS 점프/차량 → 즉시 경고
+let tooFastSoftMps = 6.0; // 소프트: 6.0m/s(21.6km/h) 이상이 3회 연속이면 경고
+let tooFastSoftCount = 0;
+let tooFastAlertCooldownMs = 15000;
+let lastTooFastAlertAt = 0;
+
 // 타이머
 let elapsedTimerInterval = null;
 
@@ -637,6 +644,8 @@ function startElapsedTimer() {
       elapsedSeconds++;
       updateElapsedTimeUI();
       updatePaceUI();
+      // ✅ 거리/남은거리 TTS는 GPS 업데이트에서 호출하되, 타이머에서도 호출하여 안정성 확보
+      updateDistanceUI();
     }
   }, 1000);
 }
@@ -708,8 +717,8 @@ function onGPSSuccess(position) {
     longitude
   );
   
-  // ✅ 3. GPS 점프 감지 (100m 이상 = 오류)
-  if (distance > 100) {
+  // ✅ 3. GPS 점프 감지 (50m 이상 = 오류)
+  if (distance > 50) {
     console.warn('⚠️ GPS 점프 감지:', distance.toFixed(2), 'm - 무시');
     lastPosition = { lat: latitude, lng: longitude, time: currentTime };  // 위치만 업데이트
     return;
@@ -717,11 +726,70 @@ function onGPSSuccess(position) {
   
   // ✅ 4. 최소 이동 거리 필터 (3m 이상만 인정)
   if (distance >= 3) {
+    // ✅ 속도 제한(경고/로그) - lastPosition 업데이트 전에 계산
+    try {
+      let speedMps = null;
+      if (speed != null && Number.isFinite(speed) && speed > 0) {
+        speedMps = speed; // m/s
+      } else {
+        const prevTime = lastPosition.time;
+        const dtSec = (currentTime - prevTime) / 1000;
+        if (dtSec > 0) {
+          speedMps = distance / dtSec;
+        }
+      }
+
+      if (speedMps != null && Number.isFinite(speedMps)) {
+        const canAlert = currentTime - lastTooFastAlertAt > tooFastAlertCooldownMs;
+
+        if (speedMps >= tooFastHardMps) {
+          if (canAlert) {
+            console.warn("속도가 너무 빠릅니다(hard):", speedMps, "m/s");
+            lastTooFastAlertAt = currentTime;
+          }
+        } else if (speedMps >= tooFastSoftMps) {
+          tooFastSoftCount += 1;
+          if (tooFastSoftCount >= 3 && canAlert) {
+            console.warn("속도가 너무 빠릅니다(soft):", speedMps, "m/s");
+            lastTooFastAlertAt = currentTime;
+            tooFastSoftCount = 0;
+          }
+        } else {
+          tooFastSoftCount = 0;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    
     // 완주했으면 거리 누적 안 함
     if (!isFinished) {
       totalDistance += distance;
     }
     lastPosition = { lat: latitude, lng: longitude, time: currentTime };
+
+      if (speedMps != null && Number.isFinite(speedMps)) {
+        const canAlert = currentTime - lastTooFastAlertAt > tooFastAlertCooldownMs;
+
+        if (speedMps >= tooFastHardMps) {
+          if (canAlert) {
+            console.warn("속도가 너무 빠릅니다(hard):", speedMps, "m/s");
+            lastTooFastAlertAt = currentTime;
+          }
+        } else if (speedMps >= tooFastSoftMps) {
+          tooFastSoftCount += 1;
+          if (tooFastSoftCount >= 3 && canAlert) {
+            console.warn("속도가 너무 빠릅니다(soft):", speedMps, "m/s");
+            lastTooFastAlertAt = currentTime;
+            tooFastSoftCount = 0;
+          }
+        } else {
+          tooFastSoftCount = 0;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
     
     // UI 업데이트
     updateDistanceUI();
@@ -847,6 +915,11 @@ function updatePaceUI() {
     const km = totalDistance / 1000;
     const paceMinutes = elapsedSeconds / 60 / km; // 분/km
     currentPaceEl.textContent = formatPace(paceMinutes);
+    
+    // ✅ 페이스 TTS
+    if (ttsReady && window.TtsManager && !completedHandled && !isFinished) {
+      window.TtsManager.maybeSpeakPace(paceMinutes);
+    }
   }
 }
 

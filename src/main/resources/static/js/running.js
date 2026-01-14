@@ -366,11 +366,9 @@ function openFreeRunCourseModal(preview) {
       )}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
     if (freeRunCourseDescInput) freeRunCourseDescInput.value = "";
-    // ✅ 주소는 모집글 출발지(meetingPlace)로 설정, 없으면 역지오코딩으로 자동 채우기
-    if (freeRunCourseAddressInput && sessionDataCache?.meetingPlace) {
-      freeRunCourseAddressInput.value = sessionDataCache.meetingPlace;
-    } else if (freeRunCourseAddressInput && preview?.startLat != null && preview?.startLng != null && geocoder) {
-      // ✅ 솔로 러닝: 역지오코딩으로 주소 자동 채우기
+    // ✅ 주소 자동 입력: preview.startLat/startLng로 역지오코딩
+    if (freeRunCourseAddressInput && preview?.startLat != null && preview?.startLng != null && geocoder) {
+      // ✅ 역지오코딩으로 주소 자동 채우기 (솔로런/오프라인 코스 없이 뛸 때)
       geocoder.coord2Address(preview.startLng, preview.startLat, (result, status) => {
         if (status === kakao.maps.services.Status.OK && result?.[0] && freeRunCourseAddressInput) {
           const addr =
@@ -382,6 +380,9 @@ function openFreeRunCourseModal(preview) {
           freeRunCourseAddressInput.value = "";
         }
       });
+    } else if (freeRunCourseAddressInput && sessionDataCache?.meetingPlace) {
+      // ✅ meetingPlace가 있으면 그것을 사용 (오프라인 자유러닝)
+      freeRunCourseAddressInput.value = sessionDataCache.meetingPlace;
     } else if (freeRunCourseAddressInput) {
       freeRunCourseAddressInput.value = "";
     }
@@ -1051,7 +1052,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await initKakaoMap();
 
     // 3. 코스가 있으면 경로 로드 및 표시 (웹소켓 전에)
-    if (sessionData.courseId) {
+    if (sessionCourseId) {
       try {
         await loadCoursePath(sessionId);
       } catch (error) {
@@ -1131,8 +1132,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // - 서버로 GPS 전송 X
     // - 프론트에서만 내 위치 표시(출발점 찾기)
     // ✅ 솔로런일 때는 시작 버튼이 표시되므로 미리보기 추적 시작
+    // ✅ 지도 초기화 후에 GPS 시작 (map이 null이면 updateUserPosition이 작동하지 않음)
     if (sessionStatus !== "IN_PROGRESS") {
-      startPreviewOnlyTracking();
+      // 지도가 초기화된 후에만 GPS 시작
+      if (map) {
+        startPreviewOnlyTracking();
+      }
       // 솔로런이 아니면 여기서 종료 (채팅방에서 시작해야 함)
       if (!isSoloRun) {
         return;
@@ -1286,6 +1291,22 @@ async function showRunningResultModalWithRetry(loadingText) {
       const data = await fetchRunningResult();
       renderRunningResult(data);
       if (resultLoadingEl) resultLoadingEl.classList.remove("show");
+      
+      // ✅ 러닝 결과 모달 표시 후 광고 팝업 표시
+      setTimeout(async () => {
+        try {
+          if (typeof loadAd === 'function' && typeof createAdPopup === 'function') {
+            const adData = await loadAd('RUN_END_BANNER');
+            if (adData) {
+              const adPopup = createAdPopup(adData);
+              document.body.appendChild(adPopup);
+            }
+          }
+        } catch (error) {
+          console.warn('러닝 결과 광고 로드 실패:', error);
+        }
+      }, 1000);
+      
       return;
     } catch (e) {
       lastErr = e;
@@ -1697,12 +1718,6 @@ async function loadCoursePath(sessionId) {
     coursePath.length > 0
   ) {
     renderStartMarker(startLat, startLng);
-
-    // 방향 화살표 표시 (두 번째 포인트가 있을 때만)
-    if (coursePath.length >= 2) {
-      const nextPoint = coursePath[1];
-      renderDirectionArrow(startLat, startLng, nextPoint.lat, nextPoint.lng);
-    }
 
     // 도착점 마커 표시 (출발점과 도착점이 다를 때만)
     const endPoint = coursePath[coursePath.length - 1];

@@ -71,7 +71,7 @@ function initFeedPage() {
     // URL 파라미터에서 정렬 옵션 확인
     const urlParams = new URLSearchParams(window.location.search);
     let sortParam = urlParams.get("sort");
-    
+
     // URL 파라미터가 없으면 localStorage 확인 (마이페이지에서 "내 게시물" 클릭 시)
     if (!sortParam) {
         const feedSortToMy = localStorage.getItem("feedSortToMy");
@@ -81,7 +81,7 @@ function initFeedPage() {
             localStorage.removeItem("feedSortToMy");
         }
     }
-    
+
     if (sortParam && ["latest", "popular", "my"].includes(sortParam)) {
         currentSort = sortParam;
         // 해당 정렬 탭 활성화
@@ -93,7 +93,7 @@ function initFeedPage() {
             }
         });
     }
-    
+
     attachShareButtonHandler();
     attachSortHandlers();
     setActiveBottomNavItem();
@@ -114,7 +114,7 @@ function setActiveBottomNavItem() {
             setTimeout(checkBottomNav, 100);
             return;
         }
-        
+
         navItems.forEach(item => {
             const href = item.getAttribute("href");
             // 피드 페이지인 경우 feed 항목 활성화
@@ -125,7 +125,7 @@ function setActiveBottomNavItem() {
             }
         });
     };
-    
+
     checkBottomNav();
 }
 
@@ -179,7 +179,7 @@ function initInfiniteScroll() {
                 loadFeeds(currentPage + 1, false);
             }
         });
-    }, { threshold: 0.1 });
+    }, {threshold: 0.1});
 
     observer.observe(sentinel);
 }
@@ -203,7 +203,7 @@ async function loadFeeds(page = 0, reset = false) {
         if (currentSort === "my") {
             url = "/api/feed/me";
         }
-        
+
         // 인기순의 경우 전체 데이터를 가져와서 정렬 (페이지네이션 없이)
         if (currentSort === "popular") {
             url += `?page=0&size=1000&sort=createdAt,desc`; // 충분히 큰 사이즈로 전체 데이터 가져오기
@@ -212,7 +212,7 @@ async function loadFeeds(page = 0, reset = false) {
         }
 
         const response = await fetch(url, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {Authorization: `Bearer ${token}`}
         });
 
         if (!response.ok) {
@@ -232,7 +232,7 @@ async function loadFeeds(page = 0, reset = false) {
         }
 
         let feeds = pageData.content || [];
-        
+
         // 인기순 정렬: 좋아요 개수 + 댓글 개수 합계로 정렬
         if (currentSort === "popular") {
             feeds = feeds.sort((a, b) => {
@@ -240,7 +240,7 @@ async function loadFeeds(page = 0, reset = false) {
                 const popularityB = (b.likeCount || 0) + (b.commentCount || 0);
                 return popularityB - popularityA; // 내림차순 정렬
             });
-            
+
             // 페이지네이션 처리 (인기순은 전체 데이터를 가져온 후 프론트에서 페이지네이션)
             const pageSize = 5;
             const startIndex = page * pageSize;
@@ -250,7 +250,7 @@ async function loadFeeds(page = 0, reset = false) {
         } else {
             hasNext = !pageData.last;
         }
-        
+
         currentPage = page;
 
         // 디버깅: 피드 데이터 확인
@@ -295,10 +295,34 @@ function renderFeeds(feeds) {
     // 피드가 있으면 빈 상태 먼저 숨김
     hideEmptyState();
 
+    let feedCount = 0;
     feeds.forEach(feed => {
+        feedCount++;
         const feedCard = createFeedCard(feed);
         feedList.appendChild(feedCard);
+        
+        // ✅ 5개마다 1개 광고 삽입 (5개 미만이어도 1개는 표시)
+        if (feedCount === 1 || feedCount % 5 === 0) {
+          insertFeedAd(feedList);
+        }
     });
+}
+
+/**
+ * 피드 리스트에 광고 삽입
+ */
+async function insertFeedAd(feedList) {
+  try {
+    if (typeof loadAd === 'function' && typeof createAdBanner === 'function') {
+      const adData = await loadAd('FEED_LIST_ITEM');
+      if (adData) {
+        const adBanner = createAdBanner(adData, 'feed-ad-banner');
+        feedList.appendChild(adBanner);
+      }
+    }
+  } catch (error) {
+    console.warn('피드 광고 로드 실패:', error);
+  }
 }
 
 /**
@@ -315,11 +339,12 @@ function createFeedCard(feed) {
 
     const profileImg = document.createElement("img");
     profileImg.className = "feed-profile-image";
-    profileImg.src = feed.profileImageUrl || "/images/default-profile.png";
+    profileImg.src = feed.profileImageUrl || '';
     profileImg.alt = feed.userLoginId;
     profileImg.style.cursor = "pointer";
-    profileImg.onerror = function() {
-        this.src = "/images/default-profile.png";
+    profileImg.onerror = function () {
+        // 기본 이미지로 교체하지 않고 숨김 처리(404/무한 요청 방지)
+        this.style.display = 'none';
     };
     // 프로필 이미지 클릭 시 프로필 페이지로 이동
     profileImg.addEventListener("click", () => {
@@ -333,13 +358,42 @@ function createFeedCard(feed) {
     loginId.className = "feed-user-login-id";
     loginId.textContent = feed.userLoginId || "-";
 
-    const location = document.createElement("div");
-    location.className = "feed-course-location";
-    // 코스 위치 정보는 feed 데이터에 없을 수 있으므로 임시로 빈 값
-    location.textContent = "";
+    const dateInfo = document.createElement("div");
+    dateInfo.className = "feed-date-info";
+    
+    // 러닝 날짜와 게시 날짜 모두 표시
+    const parts = [];
+    
+    // 러닝 날짜 (선택적 - 없을 수도 있음)
+    if (feed.startedAt) {
+        try {
+            const runDate = formatRunDate(feed.startedAt);
+            if (runDate && runDate !== '-') {
+                parts.push(`🏃 ${runDate}`);
+            }
+        } catch (error) {
+            console.error('러닝 날짜 포맷팅 에러:', error);
+        }
+    }
+    
+    // 게시 날짜 (필수)
+    if (feed.createdAt) {
+        try {
+            const postDate = formatRelativeTime(feed.createdAt);
+            if (postDate && postDate !== '-') {
+                parts.push(`${postDate} 게시`);
+            }
+        } catch (error) {
+            console.error('게시 날짜 포맷팅 에러:', error);
+            // 최종 fallback
+            parts.push(`게시: ${formatDate(feed.createdAt)}`);
+        }
+    }
+    
+    dateInfo.textContent = parts.length > 0 ? parts.join(' • ') : '';
 
     userInfo.appendChild(loginId);
-    userInfo.appendChild(location);
+    userInfo.appendChild(dateInfo);
     header.appendChild(profileImg);
     header.appendChild(userInfo);
 
@@ -349,10 +403,10 @@ function createFeedCard(feed) {
 
     const image = document.createElement("img");
     image.className = "feed-image";
-    image.src = feed.imageUrl || "/images/default-course.png";
+    image.src = feed.imageUrl || '';
     image.alt = "러닝 코스 이미지";
-    image.onerror = function() {
-        this.src = "/images/default-course.png";
+    image.onerror = function () {
+        this.style.display = 'none';
     };
 
     imageContainer.appendChild(image);
@@ -360,7 +414,17 @@ function createFeedCard(feed) {
     // 코스 제목 (이미지 하단)
     const courseTitle = document.createElement("div");
     courseTitle.className = "feed-course-title";
-    courseTitle.textContent = feed.courseTitle || "";
+    courseTitle.textContent = getFeedDisplayTitle(feed);
+
+    // ONLINEBATTLE인데 등수가 아직 없으면 비동기 로드 후 타이틀 업데이트
+    if (feed.runningType === 'ONLINEBATTLE' && !feed.courseTitle) {
+        const runningResultId = feed.runningResultId;
+        fetchOnlineBattleRanking(runningResultId).then((rank) => {
+            if (rank && courseTitle.isConnected) {
+                courseTitle.textContent = `온라인배틀 #${rank}`;
+            }
+        });
+    }
 
     // 통계 (거리, 시간)
     const stats = document.createElement("div");
@@ -415,7 +479,7 @@ function createFeedCard(feed) {
     // Jackson 직렬화로 인해 isLiked 또는 liked로 올 수 있음
     const isLiked = feed.isLiked === true || feed.liked === true;
     feedLikes.set(feed.feedId, isLiked);
-    
+
     // 디버깅: 좋아요 상태 확인
     if (feed.feedId) {
         console.log(`피드 ${feed.feedId} - 원본 데이터:`, {
@@ -430,9 +494,9 @@ function createFeedCard(feed) {
     likeIcon.setAttribute("width", "16");
     likeIcon.setAttribute("height", "16");
     likeIcon.setAttribute("viewBox", "0 0 16 16");
-    
+
     const likePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    
+
     if (isLiked) {
         // 이미 좋아요를 눌렀으면 채워진 하트
         likeIcon.setAttribute("fill", "currentColor");
@@ -445,7 +509,7 @@ function createFeedCard(feed) {
         likePath.setAttribute("d", "m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15");
         likePath.setAttribute("fill", "currentColor");
     }
-    
+
     likeIcon.appendChild(likePath);
 
     const likeCount = document.createElement("span");
@@ -498,7 +562,7 @@ function createFeedCard(feed) {
     const currentUserId = localStorage.getItem("userId");
     const isMyPost = currentUserId && Number(currentUserId) === feed.userId;
     const isAdminUser = isAdmin();
-    
+
     if (isMyPost || isAdminUser) {
         const editDeleteActions = document.createElement("div");
         editDeleteActions.className = "feed-edit-delete-actions";
@@ -613,13 +677,13 @@ async function handleLikeClick(feedId, likeAction, likeCountElement) {
             // 좋아요 취소
             response = await fetch(url, {
                 method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` }
+                headers: {Authorization: `Bearer ${token}`}
             });
         } else {
             // 좋아요 추가
             response = await fetch(url, {
                 method: "POST",
-                headers: { Authorization: `Bearer ${token}` }
+                headers: {Authorization: `Bearer ${token}`}
             });
         }
 
@@ -697,7 +761,7 @@ async function loadComments(feedId, commentsList) {
 
     try {
         const response = await fetch(`/api/feed/${feedId}/comments?page=0&size=100&sort=createdAt,asc`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {Authorization: `Bearer ${token}`}
         });
 
         if (!response.ok) {
@@ -734,11 +798,11 @@ function createCommentItem(comment, feedId) {
 
     const profileImg = document.createElement("img");
     profileImg.className = "feed-comment-profile";
-    profileImg.src = comment.profileImageUrl || "/images/default-profile.png";
+    profileImg.src = comment.profileImageUrl || '';
     profileImg.alt = comment.userLoginId;
     profileImg.style.cursor = "pointer";
-    profileImg.onerror = function() {
-        this.src = "/images/default-profile.png";
+    profileImg.onerror = function () {
+        this.style.display = 'none';
     };
     // 프로필 이미지 클릭 시 프로필 페이지로 이동
     profileImg.addEventListener("click", () => {
@@ -771,7 +835,7 @@ function createCommentItem(comment, feedId) {
     const currentUserId = localStorage.getItem("userId");
     const isMyComment = currentUserId && Number(currentUserId) === comment.userId;
     const isAdminUser = isAdmin();
-    
+
     if (isMyComment || isAdminUser) {
         const deleteButton = document.createElement("button");
         deleteButton.className = "feed-comment-delete-button";
@@ -803,7 +867,7 @@ async function submitComment(feedId, content, commentsList) {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ content })
+            body: JSON.stringify({content})
         });
 
         if (!response.ok) {
@@ -845,7 +909,7 @@ async function deleteComment(feedId, commentId, commentItem) {
     try {
         const response = await fetch(`/api/feed/${feedId}/comments/${commentId}`, {
             method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {Authorization: `Bearer ${token}`}
         });
 
         if (!response.ok) {
@@ -921,7 +985,7 @@ function formatDate(dateString) {
 function showEmptyState() {
     const emptyState = document.getElementById("feedEmpty");
     const feedList = document.querySelector('[data-role="feed-list"]');
-    
+
     if (emptyState) {
         emptyState.removeAttribute("hidden");
         emptyState.style.display = "flex";
@@ -937,7 +1001,7 @@ function showEmptyState() {
 function hideEmptyState() {
     const emptyState = document.getElementById("feedEmpty");
     const feedList = document.querySelector('[data-role="feed-list"]');
-    
+
     if (emptyState) {
         emptyState.setAttribute("hidden", "hidden");
         emptyState.style.display = "none";
@@ -1014,7 +1078,7 @@ async function deleteFeed(feedId, feedCard) {
     try {
         const response = await fetch(`/api/feed/${feedId}`, {
             method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {Authorization: `Bearer ${token}`}
         });
 
         if (!response.ok) {
@@ -1050,3 +1114,63 @@ async function deleteFeed(feedId, feedCard) {
     }
 }
 
+// feed 객체 기반으로 피드 카드에 표시할 타이틀(코스 주소/대체 타이틀)을 생성
+function getFeedDisplayTitle(feed) {
+    const baseTitle = (feed.courseTitle || '').trim();
+    if (baseTitle) return baseTitle;
+
+    const runningType = feed.runningType;
+
+    if (runningType === 'GHOST') {
+        return '고스트런';
+    }
+
+    if (runningType === 'ONLINEBATTLE') {
+        const rank = (typeof feed.onlineBattleRanking === 'number')
+            ? feed.onlineBattleRanking
+            : (feed.onlineBattleRanking ? Number(feed.onlineBattleRanking) : null);
+
+        return rank ? `온라인배틀 #${rank}` : '온라인배틀';
+    }
+
+    // 기타(코스 없는 경우 대비)
+    return '러닝';
+}
+
+// ONLINEBATTLE 랭킹 캐시 (runningResultId -> ranking)
+const onlineBattleRankingCache = new Map();
+
+async function fetchOnlineBattleRanking(runningResultId) {
+    if (!runningResultId) return null;
+    if (onlineBattleRankingCache.has(runningResultId)) {
+        return onlineBattleRankingCache.get(runningResultId);
+    }
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return null;
+
+    try {
+        const res = await fetch(`/api/battle-result/running-results/${runningResultId}/ranking`, {
+            headers: {Authorization: `Bearer ${token}`}
+        });
+        if (!res.ok) return null;
+
+        const payload = await res.json();
+        const ranking = payload?.data?.ranking;
+        if (typeof ranking === 'number') {
+            onlineBattleRankingCache.set(runningResultId, ranking);
+            return ranking;
+        }
+        if (ranking !== undefined && ranking !== null) {
+            const parsed = Number(ranking);
+            if (!Number.isNaN(parsed)) {
+                onlineBattleRankingCache.set(runningResultId, parsed);
+                return parsed;
+            }
+        }
+        return null;
+    } catch (e) {
+        console.warn('온라인배틀 랭킹 조회 실패:', e);
+        return null;
+    }
+}

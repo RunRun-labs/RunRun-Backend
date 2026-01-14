@@ -100,8 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
           window.location.href = "/admin/dashboard";
         } else {
           console.log("일반 사용자로 인식 - 홈으로 이동");
-          setMessage("로그인 성공! 홈으로 이동합니다.");
-          window.location.href = "/home";
+        setMessage("로그인 성공! 홈으로 이동합니다.");
+        window.location.href = "/home";
         }
       } catch (error) {
         setMessage(error.message || "로그인 중 오류가 발생했습니다.");

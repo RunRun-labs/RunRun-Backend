@@ -60,6 +60,10 @@ public class FeedPostService {
     ) {
         User user = getUserByPrincipal(principal);
 
+        if (req.getContent() == null || req.getContent().isBlank()) {
+            throw new InvalidRequestException(ErrorCode.FEED_CONTENT_REQUIRED);
+        }
+
         RunningResult runningResult =
                 runningResultRepository
                         .findByIdAndUserIdAndIsDeletedFalse(req.getRunningResultId(), user.getId())
@@ -81,15 +85,15 @@ public class FeedPostService {
             String imageKey = fileStorage.upload(imageFile, FileDomainType.FEED_IMAGE, user.getId());
             imageUrl = fileStorage.toHttpsUrl(imageKey);
         } else {
-            // 코스 썸네일 URL 사용
+            // 코스 썸네일 URL 사용 (S3 key를 HTTPS URL로 변환)
             if (runningResult.getCourse() != null && runningResult.getCourse().getThumbnailUrl() != null) {
-                String thumbnailUrl = runningResult.getCourse().getThumbnailUrl();
-                if (!thumbnailUrl.startsWith("http")) {
-                    imageUrl = fileStorage.toHttpsUrl(thumbnailUrl);
-                } else {
-                    imageUrl = thumbnailUrl;
-                }
+                imageUrl = fileStorage.toHttpsUrl(runningResult.getCourse().getThumbnailUrl());
             }
+        }
+
+        // 이미지가 끝까지 없으면 피드 공유 불가
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new InvalidRequestException(ErrorCode.FILE_REQUIRED);
         }
 
         FeedPost feedPost = FeedPost.create(

@@ -29,20 +29,19 @@ public class AdController {
     private final AdTrackingService adTrackingService;
 
     /**
-     * 광고 서빙 (노출 자동 카운트)
-     * GET /api/ads/serve?slotType=HOME_TOP_BANNER
+     * 광고 서빙 (노출 자동 카운트) GET /api/ads/serve?slotType=HOME_TOP_BANNER&userId=1
      */
     @GetMapping("/serve")
     public ResponseEntity<ApiResponse<AdServeResDto>> serve(
-        @RequestParam AdSlotType slotType
+        @RequestParam AdSlotType slotType,
+        @RequestParam(required = false) Long userId
     ) {
-        AdServeResDto result = adTrackingService.serveOne(slotType);
+        AdServeResDto result = adTrackingService.serveOne(slotType, userId);
         return ResponseEntity.ok(ApiResponse.success("광고 조회 성공", result));
     }
 
     /**
-     * 광고 클릭 카운트
-     * POST /api/ads/click
+     * 광고 클릭 카운트 POST /api/ads/click
      */
     @PostMapping("/click")
     public ResponseEntity<ApiResponse<Void>> click(

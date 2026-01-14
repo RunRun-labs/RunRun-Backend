@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
       rel="stylesheet"
     />
     <script
@@ -26,48 +26,15 @@
   <body>
     <div class="page">
       <!-- Header -->
-      <header class="course-header">
-        <button
-          class="back-button"
-          type="button"
-          aria-label="뒤로가기"
-          onclick="history.back()"
-        >
-          <img
-            src="http://localhost:3845/assets/5d8e7700a6d94e6f5d3b62853522a7c52a457010.svg"
-            alt="뒤로가기 아이콘"
-          />
+      <header class="header">
+        <button type="button" class="back-button" aria-label="뒤로가기" onclick="history.back()">
+          <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기">
         </button>
-        <h1 class="page-title">코스 만들기</h1>
+        <h1 class="header-title">코스 만들기</h1>
       </header>
 
-      <!-- FAB Button (Fixed above bottom nav) -->
-      <button
-        class="fab-button"
-        type="submit"
-        id="stickyCreateBtn"
-        form="courseForm"
-        aria-label="코스 생성하기"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M12 5V19M5 12H19"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-
       <!-- Main Content -->
-      <main class="course-content">
+      <main class="course-main">
         <form
           class="course-form"
           th:action="@{/api/courses}"
@@ -139,11 +106,10 @@
             <label class="field-label">이미지</label>
             <div class="image-upload-area" id="imageUploadArea">
               <div class="upload-placeholder" id="uploadPlaceholder">
-                <img
-                  src="http://localhost:3845/assets/7ed265b4ee3f9b3742a3bbc82a2767b38c5893e9.svg"
-                  alt="카메라 아이콘"
-                  class="camera-icon"
-                />
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
                 <span class="upload-text">이미지 넣기</span>
               </div>
               <div class="image-preview" id="imagePreview"></div>
@@ -158,6 +124,16 @@
           </div>
         </form>
       </main>
+
+      <!-- 작성 완료 버튼 (하단 고정) -->
+      <button
+        class="submit-button"
+        type="submit"
+        id="stickyCreateBtn"
+        form="courseForm"
+      >
+        작성 완료
+      </button>
 
       <!-- Bottom Navigation -->
       <div th:replace="~{common/bottom-nav :: bottomNav}"></div>

@@ -24,11 +24,9 @@
 <body class="challenge-detail-body">
 <main class="page challenge-detail-page">
     <button class="back-button" type="button" aria-label="챌린지 목록으로 돌아가기">
-        <img
-                th:src="@{/img/icons/back.png}"
-                src="/img/icons/back.png"
-                alt="뒤로가기 아이콘"
-        />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
     </button>
 
     <!-- 챌린지 제목 -->
@@ -77,6 +75,14 @@
         </div>
     </section>
 
+    <!-- 챌린지 상세 정보 -->
+    <section class="challenge-detail-section">
+        <h2 class="detail-section-title">챌린지 설명</h2>
+        <div class="challenge-description" data-role="challenge-description">
+            <!-- JS로 동적 생성 -->
+        </div>
+    </section>
+
     <!-- 참여 상태에 따른 UI -->
     <section class="challenge-action-section">
         <!-- 참여하지 않은 경우: 참여하기 버튼 -->
@@ -118,14 +124,6 @@
         >
             삭제하기
         </button>
-    </section>
-
-    <!-- 챌린지 상세 정보 -->
-    <section class="challenge-detail-section">
-        <h2 class="detail-section-title">상세보기</h2>
-        <div class="challenge-description" data-role="challenge-description">
-            <!-- JS로 동적 생성 -->
-        </div>
     </section>
 </main>
 

@@ -169,8 +169,46 @@ function createRunCard(record) {
     // 거리 포맷팅
     const distanceStr = record.totalDistanceKm ? record.totalDistanceKm.toFixed(1) : '0.0';
 
-    // 코스 이미지 URL
-    const imageUrl = record.courseThumbnailUrl || null;
+    // 이미지 URL 결정
+    let imageUrl = null;
+    const runningType = record.runningType;
+    const isGhostRun = runningType === 'GHOST';
+    const isOnlineBattle = runningType === 'ONLINEBATTLE';
+    
+    // 온라인배틀 등수 처리 (마이페이지와 동일하게)
+    let onlineBattleRanking = null;
+    if (isOnlineBattle) {
+        onlineBattleRanking = (typeof record.onlineBattleRanking === 'number')
+            ? record.onlineBattleRanking
+            : (record.onlineBattleRanking ? Number(record.onlineBattleRanking) : null);
+        
+        // 등수 정보가 없으면 대체 필드 확인
+        if (onlineBattleRanking === null || onlineBattleRanking === undefined) {
+            onlineBattleRanking = record.finalRank || record.rank || record.ranking || null;
+        }
+    }
+    
+    // 1순위: 런닝 기록 사진 (recordImageUrl) - 최우선!
+    if (record.recordImageUrl) {
+        imageUrl = record.recordImageUrl;
+    }
+    // 2순위: 러닝 타입별 이미지
+    else if (isGhostRun) {
+        imageUrl = '/img/ghost-run.png';
+    } else if (isOnlineBattle) {
+        const onlineBattleRankImageMap = {
+            1: '/img/online-1st.png',
+            2: '/img/online-2nd.png',
+            3: '/img/online-3rd.png',
+            4: '/img/online-4th.png'
+        };
+        imageUrl = onlineBattleRankImageMap[onlineBattleRanking] || record.courseThumbnailUrl || '/img/online-1st.png';
+    } 
+    // 3순위: 코스 썸네일
+    else if (record.courseThumbnailUrl) {
+        imageUrl = record.courseThumbnailUrl;
+    }
+
     const courseTitle = record.courseTitle || '러닝';
 
     // 이미지가 있을 때만 img 태그 추가
@@ -178,7 +216,7 @@ function createRunCard(record) {
         ? `<img src="${imageUrl}" alt="${courseTitle}" style="display: block;" onerror="this.style.display='none'" />`
         : '';
 
-    // 주소 정보 (courseTitle에서 추출하거나 별도 필드 사용)
+    // 주소 정보
     const address = courseTitle;
 
     article.innerHTML = `

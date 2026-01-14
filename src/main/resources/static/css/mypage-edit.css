@@ -1,5 +1,6 @@
 :root {
-  --primary: #baff29;
+  --primary: #10b981;
+  --primary-dark: #059669;
   --text-strong: #1a1c1e;
   --text-muted: #6c7278;
   --stroke: #edf1f3;
@@ -27,7 +28,7 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  background: var(--bg);
+  background: #f5f5f5;
   color: var(--text-strong);
 }
 
@@ -40,7 +41,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .mypage-edit-page {
@@ -51,79 +52,123 @@ body {
 
 .back-button {
   position: absolute;
-  top: 18px;
-  left: 12px;
-  background: none;
+  top: 20px;
+  left: 16px;
+  background: white;
   border: none;
-  padding: 6px;
+  padding: 10px;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .back-button img {
-  width: 100%;
-  height: 100%;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
 }
 
 .brand {
-  margin-top: 8px;
+  margin-top: 20px;
 }
 
 .brand-text {
   font-family: "Fugaz One", "Inter", sans-serif;
-  font-size: 32px;
+  font-size: 36px;
   color: #161616;
-  text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  font-weight: 700;
 }
 
 .headline {
-  text-align: left;
+  text-align: center;
   width: 100%;
-  max-width: 340px;
+  max-width: 380px;
 }
 
 .headline h1 {
-  margin: 8px 0 4px;
-  font-size: 22px;
+  margin: 12px 0 8px;
+  font-size: 28px;
   font-weight: 700;
+  color: #1a1a1a;
 }
 
 .headline p {
   margin: 0;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 
 .profile-edit-card {
   width: 100%;
-  max-width: 340px;
-  border-radius: 16px;
-  border: 1px solid var(--stroke);
+  max-width: 380px;
+  border-radius: 20px;
+  border: none;
   background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  padding: 16px 16px 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 28px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
 .profile-visual {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .profile-avatar {
-  width: 64px;
-  height: 64px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
-  border: 2px solid var(--primary);
-  background: #101010;
+  border: 4px solid #10b981;
+  background: #f0fdf4;
   display: grid;
   place-items: center;
   overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.profile-avatar:hover {
+  transform: scale(1.05);
+  border-color: #059669;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+.profile-avatar::after {
+  content: '📷';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  background: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 3px solid white;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.profile-avatar:hover::after {
+  opacity: 1;
 }
 
 .profile-avatar img {
@@ -134,74 +179,88 @@ body {
 
 .profile-initial {
   font-family: "Fugaz One", "Inter", sans-serif;
-  font-size: 20px;
-  color: var(--primary);
+  font-size: 36px;
+  color: #10b981;
+  font-weight: 700;
+}
+
+.profile-visual-text {
+  text-align: center;
 }
 
 .profile-visual-text p {
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-muted);
+  line-height: 1.5;
 }
 
 .edit-form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .section-title {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f0fdf4;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .field-label {
-  font-size: 10px;
-  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
 }
 
 .field input {
   width: 100%;
-  height: 44px;
-  padding: 12px 14px;
-  font-size: 11px;
-  border: 1px solid var(--stroke);
-  border-radius: 10px;
+  height: 48px;
+  padding: 12px 16px;
+  font-size: 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
   background: #fff;
-  box-shadow: 0 0.8px 1.6px rgba(228, 229, 231, 0.24);
   outline: none;
   color: var(--text-strong);
+  transition: all 0.2s;
+}
+
+.field input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .field input::placeholder {
-  color: #1a1c1e;
-  opacity: 0.7;
+  color: #9ca3af;
 }
 
 .field input.input-valid {
-  border-color: #baff29;
-  box-shadow: 0 0 0 1px #baff29 inset;
+  border-color: #10b981;
+  background: #f0fdf4;
 }
 
 .field input.input-invalid {
-  border-color: #ff3b30;
-  box-shadow: 0 0 0 1px #ff3b30 inset;
+  border-color: #ef4444;
+  background: #fef2f2;
 }
 
 .field-feedback {
-  min-height: 14px;
-  font-size: 11px;
-  color: #ff3b30;
-  margin: -4px 0 4px 4px;
+  min-height: 18px;
+  font-size: 12px;
+  color: #ef4444;
+  margin: 0;
+  padding-left: 4px;
 }
 
 .field-feedback.hidden {
@@ -210,89 +269,102 @@ body {
 
 /* BMI 표시 영역 */
 .bmi-display {
-  margin: 8px 0 16px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  margin: 12px 0;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid rgba(16, 185, 129, 0.2);
 }
 
 .bmi-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .bmi-label {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--text-strong);
+  color: #059669;
 }
 
 .bmi-value {
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 700;
-  color: var(--text-strong);
+  color: #10b981;
 }
 
 .bmi-status {
   font-size: 13px;
-  font-weight: 500;
-  padding: 4px 12px;
-  border-radius: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
   margin-left: auto;
 }
 
 /* BMI 상태별 색상 */
 .bmi-status.underweight {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .bmi-status.normal {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: #d1fae5;
+  color: #065f46;
 }
 
 .bmi-status.overweight {
-  background: #fff3e0;
-  color: #f57c00;
+  background: #fed7aa;
+  color: #c2410c;
 }
 
 .bmi-status.obese {
-  background: #ffebee;
-  color: #c62828;
+  background: #fecaca;
+  color: #991b1b;
 }
 
 .form-message {
-  min-height: 18px;
-  margin: 6px 0 0;
-  font-size: 12px;
+  min-height: 20px;
+  margin: 8px 0 0;
+  font-size: 13px;
   text-align: center;
-  color: #ff3b30;
+  color: #ef4444;
+  font-weight: 500;
 }
 
 .form-message.success {
-  color: #0a7a20;
+  color: #059669;
 }
 
 .primary-button {
-  margin-top: 4px;
+  margin-top: 8px;
   width: 100%;
-  height: 44px;
-  border-radius: 10px;
-  border: 1px solid #fff;
-  background: linear-gradient(
-      rgba(255, 255, 255, 0.12),
-      rgba(255, 255, 255, 0)
-    ),
-    linear-gradient(90deg, rgba(186, 255, 41, 0.6), rgba(186, 255, 41, 0.6));
-  color: #000;
-  font-weight: 600;
-  font-size: 11px;
-  box-shadow: 0 0.8px 1.6px rgba(37, 62, 167, 0.48);
+  height: 52px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
   cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+}
+
+.primary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .bottom-nav {
@@ -303,7 +375,7 @@ body {
   max-width: 420px;
   margin: 0 auto;
   height: 76px;
-  border-top: 1px solid var(--primary);
+  border-top: 1px solid #baff29;
   background: #fff;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -337,6 +409,18 @@ body {
   .mypage-edit-page {
     padding-bottom: 120px;
   }
+
+  .profile-edit-card {
+    padding: 24px 20px;
+  }
+
+  .brand-text {
+    font-size: 32px;
+  }
+
+  .headline h1 {
+    font-size: 24px;
+  }
 }
 
 @media (max-width: 920px) and (max-height: 520px) {
@@ -351,7 +435,7 @@ body {
   }
 
   .headline h1 {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .bottom-nav {
@@ -392,6 +476,3 @@ body {
     height: 30px;
   }
 }
-
-
-

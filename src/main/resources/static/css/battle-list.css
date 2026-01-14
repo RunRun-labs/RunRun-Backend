@@ -2,6 +2,8 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f9fafb;
   --neon-accent: #baff29;
+  --primary-green: #10b981;
+  --primary-green-light: #14b8a6;
   --text-primary: #1a1c1e;
   --text-secondary: #6c7278;
   --stroke: #e5e7eb;
@@ -80,44 +82,46 @@ body {
 /* 헤더 */
 .header {
   width: 100%;
-  padding: 18px 0 16px;
+  padding: 48px 16px 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
   background: #ffffff;
   margin: 0;
   box-sizing: border-box;
-  position: relative;
 }
 
 .back-button {
-  position: absolute;
-  left: 0;
-  width: 40px;
-  height: 40px;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
   border-radius: 8px;
-  cursor: pointer;
-  color: var(--text-primary);
-  transition: background 0.2s ease;
-  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.back-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .back-button:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--stroke);
 }
 
 .header-title {
-  margin: 0;
-  font-size: 20px;
+  flex: 1;
+  font-size: 22.5px;
   font-weight: 700;
   color: var(--text-primary);
-  text-align: center;
+  margin: 0;
 }
 
 /* 필터 탭 섹션 */
@@ -138,7 +142,7 @@ body {
   flex: 1;
   padding: 10px 16px;
   border: 1px solid var(--stroke);
-  border-radius: 8px;
+  border-radius: 20px;
   background: var(--bg-primary);
   color: var(--text-secondary);
   font-size: 14px;
@@ -150,14 +154,14 @@ body {
 }
 
 .filter-tab:hover {
-  border-color: var(--neon-accent);
-  background: rgba(186, 255, 41, 0.1);
+  border-color: var(--primary-green);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .filter-tab.active {
-  background: var(--neon-accent);
-  border-color: var(--neon-accent);
-  color: #000000;
+  background: linear-gradient(90deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  border-color: var(--primary-green);
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -181,7 +185,7 @@ body {
   width: 40px;
   height: 40px;
   border: 4px solid var(--stroke);
-  border-top-color: var(--neon-accent);
+  border-top-color: var(--primary-green);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -242,73 +246,52 @@ body {
   transform: translateY(-50%);
   width: 4px;
   height: 18px;
-  background: #BAFF29;
+  background: var(--primary-green);
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(186, 255, 41, 0.5);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
 .date-section-header:first-child {
   margin-top: 0;
 }
 
-/* 배틀 기록 카드 - 고스트런 스타일 */
+/* 배틀 기록 카드 - 모집글 목록 스타일 적용 */
 .battle-card {
   background: #FFFFFF;
-  border: 1px solid rgba(229, 231, 235, 0.6);
+  border: 1px solid var(--stroke);
   border-radius: 16px;
-  padding: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 14px;
+  transition: all 0.2s ease;
   cursor: pointer;
   position: relative;
   width: 100%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
   overflow: hidden;
 }
 
-.battle-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  padding: 1px;
-  background: linear-gradient(135deg, #BAFF29 0%, rgba(186, 255, 41, 0.3) 100%);
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  opacity: 0.6;
-  transition: opacity 0.3s ease;
-}
-
-.battle-card:hover::after {
-  opacity: 1;
-}
-
 .battle-card:hover {
-  box-shadow: 0 0 10px rgba(186, 255, 41, 0.2), 0 4px 16px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
-  border-color: rgba(229, 231, 235, 0.8);
+  border-color: var(--primary-green);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
 .battle-card:active {
   transform: translateY(0);
-  box-shadow: 0 0 8px rgba(186, 255, 41, 0.15), 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
 }
 
 .battle-card.first-place {
   background: #FFFFFF;
-  box-shadow: 0 0 10px rgba(186, 255, 41, 0.2), 0 4px 16px rgba(0, 0, 0, 0.08);
-  border-color: rgba(229, 231, 235, 0.6);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  border-color: var(--stroke);
 }
 
-.battle-card.first-place::after {
-  opacity: 1;
-  background: linear-gradient(135deg, #BAFF29 0%, rgba(186, 255, 41, 0.5) 100%);
+.battle-card.first-place:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
 /* 카드 헤더 (타이틀 + 시간) */
@@ -316,15 +299,16 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
+  margin-bottom: 4px;
 }
 
 .battle-card-left {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   text-align: left;
 }
 
@@ -353,9 +337,9 @@ body {
 }
 
 .session-type-badge.battle {
-  background: rgba(186, 255, 41, 0.15);
-  color: #000000;
-  border: 1px solid rgba(186, 255, 41, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--primary-green);
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .battle-card-title {
@@ -375,26 +359,27 @@ body {
   font-weight: 400;
   color: var(--text-secondary);
   text-align: left;
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 /* 카드 중앙: 통계 정보 칩 (가로 배치) */
 .battle-card-stats {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 4px;
   flex-wrap: nowrap; /* 줄바꿈 방지 */
   align-items: center;
+  padding: 8px 0;
 }
 
 .battle-stat-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: rgba(186, 255, 41, 0.2); /* 더 진한 네온 라임 배경 */
-  border: 1px solid rgba(186, 255, 41, 0.4); /* 더 진한 테두리 */
-  border-radius: 20px;
+  padding: 8px 14px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 24px;
   font-size: 12px;
   line-height: 1.4;
   transition: all 0.2s ease;
@@ -402,9 +387,10 @@ body {
 }
 
 .battle-card:hover .battle-stat-chip {
-  background: rgba(186, 255, 41, 0.25);
-  border-color: rgba(186, 255, 41, 0.5);
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
 }
 
 .battle-stat-chip.distance-chip {
@@ -484,8 +470,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-top: 8px;
-  padding-top: 12px;
+  margin-top: 4px;
+  padding-top: 14px;
   border-top: 1px solid rgba(229, 231, 235, 0.5);
   width: 100%;
 }
@@ -493,10 +479,10 @@ body {
 .rating-flow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
   background: rgba(249, 250, 251, 0.8);
   border: 1px solid rgba(229, 231, 235, 0.3);
   transition: all 0.2s ease;
@@ -539,13 +525,6 @@ body {
   opacity: 0.7;
 }
 
-.rating-previous::after {
-  content: " LP";
-  font-size: 11px;
-  font-weight: 500;
-  opacity: 0.8;
-}
-
 .rating-arrow {
   font-size: 14px;
   font-weight: 600;
@@ -560,32 +539,14 @@ body {
   letter-spacing: -0.3px;
 }
 
-.rating-current::after {
-  content: " LP";
-  font-size: 12px;
-  font-weight: 600;
-  opacity: 0.9;
-  margin-left: 2px;
-}
-
 .rating-flow.positive .rating-current {
   color: #2563EB; /* blue-600 */
   font-weight: 900;
 }
 
-.rating-flow.positive .rating-current::after {
-  color: #2563EB;
-  opacity: 0.8;
-}
-
 .rating-flow.negative .rating-current {
   color: #EF4444; /* red-500 */
   font-weight: 900;
-}
-
-.rating-flow.negative .rating-current::after {
-  color: #EF4444;
-  opacity: 0.8;
 }
 
 .rating-delta {
@@ -622,10 +583,6 @@ body {
   border-color: rgba(229, 231, 235, 0.4);
 }
 
-.battle-card.incomplete::after {
-  opacity: 0.3;
-}
-
 /* 무한 스크롤 센티널 (감지용 빈 div) */
 #sentinel {
   height: 20px;
@@ -641,7 +598,7 @@ body {
   max-width: 430px;
   margin: 0 auto;
   height: 76px;
-  border-top: 1px solid var(--neon-accent);
+  border-top: 1px solid var(--stroke);
   background: #ffffff;
   display: grid;
   grid-template-columns: repeat(5, 1fr);

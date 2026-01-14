@@ -66,6 +66,26 @@
           <div class="map-container" id="map"></div>
         </div>
 
+        <!-- 지도 모달 (visibility: hidden으로 DOM에 미리 렌더링) -->
+        <div class="map-modal-overlay" id="mapModal" style="visibility: hidden; opacity: 0;">
+          <div class="map-modal-content">
+            <div class="map-modal-header">
+              <h2 class="map-modal-title">코스 지도</h2>
+              <button
+                class="map-modal-close"
+                type="button"
+                id="closeMapModal"
+                aria-label="닫기"
+              >
+                ×
+              </button>
+            </div>
+            <div class="map-modal-body">
+              <div class="map-modal-container" id="mapModal-map"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Title Field -->
         <div class="form-field">
           <label class="field-label">제목</label>
@@ -119,10 +139,9 @@
             id="likeBtn"
             aria-label="좋아요"
           >
-            <img
-              src="http://localhost:3845/assets/9af0c1d4ec1d966c7ec0b9ad1664f0fb4dc60971.svg"
-              alt="좋아요 아이콘"
-            />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
             <span class="action-count" id="likeCount">0</span>
           </button>
           <button
@@ -131,10 +150,9 @@
             id="favoriteBtn"
             aria-label="즐겨찾기"
           >
-            <img
-              src="http://localhost:3845/assets/a153ec3dff46ec34044b8bce0977bd3c5e0e43d7.svg"
-              alt="즐겨찾기 아이콘"
-            />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
             <span class="action-count" id="favoriteCount">0</span>
           </button>
           <button
@@ -143,7 +161,7 @@
             id="sirenBtn"
             aria-label="신고하기"
           >
-            <img src="/img/siren.svg" alt="신고하기 아이콘" />
+            <img src="/img/siren.svg" th:src="@{/img/siren.svg}" alt="신고하기 아이콘" />
             <span>신고하기</span>
           </button>
         </div>

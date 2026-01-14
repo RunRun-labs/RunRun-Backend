@@ -132,6 +132,10 @@ function updateNextRunning(chatRooms) {
     ? `${hours}시간 ${minutes}분` 
     : `${minutes}분`;
 
+  // 카드 보이기
+  const card = document.querySelector('.next-running-card');
+  if (card) card.style.display = 'flex';
+
   // 카드 업데이트
   const timeEl = document.querySelector('.next-running-time');
   const infoEl = document.querySelector('.next-running-info');

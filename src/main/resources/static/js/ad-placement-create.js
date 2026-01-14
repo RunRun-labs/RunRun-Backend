@@ -240,7 +240,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (placementId) {
           window.location.href = `/admin/ad-placement/detail/${placementId}`;
         } else {
-          window.location.href = "/admin/ad-placement/inquiry";
+        window.location.href = "/admin/ad-placement/inquiry";
         }
       } else {
         throw new Error(result.message || "생성에 실패했습니다.");

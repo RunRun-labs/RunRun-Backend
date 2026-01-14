@@ -6,6 +6,14 @@ pipeline {
     timestamps()
   }
 
+  parameters {
+    booleanParam(
+      name: 'SETUP_MONITORING',
+      defaultValue: false,
+      description: 'Install/upgrade kube-prometheus-stack + RunRun monitoring manifests (requires Jenkins credential: slack-webhook-url).'
+    )
+  }
+
   triggers {
     githubPush()
   }
@@ -70,6 +78,44 @@ docker push "${ECR_REPO_URI}:latest"
 set -euo pipefail
 aws eks update-kubeconfig --region "${AWS_REGION}" --name "${EKS_CLUSTER_NAME}"
 kubectl get nodes
+'''
+        }
+      }
+    }
+
+    stage("Setup Monitoring (Prometheus/Grafana/Alertmanager)") {
+      when {
+        expression { return params.SETUP_MONITORING }
+      }
+      steps {
+        withCredentials([
+          [
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'aws-credentials'
+          ],
+          string(credentialsId: 'slack-webhook-url', variable: 'SLACK_WEBHOOK_URL')
+        ]) {
+          sh '''#!/usr/bin/env bash
+set -euo pipefail
+
+kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl -n monitoring create secret generic alertmanager-slack \
+  --from-literal=SLACK_WEBHOOK_URL="${SLACK_WEBHOOK_URL}" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+  -n monitoring \
+  -f monitoring/kube-prometheus-stack-values.yaml
+
+kubectl apply -f k8s/monitoring/runrun-servicemonitor.yaml
+kubectl apply -f k8s/monitoring/runrun-prometheusrule.yaml
+kubectl apply -f k8s/monitoring/grafana-ingress.yaml
+
+kubectl -n monitoring get pods
 '''
         }
       }

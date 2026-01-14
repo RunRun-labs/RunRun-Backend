@@ -1,13 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
   const backButton = document.getElementById("backBtn");
   const distanceChips = document.getElementById("distanceChips");
-  const startButton = document.getElementById("startButton");
+  let startButton = document.getElementById("startButton");
   const manualDistanceInput = document.getElementById("manualDistanceInput");
   const infoBox = document.getElementById("infoBox");
   const infoBoxTitle = document.getElementById("infoBoxTitle");
   const infoBoxText = document.getElementById("infoBoxText");
   const manualInputLabel = document.getElementById("manualInputLabel");
-  const courseModeNotice = document.getElementById("courseModeNotice");
   const courseInput = document.getElementById("course");
   const courseSection = document.querySelector(".course-section");
   const selectedCourseInfo = document.getElementById("selectedCourseInfo");
@@ -15,11 +14,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const courseAddress = document.getElementById("courseAddress");
   const mapSection = document.getElementById("mapSection");
   const mapContainer = document.getElementById("map");
+  const initialSelectionSection = document.getElementById(
+      "initialSelectionSection");
+  const courseSelectionButton = document.getElementById(
+      "courseSelectionButton");
+  const manualInputButton = document.getElementById("manualInputButton");
+  const distanceSection = document.getElementById("distanceSection");
 
   let selectedDistance = null;
   let manualDistanceValue = null;
   let courseId = null;
   let isCourseMode = false;
+  let isManualInputMode = false;
   let map = null;
   let coursePolyline = null;
   let selectedCourseData = null;
@@ -27,12 +33,104 @@ document.addEventListener("DOMContentLoaded", () => {
   let endMarker = null;
 
   // 코스 입력 필드 클릭 이벤트 (모집글 생성 페이지와 동일)
+  const courseInputWrapper = document.querySelector('.course-input-wrapper');
+
+  const handleCourseClick = () => {
+    console.log('코스 선택 클릭됨');
+    const returnTo = window.location.pathname + window.location.search;
+    const targetUrl = `/course?selectMode=solo&returnTo=${encodeURIComponent(
+        returnTo)}`;
+    console.log('이동할 URL:', targetUrl);
+    window.location.href = targetUrl;
+  };
+
+  if (courseInput) {
+    console.log('솔로런 코스 입력 필드 이벤트 리스너 등록됨');
+    courseInput.addEventListener("click", handleCourseClick);
+    courseInput.style.cursor = 'pointer';
+  } else {
+    console.error('코스 입력 필드를 찾을 수 없습니다!');
+  }
+
+  // wrapper에도 클릭 이벤트 추가 (확실하게 하기 위해)
+  if (courseInputWrapper) {
+    console.log('코스 입력 wrapper 이벤트 리스너 등록됨');
+    courseInputWrapper.addEventListener("click", handleCourseClick);
+    courseInputWrapper.style.cursor = 'pointer';
+  }
+
+  // Toast 메시지 표시 함수
+  function showToast(message, type = 'error') {
+    // 기존 toast 제거
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    // Toast 컨테이너 생성 (없으면)
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    // Toast 메시지 생성
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    // 애니메이션을 위해 약간의 지연 후 show 클래스 추가
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+
+    // 3초 후 제거
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 3000);
+  }
+
+  // 초기 선택 버튼 이벤트
+  if (courseSelectionButton) {
+    courseSelectionButton.addEventListener("click", () => {
+      // 코스 선택 페이지로 이동
+      const returnTo = window.location.pathname + window.location.search;
+      window.location.href = `/course?selectMode=solo&returnTo=${encodeURIComponent(
+          returnTo)}`;
+    });
+  }
+
+  if (manualInputButton) {
+    manualInputButton.addEventListener("click", () => {
+      // 직접 입력 모드로 전환
+      isManualInputMode = true;
+      initialSelectionSection.style.display = "none";
+      distanceSection.style.display = "flex";
+      infoBox.style.display = "flex";
+      if (infoBoxTitle) {
+        infoBoxTitle.textContent = "거리를 입력해주세요";
+      }
+      if (infoBoxText) {
+        infoBoxText.textContent = "원하는 거리를 직접 입력하고 솔로런을 시작하세요";
+      }
+      if (manualDistanceInput) {
+        manualDistanceInput.focus();
+      }
+      updateStartButton();
+    });
+  }
+
+  // 코스 입력 필드 클릭 이벤트
   if (courseInput) {
     courseInput.addEventListener("click", () => {
       const returnTo = window.location.pathname + window.location.search;
       window.location.href = `/course?selectMode=solo&returnTo=${encodeURIComponent(
-        returnTo
-      )}`;
+          returnTo)}`;
     });
   }
 
@@ -46,6 +144,20 @@ document.addEventListener("DOMContentLoaded", () => {
   if (urlCourseId) {
     courseId = urlCourseId;
     isCourseMode = true;
+
+    // 초기 선택 화면 숨기기
+    if (initialSelectionSection) {
+      initialSelectionSection.style.display = "none";
+    }
+
+    // 코스 섹션 표시
+    if (courseSection) {
+      courseSection.style.display = "block";
+    }
+
+    if (infoBox) {
+      infoBox.style.display = "flex";
+    }
 
     let convertedDistance = null;
 
@@ -74,8 +186,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (infoBoxTitle && infoBoxText) {
       const courseTitle =
-        urlCourseName ||
-        (convertedDistance ? `${convertedDistance}km` : "선택하신");
+          urlCourseName ||
+          (convertedDistance ? `${convertedDistance}km` : "선택하신");
       infoBoxTitle.innerHTML = `선택하신 <span class="course-title-highlight">${courseTitle}</span> 코스로 목표 거리가 설정되었습니다`;
       infoBoxText.textContent = "코스 정보에 따라 솔로런을 시작합니다";
     }
@@ -84,72 +196,58 @@ document.addEventListener("DOMContentLoaded", () => {
       manualInputLabel.textContent = "코스 지정 거리";
     }
 
-    if (courseModeNotice) {
-      courseModeNotice.style.display = "block";
-    }
-
     // 코스 정보 로드 및 표시
     loadAndDisplayCourse(parseInt(urlCourseId));
+    
+    // 시작 버튼 활성화
+    updateStartButton();
+  } else {
+    // 코스 모드가 아닐 때는 초기 선택 화면 표시
+    if (initialSelectionSection) {
+      initialSelectionSection.style.display = "flex";
+    }
+    if (courseSection) {
+      courseSection.style.display = "none";
+    }
+    if (distanceSection) {
+      distanceSection.style.display = "none";
+    }
+    // infoBox는 항상 표시
+    if (infoBox) {
+      infoBox.style.display = "flex";
+    }
   }
 
   // 거리 옵션 정의 (백엔드 DistanceType Enum과 일치)
   const distanceOptions = [
-    { value: "KM_3", label: "3km", numericValue: 3 },
-    { value: "KM_5", label: "5km", numericValue: 5 },
-    { value: "KM_10", label: "10km", numericValue: 10 },
+    {value: "KM_3", label: "3km", numericValue: 3},
+    {value: "KM_5", label: "5km", numericValue: 5},
+    {value: "KM_10", label: "10km", numericValue: 10},
   ];
 
   // 뒤로가기 버튼
   if (backButton) {
     backButton.addEventListener("click", () => {
       window.history.length > 1
-        ? window.history.back()
-        : (window.location.href = "/match/select");
-    });
-  }
-
-  // 거리 칩 생성
-  function renderDistanceChips() {
-    distanceChips.innerHTML = "";
-    distanceOptions.forEach((option) => {
-      const chip = document.createElement("button");
-      chip.className = `distance-chip ${
-        selectedDistance === option.value ? "active" : ""
-      }`;
-      chip.textContent = option.label;
-      chip.dataset.distance = option.value;
-
-      // 코스 모드일 때 버튼 비활성화
-      if (isCourseMode) {
-        chip.disabled = true;
-      } else {
-        chip.addEventListener("click", () => {
-          selectedDistance = option.value;
-          manualDistanceValue = null;
-          // 버튼 클릭 시 입력창에 해당 거리 값 채우기
-          if (manualDistanceInput) {
-            manualDistanceInput.value = option.numericValue;
-            manualDistanceInput.readOnly = false;
-          }
-          renderDistanceChips();
-          updateStartButton();
-        });
-      }
-
-      distanceChips.appendChild(chip);
+          ? window.history.back()
+          : (window.location.href = "/match/select");
     });
   }
 
   // 시작 버튼 상태 업데이트
   function updateStartButton() {
+    if (!startButton) {
+      return;
+    }
+
     // 코스 모드일 때는 항상 활성화 (courseId가 있으면)
     if (isCourseMode && courseId) {
       startButton.disabled = false;
       return;
     }
 
-    const hasValidDistance =
-      selectedDistance || (manualDistanceValue && manualDistanceValue > 0);
+    // 직접 입력값만 확인
+    const hasValidDistance = manualDistanceValue && manualDistanceValue > 0;
     if (hasValidDistance) {
       startButton.disabled = false;
     } else {
@@ -183,7 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (manualDistanceError) {
         manualDistanceError.textContent =
-          "목표 거리는 0보다 큰 값을 입력해주세요.";
+            "목표 거리는 0보다 큰 값을 입력해주세요.";
       }
       return false;
     }
@@ -195,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (manualDistanceError) {
         manualDistanceError.textContent =
-          "목표 거리는 최소 0.1km(100m) 이상이어야 합니다.";
+            "목표 거리는 최소 0.1km(100m) 이상이어야 합니다.";
       }
       return false;
     }
@@ -221,9 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // 직접 입력 시 버튼 선택 해제
       if (!isNaN(numValue) && numValue > 0) {
-        selectedDistance = null;
         manualDistanceValue = isValid ? numValue : null;
-        renderDistanceChips();
       } else if (value === "" || value === null) {
         manualDistanceValue = null;
       } else {
@@ -257,13 +353,17 @@ document.addEventListener("DOMContentLoaded", () => {
   function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(";").shift();
+    if (parts.length === 2) {
+      return parts.pop().split(";").shift();
+    }
     return null;
   }
 
   // 코스 정보 로드 및 표시
   async function loadAndDisplayCourse(courseId) {
-    if (!courseId) return;
+    if (!courseId) {
+      return;
+    }
 
     try {
       const token = getToken();
@@ -304,6 +404,39 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedCourseInfo.style.display = "block";
       }
 
+      // 코스 상세 정보 카드 표시
+      const courseDetailSection = document.getElementById("courseDetailSection");
+      const courseDetailName = document.getElementById("courseDetailName");
+      const courseDetailBadge = document.getElementById("courseDetailBadge");
+      const courseDetailDistance = document.getElementById("courseDetailDistance");
+      const courseDetailAddress = document.getElementById("courseDetailAddress");
+
+      if (courseDetailSection) {
+        courseDetailSection.style.display = "block";
+      }
+
+      if (courseDetailName && selectedCourseData.title) {
+        courseDetailName.textContent = selectedCourseData.title;
+      }
+
+      if (courseDetailBadge && selectedCourseData.registerType) {
+        const registerTypeText = {
+          'MANUAL': '수동 등록',
+          'AUTO': '자동 등록',
+          'AI': 'AI 등록'
+        }[selectedCourseData.registerType] || selectedCourseData.registerType;
+        courseDetailBadge.textContent = registerTypeText;
+      }
+
+      if (courseDetailDistance && selectedCourseData.distanceM) {
+        const distanceKm = (selectedCourseData.distanceM / 1000).toFixed(2);
+        courseDetailDistance.textContent = `${distanceKm} km`;
+      }
+
+      if (courseDetailAddress && selectedCourseData.address) {
+        courseDetailAddress.textContent = selectedCourseData.address;
+      }
+
       // 카카오맵 초기화 및 경로 표시
       if (mapContainer && window.kakao && window.kakao.maps) {
         initMapAndDisplayPath(courseId);
@@ -322,7 +455,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 카카오맵 초기화 및 경로 표시
   async function initMapAndDisplayPath(courseId) {
-    if (!mapContainer) return;
+    if (!mapContainer) {
+      return;
+    }
 
     try {
       // 카카오맵 초기화
@@ -410,7 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // 카카오맵 좌표로 변환 (GeoJSON은 [lng, lat] 순서)
       const latLngs = pathCoords.map(
-        ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
+          ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
       );
 
       // 폴리라인 생성
@@ -430,7 +565,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // 출발지 인포윈도우
         const startInfoWindow = new kakao.maps.InfoWindow({
           content:
-            '<div style="padding:8px 12px;font-size:13px;font-weight:600;color:#1a1c1e;white-space:nowrap;">📍 출발점</div>',
+              '<div style="padding:8px 12px;font-size:13px;font-weight:600;color:#1a1c1e;white-space:nowrap;">📍 출발점</div>',
           removable: false,
         });
 
@@ -452,16 +587,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 출발지와 도착지가 다른 경우에만 도착지 마커 표시
         const latDiff = Math.abs(
-          lastPosition.getLat() - firstPosition.getLat()
+            lastPosition.getLat() - firstPosition.getLat()
         );
         const lngDiff = Math.abs(
-          lastPosition.getLng() - firstPosition.getLng()
+            lastPosition.getLng() - firstPosition.getLng()
         );
         if (latDiff > 0.0001 || lngDiff > 0.0001) {
           // 도착지 인포윈도우
           const endInfoWindow = new kakao.maps.InfoWindow({
             content:
-              '<div style="padding:8px 12px;font-size:13px;font-weight:600;color:#1a1c1e;white-space:nowrap;">🏁 도착점</div>',
+                '<div style="padding:8px 12px;font-size:13px;font-weight:600;color:#1a1c1e;white-space:nowrap;">🏁 도착점</div>',
             removable: false,
           });
 
@@ -506,40 +641,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 솔로런 시작 API 호출
   async function startSoloRun() {
-    // ✅ 3개 필드 중 하나는 필수 검증
+    // ✅ 코스 또는 직접 입력 중 하나는 필수 검증
     const hasCourseId = courseId != null && courseId !== "";
-    const hasDistance = selectedDistance != null && selectedDistance !== "";
     const hasManualDistance =
-      manualDistanceValue != null &&
-      manualDistanceValue > 0 &&
-      manualDistanceValue >= 0.1;
+        manualDistanceValue != null &&
+        manualDistanceValue > 0 &&
+        manualDistanceValue >= 0.1;
 
-    if (!hasCourseId && !hasDistance && !hasManualDistance) {
-      alert("코스 선택, 거리 선택, 직접 입력 중 하나는 필수입니다.");
+    if (!hasCourseId && !hasManualDistance) {
+      showToast("코스 선택 또는 직접 입력 중 하나는 필수입니다.", "error");
       return;
     }
 
     // 코스 모드가 아닐 때 거리 검증
     if (!isCourseMode) {
-      if (!hasDistance && !hasManualDistance) {
-        alert("목표 거리를 입력해주세요");
+      if (!hasManualDistance) {
+        showToast("목표 거리를 입력해주세요", "error");
         return;
       }
 
-      // ✅ 100m 이하 validation 추가
-      let targetDistanceKm = null;
-      if (selectedDistance) {
-        if (selectedDistance === "3") targetDistanceKm = 3;
-        else if (selectedDistance === "5") targetDistanceKm = 5;
-        else if (selectedDistance === "10") targetDistanceKm = 10;
-      } else if (manualDistanceValue) {
-        targetDistanceKm = manualDistanceValue;
-      }
-
-      if (targetDistanceKm != null && targetDistanceKm > 0) {
-        const targetDistanceM = targetDistanceKm * 1000;
+      // ✅ 100m 이하 validation
+      if (manualDistanceValue != null && manualDistanceValue > 0) {
+        const targetDistanceM = manualDistanceValue * 1000;
         if (targetDistanceM < 100) {
-          alert("목표 거리는 최소 100m 이상이어야 합니다.");
+          showToast("목표 거리는 최소 100m 이상이어야 합니다.", "error");
           return;
         }
       }
@@ -547,7 +672,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 코스 모드일 때 courseId 검증
     if (isCourseMode && !hasCourseId) {
-      alert("코스를 선택해주세요.");
+      showToast("코스를 선택해주세요.", "error");
       return;
     }
 
@@ -562,9 +687,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 요청 데이터: null이 아닌 값만 전송
     const requestData = {};
-    if (hasDistance) {
-      requestData.distance = selectedDistance;
-    }
     if (hasManualDistance) {
       requestData.manualDistance = manualDistanceValue;
     }
@@ -586,20 +708,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const errorData = await response.json().catch(() => ({}));
         // ✅ 벨리데이션 에러 메시지 처리
         let errorMessage =
-          errorData.message || `HTTP error! status: ${response.status}`;
+            errorData.message || `HTTP error! status: ${response.status}`;
 
         // 벨리데이션 에러인 경우 상세 메시지 추출
         if (errorData.errors && Array.isArray(errorData.errors)) {
           const validationMessages = errorData.errors
-            .map((err) => err.defaultMessage || err.message)
-            .filter((msg) => msg)
-            .join("\n");
+          .map((err) => err.defaultMessage || err.message)
+          .filter((msg) => msg)
+          .join("\n");
           if (validationMessages) {
             errorMessage = validationMessages;
           }
         }
 
-        throw new Error(errorMessage);
+        showToast(errorMessage, "error");
+        startButton.disabled = false;
+        startButton.textContent = "솔로런 시작하기";
+        return;
       }
 
       const result = await response.json();
@@ -608,11 +733,13 @@ document.addEventListener("DOMContentLoaded", () => {
         // 세션 ID를 사용하여 러닝 페이지로 이동
         window.location.href = `/running/${sessionId}`;
       } else {
-        throw new Error(result.message || "솔로런 시작에 실패했습니다.");
+        showToast(result.message || "솔로런 시작에 실패했습니다.", "error");
+        startButton.disabled = false;
+        startButton.textContent = "솔로런 시작하기";
       }
     } catch (error) {
       console.error("솔로런 시작 실패:", error);
-      alert(error.message || "솔로런 시작에 실패했습니다.");
+      showToast(error.message || "솔로런 시작에 실패했습니다.", "error");
       startButton.disabled = false;
       startButton.textContent = "솔로런 시작하기";
     }
@@ -624,6 +751,5 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 초기화
-  renderDistanceChips();
   updateStartButton();
 });

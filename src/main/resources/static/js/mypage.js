@@ -249,39 +249,36 @@ function renderProfileImage(user) {
 
     const url = user?.profileImageUrl;
 
+    // 프로필 이미지가 없으면 default-profile.svg 사용 (이미 설정되어 있음)
     if (!url) {
-
-        imgEl.removeAttribute("src");
-        imgEl.hidden = true;
+        // 기본 이미지가 이미 설정되어 있으므로 src를 변경할 필요 없음
+        if (!imgEl.src.includes('default-profile.svg')) {
+            imgEl.src = "/img/default-profile.svg";
+        }
+        imgEl.alt = "기본 프로필 이미지";
+        imgEl.removeAttribute('hidden');
 
         if (initialEl) {
             initialEl.textContent = "";
-            initialEl.hidden = true;
+            initialEl.setAttribute('hidden', 'hidden');
         }
         return;
     }
 
-
+    // 프로필 이미지가 있으면 해당 URL 사용
     imgEl.src = url;
     imgEl.alt = "프로필 이미지";
-    imgEl.decoding = "async";
-    imgEl.loading = "lazy";
-    imgEl.hidden = false;
+    imgEl.removeAttribute('hidden');
 
     if (initialEl) {
         initialEl.textContent = "";
-        initialEl.hidden = true;
+        initialEl.setAttribute('hidden', 'hidden');
     }
 
-
+    // 이미지 로드 실패 시 default-profile.svg로 대체
     imgEl.addEventListener("error", () => {
-        imgEl.removeAttribute("src");
-        imgEl.hidden = true;
-
-        if (initialEl) {
-            initialEl.textContent = "";
-            initialEl.hidden = true;
-        }
+        imgEl.src = "/img/default-profile.svg";
+        imgEl.alt = "기본 프로필 이미지";
     }, {once: true});
 }
 
@@ -586,9 +583,60 @@ function createRunCard(record) {
     // 페이스 포맷팅 (분/km)
     const paceStr = formatPace(record.avgPace);
 
-    // 코스 이미지 URL
-    const imageUrl = record.courseThumbnailUrl || null;
-    const courseTitle = record.courseTitle || '러닝';
+    // ✅ 실행 타입/썸네일 결정
+    const isGhostRun = record.runningType === 'GHOST';
+    const isOnlineBattle = record.runningType === 'ONLINEBATTLE';
+
+    const defaultGhostImageUrl = '/img/ghost-run.png';
+
+    // 온라인배틀 등수별 이미지 (1~4등 제공)
+    let onlineBattleRanking = (typeof record.onlineBattleRanking === 'number')
+        ? record.onlineBattleRanking
+        : (record.onlineBattleRanking ? Number(record.onlineBattleRanking) : null);
+
+    // 디버깅: 온라인배틀일 때 등수 확인
+    if (isOnlineBattle) {
+        console.log('온라인배틀 기록:', {
+            recordId: record.runningResultId,
+            onlineBattleRanking: record.onlineBattleRanking,
+            onlineBattleRankingType: typeof record.onlineBattleRanking,
+            converted: onlineBattleRanking
+        });
+        
+        // 등수 정보가 없으면 finalRank 필드 확인 (백엔드에서 다른 필드명 사용 가능성)
+        if (onlineBattleRanking === null || onlineBattleRanking === undefined) {
+            onlineBattleRanking = record.finalRank || record.rank || record.ranking || null;
+            console.log('대체 필드에서 등수 확인:', onlineBattleRanking);
+        }
+    }
+
+    const onlineBattleRankImageMap = {
+        1: '/img/online-1st.png',
+        2: '/img/online-2nd.png',
+        3: '/img/online-3rd.png',
+        4: '/img/online-4th.png'
+    };
+
+    const defaultOnlineBattleImageUrl = '/img/online-1st.png'; // fallback (이미지 자산이 1~4만 있는 상태)
+
+    // 썸네일 URL 우선순위:
+    // 1) 고스트런: 고정 이미지
+    // 2) 온라인배틀: 등수별 이미지
+    // 3) 일반: 코스 썸네일 (코스로 뛴 기록의 경우)
+    const imageUrl = isGhostRun
+        ? defaultGhostImageUrl
+        : (isOnlineBattle
+            ? (onlineBattleRankImageMap[onlineBattleRanking] || defaultOnlineBattleImageUrl)
+            : (record.courseThumbnailUrl || null));
+
+    // ✅ 제목 결정 (우선순위: 고스트런 > 온라인배틀 > 일반)
+    const courseTitle = isGhostRun
+        ? '고스트런'
+        : (isOnlineBattle ? '온라인배틀' : (record.courseTitle || '러닝'));
+
+    const titleSuffix = (!isGhostRun && isOnlineBattle && onlineBattleRanking)
+        ? ` <span class="run-title-rank">#${onlineBattleRanking}</span>`
+        : '';
 
     // 러닝 상태 확인
     const runStatus = record.runStatus || 'COMPLETED';
@@ -613,7 +661,7 @@ function createRunCard(record) {
                     <span class="run-status-badge run-status-${runStatus.toLowerCase().replace('_', '-')}">${statusLabel}</span>
                 </div>
             </div>
-            <p class="run-title">${courseTitle}</p>
+            <p class="run-title">${courseTitle}${titleSuffix}</p>
             <div class="run-stats">
                 <span class="run-stat">
                     <span class="run-icon">🏃‍♂️</span>
@@ -1628,7 +1676,7 @@ async function loadPointBalance() {
 
         const payload = await response.json();
         const pointData = payload?.data;
-        
+
         if (pointData) {
             const availablePoints = pointData.availablePoints || 0;
             renderPointBalance(availablePoints);

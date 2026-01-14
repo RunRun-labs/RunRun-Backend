@@ -23,8 +23,8 @@
 <main class="page mypage-edit-page">
     <button class="back-button" type="button" aria-label="마이페이지로 돌아가기">
         <img
-                th:src="@{/img/icons/back.png}"
-                src="/img/icons/back.png"
+                th:src="@{/img/icons/back.svg}"
+                src="/img/icons/back.svg"
                 alt="뒤로가기 아이콘"
         />
     </button>
@@ -34,8 +34,8 @@
     </div>
 
     <section class="headline">
-        <h1>My Profile</h1>
-        <p>내 정보를 수정할 수 있어요.</p>
+        <h1>프로필 수정</h1>
+        <p>내 정보를 수정할 수 있어요</p>
     </section>
 
     <section class="profile-edit-card">
@@ -47,6 +47,13 @@
                         alt="프로필 이미지 미리보기"
                         hidden
                 />
+                <img
+                        data-role="default-profile"
+                        th:src="@{/img/default-profile.svg}"
+                        src="/img/default-profile.svg"
+                        alt="기본 프로필"
+                        hidden
+                />
                 <span class="profile-initial" data-role="profile-initial">RR</span>
             </div>
             <input
@@ -56,7 +63,7 @@
                     hidden
             />
             <div class="profile-visual-text">
-                <p>현재 프로필 이미지는 나중에 업로드 기능으로 변경할 수 있어요.</p>
+                <p>프로필 이미지를 클릭하여 변경할 수 있습니다</p>
             </div>
         </div>
 
@@ -69,7 +76,7 @@
             <div class="section-title">계정 정보</div>
 
             <label class="field">
-                <span class="field-label">Email</span>
+                <span class="field-label">이메일</span>
                 <input
                         type="email"
                         name="userEmail"
@@ -80,7 +87,7 @@
             <p class="field-feedback" data-feedback="userEmail" aria-live="polite"></p>
 
             <label class="field">
-                <span class="field-label">Name</span>
+                <span class="field-label">이름</span>
                 <input
                         type="text"
                         name="userName"
@@ -91,14 +98,14 @@
             </label>
             <p class="field-feedback" data-feedback="userName" aria-live="polite"></p>
 
-            <div class="section-title">프로필</div>
+            <div class="section-title">신체 정보</div>
 
             <label class="field">
-                <span class="field-label">Height (cm)</span>
+                <span class="field-label">키 (cm)</span>
                 <input
                         type="number"
                         name="heightCm"
-                        placeholder="키 (cm)"
+                        placeholder="키를 입력하세요"
                         min="50"
                         max="300"
                 />
@@ -106,11 +113,11 @@
             <p class="field-feedback" data-feedback="heightCm" aria-live="polite"></p>
 
             <label class="field">
-                <span class="field-label">Weight (kg)</span>
+                <span class="field-label">몸무게 (kg)</span>
                 <input
                         type="number"
                         name="weightKg"
-                        placeholder="몸무게 (kg)"
+                        placeholder="몸무게를 입력하세요"
                         min="10"
                         max="500"
                 />
@@ -120,7 +127,7 @@
             <!-- BMI 표시 영역 -->
             <div class="bmi-display" id="bmiDisplay" hidden>
                 <div class="bmi-info">
-                    <span class="bmi-label">BMI:</span>
+                    <span class="bmi-label">BMI</span>
                     <span class="bmi-value" id="bmiValue">-</span>
                     <span class="bmi-status" id="bmiStatus"></span>
                 </div>
@@ -132,55 +139,8 @@
     </section>
 </main>
 
-<template id="bottomNavTemplate">
-    <nav class="bottom-nav" aria-label="하단 메뉴">
-        <a class="nav-item" th:href="@{/chat}" href="/chat">
-            <img
-                    src="/img/icons/chat.svg"
-                    alt=""
-                    aria-hidden="true"
-            />
-            <span>chat</span>
-        </a>
-        <a class="nav-item" th:href="@{/feed}" href="/feed">
-            <img
-                    src="/img/icons/feed.svg"
-                    alt=""
-                    aria-hidden="true"
-            />
-            <span>feed</span>
-        </a>
-        <a class="nav-item" th:href="@{/}" href="/">
-            <img
-                    src="/img/icons/home.svg"
-                    alt=""
-                    aria-hidden="true"
-            />
-            <span>home</span>
-        </a>
-        <a class="nav-item" th:href="@{/match}" href="/match">
-            <img
-                    src="/img/icons/match.svg"
-                    alt=""
-                    aria-hidden="true"
-            />
-            <span>match</span>
-        </a>
-        <a class="nav-item" th:href="@{/my}" href="/my">
-            <img
-                    src="/img/icons/my.svg"
-                    alt=""
-                    aria-hidden="true"
-            />
-            <span>my</span>
-        </a>
-    </nav>
-</template>
-
-<div
-        id="bottomNavMount"
-        th:replace="~{common/bottom-nav :: bottomNav}"
-></div>
+<!-- Bottom Navigation -->
+<div th:replace="~{common/bottom-nav :: bottomNav}"></div>
 
 <script src="/js/mypage-edit.js" th:src="@{/js/mypage-edit.js}"></script>
 </body>

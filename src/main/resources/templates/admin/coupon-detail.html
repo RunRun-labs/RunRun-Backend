@@ -19,8 +19,16 @@
           <div class="page-header">
             <h1 class="page-title">쿠폰 상세</h1>
             <div style="display: flex; gap: 12px;">
-              <button type="button" class="create-button" onclick="window.location.href='/admin/coupon/update/' + couponId">
+              <button type="button" class="create-button" onclick="goToCouponUpdate()">
                 수정하기
+              </button>
+              <button 
+                type="button" 
+                class="create-button" 
+                style="background: #ff4444;"
+                onclick="deleteCoupon()"
+              >
+                삭제하기
               </button>
               <button type="button" class="create-button" style="background: var(--text-secondary);" onclick="window.location.href='/admin/coupon/inquiry'">
                 목록으로
