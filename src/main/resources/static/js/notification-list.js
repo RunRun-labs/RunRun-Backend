@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
           || notification.relatedType === "ONLINE") {
         const isValid = await validateMatchSession(notification.relatedId);
         if (!isValid) {
-          alert("이미 종료되거나 유효하지 않은 매치 세션입니다.");
+          showToast("이미 종료되거나 유효하지 않은 매치 세션입니다.", "error");
           return; // 이동 중단
         }
       }
@@ -254,6 +254,80 @@ document.addEventListener("DOMContentLoaded", () => {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // 토스트 메시지 표시 함수
+  function showToast(message, type = 'error') {
+    // 기존 toast 제거
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    // Toast 컨테이너 생성 (없으면)
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      container.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000;
+        pointer-events: none;
+      `;
+      document.body.appendChild(container);
+    }
+
+    // Toast 메시지 생성
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+      background-color: ${type === 'error' ? 'rgba(239, 68, 68, 0.95)' : 'rgba(59, 130, 246, 0.95)'};
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      pointer-events: auto;
+      animation: slideDown 0.3s ease-out;
+      max-width: 90%;
+      text-align: center;
+    `;
+    container.appendChild(toast);
+
+    // 애니메이션 스타일 추가 (없으면)
+    if (!document.getElementById('toast-animation-style')) {
+      const style = document.createElement('style');
+      style.id = 'toast-animation-style';
+      style.textContent = `
+        @keyframes slideDown {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // 3초 후 제거
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.remove();
+        }
+      }, 300);
+    }, 3000);
   }
 
   // 알림 목록 로드
