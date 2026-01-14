@@ -75,6 +75,22 @@ public class RecruitService {
       throw new ValidationException(ErrorCode.AGE_RESTRICTION);
     }
 
+    LocalDate meetingDate = request.getMeetingAt().toLocalDate();
+
+    boolean hasHostedRecruitThatDay =
+        recruitRepository.existsByUserAndMeetingAtBetween(
+            user,
+            meetingDate.atStartOfDay(),
+            meetingDate.atTime(23, 59, 59)
+        );
+
+    boolean hasJoinedRecruitThatDay =
+        recruitUserRepository.existsByUserAndMeetingDate(user, meetingDate);
+
+    if (hasHostedRecruitThatDay || hasJoinedRecruitThatDay) {
+      throw new ValidationException(ErrorCode.ALREADY_PARTICIPATED_SAME_DAY);
+    }
+
     Course course = null;
     if (request.getCourseId() != null) {
       course = courseRepository.findById(request.getCourseId())
