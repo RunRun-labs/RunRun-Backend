@@ -1,118 +1,118 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: runrun
-  labels:
-    app: runrun
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: runrun
-  template:
-    metadata:
-      labels:
+    name: runrun
+    labels:
         app: runrun
-    spec:
-      containers:
-        - name: runrun
-          image: ${ECR_REPO_URI}:${IMAGE_TAG}
-          envFrom:
-            - secretRef:
-                name: runrun-env
-          env:
-            - name: SPRING_PROFILES_ACTIVE
-              value: 'prod'
-            - name: SPRING_DATASOURCE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: runrun-db
-                  key: url
-            - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: runrun-db
-                  key: username
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: runrun-db
-                  key: password
-          ports:
-            - containerPort: 8080
-          imagePullPolicy: Always
-          resources:
-            limits:
-              memory: '512Mi'
-              cpu: '500m'
-            requests:
-              memory: '256Mi'
-              cpu: '250m'
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: runrun
+    template:
+        metadata:
+            labels:
+                app: runrun
+        spec:
+            containers:
+                - name: runrun
+                  image: ${ECR_REPO_URI}:${IMAGE_TAG}
+                  envFrom:
+                      - secretRef:
+                            name: runrun-env
+                  env:
+                      - name: SPRING_PROFILES_ACTIVE
+                        value: 'prod'
+                      - name: SPRING_DATASOURCE_URL
+                        valueFrom:
+                            secretKeyRef:
+                                name: runrun-db
+                                key: url
+                      - name: SPRING_DATASOURCE_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: runrun-db
+                                key: username
+                      - name: SPRING_DATASOURCE_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: runrun-db
+                                key: password
+                  ports:
+                      - containerPort: 8080
+                  imagePullPolicy: Always
+                  resources:
+                      limits:
+                          memory: '512Mi'
+                          cpu: '500m'
+                      requests:
+                          memory: '256Mi'
+                          cpu: '250m'
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: runrun-svc
-  namespace: default
-  labels:
-    app: runrun
+    name: runrun-svc
+    namespace: default
+    labels:
+        app: runrun
 spec:
-  selector:
-    app: runrun
-  ports:
-    - name: http
-      protocol: TCP
-      port: 80
-      targetPort: 8080
-  type: ClusterIP
+    selector:
+        app: runrun
+    ports:
+        - name: http
+          protocol: TCP
+          port: 80
+          targetPort: 8080
+    type: ClusterIP
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: ssl-redirect
-  namespace: default
+    name: ssl-redirect
+    namespace: default
 spec:
-  type: ClusterIP
-  ports:
-    - name: use-annotation
-      port: 443
-      targetPort: 443
+    type: ClusterIP
+    ports:
+        - name: use-annotation
+          port: 443
+          targetPort: 443
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: runrun-ingress
-  namespace: default
-  annotations:
-    kubernetes.io/ingress.class: 'alb'
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:mx-central-1:118320467932:certificate/38537b2c-f224-4655-882c-65880c767bdb"
-    alb.ingress.kubernetes.io/actions.ssl-redirect: >-
-      {"Type":"redirect","RedirectConfig":{"Protocol":"HTTPS","Port":"443","StatusCode":"HTTP_301"}}
-    alb.ingress.kubernetes.io/healthcheck-path: '/actuator/health'
-    alb.ingress.kubernetes.io/healthcheck-port: 'traffic-port'
-    alb.ingress.kubernetes.io/success-codes: '200-399'
+    name: runrun-ingress
+    namespace: default
+    annotations:
+        kubernetes.io/ingress.class: 'alb'
+        alb.ingress.kubernetes.io/scheme: internet-facing
+        alb.ingress.kubernetes.io/target-type: ip
+        alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+        alb.ingress.kubernetes.io/certificate-arn: 'arn:aws:acm:mx-central-1:118320467932:certificate/38537b2c-f224-4655-882c-65880c767bdb'
+        alb.ingress.kubernetes.io/actions.ssl-redirect: >-
+            {"Type":"redirect","RedirectConfig":{"Protocol":"HTTPS","Port":"443","StatusCode":"HTTP_301"}}
+        alb.ingress.kubernetes.io/healthcheck-path: '/actuator/health/liveness'
+        alb.ingress.kubernetes.io/healthcheck-port: 'traffic-port'
+        alb.ingress.kubernetes.io/success-codes: '200-399'
 spec:
-  rules:
-    - host: api.runrunmatch.cloud
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: ssl-redirect
-                port:
-                  name: use-annotation
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: runrun-svc
-                port:
-                  number: 80
+    rules:
+        - host: api.runrunmatch.cloud
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: ssl-redirect
+                            port:
+                                name: use-annotation
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: runrun-svc
+                            port:
+                                number: 80
