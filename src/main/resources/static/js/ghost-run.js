@@ -21,6 +21,16 @@ let lastComparison = {
   timeDiffSeconds: 0
 };
 
+// ==========================
+// TTS hooks
+// ==========================
+let ttsReady = false;
+let ghostStatusState = null; // "AHEAD" | "BEHIND" | null
+let ghostStatusChangeTime = null;
+let ghostStatusTimer = null;
+let completedHandled = false; // 종료 TTS 후 TTS 중단 플래그
+let lastKmSpoken = 0; // 마지막으로 재생한 km (DIST_DONE용)
+
 // GPS 추적
 let watchId = null;
 let lastPosition = null;
@@ -30,6 +40,13 @@ let elapsedSeconds = 0;
 let isRunning = false;
 let isPaused = false;
 let isFinished = false;
+
+// 속도 제한(경고용)
+let tooFastHardMps = 8.5; // 하드: 8.5m/s(30.6km/h) 이상은 거의 GPS 점프/차량 → 즉시 경고
+let tooFastSoftMps = 6.0; // 소프트: 6.0m/s(21.6km/h) 이상이 3회 연속이면 경고
+let tooFastSoftCount = 0;
+let tooFastAlertCooldownMs = 15000;
+let lastTooFastAlertAt = 0;
 
 // 타이머
 let elapsedTimerInterval = null;
@@ -89,6 +106,27 @@ function init() {
   
   // 초기 대기 상태 설정
   setWaitingState();
+  
+  // TTS 미리 로드
+  ensureTtsOnce().catch(() => {
+    console.warn("TTS 로드 실패 (무시)");
+  });
+}
+
+/**
+ * TTS 초기화
+ */
+async function ensureTtsOnce() {
+  if (ttsReady) return true;
+  if (!window.TtsManager) return false;
+  try {
+    await window.TtsManager.ensureLoaded({ sessionId: SESSION_ID, mode: "GHOST" });
+    ttsReady = true;
+    return true;
+  } catch (e) {
+    console.warn("TTS 로드 실패(무시):", e?.message || e);
+    return false;
+  }
 }
 
 /**
@@ -272,24 +310,72 @@ function updateComparisonUI(comparison) {
     comparisonStatus.textContent = '👻 고스트 출발! 🏁';
     comparisonDistance.textContent = '0m';
     comparisonDistance.className = 'comparison-distance';
+    ghostStatusState = null;
+    if (ghostStatusTimer) {
+      clearTimeout(ghostStatusTimer);
+      ghostStatusTimer = null;
+    }
   }
   // 앞섬
   else if (status === 'AHEAD') {
     comparisonStatus.textContent = '고스트보다 앞서고 있어요! 🔥';
     comparisonDistance.textContent = `+${distanceDiffMeters}m`;
     comparisonDistance.className = 'comparison-distance ahead';
+    
+    // 상태 변경 감지 및 TTS 처리
+    if (ghostStatusState !== 'AHEAD') {
+      // 상태가 변경됨 (BEHIND → AHEAD 또는 null → AHEAD)
+      if (ghostStatusState === 'BEHIND') {
+        // 뒤→앞으로 변경: 5초 타이머 시작
+        if (ghostStatusTimer) {
+          clearTimeout(ghostStatusTimer);
+        }
+        ghostStatusChangeTime = Date.now();
+        ghostStatusTimer = setTimeout(() => {
+          // 5초 후에도 AHEAD 상태이면 TTS 재생
+          if (ghostStatusState === 'AHEAD' && ttsReady && window.TtsManager && !completedHandled) {
+            window.TtsManager.speak("GHOST_AHEAD");
+          }
+        }, 5000);
+      }
+      ghostStatusState = 'AHEAD';
+    }
   }
   // 뒤처짐
   else if (status === 'BEHIND') {
     comparisonStatus.textContent = '고스트를 따라잡아요! 💪';
     comparisonDistance.textContent = `-${distanceDiffMeters}m`;
     comparisonDistance.className = 'comparison-distance behind';
+    
+    // 상태 변경 감지 및 TTS 처리
+    if (ghostStatusState !== 'BEHIND') {
+      // 상태가 변경됨 (AHEAD → BEHIND 또는 null → BEHIND)
+      if (ghostStatusState === 'AHEAD') {
+        // 앞→뒤로 변경: 5초 타이머 시작
+        if (ghostStatusTimer) {
+          clearTimeout(ghostStatusTimer);
+        }
+        ghostStatusChangeTime = Date.now();
+        ghostStatusTimer = setTimeout(() => {
+          // 5초 후에도 BEHIND 상태이면 TTS 재생
+          if (ghostStatusState === 'BEHIND' && ttsReady && window.TtsManager && !completedHandled) {
+            window.TtsManager.speak("GHOST_BEHIND");
+          }
+        }, 5000);
+      }
+      ghostStatusState = 'BEHIND';
+    }
   }
   // 동률 (1초 이후)
   else {
     comparisonStatus.textContent = '고스트 기록과 동률! ⚡';
     comparisonDistance.textContent = '';
     comparisonDistance.className = 'comparison-distance';
+    ghostStatusState = null;
+    if (ghostStatusTimer) {
+      clearTimeout(ghostStatusTimer);
+      ghostStatusTimer = null;
+    }
   }
 }
 
@@ -326,6 +412,11 @@ function handleStart() {
   
   // 시작 메시지 표시
   setStartingState();
+  
+  // START_RUN TTS
+  if (ttsReady && window.TtsManager) {
+    window.TtsManager.speak("START_RUN", { priority: 2, cooldownMs: 0 });
+  }
 }
 
 /**
@@ -383,6 +474,46 @@ function autoFinish() {
   
   // 러닝 종료 처리
   isFinished = true;
+  
+  // ✅ 종료 이벤트 처리: TTS 즉시 중단, 큐 비우기, 종료 멘트만 재생, 이후 Lock
+  if (ttsReady && window.TtsManager && !completedHandled) {
+    // 1. 현재 재생 중인 TTS 즉시 중단
+    if (typeof window.TtsManager.stopAll === "function") {
+      window.TtsManager.stopAll();
+    } else if (typeof window.TtsManager.stop === "function") {
+      window.TtsManager.stop();
+    }
+    
+    // 2. 재생 대기 큐 비우기
+    if (typeof window.TtsManager.clearQueue === "function") {
+      window.TtsManager.clearQueue();
+    } else if (typeof window.TtsManager.clear === "function") {
+      window.TtsManager.clear();
+    }
+    
+    // 3. 종료 멘트('러닝이 종료되었습니다')만 1회 재생
+    const endRunPromise = window.TtsManager.speak("END_RUN", {
+      priority: 2,
+      cooldownMs: 0,
+    });
+    
+    if (endRunPromise && typeof endRunPromise.then === "function") {
+      endRunPromise
+        .then(() => {
+          // 4. 재생이 끝나면 TTS Lock(이후 어떤 TTS 요청도 무시)
+          completedHandled = true;
+        })
+        .catch(() => {
+          // 에러가 나도 Lock 설정
+          completedHandled = true;
+        });
+    } else {
+      // Promise를 지원하지 않는 경우를 대비한 fallback
+      setTimeout(() => {
+        completedHandled = true;
+      }, 3000);
+    }
+  }
   
   console.log('✅ 완료 요청');
   
@@ -496,6 +627,12 @@ function stopRunning() {
     clearInterval(elapsedTimerInterval);
     elapsedTimerInterval = null;
   }
+  
+  // 고스트 상태 타이머 정리
+  if (ghostStatusTimer) {
+    clearTimeout(ghostStatusTimer);
+    ghostStatusTimer = null;
+  }
 }
 
 /**
@@ -507,6 +644,8 @@ function startElapsedTimer() {
       elapsedSeconds++;
       updateElapsedTimeUI();
       updatePaceUI();
+      // ✅ 거리/남은거리 TTS는 GPS 업데이트에서 호출하되, 타이머에서도 호출하여 안정성 확보
+      updateDistanceUI();
     }
   }, 1000);
 }
@@ -578,8 +717,8 @@ function onGPSSuccess(position) {
     longitude
   );
   
-  // ✅ 3. GPS 점프 감지 (100m 이상 = 오류)
-  if (distance > 100) {
+  // ✅ 3. GPS 점프 감지 (50m 이상 = 오류)
+  if (distance > 50) {
     console.warn('⚠️ GPS 점프 감지:', distance.toFixed(2), 'm - 무시');
     lastPosition = { lat: latitude, lng: longitude, time: currentTime };  // 위치만 업데이트
     return;
@@ -587,11 +726,70 @@ function onGPSSuccess(position) {
   
   // ✅ 4. 최소 이동 거리 필터 (3m 이상만 인정)
   if (distance >= 3) {
+    // ✅ 속도 제한(경고/로그) - lastPosition 업데이트 전에 계산
+    try {
+      let speedMps = null;
+      if (speed != null && Number.isFinite(speed) && speed > 0) {
+        speedMps = speed; // m/s
+      } else {
+        const prevTime = lastPosition.time;
+        const dtSec = (currentTime - prevTime) / 1000;
+        if (dtSec > 0) {
+          speedMps = distance / dtSec;
+        }
+      }
+
+      if (speedMps != null && Number.isFinite(speedMps)) {
+        const canAlert = currentTime - lastTooFastAlertAt > tooFastAlertCooldownMs;
+
+        if (speedMps >= tooFastHardMps) {
+          if (canAlert) {
+            console.warn("속도가 너무 빠릅니다(hard):", speedMps, "m/s");
+            lastTooFastAlertAt = currentTime;
+          }
+        } else if (speedMps >= tooFastSoftMps) {
+          tooFastSoftCount += 1;
+          if (tooFastSoftCount >= 3 && canAlert) {
+            console.warn("속도가 너무 빠릅니다(soft):", speedMps, "m/s");
+            lastTooFastAlertAt = currentTime;
+            tooFastSoftCount = 0;
+          }
+        } else {
+          tooFastSoftCount = 0;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    
     // 완주했으면 거리 누적 안 함
     if (!isFinished) {
       totalDistance += distance;
     }
     lastPosition = { lat: latitude, lng: longitude, time: currentTime };
+
+      if (speedMps != null && Number.isFinite(speedMps)) {
+        const canAlert = currentTime - lastTooFastAlertAt > tooFastAlertCooldownMs;
+
+        if (speedMps >= tooFastHardMps) {
+          if (canAlert) {
+            console.warn("속도가 너무 빠릅니다(hard):", speedMps, "m/s");
+            lastTooFastAlertAt = currentTime;
+          }
+        } else if (speedMps >= tooFastSoftMps) {
+          tooFastSoftCount += 1;
+          if (tooFastSoftCount >= 3 && canAlert) {
+            console.warn("속도가 너무 빠릅니다(soft):", speedMps, "m/s");
+            lastTooFastAlertAt = currentTime;
+            tooFastSoftCount = 0;
+          }
+        } else {
+          tooFastSoftCount = 0;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
     
     // UI 업데이트
     updateDistanceUI();
@@ -690,6 +888,22 @@ function sendGPSData() {
 function updateDistanceUI() {
   const km = (totalDistance / 1000).toFixed(2);
   currentDistanceEl.textContent = km;
+  
+  // ✅ TTS: 거리/남은거리
+  if (ttsReady && window.TtsManager && !completedHandled && !isFinished && ghostData && ghostData.targetDistance) {
+    const totalDistanceKm = totalDistance / 1000; // 미터 -> km
+    const remainingDistanceKm = Math.max(0, ghostData.targetDistance - totalDistanceKm);
+    
+    // DIST_DONE: km 단위 체크 (1km, 2km, 3km...)
+    const currentKm = Math.floor(totalDistanceKm);
+    if (currentKm > lastKmSpoken && currentKm >= 1 && currentKm <= 10) {
+      lastKmSpoken = currentKm;
+      window.TtsManager.speak(`DIST_DONE_${currentKm}KM`, { priority: 2, cooldownMs: 0 });
+    }
+    
+    // DIST_REMAIN: 남은 거리
+    window.TtsManager.onDistance(totalDistanceKm, remainingDistanceKm);
+  }
 }
 
 function updateElapsedTimeUI() {
@@ -701,6 +915,11 @@ function updatePaceUI() {
     const km = totalDistance / 1000;
     const paceMinutes = elapsedSeconds / 60 / km; // 분/km
     currentPaceEl.textContent = formatPace(paceMinutes);
+    
+    // ✅ 페이스 TTS
+    if (ttsReady && window.TtsManager && !completedHandled && !isFinished) {
+      window.TtsManager.maybeSpeakPace(paceMinutes);
+    }
   }
 }
 

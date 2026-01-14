@@ -74,6 +74,21 @@ function loadResultData() {
     console.log('📋 결과 데이터 파싱 완료:', resultData);
     
     renderResult(resultData);
+    
+    // ✅ 러닝 결과 로드 후 광고 팝업 표시
+    setTimeout(async () => {
+      try {
+        if (typeof loadAd === 'function' && typeof createAdPopup === 'function') {
+          const adData = await loadAd('RUN_END_BANNER');
+          if (adData) {
+            const adPopup = createAdPopup(adData);
+            document.body.appendChild(adPopup);
+          }
+        }
+      } catch (error) {
+        console.warn('러닝 결과 광고 로드 실패:', error);
+      }
+    }, 1000);
   })
   .catch(error => {
     console.error('❌ 결과 데이터 로드 실패:', error);

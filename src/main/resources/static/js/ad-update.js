@@ -133,7 +133,9 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   fields.imageFile.addEventListener("change", () => validateField("imageFile"));
-  fields.redirectUrl.addEventListener("blur", () => validateField("redirectUrl"));
+  fields.redirectUrl.addEventListener("blur", () =>
+    validateField("redirectUrl")
+  );
   fields.redirectUrl.addEventListener("input", () => {
     if (fields.redirectUrl.classList.contains("error")) {
       validateField("redirectUrl");
@@ -191,14 +193,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const formData = new FormData();
-    
+
     // DTO를 JSON으로 추가
     const dto = {
       name: fields.name.value.trim(),
       redirectUrl: fields.redirectUrl.value.trim(),
     };
-    formData.append("dto", new Blob([JSON.stringify(dto)], { type: "application/json" }));
-    
+    formData.append(
+      "dto",
+      new Blob([JSON.stringify(dto)], { type: "application/json" })
+    );
+
     // 이미지 파일이 있으면 추가
     if (fields.imageFile.files.length > 0) {
       formData.append("imageFile", fields.imageFile.files[0]);
@@ -230,7 +235,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (result.success) {
         alert("광고가 수정되었습니다.");
-        window.location.href = "/admin/ad/inquiry";
+        window.location.href = `/admin/ad/detail/${adId}`;
       } else {
         throw new Error(result.message || "수정에 실패했습니다.");
       }

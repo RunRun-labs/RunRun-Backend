@@ -3,6 +3,7 @@ package com.multi.runrunbackend.domain.auth.service;
 
 import static java.time.LocalDateTime.now;
 
+import com.multi.runrunbackend.common.event.UserLoginEvent;
 import com.multi.runrunbackend.common.event.UserSignedUpEvent;
 import com.multi.runrunbackend.common.exception.custom.DuplicateException;
 import com.multi.runrunbackend.common.exception.custom.NotFoundException;
@@ -96,7 +97,14 @@ public class AuthService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
         user.updateLastLogin(now());
 
-        return AuthSignInResDto.from(token, user);
+        // 로그인 이벤트 발행 (생일 쿠폰 발급용)
+        eventPublisher.publishEvent(new UserLoginEvent(user.getId()));
+
+        // 관리자 여부 확인 (ROLE_ADMIN 또는 ADMIN)
+        Boolean isAdmin = roles.stream()
+            .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ADMIN"));
+
+        return AuthSignInResDto.from(token, user, isAdmin);
     }
 }
 

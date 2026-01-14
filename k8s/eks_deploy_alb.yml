@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: runrun
+  labels:
+    app: runrun
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: runrun
+  template:
+    metadata:
+      labels:
+        app: runrun
+    spec:
+      containers:
+        - name: runrun
+          image: ${ECR_REPO_URI}:latest
+          envFrom:
+            - secretRef:
+                name: runrun-env
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: runrun-db
+                  key: url
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: runrun-db
+                  key: username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: runrun-db
+                  key: password
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: runrun-svc
+  labels:
+    app: runrun
+spec:
+  selector:
+    app: runrun
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80            # ALB가 접근할 포트
+      targetPort: 8080    # 컨테이너 내부 포트
+  type: ClusterIP       # ALB controller (Ingress) 사용 시 ClusterIP 권장 (pod IP 직접 target 등록)
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: runrun-ingress
+  namespace: default
+  annotations:
+    # ALB 컨트롤러 동작 관련 필수/권장 어노테이션
+    kubernetes.io/ingress.class: "alb"                                 # ingressClassName 대신 안전하게 지정
+    alb.ingress.kubernetes.io/scheme: internet-facing                    # internet-facing 또는 internal
+    alb.ingress.kubernetes.io/target-type: ip                            # ip -> pod IP를 타깃으로 등록 (노드 대신)
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'              # HTTP 포트 설정
+    alb.ingress.kubernetes.io/healthcheck-path: "/actuator/health"                      # ALB 헬스체크 경로 (서비스에 맞게 조정) 앱에서 인증 없이 200을 반환하는 헬스 엔드포인트(예: /actuator/health)를 추가 시큐리티랑 필터에추가
+    alb.ingress.kubernetes.io/healthcheck-port: "traffic-port"  #port: 80 targetPort: 8090 이므로 ALB가 Service→Pod로 보낼 때 내부적으로 올바른 포트(=8090)로 전달되도록 컨트롤러가 처리
+    alb.ingress.kubernetes.io/success-codes: "200-399"
+    # 필요 시 세부 설정 추가 (예: 인증, WAF, stickiness 등)
+spec:
+  rules:
+    #    - host: example.yourdomain.com    # 실제 도메인으로 교체.
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: runrun-svc
+                port:
+                  number: 80
+#  defaultBackend:  #ALB DNS 이름(예: a12345-abcdef.ap-northeast-2.elb.amazonaws.com)으로 바로 접속
+#    service:
+#      name: spring-boot-service
+#      port:
+#        number: 80
+
+
+
+#  Ingress 이름이 같으면
+#  -> 기존 ALB를 그대로 사용하고
+#  ->변경된 설정만 반영(update)됨
+#
+#  Ingress 이름이 달라지면
+#  -> 새로운 ALB가 생성됨

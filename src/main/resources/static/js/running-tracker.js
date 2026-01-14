@@ -42,7 +42,7 @@ class RunningTracker {
     // - 러닝앱 UX 기준: "선 지우기/통계"가 멈추는 것보다 약간의 오차가 낫다.
     // GPS accuracy가 너무 나쁘면(튀면) 아예 전송/누적에서 제외
     this.maxAccuracyM = 35;
-    this.maxJumpKm = 0.08; // 50m 이상은 점프(무시)
+    this.maxJumpKm = 0.05; // 50m 이상은 점프(무시)
 
     // 속도 제한(경고용)
     // - 하드: 8.5m/s(30.6km/h) 이상은 거의 GPS 점프/차량 → 즉시 경고

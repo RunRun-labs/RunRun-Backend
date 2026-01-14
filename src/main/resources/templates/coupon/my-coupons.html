@@ -30,6 +30,9 @@
   <div class="page">
     <!-- Main Content -->
     <main class="coupon-content">
+      <!-- 광고 배너 (쿠폰 상단) -->
+      <div id="coupon-top-ad"></div>
+      
       <!-- Coupon Code Input Section -->
       <div class="coupon-input-section">
         <div class="coupon-input-container">
@@ -68,6 +71,26 @@
     <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
   </div>
 
+  <script src="/js/ad-common.js" th:src="@{/js/ad-common.js}"></script>
   <script src="/js/my-coupons.js" th:src="@{/js/my-coupons.js}"></script>
+  <script>
+    // 쿠폰 페이지 로드 시 상단 광고 표시
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        if (typeof loadAd === 'function' && typeof createAdBanner === 'function') {
+          const adData = await loadAd('COUPON_LIST_BANNER');
+          if (adData) {
+            const adContainer = document.getElementById('coupon-top-ad');
+            if (adContainer) {
+              const adBanner = createAdBanner(adData);
+              adContainer.appendChild(adBanner);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('쿠폰 페이지 광고 로드 실패:', error);
+      }
+    });
+  </script>
 </body>
 </html>

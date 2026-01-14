@@ -155,5 +155,21 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long>,
         LIMIT 5
         """, nativeQuery = true)
     List<Object[]> findTop5CouponsByIssued(@Param("today") LocalDate today);
+    
+    // 올해 생일 쿠폰 발급 여부 확인 (발급 연도 기준)
+    // @SQLRestriction 때문에 native query 사용 (status와 무관하게 모든 레코드 확인)
+    @Query(value = """
+        SELECT COUNT(*) > 0
+        FROM coupon_issue ci
+        JOIN coupon_role cr ON ci.coupon_id = cr.coupon_id
+        WHERE ci.user_id = :userId
+          AND cr.trigger_event = :triggerEvent
+          AND EXTRACT(YEAR FROM ci.created_at) = :year
+        """, nativeQuery = true)
+    boolean existsByUserIdAndTriggerEventAndYear(
+        @Param("userId") Long userId,
+        @Param("triggerEvent") String triggerEvent,
+        @Param("year") int year
+    );
 }
 

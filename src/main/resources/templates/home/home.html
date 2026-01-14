@@ -31,6 +31,9 @@
         <h1 class="home-logo">RUNRUN</h1>
     </header>
 
+    <!-- 광고 배너 (홈 상단) -->
+    <div id="home-top-ad"></div>
+
     <!-- 오늘의 러닝 통계 배너 -->
     <section class="today-stats-section">
         <div class="today-stats-header">
@@ -205,6 +208,26 @@
 ></div>
 
 <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+<script src="/js/ad-common.js" th:src="@{/js/ad-common.js}"></script>
 <script src="/js/home.js" th:src="@{/js/home.js}"></script>
+<script>
+  // 홈 페이지 로드 시 상단 광고 표시
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      if (typeof loadAd === 'function' && typeof createAdBanner === 'function') {
+        const adData = await loadAd('HOME_TOP_BANNER');
+        if (adData) {
+          const adContainer = document.getElementById('home-top-ad');
+          if (adContainer) {
+            const adBanner = createAdBanner(adData);
+            adContainer.appendChild(adBanner);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('홈 페이지 광고 로드 실패:', error);
+    }
+  });
+</script>
 </body>
 </html>

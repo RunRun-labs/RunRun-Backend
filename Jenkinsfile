@@ -113,6 +113,7 @@ helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
 
 kubectl apply -f k8s/monitoring/runrun-servicemonitor.yaml
 kubectl apply -f k8s/monitoring/runrun-prometheusrule.yaml
+kubectl apply -f k8s/monitoring/grafana-ingress.yaml
 
 kubectl -n monitoring get pods
 '''
@@ -174,4 +175,3 @@ docker image prune -f || true
     }
   }
 }
-

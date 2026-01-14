@@ -138,6 +138,12 @@ body {
     background: #f5f5f5;
 }
 
+/* 광고 배너 컨테이너 - 양옆에 딱 붙게 */
+#coupon-top-ad {
+    width: calc(100% + 40px);
+    margin: 0 -20px;
+}
+
 /* Coupon Code Input Section */
 .coupon-input-section {
     width: 100%;

@@ -91,8 +91,18 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.removeItem("userId");
         }
 
+        // 관리자 여부 확인
+        console.log("로그인 응답 데이터:", loginData);
+        console.log("isAdmin 값:", loginData?.isAdmin, "타입:", typeof loginData?.isAdmin);
+        if (loginData?.isAdmin === true) {
+          console.log("관리자로 인식 - 대시보드로 이동");
+          setMessage("로그인 성공! 관리자 페이지로 이동합니다.");
+          window.location.href = "/admin/dashboard";
+        } else {
+          console.log("일반 사용자로 인식 - 홈으로 이동");
         setMessage("로그인 성공! 홈으로 이동합니다.");
         window.location.href = "/home";
+        }
       } catch (error) {
         setMessage(error.message || "로그인 중 오류가 발생했습니다.");
       } finally {

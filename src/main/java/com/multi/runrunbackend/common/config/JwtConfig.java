@@ -35,81 +35,86 @@ public class JwtConfig {
     }
 
     @Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http.csrf(AbstractHttpConfigurer::disable)
-        .formLogin(AbstractHttpConfigurer::disable)
-        .httpBasic(AbstractHttpConfigurer::disable)
-        .sessionManagement(
-            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        )
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/auth/**",
-                "/login",
-                "/signup",
-                "/swagger-ui/**",
-                "/v3/api-docs/**",
-                "/public/**",
-                "/error",
-                "/img/**",
-                "/chat/**",
-                "/ws/**",
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .sessionManagement(
+                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/auth/**",
+                    "/login",
+                    "/signup",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/public/**",
+                    "/error",
+                    "/img/**",
+                    "/chat/**",
+                    "/ws/**",
 
-                "/home",
-                "/myPage/**",
-                "/profile/**",
-                "/friends/**",
-                "/setting/**",
-                "/notification",
+                    "/home",
+                    "/myPage/**",
+                    "/profile/**",
+                    "/friends/**",
+                    "/setting/**",
+                    "/notification",
 
-                "/course",
-                "/courseCreate",
-                "/courseDetail/**",
-                "/courseUpdate/**",
-                "/course_auto/**",
-                "/course_manual/**",
+                    "/course",
+                    "/courseCreate",
+                    "/courseDetail/**",
+                    "/courseUpdate/**",
+                    "/course_auto/**",
+                    "/course_manual/**",
 
-                "/challenge/**",
-                "/crews/new",
-                "/crews/**",
-                "/match/**",
-                "/recruit/**",
+                    "/challenge/**",
+                    "/crews/new",
+                    "/crews/**",
+                    "/match/**",
+                    "/recruit/**",
 
-                "/feed/**",
-                "/running/**",
+                    "/feed/**",
+                    "/running/**",
 
-                "/terms/**",
-                "/tts-test",
+                    "/terms/**",
+                    "/tts-test",
 
-                "/membership/**",
-                "/payment/pay",
-                "/payment/history",
-                "/payment/success",
-                "/payment/fail",
-                "/payment/free-success",
+                    "/membership/**",
+                    "/payment/pay",
+                    "/payment/history",
+                    "/payment/success",
+                    "/payment/fail",
+                    "/payment/free-success",
 
-                "/coupon/my",
-                "/coupon/event",
-                "/points/**",
+                    "/coupon/my",
+                    "/coupon/event",
+                    "/points/**",
 
-                "/api/admin/coupons/public/**",
-                "/admin/**"
-            ).permitAll()
-            .requestMatchers(
-                PathRequest.toStaticResources().atCommonLocations()
-            ).permitAll()
-            .anyRequest().authenticated()
-        )
-        .addFilterBefore(
-            new JwtFilter(tokenProvider, redisTemplate),
-            UsernamePasswordAuthenticationFilter.class
-        )
-        .exceptionHandling(exception -> exception
-            .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-            .accessDeniedHandler(jwtAccessDeniedHandler)
-        );
+                    "/actuator/health",
+                    "/actuator/health/**",
+                    "/actuator/prometheus",
+                    
+                    "/api/admin/coupons/public/**",
+                    "/admin/**",
+                    "/api/ads/**"
+                ).permitAll()
+                .requestMatchers(
+                    PathRequest.toStaticResources().atCommonLocations()
+                ).permitAll()
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(
+                new JwtFilter(tokenProvider, redisTemplate),
+                UsernamePasswordAuthenticationFilter.class
+            )
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .accessDeniedHandler(jwtAccessDeniedHandler)
+            );
 
-    return http.build();
-}
+        return http.build();
+    }
 
 }

@@ -1,5 +1,6 @@
 package com.multi.runrunbackend.domain.advertisement.repository;
 
+import com.multi.runrunbackend.domain.advertisement.constant.AdSlotType;
 import com.multi.runrunbackend.domain.advertisement.entity.AdDailyStats;
 import java.time.LocalDate;
 import java.util.List;
@@ -126,4 +127,17 @@ public interface AdDailyStatsRepository extends JpaRepository<AdDailyStats, Long
         LIMIT 5
         """, nativeQuery = true)
     List<Object[]> findTop5AdsByClicks(@Param("today") LocalDate today);
+    
+    // 특정 slotType의 오늘 노출 수 합산
+    @Query("""
+        select coalesce(sum(ds.impressions), 0)
+        from AdDailyStats ds
+        join ds.placement p
+        join p.slot s
+        join p.ad a
+        where s.slotType = :slotType
+          and ds.statDate = :today
+          and a.isDeleted = false
+        """)
+    Long sumTodayImpressionsBySlotType(@Param("slotType") AdSlotType slotType, @Param("today") LocalDate today);
 }

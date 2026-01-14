@@ -85,9 +85,9 @@ public class FeedPostService {
             String imageKey = fileStorage.upload(imageFile, FileDomainType.FEED_IMAGE, user.getId());
             imageUrl = fileStorage.toHttpsUrl(imageKey);
         } else {
-            // 코스 썸네일 URL 사용
+            // 코스 썸네일 URL 사용 (S3 key를 HTTPS URL로 변환)
             if (runningResult.getCourse() != null && runningResult.getCourse().getThumbnailUrl() != null) {
-                imageUrl = runningResult.getCourse().getThumbnailUrl();
+                imageUrl = fileStorage.toHttpsUrl(runningResult.getCourse().getThumbnailUrl());
             }
         }
 

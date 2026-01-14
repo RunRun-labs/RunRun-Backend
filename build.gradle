@@ -28,6 +28,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-mongodb'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -60,6 +61,7 @@ dependencies {
     implementation "org.n52.jackson:jackson-datatype-jts:2.0.0"
     implementation 'org.springframework.boot:spring-boot-jackson2'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     implementation platform("software.amazon.awssdk:bom:2.25.0")
     implementation "software.amazon.awssdk:s3"
     implementation "software.amazon.awssdk:auth"

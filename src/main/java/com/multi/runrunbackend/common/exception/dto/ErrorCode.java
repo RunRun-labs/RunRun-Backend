@@ -482,6 +482,8 @@ public enum ErrorCode {
     AD_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AD019",
         "광고 저장에 실패했습니다."), AD_LOCKED_BY_PLACEMENT(
         HttpStatus.FORBIDDEN, "AD020", "등록된 광고는 수정할 수 없습니다"),
+    AD_DELETE_LOCKED_BY_PLACEMENT(
+        HttpStatus.FORBIDDEN, "AD028", "등록된 광고는 삭제할 수 없습니다"),
     AD_SLOT_UPDATE_ONLY_DISABLED(HttpStatus.FORBIDDEN,
         "AD021", "비활성화 중인 슬롯을 비활성화 수 없습니다"),
     AD_SLOT_IN_USE(HttpStatus.FORBIDDEN, "AD021",

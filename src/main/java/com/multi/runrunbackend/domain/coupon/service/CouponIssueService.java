@@ -79,7 +79,22 @@ public class CouponIssueService {
             }
         }
 
+        // 생일 쿠폰 중복 발급 방지: 올해 이미 발급받았는지 확인
+        if (event == CouponTriggerEvent.BIRTHDAY) {
+            int currentYear = LocalDateTime.now().getYear();
+            log.info("[CouponAuto] checking birthday coupon. userId={}, year={}", userId, currentYear);
+            boolean alreadyIssued = couponIssueRepository.existsByUserIdAndTriggerEventAndYear(
+                userId, event.name(), currentYear);
+            log.info("[CouponAuto] birthday coupon already issued check result: {}", alreadyIssued);
+            if (alreadyIssued) {
+                log.info("[CouponAuto] already issued birthday coupon this year. userId={} year={}",
+                    userId, currentYear);
+                return;
+            }
+        }
+
         List<CouponRole> roles = couponRoleRepository.findActiveRoles(event, conditionValue);
+        log.info("[CouponAuto] found {} active roles for event={}", roles.size(), event);
         if (roles.isEmpty()) {
             log.info("[CouponAuto] no active role. event={} cond={}", event, conditionValue);
             return;

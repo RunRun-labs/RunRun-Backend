@@ -622,12 +622,12 @@ function createRunCard(record) {
     // 썸네일 URL 우선순위:
     // 1) 고스트런: 고정 이미지
     // 2) 온라인배틀: 등수별 이미지
-    // 3) 일반: recordImageUrl (코스 썰네일 대신 런닝 기록 이미지 사용)
+    // 3) 일반: 코스 썸네일 (코스로 뛴 기록의 경우)
     const imageUrl = isGhostRun
         ? defaultGhostImageUrl
         : (isOnlineBattle
             ? (onlineBattleRankImageMap[onlineBattleRanking] || defaultOnlineBattleImageUrl)
-            : (record.recordImageUrl || null));
+            : (record.courseThumbnailUrl || null));
 
     // ✅ 제목 결정 (우선순위: 고스트런 > 온라인배틀 > 일반)
     const courseTitle = isGhostRun

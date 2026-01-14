@@ -236,7 +236,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (result.success) {
         alert("광고 배치가 생성되었습니다.");
+        const placementId = result.data;
+        if (placementId) {
+          window.location.href = `/admin/ad-placement/detail/${placementId}`;
+        } else {
         window.location.href = "/admin/ad-placement/inquiry";
+        }
       } else {
         throw new Error(result.message || "생성에 실패했습니다.");
       }

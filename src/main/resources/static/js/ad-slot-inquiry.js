@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <button 
                   type="button" 
                   class="action-btn edit-btn" 
-                  onclick="window.location.href='/admin/ad-slot/update/${slot.slotId}'"
+                  onclick="handleEditSlot(${slot.slotId}, '${slot.status}')"
                 >
                   수정
                 </button>
@@ -167,6 +167,15 @@ document.addEventListener("DOMContentLoaded", function () {
     div.textContent = text;
     return div.innerHTML;
   }
+
+  // 수정 버튼 클릭 핸들러
+  window.handleEditSlot = function(slotId, status) {
+    if (status === "ENABLED") {
+      alert("활성화된 슬롯은 수정할 수 없습니다. 먼저 비활성화해주세요.");
+      return;
+    }
+    window.location.href = `/admin/ad-slot/update/${slotId}`;
+  };
 
   // 상태 토글
   window.toggleStatus = function(slotId, enabled) {

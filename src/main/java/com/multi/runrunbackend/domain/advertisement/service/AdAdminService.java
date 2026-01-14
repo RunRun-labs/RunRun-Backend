@@ -123,8 +123,16 @@ public class AdAdminService {
 
         String finalKey = ad.getImageUrl();
         if (imageFile != null && !imageFile.isEmpty()) {
-            finalKey = fileStorage.uploadIfChanged(imageFile, FileDomainType.AD_IMAGE,
-                adId, ad.getImageUrl());
+            // 기존 이미지 파일 삭제
+            if (ad.getImageUrl() != null && !ad.getImageUrl().isBlank()) {
+                try {
+                    fileStorage.delete(ad.getImageUrl());
+                } catch (Exception e) {
+                    // 삭제 실패해도 계속 진행 (이미 삭제되었을 수 있음)
+                }
+            }
+            // 새 이미지 업로드
+            finalKey = fileStorage.upload(imageFile, FileDomainType.AD_IMAGE, adId);
         }
 
         ad.update(dto, finalKey);
@@ -137,7 +145,7 @@ public class AdAdminService {
             .orElseThrow(() -> new NotFoundException(ErrorCode.AD_NOT_FOUND));
 
         if (placementRepository.existsByAdId(adId)) {
-            throw new ForbiddenException(ErrorCode.AD_LOCKED_BY_PLACEMENT);
+            throw new ForbiddenException(ErrorCode.AD_DELETE_LOCKED_BY_PLACEMENT);
         }
 
         ad.delete();

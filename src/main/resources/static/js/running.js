@@ -258,11 +258,16 @@ function updateGpsAccuracyBadge(accuracyM) {
 // Preview-only GPS (STANDBY)
 // ==========================
 function startPreviewOnlyTracking() {
+  console.log("🔍 startPreviewOnlyTracking() 호출됨");
   if (!navigator.geolocation) {
     showToast("이 브라우저는 위치 기능을 지원하지 않습니다", "warn", 3500);
     return;
   }
-  if (previewWatchId != null) return;
+  if (previewWatchId != null) {
+    console.log("⚠️ previewWatchId가 이미 설정되어 있음:", previewWatchId);
+    return;
+  }
+  console.log("📍 GPS 권한 요청 시작");
 
   // ✅ 솔로런일 때는 미리보기 메시지 표시하지 않음
   if (!isSoloRun) {
@@ -273,23 +278,78 @@ function startPreviewOnlyTracking() {
     );
   }
 
-  previewWatchId = navigator.geolocation.watchPosition(
+  // ✅ GPS 권한 요청을 위해 getCurrentPosition을 먼저 호출
+  navigator.geolocation.getCurrentPosition(
     (position) => {
-      if (!position || !position.coords) return;
-      latestPosition = position;
-      lastGpsAccuracyM = position.coords.accuracy;
-      updateGpsAccuracyBadge(lastGpsAccuracyM);
-      // ✅ heading 전달 (미리보기에서는 heading이 없을 수 있음)
-      const heading =
-        position.coords.heading != null ? position.coords.heading : null;
-      updateUserPosition(
-        position.coords.latitude,
-        position.coords.longitude,
-        heading
+      // 권한이 허용되면 첫 번째 위치도 마커로 표시
+      if (position && position.coords) {
+        latestPosition = position;
+        lastGpsAccuracyM = position.coords.accuracy;
+        updateGpsAccuracyBadge(lastGpsAccuracyM);
+        // ✅ heading 전달 (미리보기에서는 heading이 없을 수 있음)
+        const heading =
+          position.coords.heading != null ? position.coords.heading : null;
+        // ✅ map이 준비되었는지 확인 후 마커 표시
+        if (map) {
+          updateUserPosition(
+            position.coords.latitude,
+            position.coords.longitude,
+            heading
+          );
+        } else {
+          // map이 아직 준비되지 않았으면 잠시 후 재시도
+          setTimeout(() => {
+            if (map && latestPosition && latestPosition.coords) {
+              const heading =
+                latestPosition.coords.heading != null
+                  ? latestPosition.coords.heading
+                  : null;
+              updateUserPosition(
+                latestPosition.coords.latitude,
+                latestPosition.coords.longitude,
+                heading
+              );
+            }
+          }, 100);
+        }
+      }
+
+      // watchPosition 시작
+      if (previewWatchId != null) return;
+
+      previewWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+          if (!position || !position.coords) return;
+          latestPosition = position;
+          lastGpsAccuracyM = position.coords.accuracy;
+          updateGpsAccuracyBadge(lastGpsAccuracyM);
+          // ✅ heading 전달 (미리보기에서는 heading이 없을 수 있음)
+          const heading =
+            position.coords.heading != null ? position.coords.heading : null;
+          // ✅ map이 준비되었는지 확인 후 마커 표시
+          if (map) {
+            updateUserPosition(
+              position.coords.latitude,
+              position.coords.longitude,
+              heading
+            );
+          }
+        },
+        (err) => {
+          console.warn("미리보기 GPS 에러:", err?.message || err);
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
       );
     },
     (err) => {
-      console.warn("미리보기 GPS 에러:", err?.message || err);
+      console.warn("GPS 권한 요청 실패:", err?.message || err);
+      if (err.code === err.PERMISSION_DENIED) {
+        showToast(
+          "위치 권한이 필요합니다. 브라우저 설정에서 위치 권한을 허용해주세요.",
+          "warn",
+          5000
+        );
+      }
     },
     { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
   );
@@ -366,22 +426,63 @@ function openFreeRunCourseModal(preview) {
       )}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
     if (freeRunCourseDescInput) freeRunCourseDescInput.value = "";
-    // ✅ 주소는 모집글 출발지(meetingPlace)로 설정, 없으면 역지오코딩으로 자동 채우기
-    if (freeRunCourseAddressInput && sessionDataCache?.meetingPlace) {
+    // ✅ 주소 자동 입력: preview.startLat/startLng로 역지오코딩
+    if (
+      freeRunCourseAddressInput &&
+      preview?.startLat != null &&
+      preview?.startLng != null
+    ) {
+      // geocoder가 없으면 초기화 대기
+      if (!geocoder) {
+        setTimeout(() => {
+          if (
+            geocoder &&
+            preview?.startLat != null &&
+            preview?.startLng != null &&
+            freeRunCourseAddressInput
+          ) {
+            geocoder.coord2Address(
+              preview.startLng,
+              preview.startLat,
+              (result, status) => {
+                if (
+                  status === kakao.maps.services.Status.OK &&
+                  result?.[0] &&
+                  freeRunCourseAddressInput
+                ) {
+                  const addr =
+                    result[0].road_address?.address_name ??
+                    result[0].address?.address_name ??
+                    "";
+                  freeRunCourseAddressInput.value = addr;
+                }
+              }
+            );
+          }
+        }, 100);
+      } else {
+        // ✅ 역지오코딩으로 주소 자동 채우기 (솔로런/오프라인 코스 없이 뛸 때)
+        geocoder.coord2Address(
+          preview.startLng,
+          preview.startLat,
+          (result, status) => {
+            if (
+              status === kakao.maps.services.Status.OK &&
+              result?.[0] &&
+              freeRunCourseAddressInput
+            ) {
+              const addr =
+                result[0].road_address?.address_name ??
+                result[0].address?.address_name ??
+                "";
+              freeRunCourseAddressInput.value = addr;
+            }
+          }
+        );
+      }
+    } else if (freeRunCourseAddressInput && sessionDataCache?.meetingPlace) {
+      // ✅ meetingPlace가 있으면 그것을 사용 (오프라인 자유러닝)
       freeRunCourseAddressInput.value = sessionDataCache.meetingPlace;
-    } else if (freeRunCourseAddressInput && preview?.startLat != null && preview?.startLng != null && geocoder) {
-      // ✅ 솔로 러닝: 역지오코딩으로 주소 자동 채우기
-      geocoder.coord2Address(preview.startLng, preview.startLat, (result, status) => {
-        if (status === kakao.maps.services.Status.OK && result?.[0] && freeRunCourseAddressInput) {
-          const addr =
-            result[0].road_address?.address_name ??
-            result[0].address?.address_name ??
-            "";
-          freeRunCourseAddressInput.value = addr;
-        } else if (freeRunCourseAddressInput) {
-          freeRunCourseAddressInput.value = "";
-        }
-      });
     } else if (freeRunCourseAddressInput) {
       freeRunCourseAddressInput.value = "";
     }
@@ -821,15 +922,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // ✅ 이전 세션의 localStorage 데이터 초기화 (캐시 문제 방지)
+  // ✅ 다른 세션으로 진입할 때만 이전 세션의 localStorage 데이터 초기화
   try {
-    const keys = Object.keys(localStorage);
-    keys.forEach((key) => {
-      if (key.startsWith(`running:${sessionId}:`)) {
-        localStorage.removeItem(key);
-      }
-    });
-    console.log("✅ 이전 세션 localStorage 데이터 초기화 완료");
+    const lastSessionId = localStorage.getItem("running:lastSessionId");
+    if (lastSessionId && lastSessionId !== String(sessionId)) {
+      // 이전 세션의 데이터 삭제
+      const keys = Object.keys(localStorage);
+      keys.forEach((key) => {
+        if (key.startsWith(`running:${lastSessionId}:`)) {
+          localStorage.removeItem(key);
+        }
+      });
+      console.log(
+        "✅ 이전 세션 localStorage 데이터 초기화 완료: sessionId=" +
+          lastSessionId
+      );
+    }
+    // 현재 세션 ID 저장
+    localStorage.setItem("running:lastSessionId", String(sessionId));
   } catch (e) {
     console.warn("localStorage 초기화 실패:", e);
   }
@@ -1045,7 +1155,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await initKakaoMap();
 
     // 3. 코스가 있으면 경로 로드 및 표시 (웹소켓 전에)
-    if (sessionData.courseId) {
+    if (sessionCourseId) {
       try {
         await loadCoursePath(sessionId);
       } catch (error) {
@@ -1125,8 +1235,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // - 서버로 GPS 전송 X
     // - 프론트에서만 내 위치 표시(출발점 찾기)
     // ✅ 솔로런일 때는 시작 버튼이 표시되므로 미리보기 추적 시작
+    // ✅ 지도 초기화 후에 GPS 시작 (map이 null이면 updateUserPosition이 작동하지 않음)
     if (sessionStatus !== "IN_PROGRESS") {
-      startPreviewOnlyTracking();
+      // 지도가 초기화된 후에만 GPS 시작
+      if (map) {
+        startPreviewOnlyTracking();
+      }
       // 솔로런이 아니면 여기서 종료 (채팅방에서 시작해야 함)
       if (!isSoloRun) {
         return;
@@ -1280,6 +1394,25 @@ async function showRunningResultModalWithRetry(loadingText) {
       const data = await fetchRunningResult();
       renderRunningResult(data);
       if (resultLoadingEl) resultLoadingEl.classList.remove("show");
+
+      // ✅ 러닝 결과 모달 표시 후 광고 팝업 표시
+      setTimeout(async () => {
+        try {
+          if (
+            typeof loadAd === "function" &&
+            typeof createAdPopup === "function"
+          ) {
+            const adData = await loadAd("RUN_END_BANNER");
+            if (adData) {
+              const adPopup = createAdPopup(adData);
+              document.body.appendChild(adPopup);
+            }
+          }
+        } catch (error) {
+          console.warn("러닝 결과 광고 로드 실패:", error);
+        }
+      }, 1000);
+
       return;
     } catch (e) {
       lastErr = e;
@@ -1329,6 +1462,38 @@ async function centerToRunner() {
   } else if (coursePath && coursePath.length > 0) {
     lat = coursePath[0].lat;
     lng = coursePath[0].lng;
+  }
+
+  // ✅ STANDBY 상태에서 latestPosition이 없으면 getCurrentPosition으로 현재 위치 가져오기
+  if (
+    (isHost || sessionStatus !== "IN_PROGRESS") &&
+    (lat == null || lng == null)
+  ) {
+    try {
+      const getCurrentPositionOnce = (options = {}) =>
+        new Promise((resolve, reject) => {
+          if (!navigator.geolocation) {
+            reject(new Error("이 브라우저에서 위치 기능을 지원하지 않습니다."));
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(resolve, reject, options);
+        });
+
+      const position = await getCurrentPositionOnce({
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 0,
+      });
+
+      if (position?.coords) {
+        lat = position.coords.latitude;
+        lng = position.coords.longitude;
+        // latestPosition도 업데이트
+        latestPosition = position;
+      }
+    } catch (e) {
+      console.warn("현재 위치 조회 실패:", e?.message || e);
+    }
   }
 
   // 참가자인데 방장 위치가 아직 없으면 최신 stats 1회 재조회 시도
@@ -1670,7 +1835,17 @@ async function loadCoursePath(sessionId) {
   // 카카오맵에 코스 경로 표시
   // ✅ remainingPath가 있으면 그것을 우선 사용 (서버가 잘라준 경로 또는 trimCourseByMatchedProgress가 업데이트한 경로)
   // remainingPath가 없으면 전체 코스(coursePath) 표시
-  drawCoursePath();
+  // ✅ map이 준비되었는지 확인 후 코스 표시
+  if (map) {
+    drawCoursePath();
+  } else {
+    // map이 아직 준비되지 않았으면 잠시 후 재시도
+    setTimeout(() => {
+      if (map && coursePath && coursePath.length >= 2) {
+        drawCoursePath();
+      }
+    }, 100);
+  }
 
   // 지도 중심을 코스 시작점으로 이동
   // ✅ 출발점 마커 표시 (서버 startLat/startLng 우선)
@@ -1691,12 +1866,6 @@ async function loadCoursePath(sessionId) {
     coursePath.length > 0
   ) {
     renderStartMarker(startLat, startLng);
-
-    // 방향 화살표 표시 (두 번째 포인트가 있을 때만)
-    if (coursePath.length >= 2) {
-      const nextPoint = coursePath[1];
-      renderDirectionArrow(startLat, startLng, nextPoint.lat, nextPoint.lng);
-    }
 
     // 도착점 마커 표시 (출발점과 도착점이 다를 때만)
     const endPoint = coursePath[coursePath.length - 1];
@@ -2140,7 +2309,32 @@ function initKakaoMap() {
       };
 
       map = new kakao.maps.Map(mapContainer, mapOption);
-      geocoder = new kakao.maps.services.Geocoder();
+
+      // ✅ Geocoder는 services가 로드된 후에 초기화
+      try {
+        if (kakao.maps.services && kakao.maps.services.Geocoder) {
+          geocoder = new kakao.maps.services.Geocoder();
+        } else {
+          // services가 아직 로드되지 않았으면 지연 초기화
+          setTimeout(() => {
+            if (kakao.maps.services && kakao.maps.services.Geocoder) {
+              geocoder = new kakao.maps.services.Geocoder();
+            }
+          }, 100);
+        }
+      } catch (e) {
+        console.warn("Geocoder 초기화 실패 (나중에 재시도):", e);
+        // 지연 초기화 시도
+        setTimeout(() => {
+          try {
+            if (kakao.maps.services && kakao.maps.services.Geocoder) {
+              geocoder = new kakao.maps.services.Geocoder();
+            }
+          } catch (e2) {
+            console.warn("Geocoder 초기화 재시도 실패:", e2);
+          }
+        }, 200);
+      }
 
       // 사용자가 지도를 움직이면 자동 따라가기(follow) 해제
       try {

@@ -295,10 +295,34 @@ function renderFeeds(feeds) {
     // 피드가 있으면 빈 상태 먼저 숨김
     hideEmptyState();
 
+    let feedCount = 0;
     feeds.forEach(feed => {
+        feedCount++;
         const feedCard = createFeedCard(feed);
         feedList.appendChild(feedCard);
+        
+        // ✅ 5개마다 1개 광고 삽입 (5개 미만이어도 1개는 표시)
+        if (feedCount === 1 || feedCount % 5 === 0) {
+          insertFeedAd(feedList);
+        }
     });
+}
+
+/**
+ * 피드 리스트에 광고 삽입
+ */
+async function insertFeedAd(feedList) {
+  try {
+    if (typeof loadAd === 'function' && typeof createAdBanner === 'function') {
+      const adData = await loadAd('FEED_LIST_ITEM');
+      if (adData) {
+        const adBanner = createAdBanner(adData, 'feed-ad-banner');
+        feedList.appendChild(adBanner);
+      }
+    }
+  } catch (error) {
+    console.warn('피드 광고 로드 실패:', error);
+  }
 }
 
 /**
