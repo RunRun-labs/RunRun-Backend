@@ -85,13 +85,13 @@ async function loadResults() {
 
     updateUI();
     
-    // ✅ 러닝 결과 로드 후 광고 팝업 표시
+    // ✅ 러닝 결과 로드 후 광고 팝업 표시 (큰 사이즈 함수 사용)
     setTimeout(async () => {
       try {
-        if (typeof loadAd === 'function' && typeof createAdPopup === 'function') {
+        if (typeof loadAd === 'function' && typeof createAdPopupForRunningResult === 'function') {
           const adData = await loadAd('RUN_END_BANNER');
           if (adData) {
-            const adPopup = createAdPopup(adData);
+            const adPopup = createAdPopupForRunningResult(adData);
             document.body.appendChild(adPopup);
           }
         }

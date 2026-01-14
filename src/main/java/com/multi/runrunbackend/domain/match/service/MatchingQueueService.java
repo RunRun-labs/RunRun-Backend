@@ -186,17 +186,63 @@ public class MatchingQueueService {
         .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     Long userId = user.getId();
 
+    String matchSessionKey = USER_MATCH_SESSION_PREFIX + userId;
+    String sessionIdStr = redisTemplate.opsForValue().get(matchSessionKey);
+
+    if (sessionIdStr != null) {
+      Long sessionId = Long.parseLong(sessionIdStr);
+
+      Optional<SessionUser> activeSession = sessionUserRepository.findActiveOnlineSession(userId);
+
+      if (activeSession.isPresent()) {
+        MatchSession session = activeSession.get().getMatchSession();
+
+        if (session.getStatus() == SessionStatus.CANCELLED) {
+          redisTemplate.delete(matchSessionKey);
+
+          String statusKey = USER_STATUS_KEY_PREFIX + userId;
+          String queueKey = redisTemplate.opsForValue().get(statusKey);
+
+          if (queueKey != null) {
+            redisTemplate.expire(statusKey, Duration.ofMinutes(3));
+            redisTemplate.expire(WAIT_START_PREFIX + userId, Duration.ofMinutes(3));
+
+            return OnlineMatchStatusResDto.builder()
+                .status("WAITING")
+                .sessionId(null)
+                .build();
+          }
+
+          return OnlineMatchStatusResDto.builder()
+              .status("NONE")
+              .sessionId(null)
+              .build();
+        }
+
+        String statusKey = USER_STATUS_KEY_PREFIX + userId;
+        String waitStartKey = WAIT_START_PREFIX + userId;
+        redisTemplate.delete(statusKey);
+        redisTemplate.delete(waitStartKey);
+
+        log.info("Redis에서 매칭 세션 발견 - User: {}, SessionID: {}", userId, sessionId);
+
+        return OnlineMatchStatusResDto.builder()
+            .status("MATCHED")
+            .sessionId(sessionId)
+            .build();
+      } else {
+        redisTemplate.delete(matchSessionKey);
+        log.warn("Redis에 세션 ID가 있지만 DB에 없음 - Redis 키 삭제 - User: {}, SessionID: {}", userId,
+            sessionIdStr);
+      }
+    }
+
     Optional<SessionUser> activeSession = sessionUserRepository.findActiveOnlineSession(userId);
 
     if (activeSession.isPresent()) {
       MatchSession session = activeSession.get().getMatchSession();
 
-      // 세션이 취소된 경우
       if (session.getStatus() == SessionStatus.CANCELLED) {
-        String matchSessionKey = USER_MATCH_SESSION_PREFIX + userId;
-        redisTemplate.delete(matchSessionKey);
-
-        // 대기 중인지 확인
         String statusKey = USER_STATUS_KEY_PREFIX + userId;
         String queueKey = redisTemplate.opsForValue().get(statusKey);
 
@@ -218,7 +264,6 @@ public class MatchingQueueService {
 
       Long sessionId = session.getId();
 
-      String matchSessionKey = USER_MATCH_SESSION_PREFIX + userId;
       redisTemplate.opsForValue().set(
           matchSessionKey,
           sessionId.toString(),
@@ -230,7 +275,7 @@ public class MatchingQueueService {
       redisTemplate.delete(statusKey);
       redisTemplate.delete(waitStartKey);
 
-      log.info("DB에서 매칭 세션 발견 - User: {}, SessionID: {}", userId, sessionId);
+      log.info("DB에서 매칭 세션 발견 (Redis 캐시 갱신) - User: {}, SessionID: {}", userId, sessionId);
 
       return OnlineMatchStatusResDto.builder()
           .status("MATCHED")

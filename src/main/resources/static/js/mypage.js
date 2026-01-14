@@ -611,13 +611,13 @@ function createRunCard(record) {
     }
 
     const onlineBattleRankImageMap = {
-        1: '/img/online-1st.png',
-        2: '/img/online-2nd.png',
-        3: '/img/online-3rd.png',
-        4: '/img/online-4th.png'
+        1: '/img/online-battle.png',
+        2: '/img/online-battle.png',
+        3: '/img/online-battle.png',
+        4: '/img/online-battle.png'
     };
 
-    const defaultOnlineBattleImageUrl = '/img/online-1st.png'; // fallback (이미지 자산이 1~4만 있는 상태)
+    const defaultOnlineBattleImageUrl = '/img/online-battle.png'; // fallback
 
     // 썸네일 URL 우선순위:
     // 1) 고스트런: 고정 이미지

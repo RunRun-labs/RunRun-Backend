@@ -767,29 +767,6 @@ function onGPSSuccess(position) {
       totalDistance += distance;
     }
     lastPosition = { lat: latitude, lng: longitude, time: currentTime };
-
-      if (speedMps != null && Number.isFinite(speedMps)) {
-        const canAlert = currentTime - lastTooFastAlertAt > tooFastAlertCooldownMs;
-
-        if (speedMps >= tooFastHardMps) {
-          if (canAlert) {
-            console.warn("속도가 너무 빠릅니다(hard):", speedMps, "m/s");
-            lastTooFastAlertAt = currentTime;
-          }
-        } else if (speedMps >= tooFastSoftMps) {
-          tooFastSoftCount += 1;
-          if (tooFastSoftCount >= 3 && canAlert) {
-            console.warn("속도가 너무 빠릅니다(soft):", speedMps, "m/s");
-            lastTooFastAlertAt = currentTime;
-            tooFastSoftCount = 0;
-          }
-        } else {
-          tooFastSoftCount = 0;
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
     
     // UI 업데이트
     updateDistanceUI();

@@ -22,7 +22,7 @@ spec:
                 name: runrun-env
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "prod"
+              value: 'prod'
             - name: SPRING_DATASOURCE_URL
               valueFrom:
                 secretKeyRef:
@@ -43,17 +43,18 @@ spec:
           imagePullPolicy: Always
           resources:
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: '512Mi'
+              cpu: '500m'
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: '256Mi'
+              cpu: '250m'
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: runrun-svc
+  namespace: default
   labels:
     app: runrun
 spec:
@@ -62,9 +63,22 @@ spec:
   ports:
     - name: http
       protocol: TCP
-      port: 80            # ALB가 접근할 포트
-      targetPort: 8080    # 컨테이너 내부 포트
-  type: ClusterIP       # ALB controller (Ingress) 사용 시 ClusterIP 권장 (pod IP 직접 target 등록)
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssl-redirect
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - name: use-annotation
+      port: 443
+      targetPort: 443
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -73,18 +87,16 @@ metadata:
   name: runrun-ingress
   namespace: default
   annotations:
-    # ALB 컨트롤러 동작 관련 필수/권장 어노테이션
-    kubernetes.io/ingress.class: "alb"                                 # ingressClassName 대신 안전하게 지정
-    alb.ingress.kubernetes.io/scheme: internet-facing                    # internet-facing 또는 internal
-    alb.ingress.kubernetes.io/target-type: ip                            # ip -> pod IP를 타깃으로 등록 (노드 대신)
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'              # HTTP/HTTPS 포트 설정
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:mx-central-1:118320467932:certificate/3fddc5dc-9edd-4506-84b1-25caeda906ef"
+    kubernetes.io/ingress.class: 'alb'
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:mx-central-1:118320467932:certificate/38537b2c-f224-4655-882c-65880c767bdb"
     alb.ingress.kubernetes.io/actions.ssl-redirect: >-
       {"Type":"redirect","RedirectConfig":{"Protocol":"HTTPS","Port":"443","StatusCode":"HTTP_301"}}
-    alb.ingress.kubernetes.io/healthcheck-path: "/actuator/health"                      # ALB 헬스체크 경로 (서비스에 맞게 조정) 앱에서 인증 없이 200을 반환하는 헬스 엔드포인트(예: /actuator/health)를 추가 시큐리티랑 필터에추가
-    alb.ingress.kubernetes.io/healthcheck-port: "traffic-port"  #port: 80 targetPort: 8090 이므로 ALB가 Service→Pod로 보낼 때 내부적으로 올바른 포트(=8090)로 전달되도록 컨트롤러가 처리
-    alb.ingress.kubernetes.io/success-codes: "200-399"
-    # 필요 시 세부 설정 추가 (예: 인증, WAF, stickiness 등)
+    alb.ingress.kubernetes.io/healthcheck-path: '/actuator/health'
+    alb.ingress.kubernetes.io/healthcheck-port: 'traffic-port'
+    alb.ingress.kubernetes.io/success-codes: '200-399'
 spec:
   rules:
     - host: api.runrunmatch.cloud
@@ -104,17 +116,3 @@ spec:
                 name: runrun-svc
                 port:
                   number: 80
-#  defaultBackend:  #ALB DNS 이름(예: a12345-abcdef.ap-northeast-2.elb.amazonaws.com)으로 바로 접속
-#    service:
-#      name: spring-boot-service
-#      port:
-#        number: 80
-
-
-
-#  Ingress 이름이 같으면
-#  -> 기존 ALB를 그대로 사용하고
-#  ->변경된 설정만 반영(update)됨
-#
-#  Ingress 이름이 달라지면
-#  -> 새로운 ALB가 생성됨
