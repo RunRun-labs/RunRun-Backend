@@ -198,12 +198,12 @@ body {
 
 .attendance-count {
     font-size: 14px;
-    color: #666;
+    color: #111827;
 }
 
 .attendance-count span {
     font-weight: 700;
-    color: #10b981;
+    color: #fff;
 }
 
 .calendar-grid {
