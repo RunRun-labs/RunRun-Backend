@@ -63,7 +63,6 @@ public class JwtFilter extends OncePerRequestFilter {
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
-    log.info("[JwtFilter] doFilterInternal START ===================================");
     String requestURI = request.getRequestURI();
 
     try {
@@ -71,18 +70,13 @@ public class JwtFilter extends OncePerRequestFilter {
       for (String exactPath : EXACT_PATHS) {
         if (requestURI.equals(exactPath)) {
           filterChain.doFilter(request, response);
-          log.info("[JwtFilter] 요청 URI가 제외 경로에 해당하여 필터를 건너뜁니다.");
-
           return;
         }
       }
 
       // 와일드카드 경로 매칭
-
       for (String wildcardPath : WILDCARD_PATHS) {
         if (PatternMatchUtils.simpleMatch(wildcardPath, requestURI)) {
-          log.info("[JwtFilter] 요청 URI({})가 제외 경로({})에 해당하여 필터를 건너뜁니다.",
-              requestURI, wildcardPath);
           filterChain.doFilter(request, response);
           return;
         }
@@ -91,7 +85,7 @@ public class JwtFilter extends OncePerRequestFilter {
       String jwt = resolveToken(request);
       String key = "blacklist:" + jwt;
       if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-        log.warn("[JwtFilter] 블랙리스트 토큰 감지 -> 요청 거부");
+        log.warn("[JwtFilter] 블랙리스트 토큰 감지 -> 요청 거부: {}", requestURI);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -105,40 +99,19 @@ public class JwtFilter extends OncePerRequestFilter {
         response.getWriter().write(convertObjectToJson(errorResponse));
         response.getWriter().flush();
         return;
-      } else {
-        log.info("블랙리스트 없음");
       }
 
-      log.info("[JwtFilter] jwt : {}", jwt);
       if (StringUtils.hasText(jwt)) {
-        log.info("[JwtFilter] JWT 토큰이 존재합니다.");
-
         if (tokenProvider.validateToken(jwt)) {
-
-          log.info("[JwtFilter] JWT 토큰이 유효합니다.");
-
           Authentication authentication = tokenProvider.getAuthentication(jwt);
           SecurityContextHolder.getContext().setAuthentication(authentication);
-
-          log.info("[JwtFilter] SecurityContext에 Authentication 객체 설정 완료: {}",
-              authentication);
-          log.info(
-              "[JwtFilter] SecurityContext에 Authentication 객체 설정 완료  authentication.getAuthorities(): {}",
-              authentication.getAuthorities());
-
-          log.info("[JwtFilter] SecurityContextHolder 객체 확인: {}",
-              SecurityContextHolder.getContext().getAuthentication());
-
         } else {
-          log.warn("[JwtFilter] JWT 토큰이 유효하지 않습니다.");
+          log.warn("[JwtFilter] JWT 토큰이 유효하지 않습니다: {}", requestURI);
         }
-      } else {
-        log.info("[JwtFilter] JWT 토큰이 존재하지 않습니다.");
       }
 
-      // 4. 필터 체인 계속 진행
+      // 필터 체인 계속 진행
       filterChain.doFilter(request, response);
-      log.info("[JwtFilter] 필터 체인 완료 후 응답 처리");
 
     } catch (TokenException e) {
       log.error("[JwtFilter] 필터 처리 중 예외 발생: {}", e.getMessage(), e);
