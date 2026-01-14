@@ -90,7 +90,7 @@ public interface SessionUserRepository extends JpaRepository<SessionUser, Long> 
       "AND su.isDeleted = false " +
       "AND (ms.status = 'STANDBY' OR ms.status = 'IN_PROGRESS') " +
       "ORDER BY ms.createdAt DESC")
-  Optional<SessionUser> findActiveSession(@Param("userId") Long userId);
+  List<SessionUser> findActiveSessions(@Param("userId") Long userId);
 
   /**
    * 매칭 참여 비율 계산용: 참여한 유저 수 (중복 제거)
