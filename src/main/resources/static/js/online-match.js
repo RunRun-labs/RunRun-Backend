@@ -51,7 +51,16 @@ window.addEventListener('notification-received', async (event) => {
       console.log('[online-match] MATCH_FOUND already handled - skip');
       return;
     }
-    matchFoundHandled = true;
+    // matchFoundHandled = true;
+
+    if (fallbackCheckInterval) {
+      clearInterval(fallbackCheckInterval);
+      fallbackCheckInterval = null;
+    }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
+    }
 
     console.log('[online-match] ✅ MATCH_FOUND 알림 처리 시작 - sessionId:',
         sessionId);
@@ -99,6 +108,8 @@ window.addEventListener('notification-received', async (event) => {
       }
 
       await showMatchFound(sessionId);
+      matchFoundHandled = true;
+
       console.log('[online-match] ✅ MATCH_FOUND 알림 처리 완료');
 
       try {
@@ -383,7 +394,7 @@ async function loadUserProfile() {
     if (response.ok && result?.success && result?.data && userProfileImage) {
       userProfileUrl = result.data.profileImageUrl;
       userProfileImage.src = userProfileUrl || "/img/default-profile.svg";
-      userProfileImage.onerror = function() {
+      userProfileImage.onerror = function () {
         this.src = "/img/default-profile.svg";
       };
     }
@@ -526,9 +537,11 @@ function resetMatchUI() {
   }
   if (fallbackCheckInterval) {
     clearInterval(fallbackCheckInterval);
+    fallbackCheckInterval = null;
   }
   if (sseCheckInterval) {
     clearInterval(sseCheckInterval);
+    sseCheckInterval = null;
   }
 }
 
