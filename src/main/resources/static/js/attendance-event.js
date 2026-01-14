@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             console.log('출석 현황 조회 시작...');
 
-            const response = await fetch('/api/users/attendance/status', {
+            const response = await fetch('/users/attendance/status', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             console.log('출석 체크 시작...');
 
-            const response = await fetch('/api/users/attendance', {
+            const response = await fetch('/users/attendance', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
