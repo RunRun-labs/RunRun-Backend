@@ -110,6 +110,29 @@
             font-weight: bold;
         }
 
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .final-price {
+            color: #000;
+            font-weight: bold;
+        }
+
+        .free-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
         .status-done {
             background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
             color: #000;
@@ -291,12 +314,13 @@
         // 금액 정보 구성
         let amountHtml = '';
         if (payment.discountAmount && payment.discountAmount > 0) {
+            const originalPrice = payment.finalAmount + payment.discountAmount;
             amountHtml = `
-            <div class="payment-amount">
-                <span class="discount-amount">-${payment.discountAmount.toLocaleString()}원</span>
-                → ${payment.finalAmount.toLocaleString()}원
-            </div>
-        `;
+    <div class="payment-amount">
+        <span class="original-price">${originalPrice.toLocaleString()}원</span>
+        <span class="final-price">${payment.finalAmount.toLocaleString()}원</span>
+    </div>
+`;
         } else {
             amountHtml = `<div class="payment-amount">${payment.finalAmount.toLocaleString()}원</div>`;
         }
