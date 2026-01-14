@@ -706,8 +706,9 @@ async function handleMatchStart() {
         return;
       }
 
-      // SSE 연결이 끊겼을 때만 폴백 체크 실행
-      console.log('[online-match] 폴백 체크: SSE 연결 끊김 상태, 매칭 상태 확인 중...');
+      // 폴백 체크 실행 (SSE 연결 상태와 관계없이)
+      const isConnected = typeof window.isSseConnected === 'function' && window.isSseConnected();
+      console.log(`[online-match] 폴백 체크 실행 - SSE 연결: ${isConnected ? '정상' : '끊김'}, 매칭 상태 확인 중...`);
       try {
         // 방법 1: /api/match/online/status 사용 (더 정확)
         const statusResponse = await fetch("/api/match/online/status", {
@@ -832,20 +833,20 @@ async function handleMatchStart() {
       // SSE 연결 상태 확인
       const isConnected = typeof window.isSseConnected === 'function' && window.isSseConnected();
       
-      if (!isConnected) {
-        // SSE 연결이 끊김 → 폴백 체크 시작
-        if (!fallbackCheckInterval) {
-          console.log('[online-match] SSE 연결 끊김 감지 - 폴백 체크 시작');
-          performFallbackCheck(); // 즉시 한 번 실행
-          fallbackCheckInterval = setInterval(performFallbackCheck, 5000);
-        }
+      // SSE 연결 상태에 따라 폴백 체크 주기 결정
+      // SSE 정상: 10초마다, SSE 끊김: 5초마다
+      const fallbackInterval = isConnected ? 10000 : 5000;
+      
+      if (!fallbackCheckInterval) {
+        // 폴백 체크 시작
+        console.log(`[online-match] 폴백 체크 시작 - SSE 연결: ${isConnected ? '정상' : '끊김'}, 주기: ${fallbackInterval / 1000}초`);
+        performFallbackCheck(); // 즉시 한 번 실행
+        fallbackCheckInterval = setInterval(performFallbackCheck, fallbackInterval);
       } else {
-        // SSE 연결이 정상 → 폴백 체크 중단
-        if (fallbackCheckInterval) {
-          console.log('[online-match] SSE 연결 복구 감지 - 폴백 체크 중단');
-          clearInterval(fallbackCheckInterval);
-          fallbackCheckInterval = null;
-        }
+        // 이미 실행 중이면 주기 조정 (SSE 연결 상태 변경 시)
+        clearInterval(fallbackCheckInterval);
+        console.log(`[online-match] 폴백 체크 주기 조정 - SSE 연결: ${isConnected ? '정상' : '끊김'}, 주기: ${fallbackInterval / 1000}초`);
+        fallbackCheckInterval = setInterval(performFallbackCheck, fallbackInterval);
       }
     };
 
