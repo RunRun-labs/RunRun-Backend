@@ -107,7 +107,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ✅ 코스 경로를 지도에 표시하는 함수
   async function loadAndDisplayCoursePath(courseId) {
-    if (!courseId || !map) return;
+    if (!courseId || !map) {
+      return;
+    }
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -173,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // 카카오맵 좌표로 변환 (GeoJSON은 [lng, lat] 순서)
       const latLngs = pathCoords.map(
-        ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
+          ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
       );
 
       // 폴리라인 생성
@@ -287,11 +289,12 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("recruitContentEl:", recruitContentEl);
     console.log("recruitData.content:", recruitData.content);
     console.log("recruitData 전체:", recruitData);
-    
+
     if (recruitContentEl) {
       // content 필드 확인 (다양한 필드명 시도)
-      const content = recruitData.content || recruitData.description || recruitData.text || "";
-      
+      const content = recruitData.content || recruitData.description
+          || recruitData.text || "";
+
       if (content && content.trim()) {
         // CSS에 white-space: pre-wrap이 있으므로 textContent로 설정해도 줄바꿈이 표시됨
         recruitContentEl.textContent = content;
@@ -318,7 +321,9 @@ document.addEventListener("DOMContentLoaded", () => {
     actionButton.style.display = "none";
     actionDisabledText.style.display = "none";
     startRunningButton.style.display = "none";
-    if (editDeleteButtons) editDeleteButtons.style.display = "none";
+    if (editDeleteButtons) {
+      editDeleteButtons.style.display = "none";
+    }
 
     // 방장인 경우
     if (isAuthor) {
@@ -352,7 +357,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (recruitData.meetingAt) {
           const meetingAt = new Date(recruitData.meetingAt);
           const now = new Date();
-          const threeHoursBefore = new Date(meetingAt.getTime() - 3 * 60 * 60 * 1000);
+          const threeHoursBefore = new Date(
+              meetingAt.getTime() - 3 * 60 * 60 * 1000);
           canShowMatchButton = now >= threeHoursBefore;
         }
 
@@ -481,7 +487,14 @@ document.addEventListener("DOMContentLoaded", () => {
               }, 1500);
             }
           } else {
-            const errorMessage = result.message || "참여 처리 중 오류가 발생했습니다.";
+            // 에러 코드에 따른 메시지 처리
+            let errorMessage = result.message || "참여 처리 중 오류가 발생했습니다.";
+
+            // 하루당 하나의 모집글만 참가 가능한 경우
+            if (result.code === "R018") {
+              errorMessage = "이미 해당 날짜에 참가한 모집글이 있습니다. 하루에 하나의 모집글만 참가할 수 있습니다.";
+            }
+
             showToast(errorMessage, "error");
           }
         } catch (error) {
@@ -722,7 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       // 먼저 사용자 정보 로드
       await loadCurrentUser();
-      
+
       const token = localStorage.getItem("accessToken");
       const headers = {
         "Content-Type": "application/json",
