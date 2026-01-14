@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 내 쿠폰</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/my-coupons.css" th:href="@{/css/my-coupons.css}">
+</head>
+<body>
+  <!-- 헤더 -->
+  <div class="header">
+    <button class="btn-back" onclick="history.back()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    <h1 class="header-title">내 쿠폰</h1>
+  </div>
+
+  <div class="page">
+    <!-- Main Content -->
+    <main class="coupon-content">
+      <!-- 광고 배너 (쿠폰 상단) -->
+      <div id="coupon-top-ad"></div>
+      
+      <!-- Coupon Code Input Section -->
+      <div class="coupon-input-section">
+        <div class="coupon-input-container">
+          <input
+              type="text"
+              placeholder="쿠폰 코드를 입력해주세요"
+              class="coupon-code-input"
+              id="couponCodeInput"
+          />
+          <button class="coupon-submit-btn" type="button" id="submitCouponBtn">
+            입력하기
+          </button>
+        </div>
+      </div>
+
+      <!-- Coupon Count -->
+      <div class="coupon-count-section">
+        <p class="coupon-count-text" id="couponCountText">보유 쿠폰 0장</p>
+      </div>
+
+      <!-- Coupon List -->
+      <div class="coupon-list" id="couponList">
+        <!-- Loading state -->
+        <div class="loading-message" id="loadingMessage">
+          <p>쿠폰을 불러오는 중...</p>
+        </div>
+        
+        <!-- Empty state -->
+        <div class="empty-message" id="emptyMessage" style="display: none;">
+          <p>보유한 쿠폰이 없습니다.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+  </div>
+
+  <script src="/js/ad-common.js" th:src="@{/js/ad-common.js}"></script>
+  <script src="/js/my-coupons.js" th:src="@{/js/my-coupons.js}"></script>
+  <script>
+    // 쿠폰 페이지 로드 시 상단 광고 표시
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        if (typeof loadAd === 'function' && typeof createAdBanner === 'function') {
+          const adData = await loadAd('COUPON_LIST_BANNER');
+          if (adData) {
+            const adContainer = document.getElementById('coupon-top-ad');
+            if (adContainer) {
+              const adBanner = createAdBanner(adData);
+              adContainer.appendChild(adBanner);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('쿠폰 페이지 광고 로드 실패:', error);
+      }
+    });
+  </script>
+</body>
+</html>

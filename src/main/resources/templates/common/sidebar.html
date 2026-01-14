@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <aside class="sidebar" aria-label="사이드바" th:fragment="sidebar">
+      <div class="sidebar-header">
+        <p class="sidebar-logo">RunRun</p>
+      </div>
+      <nav class="sidebar-nav">
+        <a
+          class="sidebar-item"
+          th:href="@{/admin/dashboard}"
+          href="/admin/dashboard"
+        >
+          <span>Dashboard</span>
+        </a>
+        <a
+          class="sidebar-item"
+          th:href="@{/admin/ad-slot/inquiry}"
+          href="/admin/ad-slot/inquiry"
+        >
+          <span>광고 슬롯</span>
+        </a>
+        <a
+          class="sidebar-item"
+          th:href="@{/admin/ad/inquiry}"
+          href="/admin/ad/inquiry"
+        >
+          <span>광고</span>
+        </a>
+        <a
+          class="sidebar-item"
+          th:href="@{/admin/ad-placement/inquiry}"
+          href="/admin/ad-placement/inquiry"
+        >
+          <span>광고 배치</span>
+        </a>
+        <a
+          class="sidebar-item"
+          th:href="@{/admin/coupon-role/inquiry}"
+          href="/admin/coupon-role/inquiry"
+        >
+          <span>쿠폰 정책</span>
+        </a>
+        <a
+          class="sidebar-item"
+          th:href="@{/admin/coupon/inquiry}"
+          href="/admin/coupon/inquiry"
+        >
+          <span>쿠폰 조회</span>
+        </a>
+        <a
+                class="sidebar-item"
+                th:href="@{/admin/points/products}"
+                href="/admin/points/products"
+        >
+            <span>포인트 상품 관리</span>
+        </a>
+        <a
+                class="sidebar-item"
+                th:href="@{/admin/running/stats}"
+                href="/admin/running/stats"
+        >
+          <span>러닝통계</span>
+        </a>
+        <a
+          class="sidebar-item"
+          href="#"
+          id="logoutBtn"
+          onclick="handleLogout(); return false;"
+        >
+          <span>Signout</span>
+        </a>
+      </nav>
+    </aside>
+  </body>
+</html>

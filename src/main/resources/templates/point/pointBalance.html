@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>내 포인트</title>
+  <link rel="stylesheet" th:href="@{/css/point-balance.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
+</head>
+<body>
+<!-- 헤더 -->
+<div class="header">
+  <button class="btn-back" onclick="history.back()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+  </button>
+  <h1 class="header-title">내 포인트</h1>
+</div>
+
+<!-- 메인 컨테이너 -->
+<div class="container">
+  <!-- 사용 가능 포인트 카드 -->
+  <div class="available-points-section">
+    <div class="points-card">
+      <div class="points-label">사용 가능 포인트</div>
+      <div class="points-amount" id="balanceAmount">0 P</div>
+    </div>
+  </div>
+
+  <!-- 이번 달 포인트 -->
+  <div class="monthly-points-section">
+    <h2 class="section-title">이번 달 포인트</h2>
+    <div class="monthly-points-grid">
+      <div class="monthly-point-card earned">
+        <div class="monthly-point-icon">⬆️</div>
+        <div class="monthly-point-label">적립</div>
+        <div class="monthly-point-amount" id="earnedAmount">+0 P</div>
+      </div>
+      <div class="monthly-point-card used">
+        <div class="monthly-point-icon">⬇️</div>
+        <div class="monthly-point-label">사용</div>
+        <div class="monthly-point-amount" id="usedAmount">-0 P</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 소멸 예정 포인트 -->
+  <div class="expiry-section">
+    <div class="expiry-card">
+      <div class="expiry-header">
+        <span class="expiry-icon">⏰</span>
+        <span class="expiry-title">소멸 예정 포인트</span>
+      </div>
+      <div class="expiry-info" id="expiryInfo">-</div>
+    </div>
+  </div>
+
+  <!-- 포인트 상세 -->
+  <div class="point-detail-section">
+    <div class="detail-header">
+      <h2 class="section-title">포인트 상세</h2>
+      <button class="btn-history" onclick="location.href='/points/history'">
+        <span>내역 보기</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">총 적립 포인트</span>
+      <span class="detail-value" id="totalPoints">0 P</span>
+    </div>
+  </div>
+</div>
+
+
+<template id="bottomNavTemplate">
+  <nav class="bottom-nav" aria-label="하단 메뉴">
+    <a class="nav-item" th:href="@{/chat}" href="/chat">
+      <img
+          src="/img/icons/chat.svg"
+          alt=""
+          aria-hidden="true"
+      />
+      <span>chat</span>
+    </a>
+    <a class="nav-item" th:href="@{/feed}" href="/feed">
+      <img
+          src="/img/icons/feed.svg"
+          alt=""
+          aria-hidden="true"
+      />
+      <span>feed</span>
+    </a>
+    <a class="nav-item" th:href="@{/}" href="/">
+      <img
+          src="/img/icons/home.svg"
+          alt=""
+          aria-hidden="true"
+      />
+      <span>home</span>
+    </a>
+    <a class="nav-item" th:href="@{/match}" href="/match">
+      <img
+          src="/img/icons/match.svg"
+          alt=""
+          aria-hidden="true"
+      />
+      <span>match</span>
+    </a>
+    <a class="nav-item active" th:href="@{/my}" href="/my">
+      <img
+          src="/img/icons/my.svg"
+          alt=""
+          aria-hidden="true"
+      />
+      <span>my</span>
+    </a>
+  </nav>
+</template>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script th:src="@{/js/point-balance.js}"></script>
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+
+</body>
+</html>

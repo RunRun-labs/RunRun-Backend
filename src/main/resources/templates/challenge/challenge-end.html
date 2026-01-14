@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | Challenge End</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/challenge.css"
+            th:href="@{/css/challenge.css}"
+    />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
+</head>
+<body class="challenge-body">
+<main class="page challenge-page">
+    <button class="back-button" type="button" aria-label="챌린지 목록으로 돌아가기">
+        <img
+                th:src="@{/img/icons/back.png}"
+                src="/img/icons/back.png"
+                alt="뒤로가기 아이콘"
+        />
+    </button>
+
+    <header class="challenge-header">
+        <h1 class="challenge-logo">CHALLENGE</h1>
+    </header>
+
+    <!-- 도전 성공 섹션 -->
+    <section class="challenge-section" data-section="completed">
+        <h2 class="section-title">도전 성공</h2>
+        <div class="challenge-list" data-role="completed-list">
+            <!-- JS로 동적 생성 -->
+            <div class="challenge-empty" data-role="completed-empty" hidden>
+                <p>완료한 챌린지가 없습니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 도전 실패 섹션 -->
+    <section class="challenge-section" data-section="failed">
+        <h2 class="section-title">도전 실패</h2>
+        <div class="challenge-list" data-role="failed-list">
+            <!-- JS로 동적 생성 -->
+            <div class="challenge-empty" data-role="failed-empty" hidden>
+                <p>실패한 챌린지가 없습니다.</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<template id="bottomNavTemplate">
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+            <img
+                    src="/img/icons/chat.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+            <img
+                    src="/img/icons/feed.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>feed</span>
+        </a>
+        <a class="nav-item" th:href="@{/}" href="/">
+            <img
+                    src="/img/icons/home.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+            <img
+                    src="/img/icons/match.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>match</span>
+        </a>
+        <a class="nav-item" th:href="@{/my}" href="/my">
+            <img
+                    src="/img/icons/my.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>my</span>
+        </a>
+    </nav>
+</template>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+<script src="/js/challenge-end.js" th:src="@{/js/challenge-end.js}"></script>
+</body>
+</html>
+

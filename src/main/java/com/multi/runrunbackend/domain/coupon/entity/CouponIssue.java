@@ -4,23 +4,13 @@ import com.multi.runrunbackend.common.entitiy.BaseCreatedEntity;
 import com.multi.runrunbackend.domain.coupon.constant.CouponIssueStatus;
 import com.multi.runrunbackend.domain.coupon.constant.CouponIssueType;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
 
 /**
  * @author : kyungsoo
@@ -33,11 +23,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
-    name = "coupon_issue",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = "code")
-    }
+        name = "coupon_issue",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_coupon_issue_coupon_user", columnNames = {"coupon_id",
+                        "user_id"})
+        }
 )
+@SQLRestriction("status = 'AVAILABLE'")
 public class CouponIssue extends BaseCreatedEntity {
 
     @Id
@@ -52,10 +44,10 @@ public class CouponIssue extends BaseCreatedEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "code", nullable = false, unique = true, length = 100)
     private String code;
 
-    @Column(name = "expiry_at", nullable = false)
+    @Column(name = "expiry_at")
     private LocalDateTime expiryAt;
 
     @Enumerated(EnumType.STRING)
@@ -63,16 +55,54 @@ public class CouponIssue extends BaseCreatedEntity {
     private CouponIssueType issueType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false)
     private CouponIssueStatus status;
 
     @Column(name = "used_at")
     private LocalDateTime usedAt;
+
+    public static CouponIssue createAuto(Coupon coupon, User user, String code) {
+        CouponIssue couponIssue = new CouponIssue();
+        couponIssue.coupon = coupon;
+        couponIssue.user = user;
+        couponIssue.issueType = CouponIssueType.AUTO;
+        couponIssue.code = code;
+        couponIssue.expiryAt = LocalDateTime.now().plusDays(90);
+
+        return couponIssue;
+    }
+
+    public static CouponIssue create(Coupon coupon, User user, String code) {
+        CouponIssue couponIssue = new CouponIssue();
+        couponIssue.coupon = coupon;
+        couponIssue.user = user;
+        couponIssue.issueType = CouponIssueType.MANUAL;
+        couponIssue.code = code;
+        couponIssue.expiryAt = LocalDateTime.now().plusDays(90);
+
+        return couponIssue;
+    }
 
     @PrePersist
     public void prePersist() {
         if (this.status == null) {
             this.status = CouponIssueStatus.AVAILABLE;
         }
+    }
+
+    public void delete() {
+        if (this.status == CouponIssueStatus.AVAILABLE) {
+            this.status = CouponIssueStatus.DELETED;
+        }
+    }
+
+    public void use() {
+        this.status = CouponIssueStatus.USED;
+        this.usedAt = LocalDateTime.now();
+    }
+
+    public void cancelUse() {
+        this.status = CouponIssueStatus.AVAILABLE;
+        this.usedAt = null;
     }
 }

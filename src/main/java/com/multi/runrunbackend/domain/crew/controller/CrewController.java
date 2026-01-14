@@ -1,0 +1,255 @@
+package com.multi.runrunbackend.domain.crew.controller;
+
+import com.multi.runrunbackend.common.response.ApiResponse;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.crew.dto.req.*;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewActivityParticipantResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewAppliedResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewDetailResDto;
+import com.multi.runrunbackend.domain.crew.dto.res.CrewListPageResDto;
+import com.multi.runrunbackend.domain.crew.service.CrewService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+/**
+ * @author : BoKyung
+ * @description : 크루 Controller
+ * @filename : CrewController
+ * @since : 25. 12. 18. 목요일
+ */
+@RestController
+@RequestMapping("/api/crews")
+@RequiredArgsConstructor
+@Tag(name = "크루 API")
+public class CrewController {
+
+    private final CrewService crewService;
+
+    /**
+     * @param reqDto 크루 생성 요청 DTO
+     * @description : 크루 생성
+     */
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> createCrew(
+            @AuthenticationPrincipal CustomUser principal,
+            @Valid @RequestPart("crew") CrewCreateReqDto reqDto,
+            @RequestPart(value = "crewImageFile", required = false) MultipartFile crewImageFile
+    ) {
+        Long crewId = crewService.createCrew(principal, reqDto, crewImageFile);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success("크루 생성 성공", crewId));
+    }
+
+    /**
+     * @param principal 인증된 사용자 정보
+     * @param crewId    크루 ID
+     * @param reqDto    크루 수정 요청 DTO
+     * @description : 크루 수정
+     */
+    @PutMapping(value = "/{crewId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Void>> updateCrew(
+            @AuthenticationPrincipal CustomUser principal,
+            @PathVariable Long crewId,
+            @Valid @RequestPart("crew") CrewUpdateReqDto reqDto,
+            @RequestPart(value = "crewImageFile", required = false) MultipartFile crewImageFile
+    ) {
+        crewService.updateCrew(crewId, principal, reqDto, crewImageFile);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 정보 수정 성공", null));
+    }
+
+    /**
+     * @param principal 인증된 사용자 정보
+     * @param crewId    크루 ID
+     * @description : 크루 삭제 (해체)
+     */
+    @DeleteMapping("/{crewId}")
+    public ResponseEntity<ApiResponse<Void>> deleteCrew(
+            @AuthenticationPrincipal CustomUser principal,
+            @PathVariable Long crewId
+    ) {
+        crewService.deleteCrew(crewId, principal);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 해체 성공", null));
+    }
+
+    /**
+     * @param cursor      마지막 조회 크루 ID (다음 페이지 조회 시 사용)
+     * @param size        페이지 크기 (기본값: 5)
+     * @param distance    거리 필터
+     * @param averagePace 평균 페이스 필터
+     * @param recruiting  모집중 우선 정렬
+     * @param keyword     크루명 검색
+     * @description : 크루 목록 조회 (커서 기반 페이징)
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<CrewListPageResDto>> getCrewList(
+            @RequestParam(required = false) Long cursor,
+
+            @RequestParam(defaultValue = "5") int size,
+
+            @RequestParam(required = false) String distance,
+
+            @RequestParam(required = false) String averagePace,
+
+            @RequestParam(required = false) Boolean recruiting,
+
+            @RequestParam(required = false) String keyword
+    ) {
+        CrewListPageResDto response = crewService.getCrewList(
+                cursor, size, distance, averagePace, recruiting, keyword);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 목록 조회 성공", response));
+    }
+
+    /**
+     * @param crewId 크루 ID
+     * @description : 크루 상세 조회
+     */
+    @GetMapping("/{crewId}")
+    public ResponseEntity<ApiResponse<CrewDetailResDto>> getCrewDetail(
+            @PathVariable Long crewId
+    ) {
+        CrewDetailResDto response = crewService.getCrewDetail(crewId);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 상세 조회 성공", response));
+    }
+
+    /**
+     * @param principal 인증된 사용자 정보
+     * @param crewId    크루 ID
+     * @param reqDto    모집 상태 변경 요청 DTO
+     * @description : 크루 모집 상태 변경
+     */
+    @PatchMapping("/{crewId}/status")
+    public ResponseEntity<ApiResponse<Void>> updateRecruitStatus(
+            @AuthenticationPrincipal CustomUser principal,
+            @PathVariable Long crewId,
+            @Valid @RequestBody CrewStatusChangeReqDto reqDto
+    ) {
+        crewService.updateRecruitStatus(principal, crewId, reqDto);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("모집 상태 변경 성공", null));
+    }
+
+    /**
+     * @param crewId    크루 ID
+     * @param principal
+     * @description : 특정 사용자가 특정 크루에 가입 신청한 상태를 조회
+     */
+    @GetMapping("/{crewId}/applied")
+    public ResponseEntity<ApiResponse<CrewAppliedResDto>> getAppliedStatus(
+            @PathVariable Long crewId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        CrewAppliedResDto result = crewService.getAppliedStatus(crewId, principal);
+
+        // 성공 응답 반환
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("가입 신청 상태 조회 성공", result));
+    }
+
+    /**
+     * @param crewId      크루 ID
+     * @param newLeaderId 새로운 크루장 ID (부크루장 또는 운영진)
+     * @param principal   인증된 사용자 정보 (현재 크루장)
+     * @description : 크루장 위임 (부크루장 또는 운영진에게만 가능, 크루장만 실행 가능)
+     */
+    @PostMapping("/{crewId}/delegate-leader")
+    public ResponseEntity<ApiResponse<Void>> delegateLeader(
+            @PathVariable Long crewId,
+            @RequestParam Long newLeaderId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        crewService.delegateLeaderManually(crewId, newLeaderId, principal);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루장 위임이 완료되었습니다.", null));
+    }
+
+    /**
+     * @param crewId    크루 ID
+     * @param principal 인증된 사용자
+     * @param reqDto    크루 활동 생성 요청 DTO
+     * @description : 크루 활동 생성 (크루장, 부크루장, 운영진만 가능)
+     */
+    @PostMapping("/{crewId}/activities")
+    public ResponseEntity<ApiResponse<Long>> createActivity(
+            @PathVariable Long crewId,
+            @AuthenticationPrincipal CustomUser principal,
+            @Valid @RequestBody CrewActivityCreateReqDto reqDto
+    ) {
+        Long activityId = crewService.createCrewActivity(crewId, principal, reqDto);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success("크루 활동 생성 성공", activityId));
+    }
+
+    /**
+     * @param crewId     크루 ID
+     * @param activityId 활동 ID
+     * @param principal  인증된 사용자
+     * @param reqDto     크루 활동 수정 요청 DTO
+     * @description : 크루 활동 수정 (크루장, 부크루장, 운영진만 가능)
+     */
+    @PutMapping("/{crewId}/activities/{activityId}")
+    public ResponseEntity<ApiResponse<Void>> updateActivity(
+            @PathVariable Long crewId,
+            @PathVariable Long activityId,
+            @AuthenticationPrincipal CustomUser principal,
+            @Valid @RequestBody CrewActivityUpdateReqDto reqDto
+    ) {
+        crewService.updateCrewActivity(activityId, crewId, principal, reqDto);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 활동 수정 성공", null));
+    }
+
+    /**
+     * @param crewId     크루 ID
+     * @param activityId 활동 ID
+     * @param principal  인증된 사용자
+     * @description : 크루 활동 삭제 (크루장, 부크루장, 운영진만 가능)
+     */
+    @DeleteMapping("/{crewId}/activities/{activityId}")
+    public ResponseEntity<ApiResponse<Void>> deleteActivity(
+            @PathVariable Long crewId,
+            @PathVariable Long activityId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        crewService.deleteCrewActivity(activityId, crewId, principal);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("크루 활동 삭제 성공", null));
+    }
+
+    /**
+     * @param activityId 활동 ID
+     * @description : 크루 활동 참여자 목록 조회
+     */
+    @GetMapping("/activities/{activityId}/participants")
+    public ResponseEntity<ApiResponse<List<CrewActivityParticipantResDto>>> getActivityParticipants(
+            @PathVariable Long activityId
+    ) {
+        List<CrewActivityParticipantResDto> participants = crewService.getActivityParticipants(activityId);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("활동 참여자 조회 성공", participants));
+    }
+}

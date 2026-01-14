@@ -3,22 +3,13 @@ package com.multi.runrunbackend.domain.challenge.entity;
 import com.multi.runrunbackend.common.entitiy.BaseTimeEntity;
 import com.multi.runrunbackend.domain.challenge.constant.UserChallengeStatus;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  *
@@ -29,10 +20,10 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(
-    name = "user_challenge",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"challenge_id", "user_id"})
-    }
+        name = "user_challenge",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"challenge_id", "user_id"})
+        }
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -57,6 +48,9 @@ public class UserChallenge extends BaseTimeEntity {
     @Column(name = "progress_value", nullable = false)
     private Double progressValue;
 
+    @Column(name = "last_progress_date")
+    private LocalDate lastProgressDate;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
@@ -64,26 +58,54 @@ public class UserChallenge extends BaseTimeEntity {
         UserChallenge uc = new UserChallenge();
         uc.user = user;
         uc.challenge = challenge;
-        uc.status = UserChallengeStatus.JOINED;
         uc.progressValue = 0.0;
+
+        if (!challenge.getStartDate().isAfter(LocalDate.now())) {
+            uc.status = UserChallengeStatus.IN_PROGRESS;
+        } else {
+            uc.status = UserChallengeStatus.JOINED;
+        }
+
         return uc;
     }
 
-    public void updateProgress(double value) {
-        this.progressValue = value;
+    public void startProgress() {
         if (this.status == UserChallengeStatus.JOINED) {
             this.status = UserChallengeStatus.IN_PROGRESS;
         }
     }
 
+    public void updateProgress(double value) {
+        // 아직 시작하지 않은 챌린지(JOINED)는 업데이트 불가
+        if (this.status == UserChallengeStatus.JOINED) {
+            return;
+        }
+
+        this.progressValue = value;
+
+        Double target = this.challenge.getTargetValue();
+        if (target != null && this.progressValue >= target) {
+            complete();
+        }
+    }
+
+    public void setLastProgressDate(LocalDate runDate) {
+        this.lastProgressDate = runDate;
+    }
+
     public void complete() {
-        this.status = UserChallengeStatus.COMPLETED;
-        this.completedAt = LocalDateTime.now();
+        // 이미 완료/실패 상태가 아닐 때만 완료 처리
+        if (this.status != UserChallengeStatus.COMPLETED && this.status != UserChallengeStatus.FAILED) {
+            this.status = UserChallengeStatus.COMPLETED;
+            this.completedAt = LocalDateTime.now();
+        }
     }
 
     public void fail() {
-        this.status = UserChallengeStatus.FAILED;
-        this.completedAt = LocalDateTime.now();
+        // 이미 완료된 건은 실패 처리하지 않음
+        if (this.status != UserChallengeStatus.COMPLETED) {
+            this.status = UserChallengeStatus.FAILED;
+            this.completedAt = LocalDateTime.now();
+        }
     }
-
 }

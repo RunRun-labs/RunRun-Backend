@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포인트 상점</title>
+    <link rel="stylesheet" th:href="@{/css/point-shop.css}">
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
+</head>
+<body>
+<!-- 헤더 -->
+<div class="header">
+    <button class="btn-back" onclick="history.back()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+    </button>
+    <h1 class="header-title">포인트 상점</h1>
+</div>
+
+<!-- 컨테이너 -->
+<div class="container">
+    <!-- 내 포인트 -->
+    <div class="my-points-section">
+        <div class="my-points-card">
+            <div class="my-points-label">내 포인트</div>
+            <div class="my-points-amount" id="myPoints">0 P</div>
+        </div>
+    </div>
+
+    <!-- 상품 그리드 -->
+    <div class="products-section">
+        <h2 class="section-title">교환 가능 상품</h2>
+        <div class="products-grid" id="productsGrid">
+            <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #999;">
+                상품을 불러오는 중...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 상품 상세 모달 -->
+<div id="productModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeProductModal()"></div>
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeProductModal()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+        </button>
+        
+        <div class="modal-image-wrapper">
+            <img id="modalImage" src="" alt="" class="modal-product-image">
+        </div>
+        
+        <div class="modal-body">
+            <h2 id="modalProductName" class="modal-product-name"></h2>
+            <p id="modalProductDescription" class="modal-product-description"></p>
+            
+            <div class="modal-points-section">
+                <div class="points-info">
+                    <span class="points-label">필요 포인트</span>
+                    <span id="modalRequiredPoints" class="points-value"></span>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn-modal-cancel" onclick="closeProductModal()">취소</button>
+                <button id="btnExchange" class="btn-modal-exchange">교환하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 로딩 스피너 -->
+<div id="loadingSpinner"
+     style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001;">
+    로딩중...
+</div>
+
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+<script th:src="@{/js/point-shop.js}"></script>
+</body>
+</html>

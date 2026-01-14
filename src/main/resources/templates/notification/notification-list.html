@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 알림 센터</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/notification-list.css" th:href="@{/css/notification-list.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
+</head>
+<body>
+<main class="page">
+  <header class="header">
+    <button type="button" id="backBtn" class="back-button" aria-label="뒤로가기">
+      <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기">
+    </button>
+    <h1 class="header-title">알림 센터</h1>
+  </header>
+
+  <section class="notification-list-section">
+    <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+      <div class="spinner"></div>
+      <p>로딩 중...</p>
+    </div>
+    <div id="notificationList" class="notification-list">
+      <!-- 알림 아이템들이 동적으로 추가됩니다 -->
+    </div>
+    <div id="sentinel" style="height: 1px;"></div>
+    <div id="emptyState" class="empty-state" style="display: none;">
+      <p>알림이 없습니다.</p>
+    </div>
+  </section>
+</main>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+<script src="/js/notification-list.js" th:src="@{/js/notification-list.js}"></script>
+</body>
+</html>
+

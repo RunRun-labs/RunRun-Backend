@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>RunRun Admin | 쿠폰 상세</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/admin-layout.css" th:href="@{/css/admin-layout.css}" />
+    <link rel="stylesheet" href="/css/coupon-detail.css" th:href="@{/css/coupon-detail.css}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <script src="/js/admin-common.js" th:src="@{/js/admin-common.js}"></script>
+    <div th:replace="~{admin/layout :: adminLayout(~{::.coupon-detail-content})}">
+      <div class="coupon-detail-content coupon-detail-container">
+        <div class="coupon-detail-card">
+          <div class="page-header">
+            <h1 class="page-title">쿠폰 상세</h1>
+            <div style="display: flex; gap: 12px;">
+              <button type="button" class="create-button" onclick="goToCouponUpdate()">
+                수정하기
+              </button>
+              <button 
+                type="button" 
+                class="create-button" 
+                style="background: #ff4444;"
+                onclick="deleteCoupon()"
+              >
+                삭제하기
+              </button>
+              <button type="button" class="create-button" style="background: var(--text-secondary);" onclick="window.location.href='/admin/coupon/inquiry'">
+                목록으로
+              </button>
+            </div>
+          </div>
+
+          <!-- 쿠폰 기본 정보 -->
+          <div class="info-section">
+            <h2 class="section-title">기본 정보</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <label class="info-label">쿠폰명</label>
+                <div class="info-value" id="couponName">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">쿠폰 코드</label>
+                <div class="info-value" id="couponCode">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">발급 수량</label>
+                <div class="info-value" id="quantity">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">발급된 수</label>
+                <div class="info-value" id="issuedCount">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">혜택 타입</label>
+                <div class="info-value" id="benefitType">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">혜택 값</label>
+                <div class="info-value" id="benefitValue">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">채널</label>
+                <div class="info-value" id="channel">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">상태</label>
+                <div class="info-value" id="status">-</div>
+              </div>
+              <div class="info-item info-item-full">
+                <label class="info-label">설명</label>
+                <div class="info-value" id="description">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">시작일</label>
+                <div class="info-value" id="startAt">-</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">종료일</label>
+                <div class="info-value" id="endAt">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 통계 필터 -->
+          <div class="stats-section">
+            <div class="stats-header">
+              <h2 class="section-title">통계</h2>
+              <div class="stats-filter">
+                <label class="filter-label">기간</label>
+                <select id="rangeFilter" class="filter-select">
+                  <option value="D7">7일</option>
+                  <option value="D30" selected>30일</option>
+                  <option value="D90">90일</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 통계 요약 -->
+            <div class="stats-summary">
+              <div class="stat-card">
+                <div class="stat-label">총 발급</div>
+                <div class="stat-value" id="totalIssued">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">총 사용</div>
+                <div class="stat-value" id="totalUsed">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">사용률</div>
+                <div class="stat-value" id="usageRate">0.00%</div>
+              </div>
+            </div>
+
+            <!-- 날짜별 발급/사용 추이 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">날짜별 발급/사용 추이</h3>
+              <canvas id="dailyTrendChart"></canvas>
+            </div>
+
+            <!-- 상태별 분포 차트 -->
+            <div class="chart-container">
+              <h3 class="chart-title">상태별 분포</h3>
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/coupon-detail.js" th:src="@{/js/coupon-detail.js}"></script>
+  </body>
+</html>
+

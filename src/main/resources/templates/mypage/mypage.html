@@ -18,16 +18,18 @@
             href="/css/mypage.css"
             th:href="@{/css/mypage.css}"
     />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
 </head>
 <body class="mypage-body">
 <main class="page mypage-page">
     <header class="mypage-header">
         <h1 class="mypage-logo">MYPAGE</h1>
-        <button class="icon-button settings-button" type="button" aria-label="설정">
-            <img
-                    src="http://localhost:3845/assets/gear-icon.svg"
-                    alt="설정 아이콘"
-            />
+        <button class="icon-button settings-button" type="button" aria-label="설정" data-role="settings">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
         </button>
     </header>
 
@@ -39,12 +41,13 @@
                 <img
                         class="avatar-img"
                         data-role="profile-preview"
+                        src="/img/default-profile.svg"
                         alt="프로필 이미지"
-                        hidden
                 />
                 <span
                         class="avatar-initial"
                         data-role="profile-initial"
+                        hidden
                 ></span>
             </div>
 
@@ -56,138 +59,279 @@
             />
 
 
-            <!-- 중앙: 이름 + 신체 정보 -->
+            <!-- 중앙: 티어/레이팅/포인트 정보 -->
             <div class="profile-text profile-center">
-
-
-                <p class="profile-meta profile-body">
-                    키:
-                    <span id="heightCm"
-                          th:text="${heightCm != null ? heightCm : '-'}">-</span>cm<br/>
-                    몸무게:
-                    <span id="weightKg"
-                          th:text="${weightKg != null ? weightKg : '-'}">-</span>kg<br/>
-                    BMI:
-                    <span id="bmiValue">-</span>
-                </p>
-            </div>
-
-
-            <div class="profile-text profile-right">
-                <p class="profile-meta">
-                    누적:
-                    <span th:text="${totalDistance != null ? totalDistance : '-'}">-</span><br/>
-                    랭킹:
-                    <span th:text="${rank != null ? rank : '-'}">-</span><br/>
-                    포인트:
-                    <span th:text="${pointBalance != null ? pointBalance : '-'}">-</span>
-                </p>
+                <div class="profile-meta">
+                    <div class="tier-section">
+                        <span class="tier-label">티어:</span>
+                        <div class="tier-display" data-role="tier-click" style="cursor: pointer;">
+                            <!-- 이미지 의존 제거: 티어는 JS에서 이모지로 렌더링 -->
+                            <span class="tier-text" id="tierText">🐢</span>
+                        </div>
+                    </div>
+                    <div class="rating-section">
+                        <span class="rating-label">레이팅:</span>
+                        <span class="rating-value" id="ratingValue">-</span>
+                    </div>
+                    <div class="point-section" data-role="point-click" style="cursor: pointer;">
+                        <span class="point-label">포인트:</span>
+                        <span class="point-value" id="pointValue">-</span>
+                    </div>
+                </div>
             </div>
 
         </div>
-
-
+        
+        <!-- 액션 버튼 -->
         <div class="profile-actions">
-            <button class="action-pill" type="button">챌린지</button>
-            <button class="action-pill" type="button">친구</button>
-            <button class="action-pill" type="button">쿠폰함</button>
-            <button class="action-pill" type="button" data-role="profile-settings">프로필 설정</button>
+            <button class="action-button-horizontal" type="button" data-role="coupons">쿠폰함</button>
+            <button class="action-button-horizontal secondary" type="button" data-role="friends">친구</button>
+            <button class="action-button-horizontal" type="button" data-role="profile-settings">프로필 설정</button>
         </div>
     </section>
 
-    <section class="weekly-section">
-        <div class="weekly-chips">
-            <button class="chip chip-filled" type="button">
-                <span class="chip-icon">🏃‍♂️</span>
-                <span th:text="${weekDistance}">21.4km</span>
+    <section class="my-content-section">
+        <div class="my-content-buttons">
+            <button class="my-content-button" type="button" data-role="challenge">
+                <span class="button-icon">🏅</span>
+                <span class="button-text">챌린지</span>
             </button>
-            <button class="chip chip-outline" type="button">
-                <span th:text="${weekLabel}">12월 둘째 주</span>
+            <button class="my-content-button" type="button" data-role="my-courses">
+                <span class="button-icon">📍</span>
+                <span class="button-text">내 코스</span>
             </button>
-            <button class="chip chip-filled" type="button">
-                <span class="chip-icon">⏱</span>
-                <span th:text="${weekTime}">3h 14m</span>
+            <button class="my-content-button" type="button" data-role="my-posts">
+                <span class="button-icon">📝</span>
+                <span class="button-text">내 게시글</span>
             </button>
-        </div>
-
-        <div class="weekly-chart">
-            <div class="chart-bars">
-                <div class="bar" style="--h: 0.35"></div>
-                <div class="bar" style="--h: 0.9"></div>
-                <div class="bar" style="--h: 0.5"></div>
-                <div class="bar" style="--h: 0.4"></div>
-                <div class="bar" style="--h: 0.75"></div>
-                <div class="bar" style="--h: 0.6"></div>
-                <div class="bar" style="--h: 0.8"></div>
-            </div>
-            <div class="chart-days">
-                <span>Mo</span>
-                <span>Tu</span>
-                <span>We</span>
-                <span>Th</span>
-                <span>Fr</span>
-                <span>Sa</span>
-                <span>Su</span>
-            </div>
         </div>
     </section>
 
-    <section class="run-list">
-        <article class="run-card">
-            <div class="run-thumb">
-                <img
-                        src="http://localhost:3845/assets/run-map-1.png"
-                        alt="러닝 코스 지도"
-                />
+    <!-- 내 코스 모달 -->
+    <div class="course-modal" id="courseModal" data-role="course-modal">
+        <div class="course-modal-overlay" data-role="course-modal-overlay"></div>
+        <div class="course-modal-content">
+            <div class="course-modal-header">
+                <h2 class="course-modal-title">내 코스</h2>
+                <button class="course-modal-close" type="button" data-role="course-modal-close" aria-label="닫기">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                </button>
             </div>
-            <div class="run-content">
-                <div class="run-header">
-                    <span class="run-date">12/9 화요일</span>
-                    <span class="run-note">"광진구실업선수" 닉과 함께</span>
-                </div>
-                <p class="run-title">정선군 여행런</p>
-                <div class="run-stats">
-          <span class="run-stat">
-            <span class="run-icon">🏃‍♂️</span>
-            <span>18km</span>
-          </span>
-                    <span class="run-stat">
-            <span class="run-icon">⏱</span>
-            <span>01:32:14</span>
-          </span>
-                </div>
-                <button class="run-share" type="button">피드에 공유</button>
+            <div class="course-modal-options">
+                <button class="course-modal-option" type="button" data-role="course-option" data-type="liked">
+                    <span class="option-icon">❤️</span>
+                    <span class="option-text">좋아요 한 코스</span>
+                    <svg class="option-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="course-modal-option" type="button" data-role="course-option" data-type="favorited">
+                    <span class="option-icon">⭐</span>
+                    <span class="option-text">즐겨찾기 한 코스</span>
+                    <svg class="option-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="course-modal-option" type="button" data-role="course-option" data-type="my">
+                    <span class="option-icon">📌</span>
+                    <span class="option-text">내가 등록한 코스</span>
+                    <svg class="option-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                </button>
             </div>
-        </article>
+        </div>
+    </div>
 
-        <article class="run-card">
-            <div class="run-thumb">
-                <img
-                        src="http://localhost:3845/assets/run-map-2.png"
-                        alt="러닝 코스 지도"
-                />
+    <!-- 챌린지 모달 -->
+    <div class="course-modal" id="challengeModal" data-role="challenge-modal">
+        <div class="course-modal-overlay" data-role="challenge-modal-overlay"></div>
+        <div class="course-modal-content">
+            <div class="course-modal-header">
+                <h2 class="course-modal-title">챌린지</h2>
+                <button class="course-modal-close" type="button" data-role="challenge-modal-close" aria-label="닫기">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                </button>
             </div>
-            <div class="run-content">
-                <div class="run-header">
-                    <span class="run-date">12/8 월요일</span>
-                    <span class="run-note">혼자</span>
-                </div>
-                <p class="run-title">분당구 운동</p>
-                <div class="run-stats">
-          <span class="run-stat">
-            <span class="run-icon">🏃‍♂️</span>
-            <span>5km</span>
-          </span>
-                    <span class="run-stat">
-            <span class="run-icon">⏱</span>
-            <span>00:20:30</span>
-          </span>
-                </div>
-                <button class="run-share" type="button">피드에 공유</button>
+            <div class="course-modal-options">
+                <button class="course-modal-option" type="button" data-role="challenge-option" data-type="active">
+                    <span class="option-icon">🏃‍♂️</span>
+                    <span class="option-text">진행중 챌린지</span>
+                    <svg class="option-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="course-modal-option" type="button" data-role="challenge-option" data-type="ended">
+                    <span class="option-icon">🏁</span>
+                    <span class="option-text">종료된 챌린지</span>
+                    <svg class="option-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                </button>
             </div>
-        </article>
+        </div>
+    </div>
+
+    <section class="run-list-section">
+        <div class="run-list-header">
+            <h2 class="run-list-title">러닝 기록</h2>
+            <button class="date-search-button" type="button" id="dateSearchButton" aria-label="날짜 검색">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span id="dateSearchLabel">날짜 검색</span>
+            </button>
+        </div>
+        <section class="run-list" data-role="run-list">
+            <!-- 러닝 기록 카드는 JavaScript로 동적 생성 -->
+        </section>
+
+        <!-- 빈 상태 UI -->
+        <div class="run-list-empty" id="runListEmpty" hidden>
+            <div class="empty-text-large">텅~</div>
+            <div class="empty-text-small">이번 주 러닝 기록이 없어요</div>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="pagination" id="pagination" hidden>
+            <button class="pagination-button" id="paginationPrev" type="button" aria-label="이전 페이지">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="pagination-pages" id="paginationPages">
+                <!-- 페이지 버튼들은 JavaScript로 동적 생성 -->
+            </div>
+            <button class="pagination-button" id="paginationNext" type="button" aria-label="다음 페이지">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
     </section>
 </main>
+
+<!-- 삭제 확인 모달 -->
+<div class="modal-overlay" id="deleteRecordModal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">러닝 기록 삭제</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-delete-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="delete-confirm-message">정말 이 러닝 기록을 삭제하시겠습니까?</p>
+            <p class="delete-warning-message">삭제된 기록은 복구할 수 없습니다.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-cancel-button" type="button" data-role="cancel-delete-record">취소</button>
+            <button class="modal-confirm-button" type="button" data-role="confirm-delete-record">삭제</button>
+        </div>
+    </div>
+</div>
+
+<!-- 이미지 모달 -->
+<div class="image-modal-overlay" id="imageModal" hidden>
+    <div class="image-modal-content">
+        <button class="image-modal-close" type="button" aria-label="닫기" data-role="close-image-modal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <img class="image-modal-img" id="imageModalImg" src="" alt="코스 이미지"/>
+    </div>
+</div>
+
+<!-- 티어/레이팅 모달 -->
+<div class="course-modal" id="tierRatingModal" data-role="tier-rating-modal" hidden>
+    <div class="course-modal-overlay" data-role="tier-rating-modal-overlay"></div>
+    <div class="course-modal-content">
+        <div class="course-modal-header">
+            <h2 class="course-modal-title">거리별 티어 & 레이팅</h2>
+            <button class="course-modal-close" type="button" data-role="tier-rating-modal-close" aria-label="닫기">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="course-modal-options" id="tierRatingList">
+            <!-- 거리별 티어/레이팅은 JavaScript로 동적 생성 -->
+            <div style="padding: 20px; text-align: center; color: #999;">
+                <p>로딩 중...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 달력 모달 -->
+<div class="calendar-modal-overlay" id="calendarModal" hidden>
+    <div class="calendar-modal-content">
+        <div class="calendar-modal-header">
+            <h2 class="calendar-modal-title">날짜 선택</h2>
+            <button class="calendar-modal-close" type="button" aria-label="닫기" data-role="close-calendar-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="calendar-container">
+            <div class="calendar-month-header">
+                <button class="calendar-nav-button" type="button" id="calendarPrevMonth" aria-label="이전 달">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div class="calendar-month-year" id="calendarMonthYear">2026년 1월</div>
+                <button class="calendar-nav-button" type="button" id="calendarNextMonth" aria-label="다음 달">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="calendar-weekdays">
+                <div class="calendar-weekday">일</div>
+                <div class="calendar-weekday">월</div>
+                <div class="calendar-weekday">화</div>
+                <div class="calendar-weekday">수</div>
+                <div class="calendar-weekday">목</div>
+                <div class="calendar-weekday">금</div>
+                <div class="calendar-weekday">토</div>
+            </div>
+            <div class="calendar-days" id="calendarDays">
+                <!-- 달력 날짜는 JavaScript로 동적 생성 -->
+            </div>
+        </div>
+        <div class="calendar-modal-footer">
+            <button class="calendar-reset-button" type="button" id="calendarResetButton">초기화</button>
+        </div>
+    </div>
+</div>
 
 <template id="bottomNavTemplate">
     <nav class="bottom-nav" aria-label="하단 메뉴">
@@ -239,8 +383,7 @@
         th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/mypage.js" th:src="@{/js/mypage.js}"></script>
 </body>
 </html>
-
-

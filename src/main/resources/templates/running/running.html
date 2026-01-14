@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>러닝</title>
+    <link
+      rel="stylesheet"
+      th:href="@{/css/running.css}"
+      href="/css/running.css"
+    />
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
+    <script
+      type="application/javascript"
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&autoload=false"
+    ></script>
+  </head>
+  <body>
+    <div class="page">
+      <!-- 상단 네비게이션 -->
+      <div class="top-nav">
+        <button class="back-button" id="backButton">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M15 18L9 12L15 6"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <h1 class="page-title">오프라인</h1>
+      </div>
+
+      <!-- 지도 컨테이너 -->
+      <div class="map-container">
+        <div id="map" class="map"></div>
+        <button
+          class="locate-button"
+          id="locateButton"
+          type="button"
+          aria-label="현재 위치로 이동"
+        >
+          ⦿
+        </button>
+      </div>
+
+      <!-- 통계 정보 오버레이 -->
+      <div class="stats-overlay">
+        <div class="stat-item">
+          <div class="stat-value" id="distanceValue">0.0km</div>
+          <div class="stat-label">DISTANCE</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="paceValue">0'00''</div>
+          <div class="stat-label">PACE</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="timeValue">00:00</div>
+          <div class="stat-label">TIME</div>
+        </div>
+      </div>
+
+      <!-- 채팅방 버튼 -->
+      <button class="chat-button" id="chatButton">채팅방</button>
+      
+      <!-- 시작 버튼 (솔로런용) -->
+      <button class="start-running-button" id="startRunningButton" style="display: none;">시작</button>
+
+      <!-- 러닝 결과 모달 -->
+      <div class="running-result-modal-overlay" id="running-result-modal-overlay">
+        <div class="running-result-modal">
+          <div class="result-header">
+            <h2>러닝 결과</h2>
+            <button class="result-close" id="running-result-close" type="button">
+              ✕
+            </button>
+          </div>
+
+          <!-- 러닝 결과 로딩 -->
+          <div class="result-loading" id="result-loading">
+            <div class="spinner"></div>
+            <div class="loading-text" id="result-loading-text">
+              러닝 결과 처리중입니다…
+            </div>
+          </div>
+
+          <div class="result-summary">
+            <div class="result-card">
+              <div class="result-label">거리(km)</div>
+              <div class="result-value" id="result-distance">0.00</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">시간</div>
+              <div class="result-value" id="result-time">00:00</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">평균 페이스</div>
+              <div class="result-value" id="result-pace">--:--</div>
+            </div>
+          </div>
+
+          <div class="result-segments">
+            <div class="segments-title">구간 페이스</div>
+            <div class="segments-list" id="result-segments"></div>
+          </div>
+
+          <div class="result-actions">
+            <button class="result-primary" id="result-go-chat" type="button">
+              채팅방으로
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 자유러닝(코스 없음) - 처리 단계 오버레이(코스 생성/저장/결과 저장) -->
+      <div class="global-loading-overlay" id="global-loading-overlay">
+        <div class="global-loading-card">
+          <div class="spinner"></div>
+          <div class="loading-text" id="global-loading-text">처리중…</div>
+        </div>
+      </div>
+
+      <!-- 자유러닝(코스 없음) - 코스 저장 모달 (경로 수정 불가, 필수 입력) -->
+      <div
+        class="free-run-course-modal-overlay"
+        id="free-run-course-modal-overlay"
+      >
+        <div class="free-run-course-modal">
+          <div class="free-run-course-header">
+            <h2 class="free-run-course-title">🧭 자유러닝 코스 저장</h2>
+            <div class="free-run-course-subtitle">
+              경로는 자동 생성되며 수정할 수 없습니다. 정보를 입력하고 저장해주세요.
+            </div>
+          </div>
+
+          <div class="free-run-course-body">
+            <div class="free-run-field">
+              <label class="free-run-label" for="free-run-course-title-input"
+                >코스 제목 *</label
+              >
+              <input
+                class="free-run-input"
+                id="free-run-course-title-input"
+                type="text"
+                maxlength="50"
+                placeholder="예: 자유러닝 코스"
+              />
+              <p class="free-run-error" id="free-run-course-title-error" style="display: none;"></p>
+            </div>
+
+            <div class="free-run-field">
+              <label class="free-run-label" for="free-run-course-desc-input"
+                >설명</label
+              >
+              <textarea
+                class="free-run-textarea"
+                id="free-run-course-desc-input"
+                rows="3"
+                maxlength="500"
+                placeholder="설명(선택)"
+              ></textarea>
+              <p class="free-run-error" id="free-run-course-desc-error" style="display: none;"></p>
+            </div>
+
+            <div class="free-run-field">
+              <label class="free-run-label" for="free-run-course-address-input"
+                >주소 *</label
+              >
+              <input
+                class="free-run-input"
+                id="free-run-course-address-input"
+                type="text"
+                maxlength="100"
+                placeholder="예: 서울특별시 ..."
+              />
+            </div>
+
+            <div class="free-run-grid">
+              <div class="free-run-field">
+                <label class="free-run-label" for="free-run-course-distance-input"
+                  >거리(m) *</label
+                >
+                <input
+                  class="free-run-input"
+                  id="free-run-course-distance-input"
+                  type="number"
+                  min="100"
+                  max="100000"
+                  readonly
+                  style="background-color: #f3f4f6; cursor: not-allowed;"
+                />
+              </div>
+              <div class="free-run-field">
+                <label class="free-run-label" for="free-run-course-registertype-input"
+                  >등록 타입 *</label
+                >
+                <select
+                  class="free-run-input"
+                  id="free-run-course-registertype-input"
+                  disabled
+                  style="background-color: #f3f4f6; cursor: not-allowed;"
+                >
+                  <option value="AI">AI</option>
+                  <option value="AUTO">AUTO</option>
+                  <option value="MANUAL" selected>MANUAL</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="free-run-grid">
+              <div class="free-run-field">
+                <label class="free-run-label">시작 위도</label>
+                <input
+                  class="free-run-input"
+                  id="free-run-course-startlat-input"
+                  type="text"
+                  readonly
+                />
+              </div>
+              <div class="free-run-field">
+                <label class="free-run-label">시작 경도</label>
+                <input
+                  class="free-run-input"
+                  id="free-run-course-startlng-input"
+                  type="text"
+                  readonly
+                />
+              </div>
+            </div>
+
+            <div class="free-run-field">
+              <label class="free-run-label" for="free-run-course-image-input"
+                >이미지(선택)</label
+              >
+              <input
+                class="free-run-input"
+                id="free-run-course-image-input"
+                type="file"
+                accept="image/*"
+              />
+            </div>
+          </div>
+
+          <div class="free-run-course-footer">
+            <button
+              class="free-run-primary"
+              id="free-run-course-save-btn"
+              type="button"
+            >
+              코스 저장 후 결과 만들기
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 하단 네비게이션 -->
+      <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+    </div>
+
+    <!-- SockJS and STOMP - 먼저 로드 (채팅방과 동일한 라이브러리) -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <!-- RunningTracker 클래스 로드 -->
+    <script
+      src="/js/running-tracker.js"
+      th:src="@{/js/running-tracker.js}"
+    ></script>
+    <!-- TTS Manager -->
+    <script th:src="@{/js/tts-manager.js}" src="/js/tts-manager.js"></script>
+    <!-- type="module" 제거하여 전역 스코프에서 실행 -->
+    <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+    <script src="/js/ad-common.js" th:src="@{/js/ad-common.js}"></script>
+    <script th:src="@{/js/running.js}" src="/js/running.js"></script>
+  </body>
+</html>

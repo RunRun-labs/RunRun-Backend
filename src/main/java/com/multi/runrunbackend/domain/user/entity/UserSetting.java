@@ -1,16 +1,8 @@
 package com.multi.runrunbackend.domain.user.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseTimeEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import com.multi.runrunbackend.domain.user.constant.ProfileVisibility;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,16 +10,16 @@ import lombok.NoArgsConstructor;
 /**
  *
  * @author : kimyongwon
- * @description : 사용자 개인 환경 설정 엔티티 - 알림 허용 여부 - 야간 알림 허용 여부 - TTS 안내 간격
+ * @description : 사용자 개인 환경 설정 엔티티 - 알림 허용 여부 - 야간 알림 허용 여부 - 프로필 공개범위
  * @filename : UserSetting
  * @since : 25. 12. 17. 오전 11:46 수요일
  */
 @Entity
 @Table(
-    name = "user_settings",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id"})
-    }
+        name = "user_settings",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"user_id"})
+        }
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -45,15 +37,19 @@ public class UserSetting extends BaseTimeEntity {
     private boolean notificationEnabled = true;
 
     @Column(name = "night_notification_enabled", nullable = false)
-    private boolean nightNotificationEnabled = false;
+    private boolean nightNotificationEnabled = true;
 
     @Column(name = "tts_interval", nullable = false)
-    private int ttsIntervalSec = 60;
+    private int ttsInterval = 1;
 
+    @Column(name = "profile_visibility", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ProfileVisibility profileVisibility = ProfileVisibility.PUBLIC;
 
     public static UserSetting createDefault(User user) {
         UserSetting setting = new UserSetting();
         setting.user = user;
+        setting.profileVisibility = ProfileVisibility.PUBLIC;
         return setting;
     }
 
@@ -62,10 +58,7 @@ public class UserSetting extends BaseTimeEntity {
         this.nightNotificationEnabled = nightEnabled;
     }
 
-    public void updateTtsInterval(int intervalSec) {
-        if (intervalSec <= 0) {
-            throw new IllegalArgumentException("ttsIntervalSec must be positive");
-        }
-        this.ttsIntervalSec = intervalSec;
+    public void updateProfileVisibility(ProfileVisibility visibility) {
+        this.profileVisibility = visibility;
     }
 }

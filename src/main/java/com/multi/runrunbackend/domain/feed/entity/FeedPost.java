@@ -38,17 +38,22 @@ public class FeedPost extends BaseEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "runing_result_id", nullable = false)
+    @JoinColumn(name = "running_result_id", nullable = false)
     private RunningResult runningResult;
 
     @Column(length = 500)
     private String content;
 
-    public static FeedPost create(User user, RunningResult runningResult, String content) {
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
+
+    public static FeedPost create(User user, RunningResult runningResult, String content, String imageUrl) {
         FeedPost post = new FeedPost();
         post.user = user;
         post.runningResult = runningResult;
         post.content = content;
+        post.imageUrl = imageUrl;
         return post;
     }
 

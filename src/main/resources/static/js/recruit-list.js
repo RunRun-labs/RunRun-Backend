@@ -1,0 +1,575 @@
+document.addEventListener("DOMContentLoaded", () => {
+  let map = null;
+  let markers = [];
+  let customOverlays = []; // InfoWindow 대신 CustomOverlay 사용
+  let userLat = null;
+  let userLng = null;
+  let currentRadius = null; // "전체"가 기본값
+  let currentSortBy = "distance";
+  let currentKeyword = "";
+  let currentIsParticipated = null;
+  let currentPage = 0;
+  let hasNext = true;
+  let isLoading = false;
+  let allRecruits = []; // 누적된 모집글 목록
+  let observer = null; // Intersection Observer
+
+  // 사용자 위치 가져오기
+  function getUserLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+          (position) => {
+            userLat = position.coords.latitude;
+            userLng = position.coords.longitude;
+            initMap();
+            loadRecruitList(true); // 초기 로드
+          },
+          (error) => {
+            console.error("위치 정보를 가져올 수 없습니다:", error);
+            userLat = 37.5665; // 기본 위치 (서울시청)
+            userLng = 126.9780;
+            initMap();
+            loadRecruitList(true); // 초기 로드
+          }
+      );
+    } else {
+      console.error("Geolocation을 지원하지 않는 브라우저입니다.");
+      userLat = 37.5665;
+      userLng = 126.9780;
+      initMap();
+      loadRecruitList(true); // 초기 로드
+    }
+  }
+
+  // 카카오맵 초기화
+  function initMap() {
+    const mapContainer = document.getElementById("map");
+    const mapOption = {
+      center: new kakao.maps.LatLng(userLat, userLng),
+      level: 5,
+    };
+
+    map = new kakao.maps.Map(mapContainer, mapOption);
+
+    const imageSrc = "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png";
+    const imageSize = new kakao.maps.Size(24, 35);
+    const imageOption = {offset: new kakao.maps.Point(12, 35)};
+    const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize,
+        imageOption);
+
+    new kakao.maps.Marker({
+      position: new kakao.maps.LatLng(userLat, userLng),
+      map: map,
+      image: markerImage,
+      title: "내 위치"
+    });
+  }
+
+  function clearMarkers() {
+    markers.forEach((marker) => marker.setMap(null));
+    customOverlays.forEach((overlay) => overlay.setMap(null));
+    markers = [];
+    customOverlays = [];
+  }
+
+  // [수정] 모집글 목록 로드 (무한 스크롤 지원)
+  async function loadRecruitList(reset = false) {
+    // 중복 호출 방지
+    if (isLoading) return;
+    if (!hasNext && !reset) return;
+
+    isLoading = true;
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const recruitList = document.getElementById("recruitList");
+
+    if (reset) {
+      currentPage = 0;
+      hasNext = true;
+      allRecruits = [];
+      recruitList.innerHTML = "";
+      clearMarkers();
+    }
+
+    loadingSpinner.style.display = "flex";
+
+    try {
+      const params = new URLSearchParams({
+        latitude: userLat.toString(),
+        longitude: userLng.toString(),
+        page: currentPage.toString(),
+        size: "10",
+      });
+
+      // 거리 필터 추가 (null이 아니고 "all"이 아닐 때만)
+      if (currentRadius !== null && currentRadius !== "all") {
+        params.append("radiusKm", currentRadius.toString());
+      }
+
+      if (currentSortBy && currentSortBy !== "latest") {
+        params.append("sortBy", currentSortBy);
+      }
+      if (currentKeyword) {
+        params.append("keyword", currentKeyword);
+      }
+      if (currentIsParticipated !== null) {
+        params.append("isParticipated", currentIsParticipated.toString());
+      }
+
+      // 1. 토큰 가져오기 (localStorage 또는 쿠키)
+      const token = localStorage.getItem("accessToken") || getCookie(
+          "accessToken");
+
+      // 2. 헤더 설정
+      const headers = {
+        "Content-Type": "application/json"
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`; // JWT 인증 헤더 추가
+      }
+
+      // 3. fetch 호출 시 headers 포함
+      const response = await fetch(`/api/recruit?${params.toString()}`, {
+        method: "GET",
+        headers: headers
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        // Slice 구조: result.data는 Slice 객체이므로 content 배열을 가져옴
+        const recruits = result.data.content || [];
+        hasNext = result.data.hasNext !== undefined ? result.data.hasNext : (recruits.length >= 10);
+
+        if (recruits.length === 0 && reset) {
+          recruitList.innerHTML = "<p>모집글이 없습니다.</p>";
+        } else if (recruits.length > 0) {
+          allRecruits = [...allRecruits, ...recruits];
+          displayRecruits(recruits, reset);
+          displayMarkers(allRecruits); // 전체 모집글 기준으로 마커 표시
+          currentPage++;
+        }
+      } else {
+        if (reset) {
+          recruitList.innerHTML = "<p>모집글이 없습니다.</p>";
+        }
+      }
+    } catch (error) {
+      console.error("모집글 목록 로드 중 오류:", error);
+      if (reset) {
+        recruitList.innerHTML = "<p>오류가 발생했습니다.</p>";
+      }
+    } finally {
+      loadingSpinner.style.display = "none";
+      isLoading = false;
+      // 무한 스크롤 Observer 재설정
+      setupInfiniteScroll();
+    }
+  }
+
+  // 모집글 카드 표시 (append 모드 지원)
+  function displayRecruits(recruits, reset = false) {
+    const recruitList = document.getElementById("recruitList");
+    
+    if (recruits.length === 0) {
+      return;
+    }
+
+    // HTML 이스케이프 함수
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 페이스 포맷팅
+    function formatPace(pace) {
+      if (!pace) return "-";
+      if (pace === "2:00") {
+        return "2:00/km 이하";
+      } else if (pace === "9:00") {
+        return "9:00/km 이상";
+      }
+      return `${pace}/km`;
+    }
+
+    // 날짜/시간 포맷팅 (간단하게)
+    function formatMeetingDateTime(dateTimeString) {
+      if (!dateTimeString) {
+        return "";
+      }
+      const date = new Date(dateTimeString);
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const today = new Date();
+      const isToday = date.getFullYear() === today.getFullYear() &&
+          date.getMonth() === today.getMonth() &&
+          date.getDate() === today.getDate();
+      
+      if (isToday) {
+        return `오늘 ${hours}:${minutes}`;
+      }
+      return `${month}/${day} ${hours}:${minutes}`;
+    }
+
+    // DocumentFragment를 사용하여 성능 최적화
+    const fragment = document.createDocumentFragment();
+
+    recruits.forEach((recruit) => {
+      const distanceText = recruit.distanceKm
+          ? `${recruit.distanceKm.toFixed(1)}km`
+          : "";
+      const paceText = formatPace(recruit.targetPace);
+      const meetingDateTime = formatMeetingDateTime(recruit.meetingAt);
+
+      const card = document.createElement("div");
+      card.className = "recruit-card";
+      card.setAttribute("data-recruit-id", recruit.recruitId);
+      card.innerHTML = `
+          <!-- 1행: 뱃지 -->
+          <div class="card-badge-wrapper">
+            <span class="card-badge recruiting">모집중</span>
+            ${recruit.isAuthor ? '<span class="card-badge host">방장</span>' : ''}
+          </div>
+          
+          <!-- 2행: 제목 -->
+          <h3 class="card-title">${escapeHtml(recruit.title)}</h3>
+          
+          <!-- 3행: 거리 정보 -->
+          ${distanceText ? `
+          <div class="card-distance">
+            <svg class="card-distance-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>내 위치에서 ${distanceText}</span>
+          </div>
+          ` : ""}
+          
+          <!-- 4행: 상세 스펙 (날짜/시간 | 페이스 | 인원) -->
+          <div class="card-specs">
+            <div class="card-spec-item">
+              <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>${meetingDateTime}</span>
+            </div>
+            <span class="card-spec-divider">·</span>
+            <div class="card-spec-item">
+              <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>${paceText}</span>
+            </div>
+            <span class="card-spec-divider">·</span>
+            <div class="card-spec-item">
+              <svg class="card-spec-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>${recruit.currentParticipants || 1}/${recruit.maxParticipants}명</span>
+            </div>
+          </div>
+        `;
+
+      card.addEventListener("click", () => {
+        const recruitId = card.getAttribute("data-recruit-id");
+        window.location.href = `/recruit/${recruitId}`;
+      });
+
+      fragment.appendChild(card);
+    });
+
+    recruitList.appendChild(fragment);
+  }
+
+  // 마커 및 지도 범위 설정 (전체 모집글 기준)
+  function displayMarkers(recruits) {
+    clearMarkers();
+    const bounds = new kakao.maps.LatLngBounds();
+    if (userLat && userLng) {
+      bounds.extend(
+          new kakao.maps.LatLng(userLat, userLng));
+    }
+
+    let hasValidMarker = false;
+    recruits.forEach((recruit) => {
+      if (recruit.latitude && recruit.longitude) {
+        const markerPosition = new kakao.maps.LatLng(
+            parseFloat(recruit.latitude), parseFloat(recruit.longitude));
+        const marker = new kakao.maps.Marker(
+            {position: markerPosition, map: map});
+
+        // CustomOverlay를 위한 HTML 요소 생성
+        const tooltipContent = document.createElement('div');
+        tooltipContent.className = 'map-tooltip';
+        tooltipContent.textContent = recruit.title;
+        
+        // CustomOverlay 생성 (초기에는 숨김 상태)
+        const customOverlay = new kakao.maps.CustomOverlay({
+          position: markerPosition,
+          content: tooltipContent,
+          yAnchor: 2.2, // 마커 위에 표시 (값이 클수록 위로)
+          xAnchor: 0.5, // 중앙 정렬
+          zIndex: 1000
+        });
+
+        // 마커 호버 시 툴팁 표시
+        kakao.maps.event.addListener(marker, 'mouseover', () => {
+          customOverlay.setMap(map);
+        });
+
+        // 마커 호버 해제 시 툴팁 숨김
+        kakao.maps.event.addListener(marker, 'mouseout', () => {
+          customOverlay.setMap(null);
+        });
+
+        // 마커 클릭 시 즉시 상세 페이지로 이동
+        kakao.maps.event.addListener(marker, 'click', () => {
+          window.location.href = `/recruit/${recruit.recruitId}`;
+        });
+
+        markers.push(marker);
+        customOverlays.push(customOverlay);
+        bounds.extend(markerPosition);
+        hasValidMarker = true;
+      }
+    });
+    if (hasValidMarker) {
+      map.setBounds(bounds);
+    }
+  }
+
+  // 무한 스크롤 설정 (Intersection Observer)
+  function setupInfiniteScroll() {
+    // 기존 observer가 있으면 해제
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+
+    // hasNext가 false면 observer 생성하지 않음
+    if (!hasNext) {
+      return;
+    }
+
+    const recruitList = document.getElementById("recruitList");
+    if (!recruitList) return;
+
+    // 기존 센티넬 제거
+    const existingSentinel = document.getElementById("scrollSentinel");
+    if (existingSentinel) {
+      existingSentinel.remove();
+    }
+
+    // 센티넬 요소 생성
+    const sentinel = document.createElement("div");
+    sentinel.id = "scrollSentinel";
+    sentinel.style.height = "1px";
+    sentinel.style.width = "100%";
+    recruitList.appendChild(sentinel);
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !isLoading && hasNext) {
+            loadRecruitList(false);
+          }
+        });
+      },
+      {
+        root: null, // viewport 기준
+        rootMargin: "200px", // 200px 전에 미리 로드
+        threshold: 0.1
+      }
+    );
+
+    observer.observe(sentinel);
+  }
+
+  // 유틸리티 함수
+  function formatDateTime(dateTimeString) {
+    if (!dateTimeString) {
+      return "";
+    }
+    const date = new Date(dateTimeString);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2,
+        "0")}-${String(date.getDate()).padStart(2, "0")} ${String(
+        date.getHours()).padStart(2, "0")}시 ${String(
+        date.getMinutes()).padStart(2, "0")}분`;
+  }
+
+  function getGenderLimitText(genderLimit) {
+    const genderMap = {M: "남성", F: "여성", BOTH: "무관"};
+    return genderMap[genderLimit] || genderLimit;
+  }
+
+  // [추가] 쿠키 가져오기 헬퍼
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop().split(";").shift();
+    }
+    return null;
+  }
+
+  // 이벤트 리스너
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      window.history.back();
+    });
+  }
+
+  // 필터/정렬 패널 토글
+  const filterToggleBtn = document.getElementById("filterToggleBtn");
+  const sortToggleBtn = document.getElementById("sortToggleBtn");
+  const filterPanel = document.getElementById("filterPanel");
+  const sortPanel = document.getElementById("sortPanel");
+
+  // 필터 패널 토글
+  if (filterToggleBtn && filterPanel) {
+    filterToggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isVisible = filterPanel.style.display !== "none";
+      filterPanel.style.display = isVisible ? "none" : "block";
+      if (sortPanel) sortPanel.style.display = "none";
+    });
+  }
+
+  // 정렬 패널 토글
+  if (sortToggleBtn && sortPanel) {
+    sortToggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isVisible = sortPanel.style.display !== "none";
+      sortPanel.style.display = isVisible ? "none" : "block";
+      if (filterPanel) filterPanel.style.display = "none";
+    });
+  }
+
+  // 필터 옵션 클릭 처리
+  const filterOptions = document.querySelectorAll(".filter-option[data-filter]");
+  filterOptions.forEach((option) => {
+    option.addEventListener("click", () => {
+      const filterType = option.dataset.filter;
+      const value = option.dataset.value;
+
+      // 같은 타입의 다른 옵션들 비활성화
+      document.querySelectorAll(`.filter-option[data-filter="${filterType}"]`).forEach((opt) => {
+        opt.classList.remove("active");
+      });
+
+      // 현재 옵션 활성화
+      option.classList.add("active");
+    });
+  });
+
+  // 정렬 옵션 클릭 처리
+  const sortOptions = document.querySelectorAll(".sort-option");
+  sortOptions.forEach((option) => {
+    option.addEventListener("click", () => {
+      sortOptions.forEach((opt) => opt.classList.remove("active"));
+      option.classList.add("active");
+
+      // 즉시 적용
+      currentSortBy = option.dataset.sort;
+      loadRecruitList(true);
+
+      // 패널 닫기
+      if (sortPanel) sortPanel.style.display = "none";
+    });
+  });
+
+  // 적용 버튼
+  const filterApplyBtn = document.querySelector(".filter-apply");
+  if (filterApplyBtn) {
+    filterApplyBtn.addEventListener("click", () => {
+      // 현재 선택된 필터 값들 읽어서 적용
+      const activeRadius = document.querySelector(".filter-option[data-filter='radius'].active");
+
+      if (activeRadius) {
+        const value = activeRadius.dataset.value;
+        // "all"이면 null로 설정, 아니면 숫자로 변환
+        currentRadius = (value === "all") ? null : parseFloat(value);
+      }
+
+      // 필터 적용
+      loadRecruitList(true);
+
+      // 패널 닫기
+      if (filterPanel) filterPanel.style.display = "none";
+    });
+  }
+
+  // 초기화 버튼
+  const filterResetBtn = document.querySelector(".filter-reset");
+  if (filterResetBtn) {
+    filterResetBtn.addEventListener("click", () => {
+      // 모든 필터 옵션 비활성화
+      document.querySelectorAll(".filter-option").forEach((opt) => {
+        opt.classList.remove("active");
+      });
+
+      // 기본값으로 설정 ("전체"가 기본)
+      document.querySelector(".filter-option[data-filter='radius'][data-value='all']")?.classList.add("active");
+
+      // 필터 초기화
+      currentRadius = null; // "전체"가 기본값
+      currentIsParticipated = null;
+      const checkbox = document.getElementById("isParticipatedCheckbox");
+      if (checkbox) checkbox.checked = false;
+
+      loadRecruitList(true);
+
+      // 패널 닫기
+      if (filterPanel) filterPanel.style.display = "none";
+    });
+  }
+
+  // 외부 클릭 시 패널 닫기
+  document.addEventListener("click", (e) => {
+    if (filterPanel && !filterPanel.contains(e.target) && filterToggleBtn && !filterToggleBtn.contains(e.target)) {
+      filterPanel.style.display = "none";
+    }
+    if (sortPanel && !sortPanel.contains(e.target) && sortToggleBtn && !sortToggleBtn.contains(e.target)) {
+      sortPanel.style.display = "none";
+    }
+  });
+
+  // 검색 입력창 이벤트 (Enter 키 및 실시간 검색)
+  const keywordInput = document.getElementById("keywordInput");
+  if (keywordInput) {
+    // Enter 키로 검색
+    keywordInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        currentKeyword = keywordInput.value.trim();
+        loadRecruitList(true); // 필터 변경 시 리셋
+      }
+    });
+    // 입력 시 실시간 검색 (선택사항 - 필요시 주석 해제)
+    // keywordInput.addEventListener("input", (e) => {
+    //   currentKeyword = e.target.value.trim();
+    //   loadRecruitList(true);
+    // });
+  }
+
+  // 참여 여부 필터 체크박스 이벤트
+  const isParticipatedCheckbox = document.getElementById("isParticipatedCheckbox");
+  if (isParticipatedCheckbox) {
+    isParticipatedCheckbox.addEventListener("change", (e) => {
+      currentIsParticipated = e.target.checked ? true : null;
+      loadRecruitList(true); // 필터 변경 시 리셋
+    });
+  }
+
+  const createBtn = document.getElementById("createBtn");
+  if (createBtn) {
+    createBtn.addEventListener("click", () => {
+      window.location.href = "/recruit/create";
+    });
+  }
+
+  getUserLocation();
+});

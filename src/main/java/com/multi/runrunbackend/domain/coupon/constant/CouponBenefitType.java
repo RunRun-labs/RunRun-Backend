@@ -7,8 +7,8 @@ package com.multi.runrunbackend.domain.coupon.constant;
  * @since : 2025. 12. 17. Wednesday
  */
 public enum CouponBenefitType {
-
-    DISCOUNT,      // 금액 할인 또는 비율 할인
+    FIXED_DISCOUNT,   // 정액 할인 (원)
+    RATE_DISCOUNT,    // 정률 할인 (%)
     EXPERIENCE,    // 우리 서비스 내 체험형 혜택
     VOUCHER        // 교환권 / 제휴사 쿠폰 / 바코드 형태
 }

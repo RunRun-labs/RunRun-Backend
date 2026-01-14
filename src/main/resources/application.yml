@@ -1,17 +1,15 @@
 spring:
   profiles:
-    active: local
+    default: local
 
-  datasource:
-    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:runrun}
-    username: ${POSTGRES_USER:runrun}
-    password: ${POSTGRES_PASSWORD:runrun123}
-    driver-class-name: org.postgresql.Driver
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE}
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
     open-in-view: false
     properties:
       hibernate:
@@ -19,14 +17,9 @@ spring:
         jdbc:
           time_zone: Asia/Seoul
 
-  data:
-    redis:
-      host: localhost
-      port: ${REDIS_PORT:6379}
-      database: 0
-      timeout: 2000ms
-  mongodb:
-    uri: mongodb://${MONGO_USER:runrun}:${MONGO_PASSWORD:runrun123}@localhost:${MONGO_PORT:27017}/${MONGO_DB:runrun_chat}?authSource=admin
+server:
+  port: 8080
+
 springdoc:
   group-configs:
     - group: all
@@ -37,7 +30,48 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expire-time: ${ACCESS_TOKEN_EXPIRE_TIME_MS}
   refresh-token-expire-time: ${REFRESH_TOKEN_EXPIRE_TIME_MS}
-server:
-  port: 8080
+
+aws:
+  region: ${AWS_REGION}
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+
 file:
+  max-size-bytes: ${FILE_MAX_SIZE_BYTES}
+  allowed-content-types: ${FILE_ALLOWED_CONTENT_TYPES}
+  hash-max-bytes: ${FILE_HASH_MAX_BYTES}
   upload-path: ${FILE_UPLOAD_PATH}
+
+tmap:
+  app-key: ${TMAP_APP_KEY}
+  base-url: ${TMAP_BASE_URL}
+
+mapbox:
+  access-token: ${MAPBOX_ACCESS_TOKEN}
+  username: ${MAPBOX_USERNAME}
+  style-id: ${MAPBOX_STYLE_ID}
+  thumbnail:
+    width: ${MAPBOX_THUMBNAIL_WIDTH}
+    height: ${MAPBOX_THUMBNAIL_HEIGHT}
+    padding: ${MAPBOX_THUMBNAIL_PADDING}
+    stroke-width: ${MAPBOX_THUMBNAIL_STROKE_WIDTH}
+    marker-radius: ${MAPBOX_THUMBNAIL_MARKER_RADIUS}
+  timeout:
+    connect-ms: ${MAPBOX_CONNECT_TIMEOUT_MS}
+    response-ms: ${MAPBOX_RESPONSE_TIMEOUT_MS}
+  response:
+    max-bytes: ${MAPBOX_RESPONSE_MAX_BYTES}
+
+tts:
+  presign:
+    ttl-seconds: ${TTS_PRESIGN_TTL_SECONDS}
+
+coupon:
+  code:
+    single:
+      length: ${COUPON_SINGLE_CODE_LENGTH}
+
+toss:
+  payments:
+    client-key: ${TOSS_CLIENT_KEY}
+    secret-key: ${TOSS_SECRET_KEY}

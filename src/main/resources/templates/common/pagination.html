@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <div
+      class="pagination"
+      th:fragment="pagination(currentPage, totalPages, onPageChange)"
+    >
+      <button
+        type="button"
+        class="pagination-btn pagination-prev"
+        th:disabled="${currentPage == 0}"
+        onclick="if (!this.disabled) { th:attr('onclick=${onPageChange}(' + ${currentPage - 1} + ')') }"
+      >
+        이전
+      </button>
+
+      <div class="pagination-numbers">
+        <button
+          th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+          type="button"
+          class="pagination-number"
+          th:classappend="${pageNum == currentPage} ? 'active' : ''"
+          th:onclick="${onPageChange} + '(' + ${pageNum} + ')'"
+        >
+          <span th:text="${pageNum + 1}">1</span>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="pagination-btn pagination-next"
+        th:disabled="${currentPage >= totalPages - 1}"
+        onclick="if (!this.disabled) { th:attr('onclick=${onPageChange}(' + ${currentPage + 1} + ')') }"
+      >
+        다음
+      </button>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>RUNRUN | 설정</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&family=Outfit:wght@600&display=swap"
+            rel="stylesheet"
+    />
+    <link
+            rel="stylesheet"
+            href="/css/setting.css"
+            th:href="@{/css/setting.css}"
+    />
+</head>
+<body class="settings-body">
+<main class="page settings-page">
+    <header class="settings-header">
+        <button class="back-button" type="button" aria-label="뒤로가기">
+            <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기" />
+        </button>
+        <h1 class="settings-title">설정</h1>
+    </header>
+
+    <section class="settings-menu">
+        <button class="settings-menu-item" data-role="notification-settings" type="button">
+            <div class="menu-item-icon notification">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="menu-item-content">
+                <span class="menu-item-text">알림설정</span>
+                <span class="menu-item-desc">알림 수신 설정을 관리합니다</span>
+            </div>
+            <svg class="menu-item-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+
+        <button class="settings-menu-item" data-role="profile-visibility" type="button">
+            <div class="menu-item-icon security">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 15V17M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="menu-item-content">
+                <span class="menu-item-text">프로필 공개 범위 설정</span>
+                <span class="menu-item-desc">프로필 공개 범위를 설정합니다</span>
+            </div>
+            <svg class="menu-item-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+
+        <button class="settings-menu-item" data-role="blocked-users" type="button">
+            <div class="menu-item-icon users">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="menu-item-content">
+                <span class="menu-item-text">차단한 사용자 관리</span>
+                <span class="menu-item-desc">차단한 사용자 목록을 확인합니다</span>
+            </div>
+            <svg class="menu-item-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+
+        <button class="settings-menu-item" data-role="logout" type="button">
+            <div class="menu-item-icon logout">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 17L21 12L16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="menu-item-content">
+                <span class="menu-item-text">로그아웃</span>
+                <span class="menu-item-desc">현재 계정에서 로그아웃합니다</span>
+            </div>
+            <svg class="menu-item-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+
+        <button class="settings-menu-item" data-role="account-delete" type="button">
+            <div class="menu-item-icon danger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.29 3.86L1.82 18C1.64537 18.3024 1.55296 18.6453 1.55199 18.9945C1.55101 19.3437 1.64151 19.6871 1.81445 19.9905C1.98738 20.2939 2.23675 20.5467 2.53773 20.7239C2.83871 20.901 3.18082 20.9962 3.53 21H20.47C20.8192 20.9962 21.1613 20.901 21.4623 20.7239C21.7633 20.5467 22.0126 20.2939 22.1856 19.9905C22.3585 19.6871 22.449 19.3437 22.448 18.9945C22.447 18.6453 22.3546 18.3024 22.18 18L13.71 3.86C13.5317 3.56611 13.2807 3.32312 12.9812 3.15448C12.6817 2.98585 12.3437 2.89725 12 2.89725C11.6563 2.89725 11.3183 2.98585 11.0188 3.15448C10.7193 3.32312 10.4683 3.56611 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="17" r="1" fill="currentColor"/>
+                </svg>
+            </div>
+            <div class="menu-item-content">
+                <span class="menu-item-text">계정 탈퇴</span>
+                <span class="menu-item-desc">계정을 영구적으로 삭제합니다</span>
+            </div>
+            <svg class="menu-item-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+
+        <button class="settings-menu-item" data-role="terms" type="button">
+            <div class="menu-item-icon document">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="menu-item-content">
+                <span class="menu-item-text">약관/정책 확인</span>
+                <span class="menu-item-desc">서비스 약관을 확인합니다</span>
+            </div>
+            <svg class="menu-item-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+
+        <button class="settings-menu-item" data-role="tts-settings" type="button">
+            <div class="menu-item-icon voice">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 1C11.2044 1 10.4413 1.31607 9.87868 1.87868C9.31607 2.44129 9 3.20435 9 4V12C9 12.7956 9.31607 13.5587 9.87868 14.1213C10.4413 14.6839 11.2044 15 12 15C12.7956 15 13.5587 14.6839 14.1213 14.1213C14.6839 13.5587 15 12.7956 15 12V4C15 3.20435 14.6839 2.44129 14.1213 1.87868C13.5587 1.31607 12.7956 1 12 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19 10V12C19 13.8565 18.2625 15.637 16.9497 16.9497C15.637 18.2625 13.8565 19 12 19C10.1435 19 8.36301 18.2625 7.05025 16.9497C5.7375 15.637 5 13.8565 5 12V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 19V23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 23H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="menu-item-content">
+                <span class="menu-item-text">TTS 설정</span>
+                <span class="menu-item-desc">음성 안내 설정을 변경합니다</span>
+            </div>
+            <svg class="menu-item-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </section>
+</main>
+
+<!-- 알림 설정 모달 -->
+<div class="modal-overlay" data-role="notification-modal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">알림설정</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-notification-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="setting-option">
+                <div class="setting-option-content">
+                    <span class="setting-option-label">알림 허용</span>
+                    <span class="setting-option-desc">알림 수신 여부를 설정합니다</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" data-role="notification-enabled"/>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-option">
+                <div class="setting-option-content">
+                    <span class="setting-option-label">야간 알림 수신</span>
+                    <span class="setting-option-desc">야간 시간대 알림 수신 여부를 설정합니다</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" data-role="night-notification-enabled"/>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-save-button" type="button" data-role="save-settings">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- 공개 범위 설정 모달 -->
+<div class="modal-overlay" data-role="profile-visibility-modal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">공개 범위 설정</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-profile-visibility-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="visibility-info-text">마이페이지 러닝 통계의 공개범위를 설정할 수 있습니다</p>
+            <label class="radio-option-item">
+                <input type="radio" name="profileVisibility" value="PUBLIC" data-role="visibility-public"/>
+                <span class="radio-option-label">전체 공개</span>
+                <span class="radio-checkmark"></span>
+            </label>
+            <label class="radio-option-item">
+                <input type="radio" name="profileVisibility" value="FRIENDS_ONLY" data-role="visibility-friends"/>
+                <span class="radio-option-label">친구에게만 공개</span>
+                <span class="radio-checkmark"></span>
+            </label>
+            <label class="radio-option-item">
+                <input type="radio" name="profileVisibility" value="PRIVATE" data-role="visibility-private"/>
+                <span class="radio-option-label">비공개</span>
+                <span class="radio-checkmark"></span>
+            </label>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-save-button" type="button" data-role="save-visibility-settings">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- 약관/정책 확인 모달 -->
+<div class="modal-overlay" data-role="terms-modal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">약관/정책 확인</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-terms-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <button class="terms-option-item" type="button" data-role="terms-service">
+                <span class="terms-option-label">서비스 이용약관</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="terms-option-item" type="button" data-role="terms-privacy">
+                <span class="terms-option-label">개인정보 처리방침</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="terms-option-item" type="button" data-role="terms-marketing">
+                <span class="terms-option-label">유료 서비스</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 계정 탈퇴 확인 모달 -->
+<div class="modal-overlay" data-role="account-delete-modal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">계정 탈퇴</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-account-delete-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="delete-confirm-message">정말 탈퇴 하시겠습니까?</p>
+            <p class="delete-warning-message">탈퇴하시면 포인트와 쿠폰 포함 모든 데이터가 삭제됩니다.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-cancel-button" type="button" data-role="cancel-delete">아니오</button>
+            <button class="modal-confirm-button" type="button" data-role="confirm-delete">예</button>
+        </div>
+    </div>
+</div>
+
+<!-- TTS 설정 모달 -->
+<div class="modal-overlay" data-role="tts-settings-modal" hidden>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">TTS 설정</h2>
+            <button class="modal-close" type="button" aria-label="닫기" data-role="close-tts-settings-modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="visibility-info-text">TTS 보이스팩을 선택하세요</p>
+            <div id="ttsVoicePackList" class="tts-voice-pack-list">
+                <!-- 보이스팩 목록이 여기에 동적으로 로드됩니다 -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-save-button" type="button" data-role="save-tts-settings">저장</button>
+        </div>
+    </div>
+</div>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/setting.js" th:src="@{/js/setting.js}"></script>
+</body>
+</html>
+

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    <title>RUNRUN | 크루</title>
+    <link rel="stylesheet" th:href="@{/css/crew/crewMain.css}">
+    <link rel="stylesheet" href="/css/notification-toast.css"
+          th:href="@{/css/notification-toast.css}">
+</head>
+<body>
+<div class="page">
+    <!-- Top Navigation -->
+    <div th:replace="~{common/top-nav :: topNav}"></div>
+
+    <!-- Main Content -->
+    <main class="crew-main-content">
+        <!-- 상단 섹션: 내 크루 -->
+        <section class="my-crew-section">
+            <h2 class="section-title">내 크루</h2>
+
+            <!-- 내 크루 카드 -->
+            <div class="crew-card" data-action="myCrewDetail">
+                <span class="crew-icon">🏃</span>
+                <span class="crew-text">내 크루</span>
+            </div>
+
+            <!-- 크루원 카드 -->
+            <div class="crew-card" data-action="members">
+                <span class="crew-icon">👥</span>
+                <span class="crew-text">크루원</span>
+            </div>
+
+            <!-- 크루 알림 카드 -->
+            <div class="crew-card" data-action="notifications">
+                <span class="crew-icon">🔔</span>
+                <span class="crew-text">크루 알림</span>
+            </div>
+        </section>
+
+        <!-- 하단 섹션: 전체 크루 목록 -->
+        <section class="crew-actions-section">
+            <h2 class="section-title">전체 크루 목록</h2>
+
+            <!-- 전체 크루 목록 버튼 -->
+            <button class="action-button" type="button" data-action="list">
+                <span class="action-icon">📝</span>
+                <span class="action-text">전체 크루 목록</span>
+            </button>
+
+            <!-- 크루 생성하기 버튼 -->
+            <button class="action-button" type="button" data-action="create">
+                <span class="action-icon">➕</span>
+                <span class="action-text">크루 생성하기</span>
+            </button>
+
+            <!-- 크루 정보 수정하기 버튼 -->
+            <button class="action-button" type="button" data-action="edit">
+                <span class="action-icon">✏️</span>
+                <span class="action-text">크루 정보 수정하기</span>
+            </button>
+        </section>
+    </main>
+
+    <!-- 하단 네비게이션 -->
+    <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+</div>
+
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+<script src="/js/crew/crewMain.js" th:src="@{/js/crew/crewMain.js}"></script>
+</body>
+</html>

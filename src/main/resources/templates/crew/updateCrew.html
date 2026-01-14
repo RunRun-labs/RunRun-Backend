@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>크루 정보 수정하기 - 런런</title>
+    <link rel="stylesheet" th:href="@{/css/crew/updateCrew.css}">
+</head>
+<body>
+<div class="container">
+
+    <header class="header">
+        <button type="button" class="btn-back" onclick="history.back()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h1 class="header-title">크루 정보 수정하기</h1>
+        <button type="button" class="btn-close-recruit" id="btnCloseRecruit">
+            모집 마감
+        </button>
+    </header>
+
+    <main class="main-content">
+        <form id="crewUpdateForm" class="crew-form">
+
+            <input type="hidden" id="crewId" name="crewId" value="">
+
+            <div class="form-group">
+                <label for="crewName" class="form-label">크루명</label>
+                <input
+                        type="text"
+                        id="crewName"
+                        name="crewName"
+                        class="form-input form-input--readonly"
+                        placeholder="크루 이름을 입력하세요."
+                        maxlength="100"
+                        readonly
+                        tabindex="-1"
+                >
+                <p class="error-text" id="crewNameError"></p>
+            </div>
+
+            <div class="form-group">
+                <label for="description" class="form-label">크루 소개글</label>
+                <textarea
+                        id="description"
+                        name="description"
+                        class="form-textarea"
+                        placeholder="크루 소개글을 작성해주세요."
+                        rows="4"
+                        required
+                ></textarea>
+                <div class="char-count">
+                    <span id="crewDescriptionCount">0</span>/500
+                </div>
+                <p class="error-text" id="descriptionError"></p>
+            </div>
+
+            <div class="form-group">
+                <label for="runningDistance" class="form-label">러닝 거리</label>
+                <select
+                        id="runningDistance"
+                        name="runningDistance"
+                        class="form-select"
+                        required
+                >
+                    <option value="">거리를 선택하세요.</option>
+                    <option value="3km 미만">3km 미만</option>
+                    <option value="3km">3km</option>
+                    <option value="5km">5km</option>
+                    <option value="10km">10km</option>
+                    <option value="10km 이상">10km 이상</option>
+                </select>
+                <p class="error-text" id="runningDistanceError"></p>
+            </div>
+
+            <div class="form-group">
+                <label for="averagePace" class="form-label">평균 페이스</label>
+                <select
+                        id="averagePace"
+                        name="averagePace"
+                        class="form-select"
+                        required
+                >
+                    <option value="">페이스를 선택하세요.</option>
+                    <option value="2분/km 이하">2분/km 이하</option>
+                    <option value="3~4분/km">3~4분/km</option>
+                    <option value="5~6분/km">5~6분/km</option>
+                    <option value="7~8분/km">7~8분/km</option>
+                    <option value="9분/km 이상">9분/km 이상</option>
+                </select>
+                <p class="error-text" id="averagePaceError"></p>
+            </div>
+
+            <div class="form-group">
+                <label for="activityRegion" class="form-label">활동 지역</label>
+                <input
+                        type="text"
+                        id="activityRegion"
+                        name="activityRegion"
+                        class="form-input"
+                        placeholder="러닝 활동 장소를 입력해주세요. 예: 서울 송파구"
+                        required
+                >
+                <p class="error-text" id="activityRegionError"></p>
+            </div>
+
+            <div class="form-group">
+                <label for="regularMeetingTime" class="form-label">정기 모임 시간</label>
+                <input
+                        type="text"
+                        id="regularMeetingTime"
+                        name="regularMeetingTime"
+                        class="form-input"
+                        placeholder="정기 모임 시간을 입력해주세요. (요일, 시간 필수) 예: 매주 월,수,금 오후 7시"
+                        required
+                >
+                <p class="error-text" id="regularMeetingTimeError"></p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">이미지</label>
+                <div class="image-upload-wrapper">
+                    <input
+                            type="file"
+                            id="imageInput"
+                            name="image"
+                            class="image-input"
+                            accept="image/*"
+                            hidden
+                    >
+                    <button
+                            type="button"
+                            class="image-upload-btn"
+                            id="uploadBtn"
+                            onclick="document.getElementById('imageInput').click()"
+                            style="display: none;"
+                    >
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                            <circle cx="20" cy="20" r="20" fill="#F5F5F5"/>
+                            <path d="M20 14V26M14 20H26" stroke="#666" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span class="upload-text">이미지 넣기</span>
+                    </button>
+                    <div id="imagePreview" class="image-preview">
+                        <img id="previewImg" src="" alt="크루 이미지">
+                        <button type="button" class="btn-edit-image"
+                                onclick="document.getElementById('imageInput').click()">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M14.166 2.5a2.083 2.083 0 112.946 2.946l-9.583 9.583-3.75.834.834-3.75 9.583-9.583z"
+                                      stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <p class="error-text" id="imageError"></p>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-submit">
+                    크루 정보 수정하기
+                </button>
+                <button type="button" class="btn-cancel" id="btnDeleteCrew">
+                    해체
+                </button>
+            </div>
+        </form>
+
+        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>처리 중입니다...</p>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="/chats" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke="currentColor"
+                      stroke-width="2"/>
+            </svg>
+            <span>chats</span>
+        </a>
+        <a href="/crews" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor"
+                      stroke-width="2"/>
+            </svg>
+            <span>crew</span>
+        </a>
+        <a href="/" class="nav-item nav-item-active">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>home</span>
+        </a>
+        <a href="/matches" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>match</span>
+        </a>
+        <a href="/my" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor"
+                      stroke-width="2"/>
+            </svg>
+            <span>my</span>
+        </a>
+    </nav>
+</div>
+
+<div id="recruitModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2 class="modal-title">크루 모집을 마감하시겠습니까?</h2>
+        <p class="modal-description">
+            모집 마감 후에는 새로운 멤버가 가입할 수 없습니다.<br>
+            다시 모집을 열 수 있습니다.
+        </p>
+        <div class="modal-buttons">
+            <button type="button" class="btn-modal-cancel" onclick="closeRecruitModal()">
+                취소
+            </button>
+            <button type="button" class="btn-modal-confirm" onclick="confirmCloseRecruit()">
+                마감하기
+            </button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/crew/updateCrew.js}"></script>
+</body>
+</html>

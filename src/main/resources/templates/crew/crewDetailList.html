@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>크루 상세 - 런런</title>
+    <link rel="stylesheet" th:href="@{/css/crew/crewDetailList.css}">
+</head>
+<body>
+
+<div class="page">
+<header class="crew-header">
+    <button class="btn-back" onclick="history.back()" aria-label="뒤로가기">
+        <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기 아이콘">
+    </button>
+    <h1 class="header-title">크루 상세</h1>
+</header>
+
+<main class="crew-detail-main">
+
+    <section class="crew-hero">
+        <div class="crew-hero__image-wrapper">
+            <img src=""
+                 alt=""
+                 class="crew-hero__image"
+                 id="crewImage">
+
+            <span class="crew-hero__badge crew-hero__badge--recruiting"
+                  id="recruitmentBadge"
+                  style="display: none;">
+                    모집중
+                </span>
+            <span class="crew-hero__badge crew-hero__badge--closed"
+                  id="recruitmentBadgeClosed"
+                  style="display: none;">
+                    모집마감
+                </span>
+        </div>
+    </section>
+
+    <section class="crew-info">
+        <div class="crew-info__header">
+            <h2 class="crew-info__title" id="crewName">
+                크루 이름
+            </h2>
+            <span class="crew-info__leader" id="crewLeader" style="display: none;">
+                크루장
+            </span>
+        </div>
+        <!-- JavaScript에서 여기에 연필 버튼 추가됨 -->
+
+        <div class="crew-info__location">
+            <span class="location-icon">📍</span>
+            <span id="crewLocation">서울 광진구</span>
+
+            <span class="member-icon" id="memberIcon" style="cursor: pointer;" title="크루원 목록 보기">👥</span>
+            <span><span id="memberCount">24</span>명 참여중</span>
+        </div>
+
+        <div class="crew-info__running">
+            <div class="running-info__item">
+                <span class="running-icon">🏃</span>
+                <span class="running-info__label">거리:</span>
+                <span class="running-info__value" id="crewDistance">-</span>
+            </div>
+            <div class="running-info__item">
+                <span class="running-icon">⏱️</span>
+                <span class="running-info__label">페이스:</span>
+                <span class="running-info__value" id="crewPace">-</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="crew-description">
+        <h3 class="section-title">
+            <span class="title-icon"></span>
+            크루 소개
+        </h3>
+        <p class="description-text" id="crewDescription">
+            매주 월, 수, 금 아침 6시에 모여서 함께 달리는 크루입니다.
+            초보자도 환영합니다! 🏃
+        </p>
+    </section>
+
+    <section class="crew-schedule">
+        <h3 class="section-title">
+            <span class="title-icon"></span>
+            정기 러닝
+        </h3>
+        <div class="schedule-card">
+            <div class="schedule-card__time">
+                <span class="schedule-icon">📅</span>
+                <span id="regularSchedule">
+                        매주 월, 수, 금 06:00
+                    </span>
+            </div>
+        </div>
+    </section>
+
+    <section class="crew-activities">
+        <h3 class="section-title">최근 활동</h3>
+
+        <div class="activity-list" id="activityList">
+
+            <div class="empty-state" id="emptyActivityState" style="display: none;">
+                <p>아직 활동 기록이 없습니다</p>
+            </div>
+        </div>
+    </section>
+
+    <input type="hidden" id="crewId" value="">
+    <input type="hidden" id="isApplied" value="false">
+</main>
+
+<footer class="crew-footer">
+    <button class="btn-action btn-action--join"
+            id="joinBtn"
+            style="display: none;"
+            aria-label="크루 신청하기">
+        가입 신청
+    </button>
+</footer>
+
+<div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+</div>
+
+<script th:src="@{/js/crew/crewDetailList.js}"></script>
+</body>
+</html>

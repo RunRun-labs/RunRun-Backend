@@ -1,0 +1,131 @@
+package com.multi.runrunbackend.domain.match.controller;
+
+import com.multi.runrunbackend.common.response.ApiResponse;
+import com.multi.runrunbackend.domain.auth.dto.CustomUser;
+import com.multi.runrunbackend.domain.match.dto.res.ProfileRunningHistoryResDto;
+import com.multi.runrunbackend.domain.match.service.ProfileRunningHistoryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+
+/**
+ *
+ * @author : kimyongwon
+ * @description : 마이페이지 - 내 러닝 기록 조회 Controller
+ * @filename : ProfileRunningHistoryController
+ * @since : 26. 1. 4. 오후 7:26 일요일
+ */
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/records")
+public class ProfileRunningHistoryController {
+
+    private final ProfileRunningHistoryService profileRunningHistoryService;
+
+    /**
+     * 마이페이지 - 내 러닝 기록 조회
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<Slice<ProfileRunningHistoryResDto>>> getMyRunningRecords(
+            @AuthenticationPrincipal CustomUser principal,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(
+                    size = 4,
+                    sort = "startedAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        Slice<ProfileRunningHistoryResDto> result =
+                profileRunningHistoryService.getMyRunningRecords(principal, startDate, endDate, pageable);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("내 러닝 기록 조회 성공", result)
+        );
+    }
+
+    /**
+     * 타인 러닝 기록 조회
+     */
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<Slice<ProfileRunningHistoryResDto>>> getUserRunningRecords(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUser principal,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(
+                    size = 4,
+                    sort = "startedAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        Slice<ProfileRunningHistoryResDto> result =
+                profileRunningHistoryService.getUserRunningRecords(
+                        userId,
+                        principal,
+                        startDate,
+                        endDate,
+                        pageable
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success("러닝 기록 조회 성공", result)
+        );
+    }
+
+    /**
+     * 공유되지 않은 러닝 기록 조회 (피드 공유용)
+     */
+    @GetMapping("/unshared")
+    public ResponseEntity<ApiResponse<Slice<ProfileRunningHistoryResDto>>> getUnsharedRunningRecords(
+            @AuthenticationPrincipal CustomUser principal,
+            @PageableDefault(
+                    size = 10,
+                    sort = "startedAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        Slice<ProfileRunningHistoryResDto> result =
+                profileRunningHistoryService.getUnsharedRunningRecords(principal, pageable);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("공유되지 않은 러닝 기록 조회 성공", result)
+        );
+    }
+
+    /**
+     * 러닝 기록 상세 조회 (단일)
+     */
+    @GetMapping("/{recordId}/detail")
+    public ResponseEntity<ApiResponse<ProfileRunningHistoryResDto>> getRunningRecordDetail(
+            @PathVariable Long recordId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        ProfileRunningHistoryResDto result =
+                profileRunningHistoryService.getRunningRecordDetail(recordId, principal);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("러닝 기록 상세 조회 성공", result)
+        );
+    }
+
+    /*
+     * 내 러닝 기록 삭제
+     */
+    @DeleteMapping("/{recordId}")
+    public ResponseEntity<ApiResponse<Void>> deleteRunningRecord(
+            @PathVariable Long recordId,
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        profileRunningHistoryService.deleteRunningRecord(recordId, principal);
+        return ResponseEntity.ok(ApiResponse.success("러닝 기록 삭제 성공", null));
+    }
+}

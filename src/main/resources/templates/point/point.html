@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포인트</title>
+    <link rel="stylesheet" th:href="@{/css/point.css}">
+</head>
+<body>
+
+<!-- 상단 네비게이션 -->
+<div th:replace="~{common/top-nav :: topNav}"></div>
+
+<div class="point-container">
+    <!-- 포인트 카드 -->
+    <div class="point-card">
+        <div class="point-card-label">사용 가능 포인트</div>
+        <div class="point-amount" id="availablePoints">0 P</div>
+        <div class="point-buttons">
+            <button class="btn btn-primary" onclick="location.href='/points/balance'">잔액조회</button>
+            <button class="btn btn-primary" onclick="location.href='/points/shop'">사용하기</button>
+        </div>
+    </div>
+
+    <!-- 포인트 적립 방법 -->
+    <div class="earn-methods">
+        <h2>포인트 적립 방법</h2>
+        <div id="earnMethods">
+            <div class="loading">데이터를 불러오는 중...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 하단 네비게이션 -->
+<div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+<script th:src="@{/js/point.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadPointMain();
+    });
+</script>
+</body>
+</html>

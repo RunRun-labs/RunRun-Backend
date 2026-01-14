@@ -9,6 +9,7 @@ import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @RequiredArgsConstructor
+@EnableMethodSecurity(prePostEnabled = true)
 public class JwtConfig {
 
     private final TokenProvider tokenProvider;
@@ -35,35 +37,84 @@ public class JwtConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .sessionManagement(
-                        sesstion -> sesstion.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                ).authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/files/**").permitAll()
-                        .requestMatchers(
-                                "/auth/**",
-                                "/login",
-                                "/signup",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/public/**",
-                                "/error",
-                                "/img/**",
-                                "/myPage/**"
-                        ).permitAll()
-                        .requestMatchers(
-                                PathRequest.toStaticResources().atCommonLocations()
-                        ).permitAll()
-                        .anyRequest().authenticated()
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .sessionManagement(
+                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/auth/**",
+                    "/login",
+                    "/signup",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/public/**",
+                    "/error",
+                    "/img/**",
+                    "/chat/**",
+                    "/ws/**",
 
-                ).addFilterBefore(new JwtFilter(tokenProvider, redisTemplate),
-                        UsernamePasswordAuthenticationFilter.class).exceptionHandling(
-                        exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                                .accessDeniedHandler(jwtAccessDeniedHandler));
+                    "/home",
+                    "/myPage/**",
+                    "/profile/**",
+                    "/friends/**",
+                    "/setting/**",
+                    "/notification",
+
+                    "/course",
+                    "/courseCreate",
+                    "/courseDetail/**",
+                    "/courseUpdate/**",
+                    "/course_auto/**",
+                    "/course_manual/**",
+
+                    "/challenge/**",
+                    "/crews/new",
+                    "/crews/**",
+                    "/match/**",
+                    "/recruit/**",
+
+                    "/feed/**",
+                    "/running/**",
+
+                    "/terms/**",
+                    "/tts-test",
+
+                    "/membership/**",
+                    "/payment/pay",
+                    "/payment/history",
+                    "/payment/success",
+                    "/payment/fail",
+                    "/payment/free-success",
+
+                    "/coupon/my",
+                    "/coupon/event",
+                    "/points/**",
+
+                    "/actuator/health",
+                    "/actuator/health/**",
+                    "/actuator/prometheus",
+                    
+                    "/api/admin/coupons/public/**",
+                    "/admin/**",
+                    "/api/ads/**"
+                ).permitAll()
+                .requestMatchers(
+                    PathRequest.toStaticResources().atCommonLocations()
+                ).permitAll()
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(
+                new JwtFilter(tokenProvider, redisTemplate),
+                UsernamePasswordAuthenticationFilter.class
+            )
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .accessDeniedHandler(jwtAccessDeniedHandler)
+            );
 
         return http.build();
-
     }
 
 }

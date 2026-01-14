@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 모집글 조회</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/recruit-list.css" th:href="@{/css/recruit-list.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
+  <script
+      type="text/javascript"
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services,clusterer">
+  </script>
+</head>
+<body>
+<div class="page">
+  <header class="header">
+    <button type="button" id="backBtn" class="back-button" aria-label="뒤로가기">
+      <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기">
+    </button>
+    <h1 class="header-title">모집글 목록</h1>
+  </header>
+
+  <main class="recruit-main">
+    <section class="search-section">
+      <div class="search-container">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path
+              d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"/>
+        </svg>
+        <input
+            type="text"
+            id="keywordInput"
+            class="search-input"
+            placeholder="검색어를 입력하세요"
+        />
+      </div>
+    </section>
+
+    <section class="map-section">
+      <div id="map" class="map-container"></div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="action-buttons-section">
+      <div class="action-buttons">
+        <button class="filter-button" type="button" id="filterToggleBtn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 4h16M2 10h16M2 16h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>필터</span>
+        </button>
+        <button class="sort-button" type="button" id="sortToggleBtn">
+          <span>정렬</span>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="sort-icon">
+            <path d="M6 4l4 4 4-4M6 16l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel" id="filterPanel" style="display: none;">
+      <div class="filter-panel-section">
+        <label class="filter-panel-label">반경</label>
+        <div class="filter-options">
+          <button class="filter-option active" data-filter="radius" data-value="all" type="button">전체</button>
+          <button class="filter-option" data-filter="radius" data-value="1" type="button">1km</button>
+          <button class="filter-option" data-filter="radius" data-value="2" type="button">2km</button>
+          <button class="filter-option" data-filter="radius" data-value="3" type="button">3km</button>
+          <button class="filter-option" data-filter="radius" data-value="5" type="button">5km</button>
+          <button class="filter-option" data-filter="radius" data-value="10" type="button">10km</button>
+          <button class="filter-option" data-filter="radius" data-value="20" type="button">20km</button>
+        </div>
+      </div>
+      <div class="filter-panel-section">
+        <label class="filter-checkbox-label">
+          <input type="checkbox" id="isParticipatedCheckbox" class="filter-checkbox">
+          <span class="filter-checkbox-text">참여한 모집글만 보기</span>
+        </label>
+      </div>
+      <div class="filter-actions">
+        <button class="filter-apply" type="button">적용</button>
+        <button class="filter-reset" type="button">초기화</button>
+      </div>
+    </div>
+
+    <!-- Sort Panel -->
+    <div class="sort-panel" id="sortPanel" style="display: none;">
+      <button class="sort-option active" data-sort="distance" type="button">거리순</button>
+      <button class="sort-option" data-sort="latest" type="button">최신순</button>
+      <button class="sort-option" data-sort="meetingSoon" type="button">모임일순</button>
+    </div>
+
+    <section class="recruit-list-section">
+      <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+        <p>로딩 중...</p>
+      </div>
+      <div id="recruitList" class="recruit-list">
+        <!-- 모집글 카드들이 동적으로 추가됩니다 -->
+      </div>
+    </section>
+  </main>
+
+  <!-- 모집글 생성 버튼 (FAB) -->
+  <button type="button" id="createBtn" class="fab-button" aria-label="모집글 생성">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
+</div>
+
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+<script src="/js/recruit-list.js" th:src="@{/js/recruit-list.js}"></script>
+</body>
+</html>

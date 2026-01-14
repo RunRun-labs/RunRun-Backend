@@ -1,16 +1,10 @@
 package com.multi.runrunbackend.domain.point.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.multi.runrunbackend.domain.point.dto.req.PointProductUpdateReqDto;
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * @author : BoKyung
@@ -19,10 +13,12 @@ import lombok.NoArgsConstructor;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
+@Table(name = "point_product")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class PointProduct extends BaseEntity {
 
     @Id
@@ -51,23 +47,26 @@ public class PointProduct extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static PointProduct toEntity(String productName, Integer requiredPoint,
-        String productImageUrl, String productDescription) {
+                                        String productImageUrl, String productDescription) {
         return PointProduct.builder()
-            .productName(productName)
-            .requiredPoint(requiredPoint)
-            .productImageUrl(productImageUrl)
-            .productDescription(productDescription)
-            .isAvailable(true)
-            .build();
+                .productName(productName)
+                .requiredPoint(requiredPoint)
+                .productImageUrl(productImageUrl)
+                .productDescription(productDescription)
+                .isAvailable(true)
+                .build();
     }
 
-    /**
-     * @description : updateAvailability - 상품 판매 가능 여부 변경
-     * @filename : PointProduct
-     * @author : BoKyung
-     * @since : 25. 12. 17. 수요일
-     */
-    public void updateAvailability(Boolean isAvailable) {
-        this.isAvailable = isAvailable;
+    public void update(PointProductUpdateReqDto req) {
+        this.productName = req.getProductName();
+        this.productDescription = req.getProductDescription();
+        this.requiredPoint = req.getRequiredPoint();
+        this.productImageUrl = req.getProductImageUrl();
+        this.isAvailable = req.getIsAvailable();
     }
+
+    public void delete() {
+        this.isDeleted = true;
+    }
+
 }

@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const messageBox = document.querySelector('[data-role="edit-message"]');
     const profilePreview = document.querySelector('[data-role="profile-preview"]');
     const profileInitial = document.querySelector('[data-role="profile-initial"]');
+    const defaultProfile = document.querySelector('[data-role="default-profile"]');
     const profileImageInput = document.getElementById("profileImageInput");
 
     const fieldOrder = [
@@ -74,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         if (profilePreview) profilePreview.addEventListener("click", trigger);
         if (profileInitial) profileInitial.addEventListener("click", trigger);
+        if (defaultProfile) defaultProfile.addEventListener("click", trigger);
     }
 
 
@@ -105,6 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 profilePreview.hidden = false;
             }
             if (profileInitial) profileInitial.hidden = true;
+            if (defaultProfile) defaultProfile.hidden = true;
             setMessage("이미지가 선택되었습니다. 하단 저장 버튼을 눌러주세요.", "success");
         } catch (e) {
 
@@ -115,6 +118,20 @@ document.addEventListener("DOMContentLoaded", () => {
         enableRealtimeValidation(editForm);
         loadCurrentUser();
 
+        // BMI 계산 및 표시를 위한 이벤트 리스너 추가
+        const heightInput = editForm.querySelector('input[name="heightCm"]');
+        const weightInput = editForm.querySelector('input[name="weightKg"]');
+        
+        if (heightInput && weightInput) {
+            const updateBMI = () => {
+                const height = parseFloat(heightInput.value);
+                const weight = parseFloat(weightInput.value);
+                updateBMIDisplay(height, weight);
+            };
+            
+            heightInput.addEventListener("input", updateBMI);
+            weightInput.addEventListener("input", updateBMI);
+        }
 
         enableProfileClickToChoose();
         if (profileImageInput) {
@@ -252,6 +269,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (weightInput) weightInput.value = user?.weightKg ?? "";
 
         updateProfileVisual(user?.name, user?.profileImageUrl);
+        
+        // BMI 표시 업데이트
+        const height = user?.heightCm ? parseFloat(user.heightCm) : null;
+        const weight = user?.weightKg ? parseFloat(user.weightKg) : null;
+        updateBMIDisplay(height, weight);
     }
 
     function updateProfileVisual(name, imageUrl) {
@@ -261,10 +283,16 @@ document.addEventListener("DOMContentLoaded", () => {
             profilePreview.src = imageUrl;
             profilePreview.hidden = false;
             profileInitial.hidden = true;
+            if (defaultProfile) defaultProfile.hidden = true;
         } else {
             profilePreview.hidden = true;
-            profileInitial.hidden = false;
-            profileInitial.textContent = makeInitial(name);
+            if (defaultProfile) {
+                defaultProfile.hidden = false;
+                profileInitial.hidden = true;
+            } else {
+                profileInitial.hidden = false;
+                profileInitial.textContent = makeInitial(name);
+            }
         }
     }
 
@@ -366,5 +394,77 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!feedback) return;
         feedback.textContent = message;
         feedback.classList.toggle("hidden", !message);
+    }
+
+    /**
+     * BMI 계산
+     */
+    function calculateBMI(heightCm, weightKg) {
+        if (!heightCm || !weightKg || heightCm <= 0 || weightKg <= 0) {
+            return null;
+        }
+        const heightM = heightCm / 100;
+        return weightKg / (heightM * heightM);
+    }
+
+    /**
+     * BMI 분류 (대한민국 기준)
+     */
+    function getBMICategory(bmi) {
+        if (bmi === null || isNaN(bmi)) {
+            return null;
+        }
+        
+        if (bmi < 18.5) {
+            return {
+                status: "underweight",
+                text: "저체중입니다"
+            };
+        } else if (bmi < 23) {
+            return {
+                status: "normal",
+                text: "정상체중입니다"
+            };
+        } else if (bmi < 25) {
+            return {
+                status: "overweight",
+                text: "과체중입니다"
+            };
+        } else {
+            return {
+                status: "obese",
+                text: "비만입니다"
+            };
+        }
+    }
+
+    /**
+     * BMI 표시 업데이트
+     */
+    function updateBMIDisplay(heightCm, weightKg) {
+        const bmiDisplay = document.getElementById("bmiDisplay");
+        const bmiValue = document.getElementById("bmiValue");
+        const bmiStatus = document.getElementById("bmiStatus");
+        
+        if (!bmiDisplay || !bmiValue || !bmiStatus) return;
+
+        const bmi = calculateBMI(heightCm, weightKg);
+        
+        if (bmi === null) {
+            bmiDisplay.hidden = true;
+            return;
+        }
+
+        bmiDisplay.hidden = false;
+        bmiValue.textContent = bmi.toFixed(1);
+        
+        const category = getBMICategory(bmi);
+        if (category) {
+            bmiStatus.textContent = category.text;
+            bmiStatus.className = `bmi-status ${category.status}`;
+        } else {
+            bmiStatus.textContent = "";
+            bmiStatus.className = "bmi-status";
+        }
     }
 });

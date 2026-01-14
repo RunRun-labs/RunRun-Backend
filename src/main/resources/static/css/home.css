@@ -1,0 +1,870 @@
+:root {
+    --primary: #10b981;
+    --primary-dark: #059669;
+    --primary-light: #d1fae5;
+    --text-strong: #1a1a1a;
+    --text-muted: #6b7280;
+    --stroke: #e5e7eb;
+    --bg: #f8fafc;
+    --error: #ef4444;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+}
+
+.home-body {
+    font-family: "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+    background: var(--bg);
+    color: var(--text-strong);
+}
+
+.page {
+    position: relative;
+    width: min(420px, 100vw);
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 0 20px 110px;
+    display: flex;
+    flex-direction: column;
+}
+
+.home-page {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 100px;
+}
+
+/* 상단 네비게이션 */
+.top-nav {
+    position: relative;
+    width: calc(100% + 40px);
+    margin: 0 -20px;
+    background: #fff;
+    border-bottom: 1px solid #000;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 9px 35px 0;
+    z-index: 5;
+    min-height: 48px;
+    flex-shrink: 0;
+}
+
+.top-nav-item {
+    position: relative;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #000;
+    font-family: "Fugaz One", "Noto Sans KR", sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: -0.24px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 51px;
+    padding-bottom: 4px;
+}
+
+.top-nav-item.active {
+    border-bottom: 2px solid #baff29;
+}
+
+.top-nav-item.active span {
+    color: #86c10a;
+    font-size: 15px;
+}
+
+.top-nav-item span {
+    display: block;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* 알림 뱃지 */
+.top-nav-item .notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--error);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-family: "Inter", sans-serif;
+}
+
+/* 헤더: RUNRUN 타이틀 */
+.home-header {
+    position: relative;
+    padding: 32px 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* 광고 배너 컨테이너 - 양옆에 딱 붙게 */
+#home-top-ad {
+    width: calc(100% + 40px);
+    margin: 0 -20px;
+}
+
+.home-logo {
+    margin: 0;
+    font-family: "Fugaz One", "Inter", sans-serif;
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    width: fit-content;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 오늘의 러닝 통계 배너 */
+.today-stats-section {
+    margin-top: 0;
+    margin-bottom: 32px;
+    padding: 28px 24px;
+    border-radius: 24px;
+    border: none;
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.today-stats-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.today-stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.today-stats-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-strong);
+    letter-spacing: -0.02em;
+}
+
+.today-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.stat-item:hover {
+    transform: translateY(-4px);
+    background: white;
+    border-color: rgba(16, 185, 129, 0.2);
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.15);
+}
+
+.stat-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-icon svg {
+    stroke: var(--primary);
+    stroke-width: 2;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-value {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a1a1a;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.stat-unit {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-left: 2px;
+}
+
+.stat-desc {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* 요일별 러닝 통계 */
+.weekly-stats-section {
+    width: 100%;
+    margin-bottom: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* 주별 통계 헤더 */
+.weekly-stats-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+/* 주별 통계 칩 (거리, 시간) */
+.weekly-stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: white;
+    border-radius: 16px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+    border: 2px solid rgba(16, 185, 129, 0.1);
+    transition: all 0.2s ease;
+}
+
+.weekly-stat-chip:hover {
+    border-color: var(--primary);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
+    transform: translateY(-2px);
+}
+
+.weekly-distance-chip {
+    flex: 0 0 auto;
+}
+
+.weekly-duration-chip {
+    flex: 0 0 auto;
+}
+
+.weekly-stat-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.weekly-duration-chip .weekly-stat-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.weekly-stat-value {
+    font-family: "Inter", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 20px;
+}
+
+/* 주 선택 영역 */
+.weekly-week-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.week-nav-button {
+    background: white;
+    border: 2px solid rgba(16, 185, 129, 0.1);
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    transition: all 0.2s ease;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);
+}
+
+.week-nav-button:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    transform: scale(1.1);
+}
+
+.week-nav-button:active {
+    transform: scale(0.95);
+}
+
+.week-nav-button svg {
+    width: 12px;
+    height: 14px;
+}
+
+.week-label {
+    font-family: "Inter", sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-strong);
+    white-space: nowrap;
+}
+
+.weekly-chart-container {
+    width: 100%;
+    padding: 28px 24px;
+    border-radius: 24px;
+    border: none;
+    background: white;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.12);
+}
+
+.chart-bars {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    align-items: flex-end;
+    height: 120px;
+    gap: 8px;
+    padding: 0 20px;
+    margin-bottom: 16px;
+}
+
+.chart-bar {
+    width: 16px;
+    max-width: 16px;
+    min-width: 16px;
+    border-radius: 8px 8px 8px 8px;
+    border: 0;
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+    transition: all 0.3s ease;
+    position: relative;
+    margin: 0 auto;
+    justify-self: center;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.chart-bar:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.chart-circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    position: relative;
+    margin: 0 auto;
+    justify-self: center;
+    align-self: flex-end;
+    box-shadow: 0 3px 8px rgba(16, 185, 129, 0.4);
+    border: 2px solid white;
+}
+
+.chart-clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chart-clickable:hover {
+    transform: scale(1.15);
+}
+
+/* 거리 정보 툴팁 */
+.chart-distance-tooltip {
+    position: absolute;
+    background: #1f2937;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+}
+
+.chart-distance-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1f2937;
+}
+
+.tooltip-date {
+    font-size: 11px;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+.tooltip-distance {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.chart-days {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    align-items: center;
+    padding: 0 20px;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    position: relative;
+    font-family: "Inter", sans-serif;
+    line-height: 16px;
+    height: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.chart-days span {
+    text-align: center;
+    position: relative;
+    justify-self: center;
+}
+
+/* 진행중인 챌린지 홍보 배너 */
+.challenge-banner-section {
+    margin-bottom: 32px;
+}
+
+.challenge-section-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.challenge-section-title {
+    margin: 0 0 8px;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-strong);
+    letter-spacing: -0.02em;
+}
+
+.challenge-section-subtitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.challenge-banner-container {
+    position: relative;
+    width: 100%;
+    min-height: 200px;
+    height: auto;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.12);
+}
+
+.challenge-banner-container:hover .challenge-nav-button {
+    opacity: 1;
+}
+
+.challenge-banner-slider {
+    display: flex;
+    width: 100%;
+    min-height: 200px;
+    height: auto;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.challenge-banner-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    min-height: 200px;
+    height: auto;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.challenge-banner-image {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.challenge-banner-overlay {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 80px;
+    position: relative;
+}
+
+.challenge-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.challenge-banner-title {
+    margin: 0 0 16px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-strong);
+    letter-spacing: -0.02em;
+}
+
+.challenge-banner-desc {
+    display: none;
+}
+
+.challenge-banner-button {
+    width: 100%;
+    padding: 16px;
+    border-radius: 16px;
+    border: none;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.challenge-banner-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(16, 185, 129, 0.4);
+}
+
+.challenge-banner-button:active {
+    transform: translateY(-1px);
+}
+
+/* 챌린지 네비게이션 화살표 */
+.challenge-nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgba(16, 185, 129, 0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.challenge-nav-button:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.challenge-nav-button:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.challenge-nav-prev {
+    left: 16px;
+}
+
+.challenge-nav-next {
+    right: 16px;
+}
+
+.challenge-nav-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* 챌린지 인디케이터 */
+.challenge-indicators {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.challenge-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d1d5db;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.challenge-indicator.active {
+    width: 24px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.challenge-indicator:hover {
+    background: #9ca3af;
+}
+
+.challenge-indicator.active:hover {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+/* 하단 네비게이션 */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 420px;
+    margin: 0 auto;
+    height: 76px;
+    border-top: 1px solid #baff29;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+    padding: 8px 12px 6px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+.nav-item {
+    text-align: center;
+    text-decoration: none;
+    color: #000;
+    font-family: "Fugaz One", "Inter", sans-serif;
+    font-size: 10px;
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+}
+
+.nav-item.active {
+    font-weight: 700;
+}
+
+.nav-item img {
+    width: 28px;
+    height: 28px;
+}
+
+@media (max-width: 480px) {
+    .page {
+        padding: 0 16px 110px;
+    }
+
+    .home-page {
+        padding-bottom: 90px;
+    }
+
+    .top-nav {
+        width: calc(100% + 32px);
+        margin: 0 -16px;
+        padding: 9px 20px 0;
+    }
+
+    #home-top-ad {
+        width: calc(100% + 32px);
+        margin: 0 -16px;
+    }
+
+    .home-logo {
+        font-size: 42px;
+    }
+
+    .today-stats-section {
+        padding: 24px 20px;
+    }
+
+    .today-stats-grid {
+        gap: 16px;
+    }
+
+    .stat-value {
+        font-size: 22px;
+    }
+
+    .stat-desc {
+        font-size: 12px;
+    }
+
+    .chart-bars {
+        height: 100px;
+        padding: 0 16px;
+    }
+
+    .chart-days {
+        padding: 0 16px;
+    }
+
+    .challenge-banner-container {
+        min-height: 180px;
+    }
+}
+
+@media (min-width: 900px) {
+    .page {
+        max-width: 960px;
+        width: 100%;
+        padding: 0 32px 140px;
+    }
+
+    .home-page {
+        padding-bottom: 120px;
+    }
+
+    .top-nav {
+        width: calc(100% + 64px);
+        margin: 0 -32px;
+        max-width: none;
+        padding: 12px 48px 0;
+    }
+
+    #home-top-ad {
+        width: calc(100% + 64px);
+        margin: 0 -32px;
+    }
+
+    .top-nav-item {
+        font-size: 11px;
+        width: auto;
+        padding: 0 16px;
+    }
+
+    .top-nav-item.active span {
+        font-size: 16px;
+    }
+
+    .home-logo {
+        font-size: 56px;
+    }
+
+    .today-stats-section {
+        max-width: 700px;
+        margin: 0 auto 32px;
+        padding: 32px 28px;
+    }
+
+    .weekly-stats-section {
+        max-width: 700px;
+        margin: 0 auto 32px;
+    }
+
+    .challenge-banner-section {
+        max-width: 700px;
+        margin: 0 auto 32px;
+    }
+
+    .challenge-banner-container {
+        min-height: 220px;
+    }
+
+    .bottom-nav {
+        max-width: 960px;
+        grid-template-columns: repeat(5, minmax(120px, 1fr));
+        height: 82px;
+        padding: 10px 24px 10px;
+    }
+
+    .nav-item {
+        font-size: 11px;
+    }
+
+    .nav-item img {
+        width: 30px;
+        height: 30px;
+    }
+}

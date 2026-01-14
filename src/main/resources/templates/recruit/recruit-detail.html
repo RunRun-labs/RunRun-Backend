@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 모집글 상세보기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/recruit-detail.css" th:href="@{/css/recruit-detail.css}">
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
+  <script
+      type="text/javascript"
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services,clusterer">
+  </script>
+</head>
+<body>
+<main class="page">
+  <!-- 헤더 -->
+  <header class="header">
+    <button type="button" id="backButton" class="back-button" aria-label="뒤로가기">
+      <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기">
+    </button>
+    <h1 class="header-title">모집글 상세보기</h1>
+  </header>
+
+  <!-- 코스 이미지 (있을 때만 표시) -->
+  <div id="courseImageSection" class="course-image-section" style="display: none;">
+    <img id="courseImage" src="" alt="코스 이미지">
+  </div>
+
+  <!-- 카카오맵 섹션 -->
+  <section class="map-section">
+    <div id="map" class="map-container"></div>
+  </section>
+
+  <!-- 제목 섹션 -->
+  <section class="title-section">
+    <label class="field-label">제목</label>
+    <div id="recruitTitle" class="field-input"></div>
+  </section>
+
+  <!-- 상세 정보 섹션 -->
+  <section class="detail-section">
+    <div class="detail-grid">
+      <!-- 일시 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">일시</span>
+          <span id="meetingAt" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 목표 거리 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">목표 거리</span>
+          <span id="targetDistance" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 페이스 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">페이스</span>
+          <span id="targetPace" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 모집 인원 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">모집 인원</span>
+          <span id="participants" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 성별 제한 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">성별</span>
+          <span id="genderLimit" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 나이 제한 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">나이</span>
+          <span id="ageRange" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 방장 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">방장</span>
+          <span id="authorLoginId" class="detail-value"></span>
+        </div>
+      </div>
+
+      <!-- 작성일자 -->
+      <div class="detail-card">
+        <div class="detail-content">
+          <span class="detail-label">작성일자</span>
+          <span id="createdAt" class="detail-value"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 설명 섹션 -->
+  <section class="description-section">
+    <label class="field-label">상세 설명</label>
+    <div id="recruitContent" class="field-textarea"></div>
+  </section>
+
+  <!-- 액션 버튼 섹션 -->
+  <div class="action-button-section">
+    <div id="editDeleteButtons" class="edit-delete-buttons" style="display: none;">
+      <button id="editButton" type="button" class="edit-button">수정하기</button>
+      <button id="deleteButton" type="button" class="delete-button">삭제하기</button>
+    </div>
+    <button id="actionButton" type="button" class="action-button" style="display: none;"></button>
+    <p id="actionDisabledText" class="action-disabled-text" style="display: none;"></p>
+    <button id="startRunningButton" type="button" class="action-button"
+            style="display: none; background: #baff29;">매칭 확정
+    </button>
+  </div>
+</main>
+
+<!-- Toast Container -->
+<div class="toast-container"></div>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+<script src="/js/recruit-detail.js" th:src="@{/js/recruit-detail.js}"></script>
+</body>
+</html>

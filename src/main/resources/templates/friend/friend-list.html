@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | 친구 목록</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link
+      rel="stylesheet"
+      href="/css/friend-list.css"
+      th:href="@{/css/friend-list.css}"
+  />
+  <link rel="stylesheet" href="/css/notification-toast.css"
+        th:href="@{/css/notification-toast.css}">
+</head>
+<body class="friend-list-body">
+<main class="page friend-list-page">
+  <header class="friend-list-header">
+    <button class="back-button" type="button" data-role="back" aria-label="뒤로가기">
+      <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기 아이콘" />
+    </button>
+    <h1 class="friend-list-title">친구 목록</h1>
+  </header>
+
+  <!-- 친구 요청 알림 -->
+  <div class="friend-request-notification" id="friendRequestNotification" hidden>
+    <p class="notification-text">
+      새로운 친구 요청 <span class="notification-count" id="requestCount">0</span> 건이 있습니다
+    </p>
+  </div>
+
+  <!-- 친구 요청 목록 -->
+  <section class="friend-requests-section" id="friendRequestsSection">
+    <div class="friend-list-container" id="friendRequestsList">
+      <!-- 동적으로 생성됨 -->
+    </div>
+  </section>
+
+  <!-- 친구 목록 -->
+  <section class="friends-section">
+    <div class="friend-list-container" id="friendsList">
+      <!-- 동적으로 생성됨 -->
+    </div>
+  </section>
+
+  <!-- 빈 상태 메시지 -->
+  <div class="empty-state" id="emptyState" hidden>
+    <p>친구가 없습니다.</p>
+  </div>
+</main>
+
+<div
+    id="bottomNavMount"
+    th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
+
+<script src="/js/friend-list.js" th:src="@{/js/friend-list.js}"></script>
+<script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
+
+</body>
+</html>
+

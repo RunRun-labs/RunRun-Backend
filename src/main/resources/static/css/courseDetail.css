@@ -1,0 +1,864 @@
+:root {
+  --primary: #baff29;
+  --primary-green: #10b981;
+  --primary-green-light: #14b8a6;
+  --text-strong: #111827;
+  --text-muted: #6b7280;
+  --text-light: #9ca3af;
+  --stroke: #f3f4f6;
+  --bg: #f9fafb;
+  --bg-white: #ffffff;
+  --bottom-nav-h: 76px;
+  --select-confirm-h: 72px; /* padding(12*2) + button(48) */
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text-strong);
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.page {
+  position: relative;
+  width: min(420px, 100vw);
+  margin: 0 auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-white);
+}
+
+/* 코스 선택(모집글에서 진입) 확인 버튼 */
+.select-confirm-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  max-width: 420px;
+  margin: 0 auto;
+  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: none; /* 하얀색 테두리 제거 */
+  backdrop-filter: blur(10px);
+  z-index: 15; /* bottom-nav(10)보다 위, 하지만 겹치지 않게 bottom으로 띄움 */
+}
+
+.select-confirm-button {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.select-confirm-button:hover {
+  opacity: 0.9;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* 선택 확인 바가 표시될 때, 스크롤 컨텐츠가 가리지 않도록 여유를 추가 */
+.course-content.has-select-confirm {
+  padding-bottom: calc(120px + var(--select-confirm-h));
+}
+
+/* Header */
+.course-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background: var(--bg-white);
+  padding: 48px 16px 16px;
+  border-bottom: 1px solid var(--stroke);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.back-button {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.back-button:hover {
+  background: var(--stroke);
+}
+
+.back-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.page-title {
+  flex: 1;
+  font-size: 22.5px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+/* Like/Favorite Actions */
+.course-like-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 20px 0;
+  border-top: 1px solid var(--stroke);
+  align-items: center;
+}
+
+.action-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.action-icon svg {
+  width: 20px;
+  height: 20px;
+  color: #999999;
+  transition: color 0.2s ease;
+}
+
+.action-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+/* 좋아요 - 빨간색 하트 */
+.heart-icon {
+  position: relative;
+}
+
+/* 즐겨찾기 - 노란색 별 */
+.star-icon {
+  position: relative;
+}
+
+/* 신고하기 버튼 */
+.siren-icon {
+  margin-left: 0;
+  flex-shrink: 0;
+}
+
+.siren-icon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.siren-icon span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.modal-title {
+  font-family: "Nunito Sans", "Noto Sans KR", sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: var(--text-strong);
+}
+
+.modal-body {
+  padding: 24px;
+  flex: 1;
+}
+
+.modal-description {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--stroke);
+}
+
+.modal-button {
+  flex: 1;
+  height: 48px;
+  border-radius: 12px;
+  font-family: "Nunito Sans", "Noto Sans KR", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.cancel-button {
+  background: #f5f5f5;
+  color: var(--text-strong);
+}
+
+.cancel-button:hover {
+  background: #e8e8e8;
+}
+
+.submit-button {
+  background: #ff3b30;
+  color: #fff;
+}
+
+.submit-button:hover {
+  background: #e6342a;
+  opacity: 0.9;
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal textarea in modal */
+.modal-body .field-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Mobile adjustments for modal */
+@media (max-width: 520px) {
+  .modal-overlay {
+    padding: 16px;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    padding: 16px 20px;
+  }
+
+  .modal-button {
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
+/* Course Actions (Edit/Delete buttons at bottom) */
+.course-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 20px 0;
+  border-top: 1px solid var(--stroke);
+}
+
+.edit-button,
+.delete-button {
+  flex: 1;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.delete-button {
+  background: #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.edit-button:hover {
+  opacity: 0.9;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.delete-button:hover {
+  opacity: 0.9;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Main Content */
+.course-content {
+  flex: 1;
+  padding: 20px 16px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Course Image Hero (크루 상세보기처럼) */
+.course-hero {
+  position: relative;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.course-hero__image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  background: #f3f4f6;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+.course-hero__image-wrapper::after {
+  content: "🏃";
+  font-size: 80px;
+  position: absolute;
+  opacity: 0.2;
+  z-index: 0;
+}
+
+.course-hero__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Form Fields */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.field-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-white);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  color: var(--text-strong);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.field-input:read-only {
+  background: var(--bg);
+  cursor: default;
+}
+
+.field-textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 12px 16px;
+  background: var(--bg-white);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  color: var(--text-strong);
+  outline: none;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+.field-textarea:read-only {
+  background: var(--bg);
+  cursor: default;
+}
+
+/* Map Container */
+.map-container {
+  width: 100%;
+  height: 250px;
+  border-radius: 12px;
+  overflow: hidden !important;
+  border: 2px solid var(--primary-green);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+  margin-top: 12px;
+  position: relative;
+  z-index: 1;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  touch-action: pan-x pan-y pinch-zoom !important;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Map Expand Overlay */
+.map-expand-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.map-expand-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 12px 20px;
+  border-radius: 8px;
+}
+
+.map-expand-hint svg {
+  fill: none;
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Map Modal */
+.map-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.map-modal-overlay[style*="visibility: visible"] {
+  pointer-events: auto;
+}
+
+.map-modal-content {
+  width: 100%;
+  max-width: 1200px;
+  height: 90vh;
+  background: white;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.map-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.map-modal-close {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 28px;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.map-modal-close:hover {
+  background: #e5e7eb;
+  color: var(--text-primary);
+}
+
+.map-modal-body {
+  flex: 1;
+  padding: 0;
+  overflow: visible;
+}
+
+.map-modal-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible !important;
+}
+
+.map-modal-container > div {
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: auto !important;
+  touch-action: auto !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .map-modal-content {
+    height: 100vh;
+    max-width: 100%;
+    border-radius: 0;
+  }
+  
+  .map-modal-overlay {
+    padding: 0;
+  }
+}
+
+/* Image Upload */
+.image-upload-area {
+  position: relative;
+  width: 100%;
+  height: 111px;
+  border: 1px dashed #000;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  background: #fff;
+  transition: background 0.2s;
+}
+
+.image-upload-area:hover {
+  background: #f9f9f9;
+}
+
+.camera-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.upload-text {
+  font-family: "Nunito Sans", "Noto Sans KR", sans-serif;
+  font-size: 16px;
+  color: #000;
+}
+
+.image-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.image-preview {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.image-preview img,
+.preview-image {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 420px;
+  margin: 0 auto;
+  height: var(--bottom-nav-h);
+  border-top: 1px solid var(--primary);
+  background: var(--bg-white);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  padding: 8px 12px 6px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.nav-item {
+  text-align: center;
+  text-decoration: none;
+  color: #000;
+  font-family: "Fugaz One", "Inter", sans-serif;
+  font-size: 10px;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.nav-item img {
+  width: 28px;
+  height: 28px;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  :root {
+    --bottom-nav-h: 76px;
+  }
+
+  .course-content {
+    padding: 16px 16px 100px;
+    gap: 18px;
+  }
+
+  .course-content.has-select-confirm {
+    padding-bottom: calc(100px + var(--select-confirm-h));
+  }
+
+  .course-header {
+    padding: 20px 16px 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+/* 모바일 가로(예: 844x390)에서도 모바일 비율 유지 */
+@media (max-width: 920px) and (max-height: 520px) {
+  :root {
+    --bottom-nav-h: 68px;
+  }
+
+  .page {
+    width: min(420px, 100vw);
+  }
+
+  .course-content {
+    padding: 14px 16px 90px;
+    gap: 16px;
+  }
+
+  .course-content.has-select-confirm {
+    padding-bottom: calc(90px + var(--select-confirm-h));
+  }
+
+  .course-header {
+    padding: 16px 14px 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .map-container {
+    height: 200px;
+  }
+
+  .course-hero__image-wrapper {
+    height: 200px;
+  }
+
+  .bottom-nav {
+    height: var(--bottom-nav-h);
+    padding: 6px 12px 6px;
+  }
+
+  .nav-item img {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* 데스크톱에서는 가로폭에 맞춰 확장 */
+@media (min-width: 900px) {
+  :root {
+    --bottom-nav-h: 82px;
+  }
+
+  body {
+    justify-content: flex-start;
+  }
+
+  .page {
+    max-width: 960px;
+    width: 100%;
+  }
+
+  .course-content {
+    padding: 32px 48px 140px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .course-content.has-select-confirm {
+    padding-bottom: calc(140px + var(--select-confirm-h));
+  }
+
+  .course-header {
+    padding: 48px 48px 16px;
+  }
+
+  .bottom-nav {
+    max-width: 960px;
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+    height: var(--bottom-nav-h);
+    padding: 10px 24px 10px;
+  }
+
+  .nav-item {
+    font-size: 11px;
+  }
+
+  .nav-item img {
+    width: 30px;
+    height: 30px;
+  }
+}

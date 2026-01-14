@@ -2,13 +2,26 @@ package com.multi.runrunbackend.domain.user.entity;
 
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.domain.tts.entity.TtsVoicePack;
 import com.multi.runrunbackend.domain.user.dto.req.UserSignUpDto;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
-import lombok.*;
-
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author : kyungsoo
@@ -22,11 +35,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Table(
-        name = "users",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "login_id"),
-                @UniqueConstraint(columnNames = "email")
-        }
+    name = "users",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = "login_id"),
+        @UniqueConstraint(columnNames = "email")
+    }
 )
 public class User extends BaseEntity {
 
@@ -69,9 +82,15 @@ public class User extends BaseEntity {
     @Column(name = "weight_kg")
     private Integer weightKg;
 
+    @Column(name = "average_pace", precision = 6, scale = 2)
+    private BigDecimal averagePace;
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    @ManyToOne
+    @JoinColumn(name = "tts_voice_pack_id")
+    private TtsVoicePack ttsVoicePack;
 
 
     public void updateLastLogin(LocalDateTime lastLoginAt) {
@@ -92,17 +111,41 @@ public class User extends BaseEntity {
         this.name = name;
     }
 
-    public static User toEntity(UserSignUpDto dto) {
+    public void deleteAccount() {
+        this.isDeleted = true;
+        this.loginId = "deleted_" + this.id;
+        this.email = "deleted_" + this.id + "@deleted.user";
+        this.name = "NULL";
+        //this.password = "";
+        this.gender = "U";
+        this.birthDate = LocalDate.now();
+
+        this.profileImageUrl = null;
+        this.heightCm = null;
+        this.weightKg = null;
+
+        this.role = "ROLE_DELETED";
+    }
+    public void updateTTS(TtsVoicePack ttsVoicePack) {
+        this.ttsVoicePack = ttsVoicePack;
+    }
+
+    public void updateAveragePace(BigDecimal averagePace) {
+        this.averagePace = averagePace;
+    }
+
+    public static User toEntity(UserSignUpDto dto, TtsVoicePack ttsVoicePack) {
         return User.builder()
-                .loginId(dto.getLoginId())
-                .password(dto.getUserPassword())
-                .email(dto.getUserEmail())
-                .name(dto.getUserName())
-                .gender(dto.getGender())
-                .birthDate(dto.getBirthDate())
-                .heightCm(dto.getHeightCm())
-                .weightKg(dto.getWeightKg())
-                .role("ROLE_USER")
-                .build();
+            .loginId(dto.getLoginId())
+            .password(dto.getUserPassword())
+            .email(dto.getUserEmail())
+            .name(dto.getUserName())
+            .gender(dto.getGender())
+            .birthDate(dto.getBirthDate())
+            .heightCm(dto.getHeightCm())
+            .weightKg(dto.getWeightKg())
+            .role("ROLE_USER")
+            .ttsVoicePack(ttsVoicePack)
+            .build();
     }
 }

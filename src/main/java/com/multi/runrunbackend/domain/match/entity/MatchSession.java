@@ -44,22 +44,22 @@ public class MatchSession extends BaseEntity {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recruit_id")
+    @JoinColumn(name = "recruit_id", nullable = true)
     private Recruit recruit;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = true)
     private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "running_result_id")
+    @JoinColumn(name = "running_result_id", nullable = true)
     private RunningResult runningResult;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private SessionType type;
 
-    @Column(name = "target_distance")
+    @Column(name = "target_distance", nullable = true)
     private Double targetDistance;
 
     @Enumerated(EnumType.STRING)
@@ -68,5 +68,23 @@ public class MatchSession extends BaseEntity {
 
     @Column(nullable = false)
     private Integer duration;
+
+    /**
+     * 세션 상태 업데이트
+     *
+     * @param status 새로운 상태
+     */
+    public void updateStatus(SessionStatus status) {
+        this.status = status;
+    }
+
+    public void updateRunningResult(RunningResult runningResult) {
+        this.runningResult = runningResult;
+    }
+
+    public void updateCourse(Course course) {
+        this.course = course;
+    }
+    
 
 }

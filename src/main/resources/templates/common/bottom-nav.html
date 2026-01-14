@@ -1,47 +1,52 @@
 <!doctype html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-  <body>
-    <nav class="bottom-nav" aria-label="하단 메뉴" th:fragment="bottomNav">
-      <a class="nav-item" th:href="@{/chat}" href="/chat">
-        <img
-          src="http://localhost:3845/assets/3ca81eaa50aaf4304e5454034789cf398897e16f.svg"
-          alt=""
-          aria-hidden="true"
-        />
-        <span>chat</span>
-      </a>
-      <a class="nav-item" th:href="@{/feed}" href="/feed">
-        <img
-          src="http://localhost:3845/assets/a25ca98a797a195cf0014d33755d97160983a834.svg"
-          alt=""
-          aria-hidden="true"
-        />
-        <span>feed</span>
-      </a>
-      <a class="nav-item" th:href="@{/}" href="/">
-        <img
-          src="http://localhost:3845/assets/6d060744ca344e07264a3340d1ce76267f035268.svg"
-          alt=""
-          aria-hidden="true"
-        />
-        <span>home</span>
-      </a>
-      <a class="nav-item" th:href="@{/match}" href="/match">
-        <img
-          src="http://localhost:3845/assets/a1c3341d0388b5ec41a25350c4e525c869160bdd.svg"
-          alt=""
-          aria-hidden="true"
-        />
-        <span>match</span>
-      </a>
-      <a class="nav-item" th:href="@{/my}" href="/my">
-        <img
-          src="http://localhost:3845/assets/1894082a888c5c07d733295ec6a54ed9b0711586.svg"
-          alt=""
-          aria-hidden="true"
-        />
-        <span>my</span>
-      </a>
-    </nav>
-  </body>
+<body>
+<nav class="bottom-nav" aria-label="하단 메뉴" th:fragment="bottomNav">
+  <a class="nav-item" th:href="@{/chat}" href="/chat">
+    <img
+        th:src="@{/img/nav-chat.svg}"
+        src="/img/nav-chat.svg"
+        alt="채팅"
+        aria-hidden="true"
+    />
+    <span>채팅</span>
+  </a>
+  <a class="nav-item" th:href="@{/feed}" href="/feed">
+    <img
+        th:src="@{/img/nav-feed.svg}"
+        src="/img/nav-feed.svg"
+        alt="피드"
+        aria-hidden="true"
+    />
+    <span>피드</span>
+  </a>
+  <a class="nav-item" th:href="@{/home}" href="/home">
+    <img
+        th:src="@{/img/nav-home.svg}"
+        src="/img/nav-home.svg"
+        alt="홈"
+        aria-hidden="true"
+    />
+    <span>홈</span>
+  </a>
+  <a class="nav-item" th:href="@{/match/select}" href="/match/select">
+    <img
+        th:src="@{/img/nav-match.svg}"
+        src="/img/nav-match.svg"
+        alt="매치"
+        aria-hidden="true"
+    />
+    <span>매치</span>
+  </a>
+  <a class="nav-item" th:href="@{/myPage}" href="/myPage">
+    <img
+        th:src="@{/img/nav-my.svg}"
+        src="/img/nav-my.svg"
+        alt="마이페이지"
+        aria-hidden="true"
+    />
+    <span>마이페이지</span>
+  </a>
+</nav>
+</body>
 </html>

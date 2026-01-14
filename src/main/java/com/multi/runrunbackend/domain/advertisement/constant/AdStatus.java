@@ -7,7 +7,6 @@ package com.multi.runrunbackend.domain.advertisement.constant;
  * @since : 2025. 12. 17. Wednesday
  */
 public enum AdStatus {
-    PENDING,
     ACTIVE,
-    DELETED
+    INACTIVE
 }

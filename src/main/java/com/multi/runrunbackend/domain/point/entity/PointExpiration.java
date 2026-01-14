@@ -1,21 +1,13 @@
 package com.multi.runrunbackend.domain.point.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseEntity;
+import com.multi.runrunbackend.common.exception.custom.BusinessException;
+import com.multi.runrunbackend.common.exception.dto.ErrorCode;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * @author : BoKyung
@@ -55,7 +47,7 @@ public class PointExpiration extends BaseEntity {
     private LocalDateTime earnedAt;
 
     @Column(name = "expires_at")
-    private LocalDateTime expiresAt;
+    private LocalDateTime expiresAt;  // 만료 예정일
 
     @Column(name = "expired_at")
     private LocalDateTime expiredAt;
@@ -67,17 +59,17 @@ public class PointExpiration extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public static PointExpiration toEntity(User user, PointHistory pointHistory,
-        Integer earnedPoint) {
+                                           Integer earnedPoint) {
         LocalDateTime now = LocalDateTime.now();
         return PointExpiration.builder()
-            .user(user)
-            .pointHistory(pointHistory)
-            .earnedPoint(earnedPoint)
-            .remainingPoint(earnedPoint)
-            .expirationStatus("ACTIVE")
-            .earnedAt(now)
-            .expiresAt(now.plusYears(1)) // 1년 후 만료
-            .build();
+                .user(user)
+                .pointHistory(pointHistory)
+                .earnedPoint(earnedPoint)
+                .remainingPoint(earnedPoint)
+                .expirationStatus("ACTIVE")
+                .earnedAt(now)
+                .expiresAt(now.plusYears(1)) // 1년 후 만료
+                .build();
     }
 
     /**
@@ -87,6 +79,9 @@ public class PointExpiration extends BaseEntity {
      * @since : 25. 12. 17. 수요일
      */
     public void usePoint(Integer amount) {
+        if (this.remainingPoint < amount) {
+            throw new BusinessException(ErrorCode.INSUFFICIENT_POINT);
+        }
         this.remainingPoint -= amount;
         if (this.remainingPoint == 0) {
             this.expirationStatus = "USED";

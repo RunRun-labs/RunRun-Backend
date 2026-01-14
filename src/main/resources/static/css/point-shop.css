@@ -1,0 +1,508 @@
+/* 전체 초기화 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background-color: #f5f5f5;
+    padding-bottom: 80px;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* 헤더 */
+.header {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    gap: 15px;
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.header-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    flex: 1;
+}
+
+.header-points {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #333;
+}
+
+.points-label {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.points-value {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* 메인 컨텐츠 */
+.container {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 80px 20px 20px;
+    overflow-y: auto;
+    height: auto;
+}
+
+/* 내 포인트 섹션 */
+.my-points-section {
+    margin-bottom: 32px;
+}
+
+.my-points-card {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.my-points-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+.my-points-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.my-points-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: white;
+    position: relative;
+    z-index: 1;
+}
+
+/* 상품 섹션 */
+.products-section {
+    margin-top: 32px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+}
+
+/* 상품 그리드 */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.product-item {
+    background-color: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.product-item:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: #10b981;
+}
+
+.product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.product-info {
+    padding: 16px;
+}
+
+.product-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 42px;
+}
+
+.product-points {
+    font-size: 18px;
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 12px;
+}
+
+.btn-exchange-item {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-exchange-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-exchange-item:active {
+    transform: translateY(0);
+}
+
+.btn-exchange-item:disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* 로딩 스피너 */
+.loading-spinner {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #c4e538;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner p {
+    font-size: 14px;
+    color: #666;
+}
+
+/* 모달 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    position: relative;
+    background-color: white;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow: hidden;
+    z-index: 1001;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1002;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+}
+
+.modal-close svg {
+    color: #333;
+}
+
+.modal-image-wrapper {
+    width: 100%;
+    height: 280px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    position: relative;
+}
+
+.modal-product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-product-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+.modal-product-description {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.modal-points-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.points-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.points-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+}
+
+.points-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #10b981;
+}
+
+.modal-buttons {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 12px;
+}
+
+.btn-modal-cancel {
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    background-color: white;
+    color: #666;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-modal-cancel:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.btn-modal-exchange {
+    padding: 16px;
+    border: none;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-modal-exchange:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btn-modal-exchange:active {
+    transform: translateY(0);
+}
+
+.btn-modal-exchange:disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 480px) {
+    .container {
+        padding: 80px 16px 20px;
+    }
+    
+    .my-points-card {
+        padding: 20px;
+    }
+    
+    .my-points-amount {
+        font-size: 32px;
+    }
+    
+    .section-title {
+        font-size: 18px;
+    }
+
+    .products-grid {
+        gap: 12px;
+    }
+
+    .product-image {
+        height: 160px;
+    }
+
+    .product-info {
+        padding: 14px;
+    }
+    
+    .product-name {
+        font-size: 14px;
+    }
+    
+    .product-points {
+        font-size: 16px;
+    }
+
+    .modal-content {
+        width: 95%;
+        border-radius: 20px;
+    }
+
+    .modal-image-wrapper {
+        height: 220px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .modal-product-name {
+        font-size: 20px;
+    }
+    
+    .points-value {
+        font-size: 22px;
+    }
+    
+    .modal-buttons {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .btn-modal-cancel {
+        order: 2;
+    }
+    
+    .btn-modal-exchange {
+        order: 1;
+    }
+}
+

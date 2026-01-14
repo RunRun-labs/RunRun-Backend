@@ -1,0 +1,359 @@
+:root {
+    --primary: #baff29;
+    --text-strong: #1a1c1e;
+    --text-muted: #6c7278;
+    --stroke: #edf1f3;
+    --info: #4d81e7;
+    --bg: #ffffff;
+    --bg-light-green: #D3F9D8;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+}
+
+body {
+    font-family: "Inter", "Nunito Sans", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text-strong);
+    display: flex;
+    justify-content: center;
+}
+
+.page {
+    position: relative;
+    width: min(420px, 100vw);
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    padding-bottom: 76px;
+}
+
+/* Top Navigation */
+.top-nav {
+    position: relative;
+    width: 100%;
+    background: #fff;
+    border-bottom: 1px solid #000;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 9px 35px 0;
+    z-index: 5;
+    min-height: 48px;
+    flex-shrink: 0;
+}
+
+.top-nav-item {
+    position: relative;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #000;
+    font-family: "Fugaz One", "Noto Sans KR", sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: -0.24px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 51px;
+    padding-bottom: 4px;
+}
+
+.top-nav-item.active {
+    border-bottom: 2px solid var(--info);
+}
+
+.top-nav-item.active span {
+    color: var(--info);
+    font-size: 15px;
+}
+
+.top-nav-item span {
+    display: block;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* 알림 뱃지 */
+.top-nav-item .notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #ff3b30;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-family: "Inter", sans-serif;
+}
+
+/* Main Content */
+.crew-main-content {
+    flex: 1;
+    padding: 20px 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding-bottom: 40px;
+}
+
+/* Section Title */
+.section-title {
+    font-family: "Fugaz One", sans-serif;
+    font-size: 18px;
+    color: var(--text-strong);
+    margin: 0 0 15px 0;
+    padding-left: 5px;
+}
+
+/* 내 크루 섹션 */
+.my-crew-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 크루 카드 (연두색 배경) */
+.crew-card {
+    width: 100%;
+    min-height: 80px;
+    background: var(--bg-light-green);
+    border-radius: 10px;
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.crew-card:hover {
+    background: rgba(211, 249, 216, 0.8);
+    transform: translateY(-2px);
+}
+
+.crew-icon {
+    font-size: 32px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.crew-text {
+    font-family: "Nunito Sans", sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-strong);
+}
+
+/* 크루 액션 섹션 */
+.crew-actions-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 액션 버튼 (흰색 배경, 연두색 테두리) */
+.action-button {
+    width: 100%;
+    min-height: 80px;
+    background: #fff;
+    border: 1.5px solid var(--primary);
+    border-radius: 10px;
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    box-shadow: 0px 2px 6px rgba(186, 255, 41, 0.3);
+}
+
+.action-button:hover {
+    background: rgba(186, 255, 41, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0px 4px 10px rgba(186, 255, 41, 0.4);
+}
+
+.action-icon {
+    font-size: 32px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.action-text {
+    font-family: "Nunito Sans", sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-strong);
+}
+
+/* ========== 하단 네비게이션 ========== */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 420px;
+    margin: 0 auto;
+    height: 76px;
+    border-top: 1px solid #baff29;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+    padding: 8px 12px 6px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+.nav-item {
+    text-align: center;
+    text-decoration: none;
+    color: #000;
+    font-family: "Fugaz One", "Inter", sans-serif;
+    font-size: 10px;
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+}
+
+.nav-item img {
+    width: 28px;
+    height: 28px;
+}
+
+.nav-item span {
+    display: block;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .page {
+        padding-bottom: 68px;
+    }
+
+    .crew-main-content {
+        padding: 16px 20px 40px;
+        gap: 24px;
+    }
+
+    .section-title {
+        font-size: 16px;
+    }
+
+    .crew-card {
+        min-height: 70px;
+        padding: 16px 20px;
+    }
+
+    .crew-icon {
+        font-size: 28px;
+    }
+
+    .crew-text {
+        font-size: 16px;
+    }
+
+    .action-button {
+        min-height: 70px;
+        padding: 16px 20px;
+    }
+
+    .action-icon {
+        font-size: 28px;
+    }
+
+    .action-text {
+        font-size: 16px;
+    }
+
+    .bottom-nav {
+        height: 68px;
+        padding: 6px 12px 6px;
+    }
+
+    .nav-item svg {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+/* 데스크톱에서는 가로폭에 맞춰 확장 */
+@media (min-width: 900px) {
+    body {
+        justify-content: flex-start;
+    }
+
+    .page {
+        max-width: 960px;
+        width: 100%;
+        padding-bottom: 82px;
+    }
+
+    .crew-main-content {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 32px 48px 40px;
+    }
+
+    .top-nav {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 12px 48px 0;
+    }
+
+    .top-nav-item {
+        font-size: 11px;
+        width: auto;
+        padding: 0 16px;
+    }
+
+    .top-nav-item.active span {
+        font-size: 16px;
+    }
+
+    .bottom-nav {
+        max-width: 960px;
+        grid-template-columns: repeat(5, minmax(120px, 1fr));
+        height: 82px;
+        padding: 10px 24px 10px;
+    }
+
+    .nav-item {
+        font-size: 11px;
+    }
+
+    .nav-item svg {
+        width: 30px;
+        height: 30px;
+    }
+}

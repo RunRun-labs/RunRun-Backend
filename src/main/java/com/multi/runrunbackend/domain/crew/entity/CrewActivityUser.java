@@ -2,18 +2,8 @@ package com.multi.runrunbackend.domain.crew.entity;
 
 import com.multi.runrunbackend.common.entitiy.BaseCreatedEntity;
 import com.multi.runrunbackend.domain.user.entity.User;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 /**
  * @author : BoKyung
@@ -22,6 +12,7 @@ import lombok.NoArgsConstructor;
  * @since : 25. 12. 17. 수요일
  */
 @Entity
+@Table(name = "crew_activity_user")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -41,16 +32,16 @@ public class CrewActivityUser extends BaseCreatedEntity {
     private User user;
 
     /**
-     * @description : toEntity - 엔티티 생성 정적 팩토리 메서드
+     * @description : create - 엔티티 생성 정적 팩토리 메서드
      * @filename : CrewActivityMember
      * @author : BoKyung
      * @since : 25. 12. 17. 수요일
      */
-    public static CrewActivityUser toEntity(CrewActivity crewActivity, User user) {
-        return CrewActivityUser.builder()
-            .crewActivity(crewActivity)
-            .user(user)
-            .build();
+    public static CrewActivityUser create(CrewActivity crewActivity, User user) {
+        CrewActivityUser activityUser = new CrewActivityUser();
+        activityUser.crewActivity = crewActivity;
+        activityUser.user = user;
+        return activityUser;
     }
 
 }
