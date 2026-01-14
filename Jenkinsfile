@@ -10,7 +10,7 @@ pipeline {
     booleanParam(
       name: 'SETUP_MONITORING',
       defaultValue: false,
-      description: 'Install/upgrade kube-prometheus-stack + RunRun monitoring manifests (requires Jenkins credential: slack-webhook-url).'
+      description: 'Install/upgrade kube-prometheus-stack + RunRun monitoring manifests (assumes alertmanager-slack Secret already exists).'
     )
   }
 
@@ -85,21 +85,21 @@ kubectl get nodes
         expression { return params.SETUP_MONITORING }
       }
       steps {
-        withCredentials([
-          [
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'aws-credentials'
-          ],
-          string(credentialsId: 'slack-webhook-url', variable: 'SLACK_WEBHOOK_URL')
-        ]) {
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-credentials'
+        ]]) {
           sh '''#!/usr/bin/env bash
 set -euo pipefail
 
 kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl -n monitoring create secret generic alertmanager-slack \
-  --from-literal=SLACK_WEBHOOK_URL="${SLACK_WEBHOOK_URL}" \
-  --dry-run=client -o yaml | kubectl apply -f -
+if ! kubectl -n monitoring get secret alertmanager-slack >/dev/null 2>&1; then
+  echo "[skip] alertmanager-slack secret not found in namespace monitoring"
+  echo "Create it once with:"
+  echo "  kubectl -n monitoring create secret generic alertmanager-slack --from-literal=SLACK_WEBHOOK_URL='https://hooks.slack.com/services/XXX/YYY/ZZZ'"
+  exit 0
+fi
 
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
