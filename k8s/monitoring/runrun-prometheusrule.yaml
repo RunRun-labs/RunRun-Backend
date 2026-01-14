@@ -1,0 +1,48 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: runrun-alerts
+  namespace: monitoring
+  labels:
+    # Must match your kube-prometheus-stack Helm release name.
+    # Example: release: monitoring
+    release: monitoring
+spec:
+  groups:
+    - name: runrun.availability
+      rules:
+        - alert: RunRunServiceDown
+          expr: up{job=~".*runrun.*"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "RunRun backend is down"
+            description: "Prometheus 'up' is 0 for runrun scrape target(s) for 2 minutes."
+    - name: runrun.http
+      rules:
+        - alert: RunRunHigh5xxRate
+          expr: |
+            (
+              sum(rate(http_server_requests_seconds_count{job=~".*runrun.*",status=~"5.."}[5m]))
+              /
+              sum(rate(http_server_requests_seconds_count{job=~".*runrun.*"}[5m]))
+            ) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "RunRun 5xx rate is high"
+            description: "5xx ratio over last 5m is > 5% for 5 minutes."
+        - alert: RunRunHighLatencyP95
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum by (le) (rate(http_server_requests_seconds_bucket{job=~".*runrun.*"}[5m]))
+            ) > 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "RunRun latency p95 is high"
+            description: "p95 latency > 1s for 10 minutes (http_server_requests_seconds_bucket)."

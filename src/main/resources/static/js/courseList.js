@@ -2,21 +2,17 @@
 // DOM Elements
 // ==========================
 let courseListContainer;
-let loadingMessage;
-let emptyMessage;
+let loadingSpinner;
 let searchInput;
-let searchButton;
 let filterButton;
 let sortButton;
 
 function initDOMElements() {
   courseListContainer = document.getElementById("courseList");
-  loadingMessage = document.getElementById("loadingMessage");
-  emptyMessage = document.getElementById("emptyMessage");
+  loadingSpinner = document.getElementById("loadingSpinner");
   searchInput =
     document.getElementById("keywordInput") ||
     document.querySelector(".search-input");
-  searchButton = document.querySelector(".search-button");
   filterButton = document.querySelector(".filter-button");
   sortButton = document.querySelector(".sort-button");
 }
@@ -74,17 +70,11 @@ async function loadCourseList(reset = false) {
   if (reset) {
     currentCursor = null;
     courseListContainer.innerHTML = "";
-    // Create loading message element
-    const loadingEl = document.createElement("div");
-    loadingEl.className = "loading-message";
-    loadingEl.id = "loadingMessage";
-    loadingEl.innerHTML = "<p>코스를 불러오는 중...</p>";
-    courseListContainer.appendChild(loadingEl);
-    if (emptyMessage) {
-      emptyMessage.style.display = "none";
-    }
-  } else if (loadingMessage) {
-    loadingMessage.style.display = "block";
+  }
+
+  // Show loading spinner
+  if (loadingSpinner) {
+    loadingSpinner.style.display = 'flex';
   }
 
   isLoading = true;
@@ -163,13 +153,9 @@ async function loadCourseList(reset = false) {
       throw new Error("데이터 형식이 올바르지 않습니다");
     }
 
-    // Hide loading message
-    const loadingEl = courseListContainer.querySelector(".loading-message");
-    if (loadingEl) {
-      loadingEl.style.display = "none";
-    }
-    if (loadingMessage) {
-      loadingMessage.style.display = "none";
+    // Hide loading spinner
+    if (loadingSpinner) {
+      loadingSpinner.style.display = 'none';
     }
 
     if (reset) {
@@ -177,19 +163,14 @@ async function loadCourseList(reset = false) {
     }
 
     if (data.items.length === 0 && reset) {
-      if (emptyMessage) {
-        emptyMessage.style.display = "block";
-        courseListContainer.appendChild(emptyMessage);
-      } else {
-        const emptyEl = document.createElement("div");
-        emptyEl.className = "empty-message";
-        emptyEl.innerHTML = "<p>등록된 코스가 없습니다.</p>";
-        courseListContainer.appendChild(emptyEl);
-      }
+      const emptyEl = document.createElement("div");
+      emptyEl.style.textAlign = 'center';
+      emptyEl.style.padding = '40px 20px';
+      emptyEl.style.color = 'var(--text-muted)';
+      emptyEl.style.fontSize = '14px';
+      emptyEl.innerHTML = "<p>등록된 코스가 없습니다.</p>";
+      courseListContainer.appendChild(emptyEl);
     } else {
-      if (emptyMessage) {
-        emptyMessage.style.display = "none";
-      }
       data.items.forEach((course) => {
         const card = createCourseCard(course);
         courseListContainer.appendChild(card);
@@ -201,19 +182,17 @@ async function loadCourseList(reset = false) {
   } catch (error) {
     console.error("Course list loading error:", error);
 
-    // Hide loading message
-    const loadingEl = courseListContainer.querySelector(".loading-message");
-    if (loadingEl) {
-      loadingEl.style.display = "none";
-    }
-    if (loadingMessage) {
-      loadingMessage.style.display = "none";
+    // Hide loading spinner
+    if (loadingSpinner) {
+      loadingSpinner.style.display = 'none';
     }
 
     // Show error message
     const errorEl = document.createElement("div");
-    errorEl.className = "empty-message";
-    errorEl.style.color = "#ff6b6b";
+    errorEl.style.textAlign = 'center';
+    errorEl.style.padding = '40px 20px';
+    errorEl.style.color = '#ff6b6b';
+    errorEl.style.fontSize = '14px';
     errorEl.innerHTML = `<p>코스를 불러오는 중 오류가 발생했습니다.<br/>${error.message}</p>`;
 
     if (reset) {
@@ -235,8 +214,20 @@ function createCourseCard(course) {
   card.className = "recruit-card";
   card.style.cursor = "pointer";
   card.setAttribute("data-course-id", course.id);
+  
+  // URL 파라미터에서 선택 모드 확인
+  const urlParams = new URLSearchParams(window.location.search);
+  const selectMode = urlParams.get('selectMode');
+  const returnTo = urlParams.get('returnTo');
+  
   card.addEventListener("click", () => {
-    window.location.href = `/courseDetail/${course.id}`;
+    // 선택 모드일 때: 상세페이지로 이동하되 선택 모드 파라미터 유지
+    if ((selectMode === 'recruit' || selectMode === 'solo') && returnTo) {
+      window.location.href = `/courseDetail/${course.id}?selectMode=${selectMode}&returnTo=${encodeURIComponent(returnTo)}`;
+    } else {
+      // 일반 모드: 상세 페이지로 이동
+      window.location.href = `/courseDetail/${course.id}`;
+    }
   });
 
   // Format course distance (코스 길이)
@@ -378,14 +369,6 @@ function escapeHtml(text) {
 function initSearchListeners() {
   if (!searchInput) {
     return;
-  }
-
-  // 검색 버튼이 있으면 클릭 이벤트 추가
-  if (searchButton) {
-    searchButton.addEventListener("click", () => {
-      currentFilters.keyword = searchInput.value.trim() || null;
-      loadCourseList(true);
-    });
   }
 
   // Enter 키로 검색
@@ -783,12 +766,12 @@ function initSortOptions() {
 }
 
 // Scroll to load more
-const courseContent = document.querySelector(".course-content");
-if (courseContent) {
-  courseContent.addEventListener("scroll", () => {
-    const scrollTop = courseContent.scrollTop;
-    const scrollHeight = courseContent.scrollHeight;
-    const clientHeight = courseContent.clientHeight;
+const courseMain = document.querySelector(".course-main");
+if (courseMain) {
+  courseMain.addEventListener("scroll", () => {
+    const scrollTop = courseMain.scrollTop;
+    const scrollHeight = courseMain.scrollHeight;
+    const clientHeight = courseMain.clientHeight;
 
     // Load more when near bottom
     if (
@@ -814,10 +797,23 @@ function initCreateButton() {
 }
 
 // ==========================
+// Back Button
+// ==========================
+function initBackButton() {
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      window.history.back();
+    });
+  }
+}
+
+// ==========================
 // Initialize
 // ==========================
 function init() {
   initDOMElements();
+  initBackButton();
   initSearchListeners();
   initCreateButton();
 
@@ -829,6 +825,23 @@ function init() {
   // Initialize filter and sort options
   initFilterOptions();
   initSortOptions();
+  
+  // URL 파라미터에서 필터 정보 읽기
+  const urlParams = new URLSearchParams(window.location.search);
+  const filter = urlParams.get('filter');
+  
+  // 필터 파라미터가 있으면 해당 필터 활성화
+  if (filter === 'liked') {
+    currentFilters.myLikedCourses = true;
+    console.log('좋아요 한 코스 필터 활성화');
+  } else if (filter === 'favorited') {
+    currentFilters.myFavoritedCourses = true;
+    console.log('즐겨찾기 한 코스 필터 활성화');
+  } else if (filter === 'my') {
+    currentFilters.myCourses = true;
+    console.log('내가 등록한 코스 필터 활성화');
+  }
+  
   updateFilterUI();
 
   loadCourseList(true);

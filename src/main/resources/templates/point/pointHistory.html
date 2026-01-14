@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>내 포인트</title>
+    <title>포인트 내역</title>
     <link rel="stylesheet" th:href="@{/css/point-history.css}">
 </head>
 <body>
@@ -14,7 +14,7 @@
             <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
     </button>
-    <h1 class="header-title">내 포인트</h1>
+    <h1 class="header-title">포인트 내역</h1>
 </div>
 
 <!-- 필터 버튼 -->
@@ -30,33 +30,61 @@
         <!-- 내역이 동적으로 추가됩니다 -->
     </div>
     <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        <div style="margin-bottom: 12px;">⏳</div>
         내역을 불러오는 중...
     </div>
 </div>
 
 <!-- 하단 네비게이션 -->
-<div class="bottom-nav">
-    <a href="/chat" class="nav-item">
-        <span class="nav-icon">💬</span>
-        <span class="nav-label">chat</span>
-    </a>
-    <a href="/crews" class="nav-item">
-        <span class="nav-icon">👥</span>
-        <span class="nav-label">crew</span>
-    </a>
-    <a href="/" class="nav-item">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label">home</span>
-    </a>
-    <a href="/match" class="nav-item">
-        <span class="nav-icon">🎯</span>
-        <span class="nav-label">match</span>
-    </a>
-    <a href="/mypage" class="nav-item active">
-        <span class="nav-icon">👤</span>
-        <span class="nav-label">my</span>
-    </a>
-</div>
+<template id="bottomNavTemplate">
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+        <a class="nav-item" th:href="@{/chat}" href="/chat">
+            <img
+                    src="/img/icons/chat.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>chat</span>
+        </a>
+        <a class="nav-item" th:href="@{/feed}" href="/feed">
+            <img
+                    src="/img/icons/feed.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>feed</span>
+        </a>
+        <a class="nav-item" th:href="@{/}" href="/">
+            <img
+                    src="/img/icons/home.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>home</span>
+        </a>
+        <a class="nav-item" th:href="@{/match}" href="/match">
+            <img
+                    src="/img/icons/match.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>match</span>
+        </a>
+        <a class="nav-item active" th:href="@{/my}" href="/my">
+            <img
+                    src="/img/icons/my.svg"
+                    alt=""
+                    aria-hidden="true"
+            />
+            <span>my</span>
+        </a>
+    </nav>
+</template>
+
+<div
+        id="bottomNavMount"
+        th:replace="~{common/bottom-nav :: bottomNav}"
+></div>
 
 <script th:src="@{/js/point-history.js}"></script>
 </body>

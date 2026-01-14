@@ -79,8 +79,17 @@ async function loadRunningRecordData() {
 function renderRunningRecordData(record) {
     // 코스 제목
     const courseTitleLabel = document.getElementById("courseTitleLabel");
-    if (courseTitleLabel && record.courseTitle) {
-        courseTitleLabel.textContent = `${record.courseTitle}`;
+    if (courseTitleLabel) {
+        courseTitleLabel.textContent = getRecordDisplayTitle(record);
+
+        // ONLINEBATTLE이고 등수가 없으면 비동기 조회 후 제목 갱신
+        if (record.runningType === 'ONLINEBATTLE' && !(record.onlineBattleRanking)) {
+            fetchOnlineBattleRanking(record.runningResultId).then((rank) => {
+                if (rank && courseTitleLabel.isConnected) {
+                    courseTitleLabel.textContent = `온라인배틀 #${rank}`;
+                }
+            });
+        }
     }
 
     // 거리
@@ -207,9 +216,23 @@ function attachFormSubmitHandler() {
             return;
         }
 
-        const content = document.getElementById("contentInput").value.trim();
+        const contentInput = document.getElementById("contentInput");
+        const content = contentInput.value.trim();
         const imageInput = document.getElementById("imageInput");
         const imageFile = imageInput.files[0];
+
+        // 유효성 검증
+        if (!content) {
+            alert("피드 내용은 비어 있을 수 없습니다.");
+            contentInput.focus();
+            return;
+        }
+
+        if (content.length > 500) {
+            alert(`피드 내용은 최대 500자까지 작성할 수 있습니다. (현재 ${content.length}자)`);
+            contentInput.focus();
+            return;
+        }
 
         // 버튼 비활성화
         submitButton.disabled = true;
@@ -266,4 +289,59 @@ function attachFormSubmitHandler() {
             submitButton.textContent = "등록하기";
         }
     });
+}
+
+/**
+ * 기록 제목 가져오기
+ */
+function getRecordDisplayTitle(record) {
+    const baseTitle = (record.courseTitle || '').trim();
+    if (baseTitle) return baseTitle;
+
+    const runningType = record.runningType;
+
+    if (runningType === 'GHOST') {
+        return '고스트런';
+    }
+
+    if (runningType === 'ONLINEBATTLE') {
+        const rank = (typeof record.onlineBattleRanking === 'number')
+            ? record.onlineBattleRanking
+            : (record.onlineBattleRanking ? Number(record.onlineBattleRanking) : null);
+        return rank ? `온라인배틀 #${rank}` : '온라인배틀';
+    }
+
+    return '러닝';
+}
+
+// ONLINEBATTLE 랭킹 캐시 (runningResultId -> ranking)
+const onlineBattleRankingCache = new Map();
+
+async function fetchOnlineBattleRanking(runningResultId) {
+    if (!runningResultId) return null;
+    if (onlineBattleRankingCache.has(runningResultId)) {
+        return onlineBattleRankingCache.get(runningResultId);
+    }
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return null;
+
+    try {
+        const res = await fetch(`/api/battle-result/running-results/${runningResultId}/ranking`, {
+            headers: {Authorization: `Bearer ${token}`}
+        });
+        if (!res.ok) return null;
+
+        const payload = await res.json();
+        const ranking = payload?.data?.ranking;
+        const parsed = (typeof ranking === 'number') ? ranking : (ranking != null ? Number(ranking) : null);
+        if (parsed != null && !Number.isNaN(parsed)) {
+            onlineBattleRankingCache.set(runningResultId, parsed);
+            return parsed;
+        }
+        return null;
+    } catch (e) {
+        console.warn('온라인배틀 랭킹 조회 실패:', e);
+        return null;
+    }
 }

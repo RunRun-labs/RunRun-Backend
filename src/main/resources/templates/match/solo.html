@@ -17,8 +17,8 @@
   <link rel="stylesheet" href="/css/notification-toast.css"
         th:href="@{/css/notification-toast.css}">
   <script
-    type="text/javascript"
-    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services,clusterer">
+      type="text/javascript"
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services,clusterer">
   </script>
 </head>
 <body>
@@ -28,13 +28,10 @@
     <div class="sticky-header-wrapper">
       <header class="header">
         <button type="button" id="backBtn" class="back-button" aria-label="뒤로가기">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <img th:src="@{/img/icons/back.svg}" src="/img/icons/back.svg" alt="뒤로가기">
         </button>
         <div class="header-content">
           <h1 class="header-title">솔로런</h1>
-          <p class="header-subtitle">혼자서 자유롭게 달리기</p>
         </div>
       </header>
     </div>
@@ -42,37 +39,75 @@
     <!-- 안내 박스 -->
     <div class="info-box" id="infoBox">
       <div class="info-box-icon">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M10 2C5.58 2 2 5.58 2 10C2 14.42 5.58 18 10 18C14.42 18 18 14.42 18 10C18 5.58 14.42 2 10 2ZM10 15C9.45 15 9 14.55 9 14C9 13.45 9.45 13 10 13C10.55 13 11 13.45 11 14C11 14.55 10.55 15 10 15ZM11 11H9V6H11V11Z" fill="currentColor"/>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path
+              d="M10 2C5.58 2 2 5.58 2 10C2 14.42 5.58 18 10 18C14.42 18 18 14.42 18 10C18 5.58 14.42 2 10 2ZM10 15C9.45 15 9 14.55 9 14C9 13.45 9.45 13 10 13C10.55 13 11 13.45 11 14C11 14.55 10.55 15 10 15ZM11 11H9V6H11V11Z"
+              fill="currentColor"/>
         </svg>
       </div>
       <div class="info-box-content">
-        <h3 class="info-box-title" id="infoBoxTitle">목표 거리를 선택하세요</h3>
-        <p class="info-box-text" id="infoBoxText">원하는 거리를 선택하고 솔로런을 시작하세요</p>
+        <h3 class="info-box-title" id="infoBoxTitle">혼자 자유롭게 달리세요.</h3>
+        <p class="info-box-text" id="infoBoxText">원하는 거리와 코스로 솔로런을 시작하세요</p>
       </div>
     </div>
 
+    <!-- 초기 선택 화면 -->
+    <section class="initial-selection-section" id="initialSelectionSection">
+      <div class="selection-buttons">
+        <button type="button" class="selection-button" id="courseSelectionButton">
+          <div class="selection-button-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                  fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="selection-button-content">
+            <span class="selection-button-label">코스 선택</span>
+            <span class="selection-button-description">기존 코스 중에서 선택하기</span>
+          </div>
+        </button>
+
+        <button type="button" class="selection-button" id="manualInputButton">
+          <div class="selection-button-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                 xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="selection-button-content">
+            <span class="selection-button-label">직접 입력하기</span>
+            <span class="selection-button-description">원하는 거리를 직접 입력하기</span>
+          </div>
+        </button>
+      </div>
+    </section>
+
     <!-- 코스 선택 섹션 -->
-    <section class="course-section">
+    <section class="course-section" id="courseSection" style="display: none;">
       <div class="course-input-group">
         <label for="course" class="course-label">코스 (선택사항)</label>
         <div class="course-input-wrapper">
           <input
-            type="text"
-            id="course"
-            class="course-input"
-            placeholder="코스를 선택하세요"
-            readonly
+              type="text"
+              id="course"
+              class="course-input"
+              placeholder="코스를 선택하세요"
+              readonly
           />
-          <svg class="course-search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="course-search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
+               xmlns="http://www.w3.org/2000/svg">
             <path
-              d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M19 19L14.65 14.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"/>
+            <path d="M19 19L14.65 14.65" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
       </div>
-      
+
       <!-- 선택된 코스 정보 (코스 선택 시 표시) -->
       <div class="selected-course-info" id="selectedCourseInfo" style="display: none;">
         <div class="course-name" id="courseName"></div>
@@ -85,32 +120,49 @@
       <div id="map" class="map-container"></div>
     </section>
 
-    <!-- 거리 선택 칩 섹션 -->
-    <section class="distance-section">
-      <div class="distance-chips-wrapper">
-        <div class="distance-chips" id="distanceChips">
-          <!-- JavaScript로 동적 생성 -->
+    <!-- 선택된 코스 상세 정보 (코스 선택 시 표시) -->
+    <section class="course-detail-section" id="courseDetailSection" style="display: none;">
+      <div class="course-detail-card">
+        <div class="course-detail-header">
+          <h3 class="course-detail-title" id="courseDetailName">코스 이름</h3>
+          <span class="course-detail-badge" id="courseDetailBadge">수동 등록</span>
+        </div>
+        <div class="course-detail-info">
+          <div class="course-detail-item">
+            <svg class="course-detail-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.5 2C13.5 2.44425 13.3069 2.84339 13 3.11805V5H18C19.6569 5 21 6.34315 21 8V11.5H19V8C19 7.44772 18.5523 7 18 7H13V8.88195C13.3069 9.15661 13.5 9.55575 13.5 10C13.5 10.8284 12.8284 11.5 12 11.5C11.1716 11.5 10.5 10.8284 10.5 10C10.5 9.55575 10.6931 9.15661 11 8.88195V7H6C5.44772 7 5 7.44772 5 8V16C5 16.5523 5.44772 17 6 17H11V15.118C10.6931 14.8434 10.5 14.4443 10.5 14C10.5 13.1716 11.1716 12.5 12 12.5C12.8284 12.5 13.5 13.1716 13.5 14C13.5 14.4443 13.3069 14.8434 13 15.118V17H18C18.5523 17 19 16.5523 19 16V13H21V16C21 17.6569 19.6569 19 18 19H13V20.882C13.3069 21.1566 13.5 21.5558 13.5 22C13.5 22.8284 12.8284 23.5 12 23.5C11.1716 23.5 10.5 22.8284 10.5 22C10.5 21.5558 10.6931 21.1566 11 20.882V19H6C4.34315 19 3 17.6569 3 16V8C3 6.34315 4.34315 5 6 5H11V3.11805C10.6931 2.84339 10.5 2.44425 10.5 2C10.5 1.17157 11.1716 0.5 12 0.5C12.8284 0.5 13.5 1.17157 13.5 2Z" fill="currentColor"/>
+            </svg>
+            <span class="course-detail-value" id="courseDetailDistance">0 km</span>
+          </div>
+          <div class="course-detail-item">
+            <svg class="course-detail-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
+            </svg>
+            <span class="course-detail-value" id="courseDetailAddress">주소</span>
+          </div>
         </div>
       </div>
-      
+    </section>
+
+    <!-- 거리 입력 섹션 -->
+    <section class="distance-section" id="distanceSection" style="display: none;">
       <!-- 직접 입력 섹션 -->
       <div class="manual-input-section">
-        <label for="manualDistanceInput" class="manual-input-label" id="manualInputLabel">직접 입력</label>
+        <label for="manualDistanceInput" class="manual-input-label" id="manualInputLabel">직접
+          입력</label>
         <div class="manual-input-wrapper">
           <input
-            type="number"
-            id="manualDistanceInput"
-            class="manual-distance-input"
-            min="0"
-            step="0.1"
-            inputmode="decimal"
+              type="number"
+              id="manualDistanceInput"
+              class="manual-distance-input"
+              placeholder="거리를 입력해주세요"
+              min="0"
+              step="0.1"
+              inputmode="decimal"
           />
           <span class="manual-input-unit">km</span>
         </div>
         <p class="manual-input-error" id="manualDistanceError"></p>
-        <p class="course-mode-notice" id="courseModeNotice" style="display: none;">
-          코스 지정 거리입니다
-        </p>
       </div>
     </section>
   </main>
@@ -130,4 +182,3 @@
 <script src="/js/solo.js" th:src="@{/js/solo.js}"></script>
 </body>
 </html>
-

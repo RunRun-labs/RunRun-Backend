@@ -10,48 +10,31 @@ html, body {
     padding: 0;
     height: 100%;
     overflow-x: hidden;
-    overflow-y: auto;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     background-color: #f5f5f5;
-    min-height: 100vh;
-}
-
-/* 메인 컨텐츠 - 스크롤 가능하게 */
-.container {
-    max-width: 420px;
-    margin: 0 auto;
-    padding: 68px 20px 90px;
-    overflow-y: auto;
-    height: auto;
-}
-
-/* 헤더 */
-.header {
-    background-color: white;
-    border-bottom: 1px solid #e0e0e0;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
+    overflow-y: scroll;
+    height: 100vh;
 }
 
 /* 상단 네비게이션 */
 .top-nav {
-    position: relative;
-    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    max-width: 420px;
+    margin: 0 auto;
     background: #fff;
     border-bottom: 1px solid #000;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     padding: 9px 35px 0;
-    z-index: 5;
+    z-index: 100;
     min-height: 48px;
-    flex-shrink: 0;
 }
 
 .top-nav-item {
@@ -89,173 +72,237 @@ body {
     white-space: nowrap;
 }
 
+/* 알림 뱃지 */
+.top-nav-item .notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #ff3b30;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-family: "Inter", sans-serif;
+}
+
 /* 메인 컨텐츠 */
 .container {
     max-width: 420px;
     margin: 0 auto;
-    padding: 68px 20px 90px;
-    overflow-y: auto;
-    height: auto;
+    padding: 68px 20px 150px;
 }
 
 /* 멤버십 카드 래퍼 */
 .membership-card-wrapper {
-    margin-bottom: 30px;
+    margin-bottom: 32px;
 }
 
 /* 멤버십 카드 공통 스타일 */
 .membership-card {
-    background: linear-gradient(135deg, #d4f563 0%, #c4e538 100%);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
     position: relative;
-    min-height: 200px;
+    min-height: 240px;
+    overflow: hidden;
+}
+
+.membership-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
 }
 
 /* 무료 회원 카드 */
 .membership-card.free {
-    background: linear-gradient(135deg, #d4f563 0%, #c4e538 100%);
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
 }
 
 /* 프리미엄 회원 카드 */
 .membership-card.premium {
-    background: linear-gradient(135deg, #d4f563 0%, #c4e538 100%);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 /* 현재 이용중 배지 */
 .status-badge {
     display: inline-block;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: #666;
-    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 16px;
+    border-radius: 20px;
+    position: relative;
+    z-index: 1;
 }
 
 /* 멤버십 타이틀 */
 .membership-title-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
 }
 
 .membership-icon {
-    font-size: 30px;
+    font-size: 40px;
 }
 
 .membership-title {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 700;
-    color: #333;
+    color: white;
 }
 
 /* 기간 표시 (프리미엄만) */
 .membership-period {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 20px;
-}
-
-/* 해지 취소 버튼 스타일 */
-.btn-resubscribe {
-    background-color: #c4e538;
-    color: #333;
-    border: 2px solid #c4e538;
-}
-
-.btn-resubscribe:hover {
-    background-color: #b3d427;
-    border-color: #b3d427;
-    color: transparent;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 24px;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
 }
 
 /* 설명 텍스트 */
 .membership-description {
     font-size: 14px;
-    color: #666;
-    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 24px;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
 }
 
 /* 버튼 그룹 */
 .button-group {
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
 }
 
 .btn {
     flex: 1;
-    padding: 12px 20px;
-    border: 2px solid #333;
+    padding: 14px 24px;
+    border: 2px solid white;
     background-color: white;
-    color: #333;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 25px;
+    color: #10b981;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
 }
 
 .btn:hover {
-    background-color: #333;
-    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .btn-cancel {
     background-color: transparent;
+    color: white;
+    border-color: white;
+}
+
+.btn-cancel:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .btn-detail {
-    background-color: transparent;
+    background-color: white;
+    color: #10b981;
+}
+
+.btn-detail:hover {
+    background-color: #f0fdf4;
+}
+
+/* 해지 취소 버튼 */
+.btn-resubscribe {
+    background-color: white;
+    color: #10b981;
+    border: 2px solid white;
+}
+
+.btn-resubscribe:hover {
+    background-color: #f0fdf4;
 }
 
 /* NEW 배지 */
 .new-badge {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: #ff4444;
+    top: 24px;
+    right: 24px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: white;
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: 700;
+    z-index: 1;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 /* 혜택 섹션 */
 .benefits-section {
     background-color: white;
-    border-radius: 15px;
-    padding: 25px;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .benefits-title {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
-    color: #333;
-    margin-bottom: 25px;
+    color: #1a1a1a;
+    margin-bottom: 28px;
 }
 
 /* 혜택 아이템 */
 .benefit-item {
     display: flex;
     align-items: flex-start;
-    gap: 15px;
+    gap: 16px;
     padding: 20px;
-    margin-bottom: 15px;
-    background-color: #f9f9f9;
-    border-radius: 12px;
-    transition: all 0.3s;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: 16px;
+    transition: all 0.2s;
+    border: 2px solid transparent;
 }
 
 .benefit-item:hover {
-    background-color: #f0f0f0;
+    border-color: rgba(16, 185, 129, 0.3);
     transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.15);
+}
+
+.benefit-item:last-child {
+    margin-bottom: 0;
 }
 
 .benefit-icon {
-    font-size: 32px;
-    min-width: 40px;
+    font-size: 36px;
+    min-width: 44px;
+    text-align: center;
 }
 
 .benefit-content {
@@ -263,16 +310,16 @@ body {
 }
 
 .benefit-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 5px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 6px;
 }
 
 .benefit-description {
-    font-size: 13px;
-    color: #666;
-    line-height: 1.5;
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.6;
 }
 
 /* 하단 네비게이션 */
@@ -291,7 +338,7 @@ body {
     align-items: center;
     padding: 8px 12px 6px;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-    z-index: 10;
+    z-index: 100;
 }
 
 .nav-item {
@@ -310,29 +357,46 @@ body {
     height: 28px;
 }
 
-.nav-item span {
-    display: block;
-}
-
 /* 반응형 디자인 */
 @media (max-width: 480px) {
     .container {
-        padding: 60px 15px 80px;
+        padding: 68px 16px 150px;
     }
 
     .membership-card {
-        padding: 25px 20px;
+        padding: 28px 24px;
     }
 
     .membership-title {
-        font-size: 28px;
+        font-size: 32px;
+    }
+
+    .benefits-section {
+        padding: 24px 20px;
+    }
+
+    .benefit-item {
+        padding: 16px;
     }
 
     .button-group {
-        flex-direction: column;
+        gap: 8px;
     }
 
     .btn {
-        width: 100%;
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .container {
+        padding: 68px 20px 150px;
+    }
+}
+
+@media (min-width: 769px) {
+    .container {
+        padding: 68px 32px 150px;
     }
 }

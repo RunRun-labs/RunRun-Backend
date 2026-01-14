@@ -7,7 +7,8 @@ let matchFoundTimeout = null;
 let countdownInterval = null;
 let currentSessionId = null; // 현재 매칭된 세션 ID 저장
 let fallbackCheckDone = false; // 폴백 체크 완료 플래그 (중복 처리 방지)
-let fallbackCheckInterval = null; // 주기적 폴백 체크 interval
+let fallbackCheckInterval = null; // 주기적 폴백 체크 interval (SSE 연결이 끊겼을 때만 실행)
+let sseCheckInterval = null; // SSE 연결 상태 확인 interval
 let matchStartTime = null; // 매칭 시작 시간 (오래된 알림 필터링용)
 
 // DOM 요소 참조 (나중에 초기화)
@@ -27,26 +28,20 @@ window.addEventListener('notification-received', async (event) => {
 
   console.log('[online-match] notification-received 이벤트 수신:', notification);
   console.log('[online-match] isMatching 상태:', isMatching);
-  console.log('[online-match] notificationType:',
-      notification.notificationType);
+  console.log('[online-match] notificationType:', notification.notificationType);
   console.log('[online-match] relatedId:', notification.relatedId);
 
-  // 매칭 중이 아니면 무시
-  if (!isMatching) {
-    console.log('[online-match] 매칭 중이 아니므로 무시');
-    return;
-  }
-
   // MATCH_FOUND 타입이고 relatedId(sessionId)가 있는 경우에만 처리
-  if (notification.notificationType === 'MATCH_FOUND'
-      && notification.relatedId) {
+  // ✅ isMatching 체크 제거: 매칭 상태와 관계없이 알림 처리 (모집글 매칭과 동일하게)
+  if (notification.notificationType === 'MATCH_FOUND' && notification.relatedId) {
     const sessionId = notification.relatedId;
 
     console.log('[online-match] 매칭 완료 알림 수신 - sessionId:', sessionId);
 
+    // ✅ 매칭 중이 아니어도 알림은 처리 (매칭 시작 전/후 알림도 처리)
     // ✅ 폴백 체크 플래그 설정 (중복 처리 방지)
     fallbackCheckDone = true;
-    isMatching = false;
+    isMatching = false; // 매칭 상태 종료
     matchStartTime = null; // ✅ 매칭 시작 시간 리셋
     
     try {
@@ -102,6 +97,10 @@ window.addEventListener('pageshow', async (e) => {
   if (fallbackCheckInterval) {
     clearInterval(fallbackCheckInterval);
     fallbackCheckInterval = null;
+  }
+  if (sseCheckInterval) {
+    clearInterval(sseCheckInterval);
+    sseCheckInterval = null;
   }
 
   try {
@@ -169,6 +168,10 @@ async function handleCancel() {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
     }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
+    }
     
     hideMatchingOverlay();
 
@@ -188,6 +191,10 @@ async function handleCancel() {
     if (fallbackCheckInterval) {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
+    }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
     }
     
     hideMatchingOverlay();
@@ -462,6 +469,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // 매칭 UI 초기화 (SEARCHING 상태로 시작)
     resetMatchUI();
     
+    // ✅ 매칭 오버레이가 표시된 후 티어 정보 업데이트
+    setTimeout(() => {
+      updateUserTierForMatching();
+    }, 100);
+    
     // 레이더 애니메이션과 매칭 완료 연출 실행
     // 약간의 지연을 주어 DOM이 완전히 로드되고 애니메이션이 시작되도록 함
     setTimeout(async () => {
@@ -512,6 +524,39 @@ async function handleMatchStart() {
 
     const token = localStorage.getItem("accessToken");
 
+    // ✅ 2. 티어 정보를 먼저 조회 (오버레이 표시 전)
+    let userTier = "거북이"; // 기본값
+    try {
+      if (token && selectedDistance) {
+        let distanceType = "KM_5";
+        if (selectedDistance === 3 || selectedDistance === "3") {
+          distanceType = "KM_3";
+        } else if (selectedDistance === 5 || selectedDistance === "5") {
+          distanceType = "KM_5";
+        } else if (selectedDistance === 10 || selectedDistance === "10") {
+          distanceType = "KM_10";
+        } else if (selectedDistance && (selectedDistance.startsWith("KM_") || selectedDistance.startsWith("km_"))) {
+          distanceType = selectedDistance.toUpperCase();
+        } else if (selectedDistance) {
+          distanceType = selectedDistance;
+        }
+
+        console.log('[DEBUG] 매칭 시작 전 티어 조회 - selectedDistance:', selectedDistance, 'distanceType:', distanceType);
+        
+        const tierResponse = await fetch(`/api/rating/distance?distanceType=${distanceType}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (tierResponse.ok) {
+          const tierResult = await tierResponse.json();
+          userTier = tierResult?.data?.currentTier || "거북이";
+          console.log('[DEBUG] 매칭 시작 전 티어 조회 성공:', userTier);
+        }
+      }
+    } catch (error) {
+      console.error("매칭 시작 전 티어 조회 실패:", error);
+    }
+
     const headers = {
       "Content-Type": "application/json",
     };
@@ -520,7 +565,7 @@ async function handleMatchStart() {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // 2. 매칭 신청 API 호출
+    // 3. 매칭 신청 API 호출
     console.log('[online-match] 매칭 신청 API 호출...');
     const response = await fetch("/api/match/online/join", {
       method: "POST",
@@ -547,9 +592,26 @@ async function handleMatchStart() {
       if (startButton) {
         startButton.style.display = "none";
       }
+      // 헤더 숨기기
+      const header = document.querySelector(".header");
+      if (header) {
+        header.style.display = "none";
+      }
 
       // 2. resetMatchUI()를 호출해서 초기화한다
       resetMatchUI();
+      
+      // ✅ 조회한 티어를 즉시 설정 (setTimeout 제거)
+      const userTierEl = document.getElementById("userTier");
+      if (userTierEl) {
+        userTierEl.textContent = userTier;
+        const tierStr = String(userTier).trim();
+        if (tierStr === "장산범" || tierStr === "JANGSANBEOM" || tierStr.toLowerCase() === "장산범") {
+          userTierEl.classList.add("tier-jangsanbeom");
+        } else {
+          userTierEl.classList.remove("tier-jangsanbeom");
+        }
+      }
 
       // 3. statusTitle의 텍스트를 "참여 중인 매칭이 존재합니다"로 변경한다
       if (statusTitle) {
@@ -593,16 +655,37 @@ async function handleMatchStart() {
     if (startButton) {
       startButton.style.display = "none";
     }
+    // 헤더 숨기기
+    const header = document.querySelector(".header");
+    if (header) {
+      header.style.display = "none";
+    }
     resetMatchUI();
+    
+    // ✅ 조회한 티어를 즉시 설정 (setTimeout 제거)
+    const userTierEl = document.getElementById("userTier");
+    if (userTierEl) {
+      userTierEl.textContent = userTier;
+      const tierStr = String(userTier).trim();
+      if (tierStr === "장산범" || tierStr === "JANGSANBEOM" || tierStr.toLowerCase() === "장산범") {
+        userTierEl.classList.add("tier-jangsanbeom");
+      } else {
+        userTierEl.classList.remove("tier-jangsanbeom");
+      }
+    }
 
-    // 5. 폴백 체크: 주기적으로 매칭 상태 확인 (SSE 이벤트를 놓쳤을 수 있으므로 REST API로 정합성 확인)
+    // 5. 폴백 체크: SSE 연결이 끊겼을 때만 주기적으로 매칭 상태 확인
     // 기존 interval이 있으면 정리
     if (fallbackCheckInterval) {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
     }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
+    }
 
-    // 폴백 체크 함수
+    // 폴백 체크 함수 (SSE 연결이 끊겼을 때만 실행됨)
     const performFallbackCheck = async () => {
       // 매칭 중인 상태가 아니면 폴백 체크 중단
       if (!isMatching) {
@@ -623,7 +706,9 @@ async function handleMatchStart() {
         return;
       }
 
-      console.log('[online-match] 폴백 체크: 매칭 상태 확인 중...');
+      // 폴백 체크 실행 (SSE 연결 상태와 관계없이)
+      const isConnected = typeof window.isSseConnected === 'function' && window.isSseConnected();
+      console.log(`[online-match] 폴백 체크 실행 - SSE 연결: ${isConnected ? '정상' : '끊김'}, 매칭 상태 확인 중...`);
       try {
         // 방법 1: /api/match/online/status 사용 (더 정확)
         const statusResponse = await fetch("/api/match/online/status", {
@@ -711,18 +796,65 @@ async function handleMatchStart() {
           }
         }
 
-        console.log('[online-match] 폴백 체크: 매칭 대기 중 (SSE 이벤트 대기)');
+        console.log('[online-match] 폴백 체크: 매칭 대기 중');
       } catch (fallbackError) {
-        console.warn('[online-match] 폴백 체크 실패 (무시하고 SSE 이벤트 대기):', fallbackError);
-        // 폴백 체크 실패해도 SSE 이벤트를 기다림
+        console.warn('[online-match] 폴백 체크 실패 (무시하고 계속):', fallbackError);
       }
     };
 
-    // 첫 폴백 체크는 2초 후 실행, 이후 5초마다 주기적으로 실행
+    // SSE 연결 상태 모니터링 및 폴백 체크 관리
+    const checkSseAndStartFallback = () => {
+      // 매칭 중이 아니면 모니터링 중단
+      if (!isMatching) {
+        if (sseCheckInterval) {
+          clearInterval(sseCheckInterval);
+          sseCheckInterval = null;
+        }
+        if (fallbackCheckInterval) {
+          clearInterval(fallbackCheckInterval);
+          fallbackCheckInterval = null;
+        }
+        return;
+      }
+      
+      // 이미 매칭 완료되었으면 중단
+      if (fallbackCheckDone) {
+        if (sseCheckInterval) {
+          clearInterval(sseCheckInterval);
+          sseCheckInterval = null;
+        }
+        if (fallbackCheckInterval) {
+          clearInterval(fallbackCheckInterval);
+          fallbackCheckInterval = null;
+        }
+        return;
+      }
+      
+      // SSE 연결 상태 확인
+      const isConnected = typeof window.isSseConnected === 'function' && window.isSseConnected();
+      
+      // SSE 연결 상태에 따라 폴백 체크 주기 결정
+      // SSE 정상: 10초마다, SSE 끊김: 5초마다
+      const fallbackInterval = isConnected ? 10000 : 5000;
+      
+      if (!fallbackCheckInterval) {
+        // 폴백 체크 시작
+        console.log(`[online-match] 폴백 체크 시작 - SSE 연결: ${isConnected ? '정상' : '끊김'}, 주기: ${fallbackInterval / 1000}초`);
+        performFallbackCheck(); // 즉시 한 번 실행
+        fallbackCheckInterval = setInterval(performFallbackCheck, fallbackInterval);
+      } else {
+        // 이미 실행 중이면 주기 조정 (SSE 연결 상태 변경 시)
+        clearInterval(fallbackCheckInterval);
+        console.log(`[online-match] 폴백 체크 주기 조정 - SSE 연결: ${isConnected ? '정상' : '끊김'}, 주기: ${fallbackInterval / 1000}초`);
+        fallbackCheckInterval = setInterval(performFallbackCheck, fallbackInterval);
+      }
+    };
+
+    // SSE 연결 상태를 주기적으로 확인 (2초마다)
+    // 연결이 끊겼을 때만 폴백 체크를 시작하고, 복구되면 중단
     setTimeout(() => {
-      performFallbackCheck();
-      // 주기적 폴백 체크 시작 (5초마다 - DB 부하 감소)
-      fallbackCheckInterval = setInterval(performFallbackCheck, 5000);
+      checkSseAndStartFallback(); // 즉시 한 번 실행
+      sseCheckInterval = setInterval(checkSseAndStartFallback, 2000); // 2초마다 SSE 상태 확인
     }, 2000);
 
     // SSE 이벤트를 기다림 (notification-received 이벤트 리스너가 처리)
@@ -772,6 +904,10 @@ function resetMatchUI() {
     clearInterval(fallbackCheckInterval);
     fallbackCheckInterval = null;
   }
+  if (sseCheckInterval) {
+    clearInterval(sseCheckInterval);
+    sseCheckInterval = null;
+  }
   
   // ✅ 폴백 체크 플래그 리셋
   fallbackCheckDone = false;
@@ -797,6 +933,15 @@ async function fetchMatchInfo(sessionId) {
     });
 
     const result = await response.json();
+
+    // 디버깅: API 응답 확인
+    console.log('[DEBUG] API 응답:', result);
+    console.log('[DEBUG] participants:', result?.data?.participants);
+    if (result?.data?.participants) {
+      result.data.participants.forEach((p, i) => {
+        console.log(`[DEBUG] participant[${i}]:`, p, 'tier:', p.tier, 'tier type:', typeof p.tier);
+      });
+    }
 
     if (!response.ok || !result?.success) {
       throw new Error(result?.message || "매칭 정보 조회에 실패했습니다.");
@@ -891,7 +1036,18 @@ async function showMatchFound(sessionId) {
         // 내 티어 업데이트
         const userTierEl = document.getElementById("userTier");
         if (userTierEl) {
-          userTierEl.textContent = participant?.tier || "토끼";
+          // API에서 티어 정보를 받아오거나, 백엔드 기본값과 일치하는 "거북이" 사용
+          const tier = participant?.tier || "거북이";
+          console.log('[DEBUG] 내 티어 값:', tier, '타입:', typeof tier, '원본 participant:', participant);
+          userTierEl.textContent = tier;
+          // 장산범일 경우 특별한 클래스 추가 (다양한 형식 대응)
+          const tierStr = String(tier).trim();
+          if (tierStr === "장산범" || tierStr === "JANGSANBEOM" || tierStr.toLowerCase() === "장산범") {
+            userTierEl.classList.add("tier-jangsanbeom");
+            console.log('[DEBUG] 장산범 티어 감지 - 빨간색 스타일 적용');
+          } else {
+            userTierEl.classList.remove("tier-jangsanbeom");
+          }
         }
         continue;
       }
@@ -904,7 +1060,18 @@ async function showMatchFound(sessionId) {
         // 내 티어 업데이트
         const userTierEl = document.getElementById("userTier");
         if (userTierEl) {
-          userTierEl.textContent = participant?.tier || "토끼";
+          // API에서 티어 정보를 받아오거나, 백엔드 기본값과 일치하는 "거북이" 사용
+          const tier = participant?.tier || "거북이";
+          console.log('[DEBUG] 내 티어 값 (fallback):', tier, '타입:', typeof tier, '원본 participant:', participant);
+          userTierEl.textContent = tier;
+          // 장산범일 경우 특별한 클래스 추가 (다양한 형식 대응)
+          const tierStr = String(tier).trim();
+          if (tierStr === "장산범" || tierStr === "JANGSANBEOM" || tierStr.toLowerCase() === "장산범") {
+            userTierEl.classList.add("tier-jangsanbeom");
+            console.log('[DEBUG] 장산범 티어 감지 (fallback) - 빨간색 스타일 적용');
+          } else {
+            userTierEl.classList.remove("tier-jangsanbeom");
+          }
         }
         continue;
       }
@@ -935,10 +1102,20 @@ async function showMatchFound(sessionId) {
 
       const label = document.createElement("div");
       label.className = "opponent-label";
-      const tier = participant?.tier || "토끼"; // 기본 티어
+      // API에서 티어 정보를 받아오거나, 백엔드 기본값과 일치하는 "거북이" 사용
+      const tier = participant?.tier || "거북이";
+      console.log('[DEBUG] 상대방 티어 값:', tier, '타입:', typeof tier, 'participant:', participant);
+      // 장산범일 경우 특별한 클래스 추가 (다양한 형식 대응)
+      const tierStr = String(tier).trim();
+      const tierClass = (tierStr === "장산범" || tierStr === "JANGSANBEOM" || tierStr.toLowerCase() === "장산범") 
+        ? "opponent-tier tier-jangsanbeom" 
+        : "opponent-tier";
+      if (tierClass.includes("tier-jangsanbeom")) {
+        console.log('[DEBUG] 상대방 장산범 티어 감지 - 빨간색 스타일 적용');
+      }
       label.innerHTML = `<span class="opponent-name">${participant?.name
       || `Player ${opponentIndex
-      + 1}`}</span><span class="opponent-tier">${tier}</span>`;
+      + 1}`}</span><span class="${tierClass}">${tier}</span>`;
 
       opponentDiv.appendChild(img);
       opponentDiv.appendChild(label);
@@ -968,8 +1145,9 @@ async function showMatchFound(sessionId) {
 
         const label = document.createElement("div");
         label.className = "opponent-label";
+        // 기본 티어는 백엔드 기본값과 일치하는 "거북이" 사용
         label.innerHTML = `<span class="opponent-name">Player ${i
-        + 1}</span><span class="opponent-tier">토끼</span>`;
+        + 1}</span><span class="opponent-tier">거북이</span>`;
 
         opponentDiv.appendChild(img);
         opponentDiv.appendChild(label);
@@ -1117,6 +1295,11 @@ function hideMatchingOverlay() {
   if (startButton) {
     startButton.style.display = "block";
   }
+  // 헤더 다시 표시
+  const header = document.querySelector(".header");
+  if (header) {
+    header.style.display = "flex";
+  }
   isMatching = false;
   matchStartTime = null; // ✅ 매칭 시작 시간 리셋
   currentSessionId = null; // 세션 ID 초기화
@@ -1135,6 +1318,10 @@ function hideMatchingOverlay() {
   if (fallbackCheckInterval) {
     clearInterval(fallbackCheckInterval);
     fallbackCheckInterval = null;
+  }
+  if (sseCheckInterval) {
+    clearInterval(sseCheckInterval);
+    sseCheckInterval = null;
   }
 }
 
@@ -1183,6 +1370,10 @@ async function handleCancel() {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
     }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
+    }
     
     hideMatchingOverlay();
 
@@ -1202,6 +1393,10 @@ async function handleCancel() {
     if (fallbackCheckInterval) {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
+    }
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
     }
     
     hideMatchingOverlay();
@@ -1262,6 +1457,80 @@ function setDefaultRatingValues() {
   }
   if (tierEl) {
     tierEl.textContent = "거북이";
+  }
+}
+
+// 매칭 대기 중 사용자 티어 업데이트
+async function updateUserTierForMatching() {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      console.warn("토큰이 없어 티어를 조회할 수 없습니다.");
+      return;
+    }
+
+    // userTierEl이 DOM에 있는지 확인
+    const userTierEl = document.getElementById("userTier");
+    if (!userTierEl) {
+      console.warn("userTierEl이 DOM에 없습니다. matchingOverlay가 표시되었는지 확인하세요.");
+      return;
+    }
+
+    // 선택한 거리에 따라 DistanceType 결정
+    // selectedDistance는 이미 "KM_3", "KM_5", "KM_10" 형식이므로 그대로 사용
+    let distanceType = "KM_5"; // 기본값
+    
+    // 숫자 형식으로 저장된 경우를 대비한 변환 (하위 호환성)
+    if (selectedDistance === 3 || selectedDistance === "3") {
+      distanceType = "KM_3";
+    } else if (selectedDistance === 5 || selectedDistance === "5") {
+      distanceType = "KM_5";
+    } else if (selectedDistance === 10 || selectedDistance === "10") {
+      distanceType = "KM_10";
+    } else if (selectedDistance && (selectedDistance.startsWith("KM_") || selectedDistance.startsWith("km_"))) {
+      // 이미 "KM_3" 형식이면 그대로 사용
+      distanceType = selectedDistance.toUpperCase();
+    } else if (selectedDistance) {
+      // 다른 형식이면 그대로 사용 (이미 올바른 형식일 수 있음)
+      distanceType = selectedDistance;
+    }
+    
+    console.log('[DEBUG] 매칭 대기 중 티어 조회 시작 - selectedDistance:', selectedDistance, 'distanceType:', distanceType);
+
+    // 티어 정보 조회
+    const response = await fetch(`/api/rating/distance?distanceType=${distanceType}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      const tier = result?.data?.currentTier || "거북이";
+      
+      console.log('[DEBUG] 매칭 대기 중 티어 조회 성공:', tier, 'distanceType:', distanceType);
+      
+      // 매칭 화면의 티어 표시 업데이트 (다시 확인)
+      const userTierEl = document.getElementById("userTier");
+      if (userTierEl) {
+        userTierEl.textContent = tier;
+        
+        // 장산범일 경우 특별한 클래스 추가
+        const tierStr = String(tier).trim();
+        if (tierStr === "장산범" || tierStr === "JANGSANBEOM" || tierStr.toLowerCase() === "장산범") {
+          userTierEl.classList.add("tier-jangsanbeom");
+          console.log('[DEBUG] 매칭 대기 중 장산범 티어 감지 - 빨간색 스타일 적용');
+        } else {
+          userTierEl.classList.remove("tier-jangsanbeom");
+        }
+      } else {
+        console.error('[DEBUG] userTierEl을 찾을 수 없습니다!');
+      }
+    } else {
+      console.warn("매칭 대기 중 티어 조회 실패:", response.status);
+    }
+  } catch (error) {
+    console.error("매칭 대기 중 티어 조회 실패:", error);
   }
 }
 

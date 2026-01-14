@@ -21,7 +21,7 @@ html, body {
 
 /* 헤더 */
 .header {
-    background: linear-gradient(135deg, #d4f563 0%, #c4e538 100%);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     position: fixed;
     top: 0;
     left: 0;
@@ -29,29 +29,33 @@ html, body {
     z-index: 100;
     display: flex;
     align-items: center;
-    padding: 15px 20px;
+    padding: 16px 20px;
     gap: 15px;
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.2);
 }
 
 .btn-back {
-    background: none;
+    background: rgba(255, 255, 255, 0.2);
     border: none;
     cursor: pointer;
-    padding: 5px;
+    padding: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #333;
+    color: white;
+    border-radius: 10px;
+    transition: all 0.2s;
 }
 
 .btn-back:hover {
-    opacity: 0.7;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
 }
 
 .header-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
-    color: #333;
+    color: white;
     flex: 1;
 }
 
@@ -81,78 +85,142 @@ html, body {
     height: auto;
 }
 
+/* 내 포인트 섹션 */
+.my-points-section {
+    margin-bottom: 32px;
+}
+
+.my-points-card {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.my-points-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+.my-points-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.my-points-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: white;
+    position: relative;
+    z-index: 1;
+}
+
+/* 상품 섹션 */
+.products-section {
+    margin-top: 32px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+}
+
 /* 상품 그리드 */
 .products-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
+    gap: 16px;
 }
 
 .product-item {
     background-color: white;
-    border-radius: 15px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s;
+    border: 2px solid transparent;
 }
 
 .product-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: #10b981;
 }
 
 .product-image {
     width: 100%;
-    height: 180px;
+    height: 200px;
     object-fit: cover;
-    background-color: #f0f0f0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
 .product-info {
-    padding: 15px;
+    padding: 16px;
 }
 
 .product-name {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
-    color: #333;
-    margin-bottom: 10px;
+    color: #1a1a1a;
+    margin-bottom: 12px;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    min-height: 42px;
 }
 
 .product-points {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
-    color: #333;
+    color: #10b981;
     margin-bottom: 12px;
 }
 
 .btn-exchange-item {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     border: none;
-    background-color: #c4e538;
-    color: #333;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
     font-size: 14px;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .btn-exchange-item:hover {
-    background-color: #b3d427;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-exchange-item:active {
+    transform: translateY(0);
 }
 
 .btn-exchange-item:disabled {
-    background-color: #e0e0e0;
-    color: #999;
+    background: #e5e7eb;
+    color: #9ca3af;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 /* 로딩 스피너 */
@@ -200,122 +268,187 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
 }
 
 .modal-content {
     position: relative;
     background-color: white;
-    border-radius: 20px;
+    border-radius: 24px;
     width: 90%;
-    max-width: 400px;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow: hidden;
     z-index: 1001;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .modal-close {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    background: none;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.95);
     border: none;
-    font-size: 32px;
-    color: #666;
-    cursor: pointer;
-    z-index: 1002;
     width: 40px;
     height: 40px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.3s;
+    cursor: pointer;
+    z-index: 1002;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s;
 }
 
 .modal-close:hover {
-    background-color: #f0f0f0;
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+}
+
+.modal-close svg {
+    color: #333;
+}
+
+.modal-image-wrapper {
+    width: 100%;
+    height: 280px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    position: relative;
 }
 
 .modal-product-image {
-    width: 100%;
-    height: 250px;
-    overflow: hidden;
-    background-color: #f0f0f0;
-}
-
-.modal-product-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.modal-product-info {
-    padding: 25px;
+.modal-body {
+    padding: 24px;
 }
 
 .modal-product-name {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
-    color: #333;
-    margin-bottom: 15px;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    line-height: 1.3;
 }
 
 .modal-product-description {
     font-size: 14px;
     color: #666;
     line-height: 1.6;
-    margin-bottom: 25px;
+    margin-bottom: 24px;
 }
 
-.modal-product-points {
+.modal-points-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.points-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    margin-bottom: 20px;
 }
 
-.modal-points-label {
+.points-label {
     font-size: 14px;
+    font-weight: 500;
     color: #666;
 }
 
-.modal-points-value {
-    font-size: 20px;
+.points-value {
+    font-size: 24px;
     font-weight: 700;
-    color: #333;
+    color: #10b981;
 }
 
-.btn-exchange {
-    width: 100%;
-    padding: 15px;
-    border: none;
-    background-color: #c4e538;
-    color: #333;
-    font-size: 16px;
-    font-weight: 700;
-    border-radius: 10px;
+.modal-buttons {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 12px;
+}
+
+.btn-modal-cancel {
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    background-color: white;
+    color: #666;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.2s;
 }
 
-.btn-exchange:hover {
-    background-color: #b3d427;
+.btn-modal-cancel:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
 }
 
-.btn-exchange:disabled {
-    background-color: #e0e0e0;
-    color: #999;
+.btn-modal-exchange {
+    padding: 16px;
+    border: none;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-modal-exchange:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btn-modal-exchange:active {
+    transform: translateY(0);
+}
+
+.btn-modal-exchange:disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 /* 반응형 디자인 */
 @media (max-width: 480px) {
     .container {
-        padding: 80px 15px 20px;
+        padding: 80px 16px 20px;
+    }
+    
+    .my-points-card {
+        padding: 20px;
+    }
+    
+    .my-points-amount {
+        font-size: 32px;
+    }
+    
+    .section-title {
+        font-size: 18px;
     }
 
     .products-grid {
@@ -323,19 +456,53 @@ html, body {
     }
 
     .product-image {
-        height: 150px;
+        height: 160px;
     }
 
     .product-info {
-        padding: 12px;
+        padding: 14px;
+    }
+    
+    .product-name {
+        font-size: 14px;
+    }
+    
+    .product-points {
+        font-size: 16px;
     }
 
     .modal-content {
         width: 95%;
+        border-radius: 20px;
     }
 
-    .modal-product-image {
-        height: 200px;
+    .modal-image-wrapper {
+        height: 220px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .modal-product-name {
+        font-size: 20px;
+    }
+    
+    .points-value {
+        font-size: 22px;
+    }
+    
+    .modal-buttons {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .btn-modal-cancel {
+        order: 2;
+    }
+    
+    .btn-modal-exchange {
+        order: 1;
     }
 }
 

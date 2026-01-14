@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 멤버십 정보 조회
     fetchMembershipInfo(token);
+    
+    // 알림 배지 업데이트
+    if (typeof window.updateNotificationBadge === 'function') {
+        window.updateNotificationBadge();
+    }
 });
 
 // ========================================

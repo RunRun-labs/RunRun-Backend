@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const messageBox = document.querySelector('[data-role="edit-message"]');
     const profilePreview = document.querySelector('[data-role="profile-preview"]');
     const profileInitial = document.querySelector('[data-role="profile-initial"]');
+    const defaultProfile = document.querySelector('[data-role="default-profile"]');
     const profileImageInput = document.getElementById("profileImageInput");
 
     const fieldOrder = [
@@ -74,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         if (profilePreview) profilePreview.addEventListener("click", trigger);
         if (profileInitial) profileInitial.addEventListener("click", trigger);
+        if (defaultProfile) defaultProfile.addEventListener("click", trigger);
     }
 
 
@@ -105,6 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 profilePreview.hidden = false;
             }
             if (profileInitial) profileInitial.hidden = true;
+            if (defaultProfile) defaultProfile.hidden = true;
             setMessage("이미지가 선택되었습니다. 하단 저장 버튼을 눌러주세요.", "success");
         } catch (e) {
 
@@ -280,10 +283,16 @@ document.addEventListener("DOMContentLoaded", () => {
             profilePreview.src = imageUrl;
             profilePreview.hidden = false;
             profileInitial.hidden = true;
+            if (defaultProfile) defaultProfile.hidden = true;
         } else {
             profilePreview.hidden = true;
-            profileInitial.hidden = false;
-            profileInitial.textContent = makeInitial(name);
+            if (defaultProfile) {
+                defaultProfile.hidden = false;
+                profileInitial.hidden = true;
+            } else {
+                profileInitial.hidden = false;
+                profileInitial.textContent = makeInitial(name);
+            }
         }
     }
 

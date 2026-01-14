@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RUNRUN | 자동 코스 등록</title>
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=477a1cea9ecc7c2b3e69f3540a3986b4&libraries=services"></script>
+    <style>
+      :root {
+        font-family: "Nunito Sans", "Noto Sans KR", sans-serif;
+        --primary: #baff29;
+        --bg: #f7f7f9;
+        --text: #1a1c1e;
+        --muted: #6c7278;
+        --danger: #ff3d00;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        min-height: 100vh;
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      .page {
+        max-width: 520px;
+        margin: 0 auto;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        width: 100%;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
+        background: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      header h1 {
+        flex: 1;
+        text-align: center;
+        margin: 0;
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .icon-btn {
+        border: none;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        background: rgba(0, 0, 0, 0.05);
+        padding: 8px 16px;
+      }
+
+      .apply-btn {
+        border: none;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        background: var(--primary);
+        padding: 8px 20px;
+        color: #000;
+      }
+
+      .apply-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      #map {
+        flex: 1;
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* 검색 패널 */
+      .search-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 10;
+        overflow: visible;
+      }
+
+      .search-input-wrapper {
+        position: relative;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .search-input-wrapper:last-of-type {
+        border-bottom: none;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 16px 48px 16px 48px;
+        border: none;
+        font-size: 15px;
+        outline: none;
+      }
+
+      .search-input::placeholder {
+        color: #999;
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+        font-size: 18px;
+      }
+
+      .clear-icon {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #e0e0e0;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        color: #666;
+      }
+
+      .search-input:not(:placeholder-shown) ~ .clear-icon {
+        display: flex;
+      }
+
+      /* 검색 결과 리스트 */
+      .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 4px;
+        z-index: 1000;
+      }
+
+      .search-results.show {
+        display: block;
+      }
+
+      .search-result-item {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .search-result-item:hover {
+        background: #f8f8f8;
+      }
+
+      .search-result-item:last-child {
+        border-bottom: none;
+      }
+
+      .result-name {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 4px;
+        color: #000;
+      }
+
+      .result-address {
+        font-size: 13px;
+        color: #666;
+      }
+
+      .result-category {
+        font-size: 11px;
+        color: #999;
+        margin-top: 2px;
+      }
+
+      /* 코스 생성 버튼 */
+      .create-route-btn {
+        position: fixed;
+        bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 18px 48px;
+        background: var(--primary);
+        border: none;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        display: none;
+        box-shadow: 0 8px 24px rgba(186, 255, 41, 0.5);
+        transition: all 0.3s;
+        z-index: 15;
+        max-width: calc(100% - 40px);
+        white-space: nowrap;
+      }
+
+      .create-route-btn.show {
+        display: block;
+        animation: slideUp 0.3s ease-out;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+
+      .create-route-btn:hover {
+        transform: translateX(-50%) translateY(-2px);
+        box-shadow: 0 12px 32px rgba(186, 255, 41, 0.6);
+      }
+
+      .create-route-btn:active {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .create-route-btn:disabled {
+        background: #ddd;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      /* 결과 모달 */
+      .result-modal {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 520px;
+        background: white;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 20;
+        display: none;
+        padding: 20px;
+        max-height: 40vh;
+        overflow-y: auto;
+      }
+
+      .result-modal.show {
+        display: block;
+      }
+
+      .modal-handle {
+        width: 40px;
+        height: 4px;
+        background: #ddd;
+        border-radius: 2px;
+        margin: 0 auto 16px;
+      }
+
+      .modal-title {
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 12px;
+      }
+
+      .modal-info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .modal-info-row:last-child {
+        border-bottom: none;
+      }
+
+      .modal-info-label {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .modal-info-value {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .modal-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      .modal-button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .modal-button.cancel {
+        background: #f0f0f0;
+        color: #666;
+      }
+
+      .modal-button.confirm {
+        background: var(--primary);
+        color: #000;
+      }
+
+      /* 로딩 오버레이 */
+      .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+
+      .loading-overlay.show {
+        display: flex;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f0f0f0;
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .no-results {
+        padding: 20px;
+        text-align: center;
+        color: #999;
+        font-size: 13px;
+      }
+
+      /* 반응형 */
+      @media (max-width: 520px) {
+        .search-panel {
+          left: 16px;
+          right: 16px;
+        }
+
+        .create-route-btn {
+          padding: 16px 40px;
+          font-size: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <button class="icon-btn" type="button" onclick="history.back()">
+          뒤로
+        </button>
+        <h1>경로 검색</h1>
+        <button class="apply-btn" id="applyBtn" disabled>적용</button>
+      </header>
+
+      <div id="map">
+        <!-- 검색 패널 -->
+        <div class="search-panel">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input
+              id="startInput"
+              class="search-input"
+              placeholder="출발지를 검색하세요"
+              autocomplete="off"
+            />
+            <button class="clear-icon" id="clearStart">×</button>
+            <!-- 출발지 검색 결과 -->
+            <div class="search-results" id="startResults"></div>
+          </div>
+          <div class="search-input-wrapper">
+            <span class="search-icon">📍</span>
+            <input
+              id="endInput"
+              class="search-input"
+              placeholder="도착지를 검색하세요"
+              autocomplete="off"
+            />
+            <button class="clear-icon" id="clearEnd">×</button>
+            <!-- 도착지 검색 결과 -->
+            <div class="search-results" id="endResults"></div>
+          </div>
+          <!-- 코스 생성 버튼 -->
+        </div>
+        
+        <!-- 코스 생성 버튼 (지도 하단) -->
+        <button class="create-route-btn" id="createRouteBtn">
+          🚀 코스 생성
+        </button>
+
+        <!-- 결과 모달 -->
+        <div class="result-modal" id="resultModal">
+          <div class="modal-handle"></div>
+          <div class="modal-title">경로 정보</div>
+          <div class="modal-info-row">
+            <span class="modal-info-label">거리</span>
+            <span class="modal-info-value" id="modalDistance">-</span>
+          </div>
+          <div class="modal-info-row">
+            <span class="modal-info-label">출발지</span>
+            <span class="modal-info-value" id="modalStart">-</span>
+          </div>
+          <div class="modal-info-row">
+            <span class="modal-info-label">도착지</span>
+            <span class="modal-info-value" id="modalEnd">-</span>
+          </div>
+          <div class="modal-buttons">
+            <button class="modal-button cancel" id="cancelBtn">다시 검색</button>
+          </div>
+        </div>
+
+        <!-- 로딩 오버레이 -->
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="none">
+      const MAX_DISTANCE_M = 42195;
+      const STORAGE_KEY = "courseDraft";
+      const API_BASE = "";
+
+      const startInput = document.getElementById("startInput");
+      const endInput = document.getElementById("endInput");
+      const startResults = document.getElementById("startResults");
+      const endResults = document.getElementById("endResults");
+      const clearStart = document.getElementById("clearStart");
+      const clearEnd = document.getElementById("clearEnd");
+      const createRouteBtn = document.getElementById("createRouteBtn");
+      const resultModal = document.getElementById("resultModal");
+      const loadingOverlay = document.getElementById("loadingOverlay");
+      const applyBtn = document.getElementById("applyBtn");
+      const cancelBtn = document.getElementById("cancelBtn");
+
+      const map = new kakao.maps.Map(document.getElementById("map"), {
+        center: new kakao.maps.LatLng(37.5665, 126.978),
+        level: 5,
+      });
+      const ps = new kakao.maps.services.Places();
+
+      let polyline = null;
+      let startMarker = null;
+      let endMarker = null;
+      let currentStart = null;
+      let currentEnd = null;
+      let currentLineString = null;
+      let currentTotalDistanceM = null;
+
+      // 검색 디바운스
+      let searchTimeout = null;
+
+      function showLoading() {
+        loadingOverlay.classList.add("show");
+      }
+
+      function hideLoading() {
+        loadingOverlay.classList.remove("show");
+      }
+
+      function clearMarker(marker) {
+        if (marker) {
+          marker.setMap(null);
+        }
+      }
+
+      function addMarker(lat, lng, label) {
+        const marker = new kakao.maps.Marker({
+          position: new kakao.maps.LatLng(lat, lng),
+          map: map,
+        });
+
+        // 라벨 추가
+        const content = `<div style="padding:5px 10px;background:white;border:2px solid #333;border-radius:8px;font-weight:bold;font-size:12px;">${label}</div>`;
+        const customOverlay = new kakao.maps.CustomOverlay({
+          position: new kakao.maps.LatLng(lat, lng),
+          content: content,
+          yAnchor: 2.5,
+        });
+        customOverlay.setMap(map);
+
+        return marker;
+      }
+
+      function drawRoute(coords) {
+        if (polyline) {
+          polyline.setMap(null);
+        }
+        const path = coords.map(
+          ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
+        );
+        polyline = new kakao.maps.Polyline({
+          path: path,
+          strokeWeight: 6,
+          strokeColor: "#ff3d00",
+          strokeOpacity: 0.8,
+        });
+        polyline.setMap(map);
+
+        // 경로에 맞춰 지도 범위 조정
+        const bounds = new kakao.maps.LatLngBounds();
+        path.forEach((p) => bounds.extend(p));
+        map.setBounds(bounds);
+      }
+
+      function haversineMeters(lat1, lng1, lat2, lng2) {
+        const R = 6371000;
+        const toRad = (d) => (d * Math.PI) / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLng = toRad(lng2 - lng1);
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLng / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      }
+
+      function calcDistanceFromLineString(lineString) {
+        if (!lineString || lineString.length < 2) return 0;
+        let sum = 0;
+        for (let i = 1; i < lineString.length; i++) {
+          const [lng1, lat1] = lineString[i - 1];
+          const [lng2, lat2] = lineString[i];
+          sum += haversineMeters(lat1, lng1, lat2, lng2);
+        }
+        return Math.round(sum);
+      }
+
+      // 검색 결과 표시
+      function showSearchResults(results, container, onSelect) {
+        container.innerHTML = "";
+        
+        if (!results || results.length === 0) {
+          container.innerHTML = '<div class="no-results">검색 결과가 없습니다</div>';
+          container.classList.add("show");
+          return;
+        }
+
+        results.forEach((place) => {
+          const item = document.createElement("div");
+          item.className = "search-result-item";
+          
+          const categoryText = place.category_name ? 
+            `<div class="result-category">${place.category_name}</div>` : '';
+          
+          item.innerHTML = `
+            <div class="result-name">${place.place_name}</div>
+            <div class="result-address">${
+              place.road_address_name || place.address_name
+            }</div>
+            ${categoryText}
+          `;
+          item.addEventListener("click", () => {
+            onSelect(place);
+            container.classList.remove("show");
+          });
+          container.appendChild(item);
+        });
+        container.classList.add("show");
+      }
+
+      // 검색 함수 (실시간)
+      function searchPlaces(keyword, callback) {
+        if (!keyword || !keyword.trim()) {
+          callback([]);
+          return;
+        }
+        
+        ps.keywordSearch(keyword, (data, status) => {
+          if (status === kakao.maps.services.Status.OK) {
+            callback(data.slice(0, 10)); // 상위 10개
+          } else {
+            callback([]);
+          }
+        });
+      }
+
+      // 출발지 검색 (한글자씩 실시간)
+      startInput.addEventListener("input", (e) => {
+        const keyword = e.target.value.trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (!keyword) {
+          startResults.innerHTML = "";
+          startResults.classList.remove("show");
+          return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+          searchPlaces(keyword, (results) => {
+            showSearchResults(results, startResults, (place) => {
+              currentStart = {
+                lat: Number(place.y),
+                lng: Number(place.x),
+                address: place.road_address_name || place.address_name,
+                name: place.place_name,
+              };
+              startInput.value = place.place_name;
+              startResults.classList.remove("show");
+              
+              clearMarker(startMarker);
+              startMarker = addMarker(
+                currentStart.lat,
+                currentStart.lng,
+                "출발"
+              );
+              map.setCenter(
+                new kakao.maps.LatLng(currentStart.lat, currentStart.lng)
+              );
+              map.setLevel(3);
+              checkRouteReady();
+            });
+          });
+        }, 200); // 200ms 디바운스
+      });
+
+      // 도착지 검색 (한글자씩 실시간)
+      endInput.addEventListener("input", (e) => {
+        const keyword = e.target.value.trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (!keyword) {
+          endResults.innerHTML = "";
+          endResults.classList.remove("show");
+          return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+          searchPlaces(keyword, (results) => {
+            showSearchResults(results, endResults, (place) => {
+              currentEnd = {
+                lat: Number(place.y),
+                lng: Number(place.x),
+                address: place.road_address_name || place.address_name,
+                name: place.place_name,
+              };
+              endInput.value = place.place_name;
+              endResults.classList.remove("show");
+              
+              clearMarker(endMarker);
+              endMarker = addMarker(currentEnd.lat, currentEnd.lng, "도착");
+              checkRouteReady();
+            });
+          });
+        }, 200); // 200ms 디바운스
+      });
+
+      // 클리어 버튼
+      clearStart.addEventListener("click", () => {
+        startInput.value = "";
+        currentStart = null;
+        clearMarker(startMarker);
+        startMarker = null;
+        startResults.innerHTML = "";
+        startResults.classList.remove("show");
+        checkRouteReady();
+      });
+
+      clearEnd.addEventListener("click", () => {
+        endInput.value = "";
+        currentEnd = null;
+        clearMarker(endMarker);
+        endMarker = null;
+        endResults.innerHTML = "";
+        endResults.classList.remove("show");
+        checkRouteReady();
+      });
+
+      // 코스 생성 버튼 표시 여부
+      function checkRouteReady() {
+        if (currentStart && currentEnd) {
+          createRouteBtn.classList.add("show");
+        } else {
+          createRouteBtn.classList.remove("show");
+        }
+      }
+
+      // 코스 생성 (편도)
+      createRouteBtn.addEventListener("click", async () => {
+        if (!currentStart || !currentEnd) {
+          alert("출발지와 도착지를 모두 선택해주세요.");
+          return;
+        }
+
+        showLoading();
+        
+        // 검색 결과 닫기
+        startResults.classList.remove("show");
+        endResults.classList.remove("show");
+
+        try {
+          // 토큰 가져오기
+          const token = localStorage.getItem("accessToken");
+          const headers = {
+            "Content-Type": "application/json",
+          };
+          
+          if (token) {
+            headers["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+          }
+          
+          const response = await fetch(API_BASE + "/api/courses/oneway", {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify({
+              startLat: currentStart.lat,
+              startLng: currentStart.lng,
+              endLat: currentEnd.lat,
+              endLng: currentEnd.lng,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("경로 생성에 실패했습니다.");
+          }
+
+          const data = await response.json();
+
+          if (!data?.lineString || data.lineString.length < 2) {
+            throw new Error("경로 데이터를 받지 못했습니다.");
+          }
+
+          currentLineString = data.lineString;
+          currentTotalDistanceM =
+            data.totalDistance || calcDistanceFromLineString(data.lineString);
+
+          if (currentTotalDistanceM > MAX_DISTANCE_M) {
+            alert(
+              "42.195km를 초과하는 코스는 만들 수 없습니다. 다른 경로를 선택해주세요."
+            );
+            currentLineString = null;
+            currentTotalDistanceM = null;
+            applyBtn.disabled = true;
+            return;
+          }
+
+          // 경로 그리기
+          drawRoute(currentLineString);
+
+          // 적용 버튼 활성화
+          applyBtn.disabled = false;
+
+          // 결과 모달 표시
+          document.getElementById("modalDistance").textContent =
+            (currentTotalDistanceM / 1000).toFixed(2) + " km";
+          document.getElementById("modalStart").textContent =
+            currentStart.name;
+          document.getElementById("modalEnd").textContent = currentEnd.name;
+          resultModal.classList.add("show");
+        } catch (error) {
+          console.error(error);
+          alert(error.message || "경로 생성 중 오류가 발생했습니다.");
+        } finally {
+          hideLoading();
+        }
+      });
+
+      // 다시 검색
+      cancelBtn.addEventListener("click", () => {
+        resultModal.classList.remove("show");
+        if (polyline) {
+          polyline.setMap(null);
+          polyline = null;
+        }
+        currentLineString = null;
+        currentTotalDistanceM = null;
+        applyBtn.disabled = true;
+      });
+
+      // 적용 버튼 (헤더)
+      applyBtn.addEventListener("click", () => {
+        if (!currentLineString || !currentStart) {
+          alert("경로 정보가 없습니다.");
+          return;
+        }
+
+        const payload = {
+          path: {
+            type: "LineString",
+            coordinates: currentLineString,
+          },
+          distanceM: Math.round(currentTotalDistanceM),
+          startLat: currentStart.lat,
+          startLng: currentStart.lng,
+          address: currentStart.address || "",
+          courseRegisterType: "AUTO",
+        };
+
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        const returnPage =
+          sessionStorage.getItem("returnPage") || "/courseCreate";
+        sessionStorage.removeItem("returnPage");
+        window.location.href = returnPage;
+      });
+
+      // 외부 클릭 시 검색 결과 닫기
+      document.addEventListener("click", (e) => {
+        if (!startInput.contains(e.target) && !startResults.contains(e.target) && e.target !== clearStart) {
+          startResults.classList.remove("show");
+        }
+        if (!endInput.contains(e.target) && !endResults.contains(e.target) && e.target !== clearEnd) {
+          endResults.classList.remove("show");
+        }
+      });
+    </script>
+  </body>
+</html>

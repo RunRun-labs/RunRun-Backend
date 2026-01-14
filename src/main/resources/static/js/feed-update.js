@@ -72,14 +72,55 @@ async function loadFeedData() {
     }
 }
 
+// ONLINEBATTLE 랭킹 캐시 (runningResultId -> ranking)
+const onlineBattleRankingCache = new Map();
+
+async function fetchOnlineBattleRanking(runningResultId) {
+    if (!runningResultId) return null;
+    if (onlineBattleRankingCache.has(runningResultId)) {
+        return onlineBattleRankingCache.get(runningResultId);
+    }
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return null;
+
+    try {
+        const res = await fetch(`/api/battle-result/running-results/${runningResultId}/ranking`, {
+            headers: {Authorization: `Bearer ${token}`}
+        });
+        if (!res.ok) return null;
+
+        const payload = await res.json();
+        const ranking = payload?.data?.ranking;
+        const parsed = (typeof ranking === 'number') ? ranking : (ranking != null ? Number(ranking) : null);
+        if (parsed != null && !Number.isNaN(parsed)) {
+            onlineBattleRankingCache.set(runningResultId, parsed);
+            return parsed;
+        }
+        return null;
+    } catch (e) {
+        console.warn('온라인배틀 랭킹 조회 실패:', e);
+        return null;
+    }
+}
+
 /**
  * 피드 데이터 렌더링
  */
 function renderFeedData(feed) {
     // 코스 제목
     const courseTitleLabel = document.getElementById("courseTitleLabel");
-    if (courseTitleLabel && feed.courseTitle) {
-        courseTitleLabel.textContent = `${feed.courseTitle}`;
+    if (courseTitleLabel) {
+        courseTitleLabel.textContent = getFeedDisplayTitle(feed);
+
+        // ONLINEBATTLE이고 코스 제목이 비어있으면 비동기 조회 후 제목 갱신
+        if (feed.runningType === 'ONLINEBATTLE' && !(feed.courseTitle && String(feed.courseTitle).trim())) {
+            fetchOnlineBattleRanking(feed.runningResultId).then((rank) => {
+                if (rank && courseTitleLabel.isConnected) {
+                    courseTitleLabel.textContent = `온라인배틀 #${rank}`;
+                }
+            });
+        }
     }
 
     // 거리
@@ -127,6 +168,29 @@ function renderFeedData(feed) {
 }
 
 /**
+ * 피드 제목 가져오기
+ */
+function getFeedDisplayTitle(feed) {
+    const baseTitle = (feed.courseTitle || '').trim();
+    if (baseTitle) return baseTitle;
+
+    const runningType = feed.runningType;
+
+    if (runningType === 'GHOST') {
+        return '고스트런';
+    }
+
+    if (runningType === 'ONLINEBATTLE') {
+        const rank = (typeof feed.onlineBattleRanking === 'number')
+            ? feed.onlineBattleRanking
+            : (feed.onlineBattleRanking ? Number(feed.onlineBattleRanking) : null);
+        return rank ? `온라인배틀 #${rank}` : '온라인배틀';
+    }
+
+    return '러닝';
+}
+
+/**
  * 시간 포맷팅 (초 -> MM:SS 또는 HH:MM:SS)
  */
 function formatDuration(seconds) {
@@ -170,10 +234,18 @@ function attachFormSubmitHandler() {
             return;
         }
 
-        const content = document.getElementById("contentInput").value.trim();
-        
+        const contentInput = document.getElementById("contentInput");
+        const content = contentInput.value.trim();
+
         if (!content) {
             alert("내용을 입력해주세요.");
+            contentInput.focus();
+            return;
+        }
+
+        if (content.length > 500) {
+            alert(`피드 내용은 최대 500자까지 작성할 수 있습니다. (현재 ${content.length}자)`);
+            contentInput.focus();
             return;
         }
 
@@ -225,4 +297,3 @@ function attachFormSubmitHandler() {
         }
     });
 }
-
