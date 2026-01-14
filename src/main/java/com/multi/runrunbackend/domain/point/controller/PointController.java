@@ -92,4 +92,12 @@ public class PointController {
         );
         return ResponseEntity.ok(ApiResponse.success("포인트 상품 상세 조회 성공", response));
     }
+
+    @GetMapping("/balance")
+    public ResponseEntity<ApiResponse<Integer>> getMyPointBalance(
+            @AuthenticationPrincipal CustomUser principal
+    ) {
+        Integer balance = pointService.getAvailablePoints(principal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("포인트 잔액 조회 성공", balance));
+    }
 }
