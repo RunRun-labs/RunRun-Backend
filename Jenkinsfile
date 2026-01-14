@@ -60,9 +60,6 @@ aws ecr get-login-password --region "${AWS_REGION}" \
 
 docker build -t "${ECR_REPO_URI}:${IMAGE_TAG}" .
 docker push "${ECR_REPO_URI}:${IMAGE_TAG}"
-
-docker tag "${ECR_REPO_URI}:${IMAGE_TAG}" "${ECR_REPO_URI}:latest"
-docker push "${ECR_REPO_URI}:latest"
 '''
         }
       }
@@ -134,7 +131,11 @@ echo "[skip] MongoDB: using MongoDB Atlas (no in-cluster MongoDB)"
 
     stage("Deploy App (Deployment/Service/Ingress)") {
       steps {
-        sh '''#!/usr/bin/env bash
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-credentials'
+        ]]) {
+          sh '''#!/usr/bin/env bash
 set -euo pipefail
 
 command -v envsubst >/dev/null 2>&1 || {
@@ -149,6 +150,7 @@ kubectl get pods -o wide
 kubectl get svc -o wide
 kubectl get ingress -o wide || true
 '''
+        }
       }
     }
 
