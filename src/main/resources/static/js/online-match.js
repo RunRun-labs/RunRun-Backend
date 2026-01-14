@@ -382,7 +382,10 @@ async function loadUserProfile() {
 
     if (response.ok && result?.success && result?.data && userProfileImage) {
       userProfileUrl = result.data.profileImageUrl;
-      userProfileImage.src = userProfileUrl || "data:image/svg+xml,...";
+      userProfileImage.src = userProfileUrl || "/img/default-profile.svg";
+      userProfileImage.onerror = function() {
+        this.src = "/img/default-profile.svg";
+      };
     }
   } catch (error) {
     console.error("프로필 로드 오류:", error);
@@ -599,8 +602,8 @@ async function showMatchFound(sessionId) {
       div.className = "opponent-profile";
       div.style.left = `${x}%`;
       div.style.top = `${y}%`;
-      div.innerHTML = `<img src="${p.profileImage
-      || 'data:image/svg+xml,...'}" alt="상대방"><div class="opponent-label"><span class="opponent-name">${p.name
+      div.innerHTML = `<img src="${p.profileImage || '/img/default-profile.svg'}"
+      alt="상대방" onerror="this.src='/img/default-profile.svg'"><div class="opponent-label"><span class="opponent-name">${p.name
       || 'Player'}</span><span class="opponent-tier">${p.tier
       || '토끼'}</span></div>`;
       opponentProfiles.appendChild(div);
