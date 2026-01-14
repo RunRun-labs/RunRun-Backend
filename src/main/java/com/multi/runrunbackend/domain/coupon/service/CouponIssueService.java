@@ -22,15 +22,14 @@ import com.multi.runrunbackend.domain.coupon.util.CouponCodeGenerator;
 import com.multi.runrunbackend.domain.course.dto.req.CursorPage;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * @author : kyungsoo
@@ -52,7 +51,7 @@ public class CouponIssueService {
 
     @Transactional(readOnly = true)
     public CursorPage<CouponIssueListItemResDto> getCouponIssueList(CustomUser principal,
-                                                                    CouponIssueListReqDto req) {
+        CouponIssueListReqDto req) {
         User user = getUserOrThrow(principal);
         return couponIssueRepository.searchIssuedCoupons(user.getId(), req);
     }
@@ -73,7 +72,8 @@ public class CouponIssueService {
             boolean alreadyIssued = couponIssueRepository.existsByUserIdAndTriggerEventAndConditionValue(
                 userId, event, conditionValue);
             if (alreadyIssued) {
-                log.info("[CouponAuto] already issued for distance. userId={} event={} conditionValue={}",
+                log.info(
+                    "[CouponAuto] already issued for distance. userId={} event={} conditionValue={}",
                     userId, event, conditionValue);
                 return;
             }
@@ -82,7 +82,8 @@ public class CouponIssueService {
         // 생일 쿠폰 중복 발급 방지: 올해 이미 발급받았는지 확인
         if (event == CouponTriggerEvent.BIRTHDAY) {
             int currentYear = LocalDateTime.now().getYear();
-            log.info("[CouponAuto] checking birthday coupon. userId={}, year={}", userId, currentYear);
+            log.info("[CouponAuto] checking birthday coupon. userId={}, year={}", userId,
+                currentYear);
             boolean alreadyIssued = couponIssueRepository.existsByUserIdAndTriggerEventAndYear(
                 userId, event.name(), currentYear);
             log.info("[CouponAuto] birthday coupon already issued check result: {}", alreadyIssued);
@@ -112,8 +113,7 @@ public class CouponIssueService {
     }
 
     /**
-     * 누적 거리 기준 거리 달성 쿠폰 발급
-     * - 사용자의 누적 거리가 쿠폰 조건값과 일치하는 모든 쿠폰을 발급
+     * 누적 거리 기준 거리 달성 쿠폰 발급 - 사용자의 누적 거리가 쿠폰 조건값과 일치하는 모든 쿠폰을 발급
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void issueAutoForAccumulatedDistance(Long userId, int accumulatedDistanceMeters) {
@@ -143,7 +143,8 @@ public class CouponIssueService {
                 boolean alreadyIssued = couponIssueRepository.existsByUserIdAndTriggerEventAndConditionValue(
                     userId, CouponTriggerEvent.RUN_COUNT_REACHED, conditionValue);
                 if (alreadyIssued) {
-                    log.debug("[CouponAuto] already issued for accumulated distance. userId={} distance={}m",
+                    log.debug(
+                        "[CouponAuto] already issued for accumulated distance. userId={} distance={}m",
                         userId, conditionValue);
                     continue;
                 }
@@ -151,10 +152,12 @@ public class CouponIssueService {
                 Long couponId = role.getCoupon().getId();
                 try {
                     issueOneAuto(user, couponId, now);
-                    log.info("[CouponAuto] issued coupon for accumulated distance. userId={} distance={}m couponId={}",
+                    log.info(
+                        "[CouponAuto] issued coupon for accumulated distance. userId={} distance={}m couponId={}",
                         userId, conditionValue, couponId);
                 } catch (Exception e) {
-                    log.error("[CouponAuto] fail userId={} couponId={} distance={}m", userId, couponId,
+                    log.error("[CouponAuto] fail userId={} couponId={} distance={}m", userId,
+                        couponId,
                         conditionValue, e);
                 }
             }
@@ -165,32 +168,39 @@ public class CouponIssueService {
 
         try {
             Coupon coupon = couponRepository.findByIdForUpdate(couponId)
-                    .orElse(null);
+                .orElse(null);
 
             if (coupon == null) {
                 log.info("[CouponAuto] coupon not found. userId={} couponId={}", user.getId(),
-                        couponId);
+                    couponId);
                 return;
             }
 
             if (coupon.getStatus() != CouponStatus.ACTIVE) {
                 log.debug("[CouponAuto] skip inactive. userId={} couponId={}", user.getId(),
-                        couponId);
+                    couponId);
                 return;
             }
             if (now.isBefore(coupon.getStartAt())) {
                 log.debug("[CouponAuto] skip not started. userId={} couponId={} startAt={} now={}",
-                        user.getId(), couponId, coupon.getStartAt(), now);
+                    user.getId(), couponId, coupon.getStartAt(), now);
                 return;
             }
             if (now.isAfter(coupon.getEndAt())) {
                 log.debug("[CouponAuto] skip expired. userId={} couponId={} endAt={} now={}",
-                        user.getId(), couponId, coupon.getEndAt(), now);
+                    user.getId(), couponId, coupon.getEndAt(), now);
                 return;
             }
 
             Integer q = coupon.getQuantity();
             if (q != null && q > 0 && coupon.getIssuedCount() >= q) {
+                return;
+            }
+
+            //중복 발급 체크 추가
+            if (couponIssueRepository.existsByCouponIdAndUserId(couponId, user.getId())) {
+                log.info("[CouponAuto] already issued. userId={} couponId={}", user.getId(),
+                    couponId);
                 return;
             }
 
@@ -200,7 +210,7 @@ public class CouponIssueService {
             int updated = couponRepository.increaseIssuedCountAndMaybeSoldOut(couponId);
             if (updated == 0) {
                 log.debug("[CouponAuto] skip soldout(or not updatable). userId={} couponId={}",
-                        user.getId(), couponId);
+                    user.getId(), couponId);
             }
 
         } catch (DataIntegrityViolationException e) {
@@ -216,7 +226,7 @@ public class CouponIssueService {
         User user = getUserOrThrow(principal);
         String code = req.getCode() == null ? null : req.getCode().trim();
         Coupon coupon = couponRepository.findByCodeIgnoreCase(code)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_NOT_FOUND));
 
         issueManual(user, coupon);
     }
@@ -226,7 +236,7 @@ public class CouponIssueService {
         User user = getUserOrThrow(principal);
 
         Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_NOT_FOUND));
 
         issueManual(user, coupon);
     }
@@ -274,7 +284,7 @@ public class CouponIssueService {
         User user = getUserOrThrow(principal);
 
         CouponIssue couponIssue = couponIssueRepository.findById(couponIssueId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
 
         if (!user.getId().equals(couponIssue.getUser().getId())) {
             throw new ForbiddenException(ErrorCode.COUPON_ISSUE_FORBIDDEN);
@@ -291,7 +301,7 @@ public class CouponIssueService {
             throw new NotFoundException(ErrorCode.USER_NOT_FOUND);
         }
         return userRepository.findByLoginId(principal.getLoginId())
-                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     }
 
     /**
@@ -304,17 +314,17 @@ public class CouponIssueService {
         }
 
         Coupon coupon = couponRepository.findByCodeIgnoreCase(couponCode.trim())
-                .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_NOT_FOUND));
 
         if (coupon.getBenefitType() != CouponBenefitType.FIXED_DISCOUNT
-                && coupon.getBenefitType() != CouponBenefitType.RATE_DISCOUNT
-                && coupon.getBenefitType() != CouponBenefitType.EXPERIENCE) {
+            && coupon.getBenefitType() != CouponBenefitType.RATE_DISCOUNT
+            && coupon.getBenefitType() != CouponBenefitType.EXPERIENCE) {
             throw new BusinessException(ErrorCode.COUPON_NOT_APPLICABLE_FOR_PAYMENT);
         }
 
         CouponIssue couponIssue = couponIssueRepository
-                .findByCouponAndUser(coupon, userRepository.getReferenceById(userId))
-                .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
+            .findByCouponAndUser(coupon, userRepository.getReferenceById(userId))
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
 
         if (couponIssue.getStatus() != CouponIssueStatus.AVAILABLE) {
             throw new BusinessException(ErrorCode.COUPON_ISSUE_NOT_AVAILABLE);
@@ -367,7 +377,7 @@ public class CouponIssueService {
     @Transactional
     public void useCoupon(Long couponIssueId) {
         CouponIssue couponIssue = couponIssueRepository.findById(couponIssueId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
 
         if (couponIssue.getStatus() != CouponIssueStatus.AVAILABLE) {
             throw new BusinessException(ErrorCode.COUPON_ISSUE_NOT_AVAILABLE);
@@ -383,11 +393,11 @@ public class CouponIssueService {
     @Transactional
     public void cancelCouponUse(Long couponIssueId) {
         CouponIssue couponIssue = couponIssueRepository.findById(couponIssueId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
 
         if (couponIssue.getStatus() != CouponIssueStatus.USED) {
             log.warn("사용 상태가 아닌 쿠폰 취소 시도 - couponIssueId: {}, status: {}",
-                    couponIssueId, couponIssue.getStatus());
+                couponIssueId, couponIssue.getStatus());
             return;
         }
 
