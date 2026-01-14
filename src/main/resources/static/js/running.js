@@ -2964,7 +2964,10 @@ function handleRunningStats(stats) {
         }
       }
 
-      window.TtsManager.onDistance(stats.totalDistance, remainingDistance);
+      // ✅ 시작 직후(stats.totalDistance가 0일 때)는 거리 TTS 재생하지 않음
+      if (stats.totalDistance > 0) {
+        window.TtsManager.onDistance(stats.totalDistance, remainingDistance);
+      }
     }
     // ✅ 방장/참여자 모두: 서버가 브로드캐스트하는 hostMatchedDistM(코스 위 진행도) 기준으로 트리밍
     // - 러닝 시작(IN_PROGRESS) 이후에만 선이 사라지게 한다

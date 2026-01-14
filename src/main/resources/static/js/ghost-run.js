@@ -11,6 +11,7 @@ let ghostData = null;
 let myUserId = null; // 추가!
 
 // ✅ 재연결 관리
+let wsManualDisconnect = false;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 let reconnectTimeout = null;
@@ -80,20 +81,20 @@ if (storedUserId) {
 // 페이지 로드 시 초기화
 document.addEventListener("DOMContentLoaded", () => {
   console.log("👻 고스트런 페이지 초기화");
-
+  
   // URL에서 sessionId 가져오기
   const urlParams = new URLSearchParams(window.location.search);
   SESSION_ID = parseInt(urlParams.get("sessionId"));
-
+  
   if (!SESSION_ID) {
     console.error("❌ SESSION_ID가 없습니다!");
     alert("잘못된 접근입니다.");
     window.location.href = "/match/ghost";
     return;
   }
-
+  
   console.log("📍 Session ID:", SESSION_ID);
-
+  
   // 초기화
   init();
 });
@@ -110,7 +111,7 @@ function init() {
     });
   });
   connectWebSocket();
-
+  
   // 초기 대기 상태 설정
   setWaitingState();
 }
@@ -150,7 +151,7 @@ function setStartingState() {
   comparisonStatus.textContent = "👻 고스트 출발! 🏁";
   comparisonDistance.textContent = "0m";
   comparisonDistance.className = "comparison-distance";
-
+  
   // 애니메이션 효과
   comparisonStatus.classList.add("starting");
   setTimeout(() => {
@@ -173,7 +174,7 @@ function setupEventListeners() {
  */
 async function loadGhostData() {
   const token = getToken();
-
+  
   try {
     // 고스트 세션 정보 조회 API 호출
     const response = await fetch(`/api/match/ghost/session/${SESSION_ID}`, {
@@ -181,21 +182,21 @@ async function loadGhostData() {
         Authorization: `Bearer ${token}`,
       },
     });
-
+    
     if (!response.ok) throw new Error("세션 조회 실패");
-
+    
     const result = await response.json();
     ghostData = result.data;
-
+    
     console.log("✅ 고스트 데이터 로드:", ghostData);
-
+    
     // 고스트 정보 표시
     if (ghostData.ghostRecord) {
       const record = ghostData.ghostRecord;
       ghostDateEl.textContent = formatDate(record.startedAt);
       ghostTimeEl.textContent = formatTime(record.totalTime);
       ghostPaceEl.textContent = formatPace(record.avgPace);
-
+      
       console.log("👻 고스트 정보 표시 완료:", {
         date: formatDate(record.startedAt),
         time: formatTime(record.totalTime),
@@ -213,13 +214,28 @@ async function loadGhostData() {
  * WebSocket 연결
  */
 function connectWebSocket() {
+  wsManualDisconnect = false;
+  
   const socket = new SockJS("/ws");
   stompClient = Stomp.over(socket);
-
+  
   // 디버그 모드 끄기
   stompClient.debug = null;
-
-  stompClient.connect({}, onConnected, onError);
+  
+  // ✅ SockJS close/reconnect 알림
+  try {
+    socket.onclose = () => {
+      if (wsManualDisconnect) return;
+      isConnected = false;
+      if (!completedHandled) {
+        attemptReconnect();
+      }
+    };
+  } catch (e) {
+    // ignore
+  }
+  
+  stompClient.connect({}, onConnected, onConnectionError);
 }
 
 /**
@@ -228,50 +244,59 @@ function connectWebSocket() {
 function onConnected() {
   console.log("✅ WebSocket 연결 성공");
   isConnected = true;
-
+  
   // ✅ 재연결 성공 메시지 (초기화 전에 체크)
   const wasReconnecting = reconnectAttempts > 0;
-
+  
   // ✅ 재연결 카운터 초기화
   reconnectAttempts = 0;
   if (reconnectTimeout) {
     clearTimeout(reconnectTimeout);
     reconnectTimeout = null;
   }
-
+  
   if (wasReconnecting) {
     showToast("✅ 연결 복구 성공!", "success");
   }
-
+  
   // 고스트런 비교 결과 구독
   stompClient.subscribe(`/sub/ghost-run/${SESSION_ID}`, onGhostComparison);
   console.log(`✅ 구독: /sub/ghost-run/${SESSION_ID}`);
-
-  // 에러 메시지 구독
-  stompClient.subscribe(`/sub/ghost-run/${SESSION_ID}/error`, onError);
+  
+  // ✅ 에러 메시지 구독 (별도 핸들러 사용)
+  stompClient.subscribe(`/sub/ghost-run/${SESSION_ID}/error`, handleErrorMessage);
   console.log(`✅ 구독: /sub/ghost-run/${SESSION_ID}/error`);
-
+  
   // 완료 메시지 구독
   stompClient.subscribe(`/sub/ghost-run/${SESSION_ID}/complete`, onComplete);
   console.log(`✅ 구독: /sub/ghost-run/${SESSION_ID}/complete`);
-
+  
   console.log("✅ 고스트런 구독 완료");
 }
 
 /**
- * WebSocket 에러
+ * WebSocket 연결 에러 (연결 실패 시)
  */
-function onError(error) {
-  console.error("❌ WebSocket 에러:", error);
+function onConnectionError(error) {
+  console.error("❌ WebSocket 연결 에러:", error);
   isConnected = false;
-
-  if (error.body) {
-    const errorData = JSON.parse(error.body);
-    console.error("에러 메시지:", errorData.error);
+  
+  if (!wsManualDisconnect && !completedHandled) {
+    attemptReconnect();
   }
+}
 
-  // ✅ 재연결 시도
-  attemptReconnect();
+/**
+ * 서버 에러 메시지 처리 (재연결하지 않음)
+ */
+function handleErrorMessage(message) {
+  const error = JSON.parse(message.body);
+  console.error("❌ 서버 에러 수신:", error);
+  
+  if (error.error) {
+    console.error("에러 메시지:", error.error);
+    showToast(error.error || "오류가 발생했습니다", "error");
+  }
 }
 
 /**
@@ -280,13 +305,13 @@ function onError(error) {
 function onGhostComparison(message) {
   const comparison = JSON.parse(message.body);
   console.log("📊 고스트 비교:", comparison);
-
+  
   // 마지막 비교 결과 저장 (종료 시 사용)
   lastComparison = {
     status: comparison.status || "EVEN",
     timeDiffSeconds: comparison.timeDiffSeconds || 0,
   };
-
+  
   updateComparisonUI(comparison);
 }
 
@@ -299,17 +324,17 @@ function updateComparisonUI(comparison) {
     setWaitingState();
     return;
   }
-
+  
   const { status, distanceDiffMeters, timeDiffSeconds, compareMethod } =
     comparison;
-
+  
   console.log("📊 비교 결과:", {
     status,
     distance: `${distanceDiffMeters}m`,
     time: `${timeDiffSeconds}s`,
     method: compareMethod === "KM_BASED" ? "정밀비교" : "평균페이스",
   });
-
+  
   // 시작 직후 (0초, 0m)
   if (status === "EVEN" && distanceDiffMeters === 0) {
     comparisonStatus.textContent = "👻 고스트 출발! 🏁";
@@ -389,7 +414,7 @@ function onComplete(message) {
       }, 3000);
     }
   }
-
+  
   // 결과 페이지로 이동 (TODO: 결과 페이지 구현)
   setTimeout(() => {
     alert("고스트런을 완주했습니다!");
@@ -418,7 +443,7 @@ async function handleStart() {
     const remainingDistanceKm = ghostData.targetDistance;
     window.TtsManager.resetDistanceState(remainingDistanceKm);
   }
-
+  
   startGPSTracking();
   startRunning();
 
@@ -434,15 +459,15 @@ async function handleStart() {
       window.TtsManager.speak("MOTIVATE_GOOD_JOB");
     }, 5 * 60 * 1000);
   }
-
+  
   // 버튼 변경
   startButton.style.display = "none";
   pauseButton.style.display = "flex";
-
+  
   // 상태 변경
   statusBadge.classList.add("running");
   statusText.textContent = "러닝 중";
-
+  
   // 시작 메시지 표시
   setStartingState();
 
@@ -457,20 +482,20 @@ async function handleStart() {
  */
 function handlePause() {
   console.log("⏸ 일시정지");
-
+  
   isPaused = true;
   stopGPSTracking();
-
+  
   // 타이머 정지
   if (elapsedTimerInterval) {
     clearInterval(elapsedTimerInterval);
     elapsedTimerInterval = null;
   }
-
+  
   // 버튼 변경
   pauseButton.style.display = "none";
   resumeButton.style.display = "flex";
-
+  
   // 상태 변경
   statusBadge.classList.remove("running");
   statusBadge.classList.add("paused");
@@ -482,17 +507,17 @@ function handlePause() {
  */
 function handleResume() {
   console.log("▶️ 재개");
-
+  
   isPaused = false;
   startGPSTracking();
-
+  
   // 타이머 재시작
   startElapsedTimer();
-
+  
   // 버튼 변경
   resumeButton.style.display = "none";
   pauseButton.style.display = "flex";
-
+  
   // 상태 변경
   statusBadge.classList.remove("paused");
   statusBadge.classList.add("running");
@@ -504,10 +529,10 @@ function handleResume() {
  */
 function autoFinish() {
   console.log("🏁 목표 거리 도달 - 자동 종료");
-
+  
   // 러닝 종료 처리
   isFinished = true;
-
+  
   // ✅ 종료 이벤트 처리: TTS 즉시 중단, 큐 비우기, 종료 멘트만 재생, 이후 Lock
   if (ttsReady && window.TtsManager && !completedHandled) {
     // 1. 현재 재생 중인 TTS 즉시 중단
@@ -549,30 +574,30 @@ function autoFinish() {
   }
 
   console.log("✅ 완료 요청");
-
+  
   // 러닝 결과 데이터 계산
   const totalDistanceKm = totalDistance / 1000; // km
   const avgPaceMinPerKm = elapsedSeconds / 60 / totalDistanceKm; // 분/km
-
+  
   // userId 확인 (배틀과 동일)
   if (!myUserId) {
     alert("오류: 사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
     window.location.href = "/login";
     return;
   }
-
+  
   const finishData = {
     userId: myUserId, // 배틀과 동일!
     totalDistance: parseFloat(totalDistanceKm.toFixed(2)),
     totalTime: elapsedSeconds,
     avgPace: parseFloat(avgPaceMinPerKm.toFixed(2)),
   };
-
+  
   console.log("🏁 완료 데이터:", finishData);
   console.log("📡 WebSocket 연결 상태:", isConnected);
   console.log("📡 STOMP 클라이언트:", stompClient ? "존재" : "없음");
   console.log("📡 전송 경로:", `/pub/ghost-run/${SESSION_ID}/finish`);
-
+  
   // WebSocket으로 완료 알림 (러닝 결과 포함)
   if (isConnected && stompClient) {
     try {
@@ -593,9 +618,9 @@ function autoFinish() {
     alert("오류: WebSocket 연결이 끊기셨습니다!");
     return;
   }
-
+  
   stopRunning();
-
+  
   // 내 기록을 localStorage에 저장 (결과 페이지에서 사용)
   localStorage.setItem("ghost_my_distance", totalDistanceKm.toFixed(2));
   localStorage.setItem("ghost_my_time", elapsedSeconds.toString());
@@ -604,7 +629,7 @@ function autoFinish() {
     lastComparison.timeDiffSeconds.toString()
   );
   localStorage.setItem("ghost_status", lastComparison.status);
-
+  
   // 결과 페이지로 이동
   setTimeout(() => {
     window.location.href = `/match/ghost-result?sessionId=${SESSION_ID}`;
@@ -616,12 +641,12 @@ function autoFinish() {
  */
 async function handleQuit() {
   if (!confirm("정말로 포기하시겠습니까?")) return;
-
+  
   console.log("❌ 포기");
-
+  
   isRunning = false;
   stopRunning();
-
+  
   // 세션 종료 API 호출
   const token = getToken();
   try {
@@ -634,7 +659,7 @@ async function handleQuit() {
   } catch (error) {
     console.error("세션 종료 실패:", error);
   }
-
+  
   window.location.href = "/match/ghost";
 }
 
@@ -646,7 +671,7 @@ function startRunning() {
   isPaused = false;
   startTime = Date.now();
   elapsedSeconds = 0;
-
+  
   startElapsedTimer();
 }
 
@@ -656,9 +681,9 @@ function startRunning() {
 function stopRunning() {
   isRunning = false;
   isPaused = false;
-
+  
   stopGPSTracking();
-
+  
   if (elapsedTimerInterval) {
     clearInterval(elapsedTimerInterval);
     elapsedTimerInterval = null;
@@ -694,19 +719,19 @@ function startGPSTracking() {
     alert("GPS를 사용할 수 없습니다.");
     return;
   }
-
+  
   const options = {
     enableHighAccuracy: true,
     timeout: 5000,
     maximumAge: 0,
   };
-
+  
   watchId = navigator.geolocation.watchPosition(
     onGPSSuccess,
     onGPSError,
     options
   );
-
+  
   console.log("📍 GPS 추적 시작");
 }
 
@@ -729,7 +754,7 @@ function onGPSSuccess(position) {
   const accuracy = position.coords.accuracy; // 정확도 (m)
   const speed = position.coords.speed;
   const currentTime = Date.now();
-
+  
   console.log(
     "📍 GPS 업데이트:",
     latitude,
@@ -738,20 +763,20 @@ function onGPSSuccess(position) {
     accuracy,
     "m"
   );
-
+  
   // ✅ 1. 정확도 필터링 (20m 이하만 사용)
   if (accuracy > 20) {
     console.warn("⚠️ GPS 정확도 낮음:", accuracy, "m - 무시");
     return;
   }
-
+  
   // 첫 위치 저장
   if (!lastPosition) {
-    lastPosition = { lat: latitude, lng: longitude, time: currentTime };
+    lastPosition = { lat: latitude, lng: longitude, time: currentTime, lastSentTime: 0 };
     console.log("📍 첫 위치 저장");
     return; // ✅ 첫 위치는 거리 계산 안 함!
   }
-
+  
   // ✅ 2. 거리 계산 (Haversine formula)
   const distance = calculateDistance(
     lastPosition.lat,
@@ -759,14 +784,14 @@ function onGPSSuccess(position) {
     latitude,
     longitude
   );
-
+  
   // ✅ 3. GPS 점프 감지 (50m 이상 = 오류)
   if (distance > 50) {
     console.warn("⚠️ GPS 점프 감지:", distance.toFixed(2), "m - 무시");
-    lastPosition = { lat: latitude, lng: longitude, time: currentTime }; // 위치만 업데이트
+    lastPosition = { lat: latitude, lng: longitude, time: currentTime, lastSentTime: lastPosition.lastSentTime || 0 }; // 위치만 업데이트
     return;
   }
-
+  
   // ✅ 4. 최소 이동 거리 필터 (3m 이상만 인정)
   if (distance >= 3) {
     // ✅ 속도 제한(경고/로그) - lastPosition 업데이트 전에 계산
@@ -810,14 +835,17 @@ function onGPSSuccess(position) {
     if (!isFinished) {
       totalDistance += distance;
     }
-    lastPosition = { lat: latitude, lng: longitude, time: currentTime };
-
+    lastPosition = { lat: latitude, lng: longitude, time: currentTime, lastSentTime: lastPosition.lastSentTime || 0 };
+    
     // UI 업데이트
     updateDistanceUI();
-
-    // WebSocket으로 GPS 데이터 전송
-    sendGPSData();
-
+    
+    // ✅ 1초 간격으로 GPS 전송 (온라인 배틀과 동일)
+    if (!lastPosition.lastSentTime || currentTime - lastPosition.lastSentTime >= 1000) {
+      sendGPSData();
+      lastPosition.lastSentTime = currentTime;
+    }
+    
     // ⭐ 목표 거리 도달 시 자동 종료
     if (ghostData && ghostData.targetDistance) {
       const targetMeters = ghostData.targetDistance * 1000; // km -> m
@@ -825,6 +853,15 @@ function onGPSSuccess(position) {
         console.log("🏁 목표 거리 도달! 자동 종료");
         autoFinish();
       }
+    }
+  } else if (isFinished) {
+    // ✅ 완주 후에도 주기적으로 GPS 전송 (타임아웃 체크용)
+    if (!lastPosition || !lastPosition.lastSentTime || currentTime - lastPosition.lastSentTime >= 2000) {
+      sendGPSData();
+      if (!lastPosition) {
+        lastPosition = { lat: latitude, lng: longitude, time: currentTime, lastSentTime: 0 };
+      }
+      lastPosition.lastSentTime = currentTime;
     }
   }
 }
@@ -834,7 +871,7 @@ function onGPSSuccess(position) {
  */
 function onGPSError(error) {
   console.error("❌ GPS 에러:", error);
-
+  
   if (error.code === error.PERMISSION_DENIED) {
     alert("위치 권한이 필요합니다.");
   }
@@ -860,7 +897,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 /**
  * WebSocket으로 GPS 데이터 전송
- *
+ * 
  * 흐름:
  * 1. 매 1초마다 GPS 위치 수신
  * 2. 총 이동 거리 계산 (Haversine 공식)
@@ -881,14 +918,14 @@ function sendGPSData() {
   if (!isRunning || isPaused) {
     return;
   }
-
+  
   const data = {
     distance: totalDistance / 1000, // km
     elapsedTime: elapsedSeconds, // 초
   };
-
+  
   const destination = `/pub/ghost-run/${SESSION_ID}/gps`;
-
+  
   console.log(`📤 GPS 전송 -> ${destination}`, {
     distance: `${data.distance.toFixed(3)}km`,
     time: `${data.elapsedTime}s`,
@@ -896,7 +933,7 @@ function sendGPSData() {
       ? `${ghostData.targetDistance}km`
       : "unknown",
   });
-
+  
   try {
     stompClient.send(destination, {}, JSON.stringify(data));
     console.log("✅ GPS 전송 성공");
@@ -931,14 +968,27 @@ function updateDistanceUI() {
     const currentKm = Math.floor(totalDistanceKm);
     if (currentKm > lastKmSpoken && currentKm >= 1 && currentKm <= 10) {
       lastKmSpoken = currentKm;
+      
+      // ✅ 1km 도달 시 DIST_DONE TTS 재생
       window.TtsManager.speak(`DIST_DONE_${currentKm}KM`, {
         priority: 2,
         cooldownMs: 0,
       });
+      
+      // ✅ 1km 도달 시점의 평균 페이스 계산하여 TTS 재생
+      if (elapsedSeconds > 0 && totalDistanceKm > 0) {
+        const paceMinutes = elapsedSeconds / 60 / totalDistanceKm; // 분/km
+        // segmentPaces 형식으로 만들어서 onSplitPaces에 전달
+        const segmentPaces = { [currentKm]: paceMinutes };
+        window.TtsManager.onSplitPaces(segmentPaces);
+      }
     }
 
     // DIST_REMAIN: 남은 거리
-    window.TtsManager.onDistance(totalDistanceKm, remainingDistanceKm);
+    // ✅ 시작 직후(totalDistance가 0일 때)는 거리 TTS 재생하지 않음
+    if (totalDistanceKm > 0) {
+      window.TtsManager.onDistance(totalDistanceKm, remainingDistanceKm);
+    }
   }
 }
 
@@ -998,20 +1048,23 @@ function formatDate(dateString) {
  * ✅ WebSocket 재연결 시도
  */
 function attemptReconnect() {
+  // 수동으로 연결을 끊은 경우 재연결하지 않음
+  if (wsManualDisconnect) return;
+  
   // 이미 재연결 중이면 중복 방지
   if (reconnectTimeout) {
     console.log("⚠️ 이미 재연결 중...");
     return;
   }
-
+  
   reconnectAttempts++;
-
+  
   if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
     console.error("❌ 최대 재연결 시도 초과 (5회)");
     showToast("❌ 연결 실패. 페이지를 새로고침 해주세요.", "error");
     return;
   }
-
+  
   console.log(
     `🔄 WebSocket 재연결 시도 (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
   );
@@ -1019,11 +1072,11 @@ function attemptReconnect() {
     `🔄 연결 회복 중... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`,
     "info"
   );
-
+  
   // ✅ 1초 후 재연결 (즉시 재연결하면 서버 부하 가능)
   reconnectTimeout = setTimeout(() => {
     reconnectTimeout = null;
-
+    
     // WebSocket 연결
     try {
       connectWebSocket();
@@ -1044,10 +1097,10 @@ function showToast(message, type = "info") {
   if (existingToast) {
     document.body.removeChild(existingToast);
   }
-
+  
   const toast = document.createElement("div");
   toast.id = "toast-message";
-
+  
   // 타입별 색상
   let bgColor;
   switch (type) {
@@ -1062,7 +1115,7 @@ function showToast(message, type = "info") {
       bgColor = "rgba(59, 130, 246, 0.95)"; // 파랑
       break;
   }
-
+  
   toast.style.cssText = `
     position: fixed;
     top: 100px;
@@ -1081,7 +1134,7 @@ function showToast(message, type = "info") {
     text-align: center;
   `;
   toast.textContent = message;
-
+  
   // 애니메이션 정의
   if (!document.getElementById("toast-animation-style")) {
     const style = document.createElement("style");
@@ -1100,9 +1153,9 @@ function showToast(message, type = "info") {
     `;
     document.head.appendChild(style);
   }
-
+  
   document.body.appendChild(toast);
-
+  
   // 3초 후 제거
   setTimeout(() => {
     toast.style.opacity = "0";
