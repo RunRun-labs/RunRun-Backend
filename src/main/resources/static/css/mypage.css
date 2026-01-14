@@ -626,19 +626,26 @@ body {
     margin-top: 40px;
     text-align: center;
     padding: 60px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
 }
 
 .empty-text-large {
-    font-size: 64px;
-    margin-bottom: 16px;
-    opacity: 0.5;
+    font-size: 80px;
+    line-height: 1;
+    margin: 0;
+    opacity: 0.3;
+    filter: grayscale(100%);
 }
 
 .empty-text-small {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 500;
     color: var(--text-gray);
-    margin-bottom: 8px;
+    margin: 0;
 }
 
 /* Course Modal */

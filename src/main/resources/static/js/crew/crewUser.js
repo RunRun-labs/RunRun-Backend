@@ -353,21 +353,19 @@ function createAvatar(member, isLeader) {
 
     // 프로필 이미지 처리
     if (member.profileImageUrl && member.profileImageUrl.trim() !== '') {
-        const initial = member.userName ? member.userName.charAt(0).toUpperCase() : '?';
         return `
             <div class="${avatarClass}">
                 <img src="${escapeHtml(member.profileImageUrl)}" 
                      alt="${escapeHtml(member.userName)}" 
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="avatar-placeholder" style="display:none;">${initial}</div>
+                     onerror="this.src='/img/default-profile.svg';">
             </div>
         `;
     } else {
-        // 프로필 이미지 없을 때
-        const initial = member.userName ? member.userName.charAt(0).toUpperCase() : '?';
+        // 프로필 이미지 없을 때 default-profile.svg 사용
         return `
             <div class="${avatarClass}">
-                <div class="avatar-placeholder">${initial}</div>
+                <img src="/img/default-profile.svg" 
+                     alt="${escapeHtml(member.userName)}">
             </div>
         `;
     }

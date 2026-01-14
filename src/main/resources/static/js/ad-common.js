@@ -122,7 +122,7 @@ function createAdBanner(adData, className = '') {
 }
 
 /**
- * 광고 팝업 생성 (러닝 결과용)
+ * 광고 팝업 생성 (기존 - 작은 사이즈)
  * @param {Object} adData - 광고 데이터
  * @returns {HTMLElement} 광고 팝업 요소
  */
@@ -236,6 +236,174 @@ function createAdPopup(adData) {
         to {
           transform: translateY(0);
           opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  return overlay;
+}
+
+/**
+ * 광고 팝업 생성 (런닝 결과 전용 - 큰 사이즈)
+ * @param {Object} adData - 광고 데이터
+ * @returns {HTMLElement} 광고 팝업 요소
+ */
+function createAdPopupForRunningResult(adData) {
+  const overlay = document.createElement('div');
+  overlay.className = 'ad-popup-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+    padding: 20px;
+  `;
+
+  const popup = document.createElement('div');
+  popup.className = 'ad-popup';
+  
+  // 반응형 크기 설정
+  let popupWidth, popupMaxWidth;
+  const screenWidth = window.innerWidth;
+  
+  if (screenWidth <= 480) {
+    // 모바일: 화면의 90%, 최대 340px
+    popupWidth = '90%';
+    popupMaxWidth = '340px';
+  } else if (screenWidth <= 768) {
+    // 태블릿: 화면의 75%, 최대 500px
+    popupWidth = '75%';
+    popupMaxWidth = '500px';
+  } else {
+    // 데스크톱: 고정 크기 550px
+    popupWidth = '550px';
+    popupMaxWidth = '550px';
+  }
+  
+  popup.style.cssText = `
+    position: relative;
+    width: ${popupWidth};
+    max-width: ${popupMaxWidth};
+    min-width: 280px;
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.3s ease;
+  `;
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'ad-popup-close';
+  closeBtn.innerHTML = '✕';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+  `;
+
+  closeBtn.addEventListener('mouseenter', () => {
+    closeBtn.style.background = 'rgba(0, 0, 0, 0.8)';
+    closeBtn.style.transform = 'scale(1.1)';
+  });
+
+  closeBtn.addEventListener('mouseleave', () => {
+    closeBtn.style.background = 'rgba(0, 0, 0, 0.6)';
+    closeBtn.style.transform = 'scale(1)';
+  });
+
+  closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    overlay.style.animation = 'fadeOut 0.2s ease';
+    setTimeout(() => overlay.remove(), 200);
+  });
+
+  const img = document.createElement('img');
+  img.src = adData.imageUrl;
+  img.alt = adData.name || '광고';
+  img.style.cssText = `
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    display: block;
+    object-fit: contain;
+    background: #f5f5f5;
+  `;
+  img.onerror = function() {
+    overlay.remove();
+  };
+
+  popup.addEventListener('click', () => {
+    handleAdClick(adData.placementId, adData.redirectUrl);
+    overlay.style.animation = 'fadeOut 0.2s ease';
+    setTimeout(() => overlay.remove(), 200);
+  });
+
+  popup.appendChild(closeBtn);
+  popup.appendChild(img);
+  overlay.appendChild(popup);
+
+  // 오버레이 클릭 시 닫기
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.style.animation = 'fadeOut 0.2s ease';
+      setTimeout(() => overlay.remove(), 200);
+    }
+  });
+
+  // ESC 키로 닫기
+  const closeOnEsc = (e) => {
+    if (e.key === 'Escape') {
+      overlay.style.animation = 'fadeOut 0.2s ease';
+      setTimeout(() => overlay.remove(), 200);
+      document.removeEventListener('keydown', closeOnEsc);
+    }
+  };
+  document.addEventListener('keydown', closeOnEsc);
+
+  // CSS 애니메이션 추가 (fadeOut 추가)
+  if (!document.getElementById('ad-popup-styles-enhanced')) {
+    const style = document.createElement('style');
+    style.id = 'ad-popup-styles-enhanced';
+    style.textContent = `
+      @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+      
+      /* 모바일 최적화 */
+      @media (max-width: 480px) {
+        .ad-popup {
+          border-radius: 20px !important;
+        }
+        .ad-popup-close {
+          width: 36px !important;
+          height: 36px !important;
+          top: 12px !important;
+          right: 12px !important;
+          font-size: 20px !important;
         }
       }
     `;

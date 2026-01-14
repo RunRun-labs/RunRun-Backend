@@ -196,13 +196,7 @@ function createRunCard(record) {
     else if (isGhostRun) {
         imageUrl = '/img/ghost-run.png';
     } else if (isOnlineBattle) {
-        const onlineBattleRankImageMap = {
-            1: '/img/online-1st.png',
-            2: '/img/online-2nd.png',
-            3: '/img/online-3rd.png',
-            4: '/img/online-4th.png'
-        };
-        imageUrl = onlineBattleRankImageMap[onlineBattleRanking] || record.courseThumbnailUrl || '/img/online-1st.png';
+        imageUrl = '/img/online-battle.png';
     } 
     // 3순위: 코스 썸네일
     else if (record.courseThumbnailUrl) {
