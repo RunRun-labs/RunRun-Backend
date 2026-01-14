@@ -44,7 +44,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -730,8 +729,8 @@ public class MatchSessionService {
 
   public ActiveSessionResDto getActiveSession(Long userId) {
 
-    Optional<SessionUser> activeSessionOpt = sessionUserRepository.findActiveSession(userId);
-    if (activeSessionOpt.isEmpty()) {
+    List<SessionUser> activeSessions = sessionUserRepository.findActiveSessions(userId);
+    if (activeSessions.isEmpty()) {
       try {
         List<SessionUser> allSessionUsers = sessionUserRepository.findAll()
             .stream()
@@ -768,7 +767,7 @@ public class MatchSessionService {
       return null;
     }
 
-    SessionUser sessionUser = activeSessionOpt.get();
+    SessionUser sessionUser = activeSessions.get(0);
     MatchSession session = sessionUser.getMatchSession();
     SessionStatus status = session.getStatus();
     SessionType type = session.getType();
