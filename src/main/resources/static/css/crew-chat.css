@@ -26,6 +26,9 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
+  /* 모바일 환경에서 fixed 요소 지원 */
+  position: fixed;
+  width: 100%;
 }
 
 body {
@@ -42,6 +45,7 @@ body {
   width: min(390px, 100vw);
   margin: 0 auto;
   height: 100vh;
+  height: 100dvh; /* 동적 뷰포트 높이 */
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -336,13 +340,17 @@ body {
 .message-input-area {
   background: var(--bg-white);
   border-top: 1px solid var(--stroke);
-  padding: 13px 16px 12px;
+  padding: 13px 16px;
+  padding-bottom: max(13px, env(safe-area-inset-bottom)); /* iOS Safe Area */
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  position: relative;
-  z-index: 5;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  /* 모바일 키보드를 위한 고정 */
+  width: 100%;
 }
 
 .attach-button {
@@ -428,6 +436,11 @@ body {
 
   .chat-container {
     padding-bottom: 8px;
+  }
+  
+  /* 모바일 키보드 대응 */
+  .message-input-area {
+    padding-bottom: max(13px, env(safe-area-inset-bottom));
   }
 }
 
