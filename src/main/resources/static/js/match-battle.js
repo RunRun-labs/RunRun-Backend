@@ -893,8 +893,13 @@ function createRankingItem(participant, isMe, allRankings) {
 
   const rankNumber = document.createElement("div");
   rankNumber.className = "rank-number";
-  // ✅ rank가 0이면 "포기" 표시
-  rankNumber.textContent = participant.rank === 0 ? "포기" : participant.rank;
+  // ✅ rank가 0이면 X 배지 표시
+  if (participant.rank === 0) {
+    rankNumber.innerHTML = '<span style="font-size: 24px; color: #ef4444;">❌</span>';
+    rankNumber.style.cssText = 'display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(239, 68, 68, 0.1); border-radius: 50%;';
+  } else {
+    rankNumber.textContent = participant.rank;
+  }
 
   const avatar = document.createElement("div");
   avatar.className = "participant-avatar";
