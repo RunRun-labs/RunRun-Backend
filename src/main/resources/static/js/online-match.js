@@ -334,9 +334,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (pGroup) {
           setTimeout(() => {
             pGroup.classList.add("show");
-            setTimeout(() => {
-              pGroup.scrollIntoView({behavior: 'smooth', block: 'center'});
-            }, 400);
+            // scrollIntoView 제거 - 위쪽이 잘리지 않도록
+            // setTimeout(() => {
+            //   pGroup.scrollIntoView({behavior: 'smooth', block: 'center'});
+            // }, 400);
           }, 100);
         }
       } else if (type === "participant") {
