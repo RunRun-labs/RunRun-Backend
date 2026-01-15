@@ -295,6 +295,9 @@ function onConnected(frame) {
   console.log("✅ WebSocket 연결 성공:", frame);
   isConnected = true;
 
+  // ✅ TTS 준비 확인
+  ensureTtsOnce().catch(() => {});
+
   // 실시간 순위 업데이트 구독
   stompClient.subscribe(
     "/sub/battle/" + SESSION_ID + "/ranking",
@@ -356,8 +359,13 @@ function onConnected(frame) {
 
   console.log("✅ 채널 구독 완료");
 
-  // 초기 순위 로드 (REST API)
-  loadInitialRankings();
+  // ✅ TTS 준비 확인 후 초기 순위 로드
+  ensureTtsOnce().then(() => {
+    loadInitialRankings();
+  }).catch(() => {
+    // TTS 로드 실패해도 순위는 로드
+    loadInitialRankings();
+  });
 }
 
 /**
@@ -373,13 +381,16 @@ function loadInitialRankings() {
       Authorization: token ? "Bearer " + token : "",
     },
   })
-    .then((response) => {
+    .then(async (response) => {
       if (!response.ok) throw new Error("API 호출 실패");
       return response.json();
     })
-    .then((data) => {
+    .then(async (data) => {
       console.log("✅ 초기 순위 로드:", data);
       if (data.data && data.data.length > 0) {
+        // ✅ TTS가 준비될 때까지 기다림
+        await ensureTtsOnce();
+        
         handleRankingUpdate(data.data);
 
         // ✅ 새로고침 시 내 데이터로 상태 복원
@@ -809,7 +820,10 @@ function handleRankingUpdate(rankings) {
       }
 
       // DIST_REMAIN: 남은 거리
-      window.TtsManager.onDistance(totalDistanceKm, remainingDistanceKm);
+      // ✅ 시작 직후(totalDistanceKm이 0일 때)는 거리 TTS 재생하지 않음
+      if (totalDistanceKm > 0) {
+        window.TtsManager.onDistance(totalDistanceKm, remainingDistanceKm);
+      }
 
       // ✅ 페이스 TTS는 onSplitPaces에서 1km마다 재생되므로 여기서는 제거
     }

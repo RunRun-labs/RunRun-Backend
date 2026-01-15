@@ -151,13 +151,13 @@ function anyInvalid() {
 // Initialize map
 function initMap() {
   console.log("[MAP INIT] Starting map initialization...");
-  
+
   if (!mapContainer) {
     console.error("[MAP INIT ERROR] Map container not found!");
     return;
   }
   console.log("[MAP INIT] Map container found:", mapContainer);
-  
+
   if (typeof kakao === "undefined" || !kakao.maps) {
     console.error("[MAP INIT ERROR] Kakao Maps SDK not loaded!");
     return;
@@ -166,7 +166,7 @@ function initMap() {
 
   const center = new kakao.maps.LatLng(37.5665, 126.978);
   console.log("[MAP INIT] Center position:", center);
-  
+
   // 지도 생성 - 드래그와 줌 확실하게 활성화
   const mapOptions = {
     center: center,
@@ -178,26 +178,26 @@ function initMap() {
     keyboardShortcuts: true
   };
   console.log("[MAP INIT] Map options:", mapOptions);
-  
+
   map = new kakao.maps.Map(mapContainer, mapOptions);
   console.log("[MAP INIT] Map object created:", map);
   console.log("[MAP INIT] Map draggable status:", map.getDraggable());
   console.log("[MAP INIT] Map zoomable status:", map.getZoomable());
 
   // 지도에 마우스 이벤트 리스너 추가 (드래그 테스트)
-  kakao.maps.event.addListener(map, 'dragstart', function() {
+  kakao.maps.event.addListener(map, 'dragstart', function () {
     console.log("[MAP EVENT] Drag started!");
   });
-  
-  kakao.maps.event.addListener(map, 'drag', function() {
+
+  kakao.maps.event.addListener(map, 'drag', function () {
     console.log("[MAP EVENT] Dragging...");
   });
-  
-  kakao.maps.event.addListener(map, 'dragend', function() {
+
+  kakao.maps.event.addListener(map, 'dragend', function () {
     console.log("[MAP EVENT] Drag ended!");
   });
-  
-  kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+
+  kakao.maps.event.addListener(map, 'click', function (mouseEvent) {
     console.log("[MAP EVENT] Map clicked at:", mouseEvent.latLng);
   });
 
@@ -210,37 +210,38 @@ function initMap() {
       map.setZoomable(true);
       console.log("[MAP ENABLE] Map draggable:", map.getDraggable());
       console.log("[MAP ENABLE] Map zoomable:", map.getZoomable());
-      
+
       // DOM 요소 확인 및 touch-action 강제 변경
       const allDivsInContainer = mapContainer.querySelectorAll('div');
       let mapDiv = null;
-      
+
       for (let i = 0; i < allDivsInContainer.length; i++) {
         const div = allDivsInContainer[i];
-        if (!div.classList.contains('map-expand-overlay') && 
+        if (!div.classList.contains('map-expand-overlay') &&
             !div.classList.contains('map-expand-hint')) {
           mapDiv = div;
           break;
         }
       }
-      
+
       console.log("[MAP ENABLE] Map div element:", mapDiv);
       if (mapDiv) {
         mapDiv.style.removeProperty('touch-action');
         mapDiv.style.touchAction = 'auto';
         mapDiv.style.setProperty('touch-action', 'auto', 'important');
-        
+
         const allDivs = mapDiv.querySelectorAll('div');
         allDivs.forEach(div => {
           div.style.removeProperty('touch-action');
           div.style.touchAction = 'auto';
           div.style.setProperty('touch-action', 'auto', 'important');
         });
-        
+
         if (!mapDiv.hasAttribute('data-observer-attached')) {
           const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
-              if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+              if (mutation.type === 'attributes' && mutation.attributeName
+                  === 'style') {
                 const target = mutation.target;
                 if (target.style.touchAction !== 'auto') {
                   console.log("[MAP OBSERVER] Touch-action changed, fixing...");
@@ -251,19 +252,20 @@ function initMap() {
               }
             });
           });
-          
+
           observer.observe(mapDiv, {
             attributes: true,
             attributeFilter: ['style'],
             subtree: true
           });
-          
+
           mapDiv.setAttribute('data-observer-attached', 'true');
           console.log("[MAP ENABLE] MutationObserver attached to map div");
         }
-        
+
         const computedStyle = window.getComputedStyle(mapDiv);
-        console.log("[MAP ENABLE] Map div touch-action AFTER fix:", computedStyle.touchAction);
+        console.log("[MAP ENABLE] Map div touch-action AFTER fix:",
+            computedStyle.touchAction);
       }
     }
   };
@@ -291,7 +293,7 @@ function initMap() {
     console.log("[MAP ENABLE] Timeout 1000ms");
     enableMapInteraction();
   }, 1000);
-  
+
   console.log("[MAP INIT] Map initialization complete!");
 }
 
@@ -385,7 +387,7 @@ function renderRouteOnMap(coords) {
     clearInfoWindows();
     return;
   }
-  
+
   if (!map) {
     return;
   }
@@ -474,7 +476,7 @@ function renderRouteOnMap(coords) {
 
   map.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
   map.setLevel(level);
-  
+
   map.setDraggable(true);
   map.setZoomable(true);
 }
@@ -785,7 +787,8 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   console.log("[SUBMIT] Form submitted");
-  console.log("[SUBMIT] pathInput.value:", pathInput.value ? "exists" : "empty");
+  console.log("[SUBMIT] pathInput.value:",
+      pathInput.value ? "exists" : "empty");
   console.log("[SUBMIT] distanceMInput.value:", distanceMInput.value);
   console.log("[SUBMIT] courseTypeInput.value:", courseTypeInput.value);
   console.log("[SUBMIT] addressInput.value:", addressInput.value);
@@ -1000,7 +1003,7 @@ autoRouteBtn?.addEventListener("click", () => {
   } else {
     sessionStorage.setItem("returnPage", "/courseUpdate");
   }
-  window.location.href = "/test";
+  window.location.href = "/course_auto";
 });
 
 manualRouteBtn?.addEventListener("click", () => {
@@ -1044,7 +1047,7 @@ function openMapModal() {
   if (modal) {
     modal.style.visibility = "visible";
     modal.style.opacity = "1";
-    
+
     if (!isModalMapInitialized) {
       console.log("[MAP MODAL] First time opening, initializing...");
       setTimeout(() => {
@@ -1052,7 +1055,8 @@ function openMapModal() {
         const pathValue = pathInput.value;
         if (pathValue) {
           try {
-            const pathObj = typeof pathValue === "string" ? JSON.parse(pathValue) : pathValue;
+            const pathObj = typeof pathValue === "string" ? JSON.parse(
+                pathValue) : pathValue;
             if (pathObj && pathObj.coordinates) {
               displayCourseOnModalMap(pathObj.coordinates);
             }
@@ -1086,20 +1090,20 @@ function closeMapModal() {
 
 function initModalMap() {
   console.log("[MAP MODAL] Initializing modal map...");
-  
+
   const modalMapContainer = document.getElementById("mapModal-map");
   if (!modalMapContainer) {
     console.error("[MAP MODAL ERROR] Modal map container not found!");
     return;
   }
-  
+
   if (typeof kakao === "undefined" || !kakao.maps) {
     console.error("[MAP MODAL ERROR] Kakao Maps SDK not loaded!");
     return;
   }
 
   const center = new kakao.maps.LatLng(37.5665, 126.978);
-  
+
   const mapOptions = {
     center: center,
     level: 5,
@@ -1109,12 +1113,12 @@ function initModalMap() {
     disableDoubleClickZoom: false,
     keyboardShortcuts: true
   };
-  
+
   mapModal = new kakao.maps.Map(modalMapContainer, mapOptions);
   console.log("[MAP MODAL] Modal map created successfully");
   console.log("[MAP MODAL] Modal map draggable:", mapModal.getDraggable());
   console.log("[MAP MODAL] Modal map zoomable:", mapModal.getZoomable());
-  
+
   setTimeout(() => {
     if (mapModal) {
       mapModal.relayout();
@@ -1123,7 +1127,7 @@ function initModalMap() {
       console.log("[MAP MODAL] Modal map re-enabled (100ms)");
     }
   }, 100);
-  
+
   setTimeout(() => {
     if (mapModal) {
       mapModal.relayout();
@@ -1132,7 +1136,7 @@ function initModalMap() {
       console.log("[MAP MODAL] Modal map re-enabled (300ms)");
     }
   }, 300);
-  
+
   setTimeout(() => {
     if (mapModal) {
       mapModal.relayout();
@@ -1145,7 +1149,7 @@ function initModalMap() {
 
 function displayCourseOnModalMap(pathCoords) {
   console.log("[MAP MODAL] Displaying course on modal map...");
-  
+
   if (!mapModal) {
     console.error("[MAP MODAL ERROR] Modal map not initialized!");
     return;
@@ -1164,17 +1168,27 @@ function displayCourseOnModalMap(pathCoords) {
   const endLng = endCoord[0];
 
   const isRoundTrip =
-    Math.abs(startLat - endLat) < 0.0001 &&
-    Math.abs(startLng - endLng) < 0.0001;
+      Math.abs(startLat - endLat) < 0.0001 &&
+      Math.abs(startLng - endLng) < 0.0001;
 
   const displayStartLat = parseFloat(startLatInput.value) || startLat;
   const displayStartLng = parseFloat(startLngInput.value) || startLng;
 
-  if (modalStartMarker) modalStartMarker.setMap(null);
-  if (modalEndMarker) modalEndMarker.setMap(null);
-  if (modalPolyline) modalPolyline.setMap(null);
-  if (modalStartInfoWindow) modalStartInfoWindow.close();
-  if (modalEndInfoWindow) modalEndInfoWindow.close();
+  if (modalStartMarker) {
+    modalStartMarker.setMap(null);
+  }
+  if (modalEndMarker) {
+    modalEndMarker.setMap(null);
+  }
+  if (modalPolyline) {
+    modalPolyline.setMap(null);
+  }
+  if (modalStartInfoWindow) {
+    modalStartInfoWindow.close();
+  }
+  if (modalEndInfoWindow) {
+    modalEndInfoWindow.close();
+  }
 
   const startLatLng = new kakao.maps.LatLng(displayStartLat, displayStartLng);
   modalStartMarker = new kakao.maps.Marker({
@@ -1189,7 +1203,9 @@ function displayCourseOnModalMap(pathCoords) {
   });
 
   kakao.maps.event.addListener(modalStartMarker, "click", function () {
-    if (modalEndInfoWindow) modalEndInfoWindow.close();
+    if (modalEndInfoWindow) {
+      modalEndInfoWindow.close();
+    }
     modalStartInfoWindow.open(mapModal, modalStartMarker);
   });
 
@@ -1207,7 +1223,9 @@ function displayCourseOnModalMap(pathCoords) {
     });
 
     kakao.maps.event.addListener(modalEndMarker, "click", function () {
-      if (modalStartInfoWindow) modalStartInfoWindow.close();
+      if (modalStartInfoWindow) {
+        modalStartInfoWindow.close();
+      }
       modalEndInfoWindow.open(mapModal, modalEndMarker);
     });
   }
@@ -1235,15 +1253,21 @@ function displayCourseOnModalMap(pathCoords) {
   const maxDiff = Math.max(latDiff, lngDiff);
 
   let level = 5;
-  if (maxDiff > 0.1) level = 4;
-  else if (maxDiff > 0.05) level = 5;
-  else if (maxDiff > 0.02) level = 6;
-  else if (maxDiff > 0.01) level = 7;
-  else level = 8;
+  if (maxDiff > 0.1) {
+    level = 4;
+  } else if (maxDiff > 0.05) {
+    level = 5;
+  } else if (maxDiff > 0.02) {
+    level = 6;
+  } else if (maxDiff > 0.01) {
+    level = 7;
+  } else {
+    level = 8;
+  }
 
   mapModal.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
   mapModal.setLevel(level);
-  
+
   setTimeout(() => {
     if (mapModal) {
       mapModal.relayout();
@@ -1252,14 +1276,14 @@ function displayCourseOnModalMap(pathCoords) {
       console.log("[MAP MODAL] Modal map finalized");
     }
   }, 100);
-  
+
   console.log("[MAP MODAL] Course displayed on modal map");
 }
 
 // Initialize on page load
 function bootstrapMap() {
   console.log("[BOOTSTRAP] Starting map bootstrap...");
-  
+
   if (!mapContainer) {
     console.error("[BOOTSTRAP ERROR] Map container not found!");
     return;
@@ -1286,7 +1310,7 @@ function bootstrapMap() {
     }
     loadCourseData();
   }, 100);
-  
+
   console.log("[BOOTSTRAP] Bootstrap complete!");
 }
 
