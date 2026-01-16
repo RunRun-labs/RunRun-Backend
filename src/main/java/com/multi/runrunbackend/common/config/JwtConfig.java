@@ -47,61 +47,24 @@ public class JwtConfig {
                     "/auth/**",
                     "/login",
                     "/signup",
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/public/**",
-                    "/error",
+                    "/css/**",
+                    "/js/**",
                     "/img/**",
-                    "/chat/**",
-                    "/ws/**",
-                    "/myPage/**",
-                    "/profile/**",
-                    "/friends/**",
-                    "/setting/**",
-                    "/notification",
-
-                    "/course",
-                    "/courseCreate",
-                    "/courseDetail/**",
-                    "/courseUpdate/**",
-                    "/course_auto/**",
-                    "/course_manual/**",
-
-                    "/challenge/**",
-                    "/crews/new",
-                    "/crews/**",
-                    "/match/**",
-                    "/recruit/**",
-
-                    "/feed/**",
-                    "/running/**",
-
-                    "/terms/**",
-                    "/tts-test",
-
-                    "/membership/**",
-                    "/payment/pay",
-                    "/payment/history",
-                    "/payment/success",
-                    "/payment/fail",
-                    "/payment/free-success",
-
-                    "/coupon/my",
-                    "/coupon/event",
-                    "/points/**",
-
+                    "/favicon.ico",
                     "/actuator/health",
                     "/actuator/health/**",
                     "/actuator/prometheus",
 
-                    "/api/admin/coupons/public/**",
-                    "/admin/**",
-                    "/api/ads/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/error",
+                    "/public/**",
                     "/attendance-event"
                 ).permitAll()
                 .requestMatchers(
                     PathRequest.toStaticResources().atCommonLocations()
                 ).permitAll()
+                // ✅ 나머지 모든 경로는 인증 필요
                 .anyRequest().authenticated()
             )
             .addFilterBefore(
