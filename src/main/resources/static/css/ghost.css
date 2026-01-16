@@ -278,8 +278,18 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 0 4px;
+  gap: 8px;
+  margin: 0 -20px;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.date-filter-description {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: left;
+  margin-bottom: 4px;
 }
 
 .date-filter-quick-buttons {
@@ -317,43 +327,69 @@ body {
 
 .date-filter-inputs {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: row; /* 가로 배치 */
+  gap: 8px; /* 입력 필드 간 간격 */
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .date-input-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 120px;
+  gap: 2px;
+  flex: 1; /* 동일한 너비로 분할 */
+  min-width: 0; /* flex에서 최소 너비 제한 해제 */
+  box-sizing: border-box;
+  overflow: hidden; /* 넘치는 부분 숨김 */
 }
 
 .date-label {
-  font-size: 12px;
+  font-size: 9px; /* 더 작은 폰트 */
   font-weight: 500;
   color: var(--text-secondary);
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .date-input {
-  padding: 10px 12px;
+  /* 브라우저 기본 스타일 완전 제거 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  
+  /* 기본 스타일 리셋 */
+  margin: 0;
+  padding: 4px 30px 4px 8px;
   border: 1px solid var(--stroke);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--bg-card);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 11px;
   font-family: "Inter", sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+  height: 32px;
+  line-height: 1.5;
+  text-align: left;
+  vertical-align: middle;
+  
+  /* 브라우저별 border-radius 보장 */
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
 }
 
 .date-input:hover {
   border-color: var(--accent-purple);
   background: rgba(139, 92, 246, 0.05);
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
 }
 
 .date-input:focus {
@@ -361,43 +397,46 @@ body {
   border-color: var(--accent-purple);
   background: rgba(139, 92, 246, 0.1);
   box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+}
+
+.date-input:active {
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
 }
 
 /* 날짜 입력 필드의 달력 아이콘 스타일링 */
 .date-input::-webkit-calendar-picker-indicator {
   filter: invert(1) opacity(0.5);
   cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 0;
 }
 
 .date-input::-webkit-inner-spin-button,
 .date-input::-webkit-clear-button {
   filter: invert(1) opacity(0.5);
+  border-radius: 0;
+}
+
+/* Firefox용 */
+.date-input::-moz-focus-inner {
+  border: 0;
+  padding: 0;
 }
 
 .date-separator {
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  padding-bottom: 10px;
-  align-self: flex-end;
-  flex-shrink: 0;
+  display: none; /* 세로 배치에서는 필요 없음 */
 }
 
 .reset-date-button {
-  padding: 10px;
-  border: 1px solid var(--stroke);
-  border-radius: 8px;
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  height: 42px;
-  width: 42px;
-  box-sizing: border-box;
+  display: none; /* 새로고침 버튼 숨기기 */
 }
 
 .reset-date-button:hover {
@@ -896,6 +935,84 @@ body {
     font-size: 13px;
   }
 
+  /* 날짜 필터 모바일 조정 */
+  .date-filter-section {
+    margin: 0 -16px;
+    padding: 0 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .date-filter-description {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+
+  .date-filter-inputs {
+    flex-direction: row; /* 모바일에서도 가로 배치 유지 */
+    gap: 6px; /* 모바일에서 간격 축소 */
+    align-items: stretch;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .date-input-group {
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .date-label {
+    font-size: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .date-input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin: 0;
+    padding: 3px 26px 3px 6px;
+    border: 1px solid var(--stroke);
+    border-radius: 6px;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 10px;
+    font-family: "Inter", sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    height: 28px;
+    line-height: 1.5;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .date-input:hover,
+  .date-input:focus,
+  .date-input:active {
+    border-radius: 6px;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+  }
+
+  .date-input::-webkit-calendar-picker-indicator {
+    width: 14px;
+    height: 14px;
+  }
+
+  .date-separator {
+    display: none;
+  }
+
   .record-card {
     padding: 14px;
   }
@@ -929,6 +1046,84 @@ body {
     font-size: 20px;
   }
 
+  /* 작은 화면에서도 날짜 필터 조정 */
+  .date-filter-section {
+    margin: 0 -16px;
+    padding: 0 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .date-filter-description {
+    font-size: 9px;
+    margin-bottom: 4px;
+  }
+
+  .date-filter-inputs {
+    flex-direction: row; /* 작은 화면에서도 가로 배치 유지 */
+    gap: 4px; /* 더 작은 간격 */
+    align-items: stretch;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .date-input-group {
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .date-label {
+    font-size: 7px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .date-input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin: 0;
+    padding: 2px 24px 2px 4px;
+    border: 1px solid var(--stroke);
+    border-radius: 6px;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 9px;
+    font-family: "Inter", sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    height: 26px;
+    line-height: 1.5;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .date-input:hover,
+  .date-input:focus,
+  .date-input:active {
+    border-radius: 6px;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+  }
+
+  .date-input::-webkit-calendar-picker-indicator {
+    width: 12px;
+    height: 12px;
+  }
+
+  .date-separator {
+    display: none;
+  }
+
   .start-button {
     bottom: 88px;
   }
@@ -941,5 +1136,18 @@ body {
   .nav-item img {
     width: 26px;
     height: 26px;
+  }
+}
+
+/* 매우 작은 화면에서 세로 배치로 전환 */
+@media (max-width: 360px) {
+  .date-filter-inputs {
+    flex-direction: column; /* 매우 작은 화면에서는 세로 배치 */
+    gap: 8px;
+  }
+
+  .date-input-group {
+    width: 100%;
+    flex: none;
   }
 }
