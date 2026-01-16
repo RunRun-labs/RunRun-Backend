@@ -47,7 +47,8 @@ async function refreshAccessToken() {
   }
 
   try {
-    const response = await fetch("/auth/refresh", {
+    // ✅ refresh 요청은 원본 fetch 사용 (무한 루프 방지)
+    const response = await originalFetch("/auth/refresh", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -78,6 +79,9 @@ async function refreshAccessToken() {
   }
 }
 
+// ✅ 전역 fetch 함수 원본 저장
+const originalFetch = window.fetch;
+
 /**
  * 공통 fetch 함수 (토큰 만료 처리 포함)
  * @param {string} url - API URL
@@ -88,7 +92,7 @@ async function refreshAccessToken() {
 async function fetchWithAuth(url, options = {}, requireAuth = true) {
   // 인증이 필요 없는 경우 (permitAll 경로)
   if (!requireAuth) {
-    return fetch(url, options);
+    return originalFetch(url, options);
   }
 
   let accessToken = getAccessToken();
@@ -100,7 +104,7 @@ async function fetchWithAuth(url, options = {}, requireAuth = true) {
   }
 
   // 첫 번째 요청 (accessToken 사용)
-  let response = await fetch(url, {
+  let response = await originalFetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -116,7 +120,7 @@ async function fetchWithAuth(url, options = {}, requireAuth = true) {
       const newAccessToken = await refreshAccessToken();
 
       // 재발급된 accessToken으로 원래 요청 재시도
-      response = await fetch(url, {
+      response = await originalFetch(url, {
         ...options,
         headers: {
           "Content-Type": "application/json",
@@ -139,6 +143,94 @@ async function fetchWithAuth(url, options = {}, requireAuth = true) {
 
   return response;
 }
+
+/**
+ * ✅ 전역 fetch 함수 래핑 (모든 fetch 호출에 자동 refresh 로직 적용)
+ * Authorization 헤더가 있는 요청만 감지하여 401 시 자동으로 refresh 후 재시도
+ */
+window.fetch = async function (url, options = {}) {
+  // ✅ /auth/refresh 요청은 원본 fetch 사용 (무한 루프 방지)
+  const urlString = typeof url === "string" ? url : url.toString();
+  const isRefreshRequest = urlString.includes("/auth/refresh");
+
+  if (isRefreshRequest) {
+    return originalFetch(url, options);
+  }
+
+  // ✅ Authorization 헤더 확인
+  let hasAuthHeader = false;
+  let authValue = null;
+
+  if (options.headers) {
+    if (options.headers instanceof Headers) {
+      authValue = options.headers.get("Authorization");
+      hasAuthHeader = !!authValue;
+    } else if (typeof options.headers === "object") {
+      authValue =
+        options.headers.Authorization ||
+        options.headers.authorization ||
+        options.headers["Authorization"];
+      hasAuthHeader = !!authValue;
+    }
+  }
+
+  // ✅ Authorization 헤더가 없으면 원본 fetch 사용
+  if (!hasAuthHeader) {
+    return originalFetch(url, options);
+  }
+
+  // ✅ 첫 번째 요청 (원본 fetch 사용)
+  let response = await originalFetch(url, options);
+
+  // ✅ 401 에러이고 Authorization 헤더가 있는 경우에만 refresh 시도
+  if (response.status === 401) {
+    try {
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        // refreshToken이 없으면 원본 응답 반환
+        return response;
+      }
+
+      // ✅ refreshToken으로 accessToken 재발급
+      const newAccessToken = await refreshAccessToken();
+
+      // ✅ 재발급된 accessToken으로 원래 요청 재시도
+      const newOptions = { ...options };
+      if (newOptions.headers instanceof Headers) {
+        newOptions.headers.set("Authorization", `Bearer ${newAccessToken}`);
+      } else if (typeof newOptions.headers === "object") {
+        newOptions.headers = {
+          ...newOptions.headers,
+          Authorization: `Bearer ${newAccessToken}`,
+        };
+      } else {
+        newOptions.headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${newAccessToken}`,
+        };
+      }
+
+      response = await originalFetch(url, newOptions);
+
+      // ✅ 재시도 후에도 401이면 refreshToken도 만료
+      if (response.status === 401) {
+        redirectToLogin();
+      }
+    } catch (error) {
+      // ✅ refresh 실패 시 원본 응답 반환
+      console.error("토큰 재발급 실패:", error);
+      if (
+        error.message &&
+        error.message.includes("refreshToken이 만료되었습니다")
+      ) {
+        redirectToLogin();
+      }
+      return response;
+    }
+  }
+
+  return response;
+};
 
 /**
  * API 응답 JSON 파싱 (에러 처리 포함)
