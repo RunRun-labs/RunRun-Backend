@@ -54,17 +54,44 @@ public class JwtConfig {
                     "/actuator/health",
                     "/actuator/health/**",
                     "/actuator/prometheus",
-
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/error",
                     "/public/**",
-                    "/attendance-event"
+                    "/attendance-event",
+                    // ✅ HTML 페이지 경로는 permitAll (프론트엔드에서 토큰 체크)
+                    "/",
+                    "/home",
+                    "/match/**",
+                    "/recruit/**",
+                    "/crews/**",
+                    "/chat/**",
+                    "/notification",
+                    "/myPage/**",
+                    "/feed/**",
+                    "/challenge/**",
+                    "/course**",
+                    "/courseCreate",
+                    "/courseDetail/**",
+                    "/courseUpdate/**",
+                    "/membership",
+                    "/payment/**",
+                    "/points/**",
+                    "/admin/**",
+                    "/test/**",
+                    "/setting/**",
+                    "/terms/**",
+                    "/profile/**",
+                    "/friends/**",
+                    "/coupon/**",
+                    "/running/**"
                 ).permitAll()
                 .requestMatchers(
                     PathRequest.toStaticResources().atCommonLocations()
                 ).permitAll()
-                // ✅ 나머지 모든 경로는 인증 필요
+                // ✅ API 요청만 인증 필요 (Authorization 헤더로 처리)
+                .requestMatchers("/api/**").authenticated()
+                // ✅ 나머지 경로도 인증 필요
                 .anyRequest().authenticated()
             )
             .addFilterBefore(

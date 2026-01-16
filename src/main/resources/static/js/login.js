@@ -10,27 +10,29 @@ document.addEventListener("DOMContentLoaded", () => {
   if (backButton) {
     backButton.addEventListener("click", () => {
       window.history.length > 1
-          ? window.history.back()
-          : (window.location.href = "/");
+        ? window.history.back()
+        : (window.location.href = "/");
     });
   }
 
   if (togglePasswordBtn && passwordInput) {
     let isVisible = false;
-    const eyeIcon = togglePasswordBtn.querySelector('.eye-icon');
+    const eyeIcon = togglePasswordBtn.querySelector(".eye-icon");
 
     togglePasswordBtn.addEventListener("click", () => {
       isVisible = !isVisible;
       passwordInput.type = isVisible ? "text" : "password";
       togglePasswordBtn.setAttribute(
-          "aria-label",
-          isVisible ? "비밀번호 숨기기" : "비밀번호 표시"
+        "aria-label",
+        isVisible ? "비밀번호 숨기기" : "비밀번호 표시"
       );
 
       // 아이콘 변경
       if (eyeIcon) {
-        eyeIcon.src = isVisible ? '/img/eye-open.svg' : '/img/eye-closed.svg';
-        eyeIcon.alt = isVisible ? '비밀번호 표시 아이콘' : '비밀번호 감춤 아이콘';
+        eyeIcon.src = isVisible ? "/img/eye-open.svg" : "/img/eye-closed.svg";
+        eyeIcon.alt = isVisible
+          ? "비밀번호 표시 아이콘"
+          : "비밀번호 감춤 아이콘";
       }
     });
   }
@@ -59,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({loginId, loginPw}),
+          body: JSON.stringify({ loginId, loginPw }),
         });
 
         const result = await response.json().catch(() => ({}));
@@ -91,18 +93,27 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.removeItem("userId");
         }
 
+        // ✅ 토큰 저장이 완료되도록 약간의 지연 후 리다이렉트
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
         // 관리자 여부 확인
         console.log("로그인 응답 데이터:", loginData);
-        console.log("isAdmin 값:", loginData?.isAdmin, "타입:",
-            typeof loginData?.isAdmin);
+        console.log(
+          "isAdmin 값:",
+          loginData?.isAdmin,
+          "타입:",
+          typeof loginData?.isAdmin
+        );
         if (loginData?.isAdmin === true) {
           console.log("관리자로 인식 - 대시보드로 이동");
           setMessage("로그인 성공! 관리자 페이지로 이동합니다.");
-          window.location.href = "/admin/dashboard";
+          // ✅ window.location.replace 사용하여 뒤로가기 방지
+          window.location.replace("/admin/dashboard");
         } else {
           console.log("일반 사용자로 인식 - 홈으로 이동");
           setMessage("로그인 성공! 홈으로 이동합니다.");
-          window.location.href = "/home";
+          // ✅ window.location.replace 사용하여 뒤로가기 방지
+          window.location.replace("/home");
         }
       } catch (error) {
         // ✅ 모든 에러를 "아이디 또는 비밀번호가 일치하지 않습니다"로 통일
@@ -115,9 +126,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Static fallback: use inline template when Thymeleaf include is not processed
   if (
-      bottomNavMount &&
-      bottomNavMount.childElementCount === 0 &&
-      bottomNavTemplate
+    bottomNavMount &&
+    bottomNavMount.childElementCount === 0 &&
+    bottomNavTemplate
   ) {
     const clone = bottomNavTemplate.content.firstElementChild.cloneNode(true);
     bottomNavMount.replaceWith(clone);
