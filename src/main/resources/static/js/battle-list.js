@@ -403,7 +403,8 @@ document.addEventListener("DOMContentLoaded", () => {
     card.className = cardClass;
 
     // 순위/참가자 수 표시
-    const rankParticipantsText = (ranking === 0 || ranking === null || ranking === undefined)
+    const rankParticipantsText = (ranking === 0 || ranking === null || ranking
+        === undefined)
         ? rankText
         : (participants > 0 ? `${record.ranking} / ${participants}` : rankText);
 
@@ -426,10 +427,6 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </div>
       <div class="battle-card-stats">
-        <span class="battle-stat-chip">
-          <span class="chip-label">기록</span>
-          <span class="chip-value">${time}</span>
-        </span>
         <span class="battle-stat-chip">
           <span class="chip-label">페이스</span>
           <span class="chip-value">${pace}</span>
