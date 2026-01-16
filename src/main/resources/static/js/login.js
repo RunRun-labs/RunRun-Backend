@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (togglePasswordBtn && passwordInput) {
     let isVisible = false;
     const eyeIcon = togglePasswordBtn.querySelector('.eye-icon');
-    
+
     togglePasswordBtn.addEventListener("click", () => {
       isVisible = !isVisible;
       passwordInput.type = isVisible ? "text" : "password";
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "aria-label",
           isVisible ? "비밀번호 숨기기" : "비밀번호 표시"
       );
-      
+
       // 아이콘 변경
       if (eyeIcon) {
         eyeIcon.src = isVisible ? '/img/eye-open.svg' : '/img/eye-closed.svg';
@@ -65,25 +65,25 @@ document.addEventListener("DOMContentLoaded", () => {
         const result = await response.json().catch(() => ({}));
 
         if (!response.ok || !result?.success) {
-          throw new Error(result?.message || "로그인에 실패했습니다.");
+          throw new Error("아이디 또는 비밀번호가 일치하지 않습니다.");
         }
 
         // 새로운 응답 구조: { token: TokenDto, userId: Long }
         const loginData = result.data;
-        
+
         // 항상 덮어쓰기 위해 조건 없이 저장
         if (loginData?.token?.accessToken) {
           localStorage.setItem("accessToken", loginData.token.accessToken);
         } else {
           localStorage.removeItem("accessToken");
         }
-        
+
         if (loginData?.token?.refreshToken) {
           localStorage.setItem("refreshToken", loginData.token.refreshToken);
         } else {
           localStorage.removeItem("refreshToken");
         }
-        
+
         // userId는 항상 덮어쓰기 (값이 없으면 제거)
         if (loginData?.userId != null && loginData?.userId !== undefined) {
           localStorage.setItem("userId", String(loginData.userId));
@@ -93,18 +93,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 관리자 여부 확인
         console.log("로그인 응답 데이터:", loginData);
-        console.log("isAdmin 값:", loginData?.isAdmin, "타입:", typeof loginData?.isAdmin);
+        console.log("isAdmin 값:", loginData?.isAdmin, "타입:",
+            typeof loginData?.isAdmin);
         if (loginData?.isAdmin === true) {
           console.log("관리자로 인식 - 대시보드로 이동");
           setMessage("로그인 성공! 관리자 페이지로 이동합니다.");
           window.location.href = "/admin/dashboard";
         } else {
           console.log("일반 사용자로 인식 - 홈으로 이동");
-        setMessage("로그인 성공! 홈으로 이동합니다.");
-        window.location.href = "/home";
+          setMessage("로그인 성공! 홈으로 이동합니다.");
+          window.location.href = "/home";
         }
       } catch (error) {
-        setMessage(error.message || "로그인 중 오류가 발생했습니다.");
+        // ✅ 모든 에러를 "아이디 또는 비밀번호가 일치하지 않습니다"로 통일
+        setMessage("아이디 또는 비밀번호가 일치하지 않습니다.");
       } finally {
         submitBtn?.removeAttribute("disabled");
       }
