@@ -138,7 +138,8 @@
         </div>
     </div>
 
-    <script>
+    <script src="/js/api-common.js" th:src="@{/js/api-common.js}"></script>
+<script>
         // ⭐ 하이브리드 방식: watchPosition + 1초 폴링
         let watchId = null;        // watchPosition ID
         let pollTimer = null;      // 1초 폴링 타이머
@@ -363,5 +364,6 @@
             statusEl.className = 'status waiting';
         }
     </script>
+
 </body>
 </html>

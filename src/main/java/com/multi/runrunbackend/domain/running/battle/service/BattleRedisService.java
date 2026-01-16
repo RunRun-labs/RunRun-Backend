@@ -6,8 +6,8 @@ import com.multi.runrunbackend.domain.running.battle.dto.BattleUserDto;
 import com.multi.runrunbackend.domain.running.battle.dto.TimeoutDto;
 import com.multi.runrunbackend.domain.running.battle.dto.req.BattleGpsReqDto.GpsData;
 import com.multi.runrunbackend.domain.running.battle.dto.res.BattleRankingResDto;
-import com.multi.runrunbackend.domain.user.entity.User;  // ✅ 추가
-import com.multi.runrunbackend.domain.user.repository.UserRepository;  // ✅ 추가
+import com.multi.runrunbackend.domain.user.entity.User;
+import com.multi.runrunbackend.domain.user.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -45,11 +45,11 @@ public class BattleRedisService {
    */
   public void setBattleStartTime(Long sessionId, LocalDateTime startTime) {
     String key = String.format(BATTLE_START_TIME_KEY, sessionId);
-    
+
     try {
       String timeStr = startTime.toString();
       redisTemplate.opsForValue().set(key, timeStr, BATTLE_TTL);
-      
+
       log.info("✅ 배틀 시작 시간 저장: sessionId={}, startTime={}", sessionId, startTime);
     } catch (Exception e) {
       log.error("❌ 배틀 시작 시간 저장 실패: sessionId={}", sessionId, e);
@@ -62,15 +62,15 @@ public class BattleRedisService {
    */
   public LocalDateTime getBattleStartTime(Long sessionId) {
     String key = String.format(BATTLE_START_TIME_KEY, sessionId);
-    
+
     try {
       String timeStr = (String) redisTemplate.opsForValue().get(key);
-      
+
       if (timeStr == null) {
         log.warn("⚠️ 배틀 시작 시간 없음: sessionId={}", sessionId);
         return null;
       }
-      
+
       return LocalDateTime.parse(timeStr);
     } catch (Exception e) {
       log.error("❌ 배틀 시작 시간 조회 실패: sessionId={}", sessionId, e);
@@ -86,7 +86,7 @@ public class BattleRedisService {
 
     // ✅ Redis에서 배틀 시작 시간 조회
     LocalDateTime battleStartTime = getBattleStartTime(sessionId);
-    
+
     if (battleStartTime == null) {
       log.warn("⚠️ 배틀 시작 시간이 없음, 현재 시각 사용: sessionId={}", sessionId);
       battleStartTime = LocalDateTime.now();
@@ -199,7 +199,7 @@ public class BattleRedisService {
     Set<ZSetOperations.TypedTuple<Object>> rankingSet =
         redisTemplate.opsForZSet().reverseRangeWithScores(rankingKey, 0, -1);
 
-    log.info("🔥🔥🔥 getRankings 호출: sessionId={}, ranking ZSet 크기={}", 
+    log.info("🔥🔥🔥 getRankings 호출: sessionId={}, ranking ZSet 크기={}",
         sessionId, rankingSet == null ? 0 : rankingSet.size());
 
     if (rankingSet == null || rankingSet.isEmpty()) {
@@ -260,7 +260,7 @@ public class BattleRedisService {
           // ✅ 사용자 정보 조회하여 프로필 이미지 가져오기
           User user = userRepository.findById(userId).orElse(null);
           String profileImageUrl = (user != null) ? user.getProfileImageUrl() : null;
-          
+
           rankings.add(BattleRankingResDto.builder()
               .rank(0)  // 임시 순위 (정렬 후 부여)
               .userId(userId)
@@ -284,7 +284,7 @@ public class BattleRedisService {
       }
     }
 
-    log.info("🔥🔥🔥 데이터 수집 완료: 전체={}명, 조회성공={}명, NULL={}명", 
+    log.info("🔥🔥🔥 데이터 수집 완료: 전체={}명, 조회성공={}명, NULL={}명",
         rankingSet.size(), rankings.size(), nullJsonCount);
 
     // ✅ 2단계: 상태별로 분류 및 정렬
@@ -360,23 +360,22 @@ public class BattleRedisService {
   /**
    * 참가자 완주 처리
    */
-  public void finishUser(Long sessionId, Long userId) {
+  public boolean finishUser(Long sessionId, Long userId) {
     String key = String.format(BATTLE_USER_KEY, sessionId, userId);
 
     String json = (String) redisTemplate.opsForValue().get(key);
     if (json == null) {
       log.warn("⚠️ 배틀 참가자 데이터 없음: sessionId={}, userId={}", sessionId, userId);
-      return;
+      return false;
     }
 
     try {
       BattleUserDto userData = objectMapper.readValue(json, BattleUserDto.class);
 
-      // ✅ 이미 완주한 경우 더 이상 처리하지 않음 (멱등성 보장)
       if (userData.getIsFinished()) {
-        log.warn("⚠️⚠️⚠️ 이미 완주 처리된 참가자: sessionId={}, userId={}, 기존완주시각={}",
+        log.debug("ℹ️ 이미 완주 처리된 참가자: sessionId={}, userId={}, 기존완주시각={}",
             sessionId, userId, userData.getFinishTime());
-        return;  // ✅ 중복 완주 방지!
+        return false;
       }
 
       LocalDateTime finishTime = LocalDateTime.now();
@@ -410,8 +409,12 @@ public class BattleRedisService {
           "🏁🏁🏁 참가자 완주: sessionId={}, userId={}, username={}, 실제완주시각={}, distance={}m, pace={}",
           sessionId, userId, userData.getUsername(), finishTime, userData.getTotalDistance(),
           userData.getCurrentPace());
+
+      return true;
+
     } catch (JsonProcessingException e) {
       log.error("❌ JSON 처리 실패: sessionId={}, userId={}", sessionId, userId, e);
+      return false;
     }
   }
 
@@ -465,20 +468,21 @@ public class BattleRedisService {
         try {
           BattleUserDto userData = objectMapper.readValue(json, BattleUserDto.class);
 
-          log.info("🔍 처리 전: userId={}, isFinished={}, status={}, distance={}m", 
+          log.info("🔍 처리 전: userId={}, isFinished={}, status={}, distance={}m",
               userId, userData.getIsFinished(), userData.getStatus(), userData.getTotalDistance());
 
           // ✅ 미완주자만 타임아웃으로 변경 (상태가 null이거나 RUNNING인 경우)
-          if (!userData.getIsFinished() && (userData.getStatus() == null || "RUNNING".equals(userData.getStatus()))) {
+          if (!userData.getIsFinished() && (userData.getStatus() == null || "RUNNING".equals(
+              userData.getStatus()))) {
             userData.setStatus("TIMEOUT");
             String updatedJson = objectMapper.writeValueAsString(userData);
             redisTemplate.opsForValue().set(userKey, updatedJson, BATTLE_TTL);
 
             timeoutCount++;
-            log.info("⏰ 자동 타임아웃 설정: sessionId={}, userId={}, distance={}m", 
+            log.info("⏰ 자동 타임아웃 설정: sessionId={}, userId={}, distance={}m",
                 sessionId, userId, userData.getTotalDistance());
           } else {
-            log.info("ℹ️ 타임아웃 대상 아님: userId={}, isFinished={}, status={}", 
+            log.info("ℹ️ 타임아웃 대상 아님: userId={}, isFinished={}, status={}",
                 userId, userData.getIsFinished(), userData.getStatus());
           }
         } catch (JsonProcessingException e) {
@@ -511,7 +515,7 @@ public class BattleRedisService {
       String updatedJson = objectMapper.writeValueAsString(userData);
       redisTemplate.opsForValue().set(key, updatedJson, BATTLE_TTL);
 
-      log.info("🚺 참가자 포기 처리: sessionId={}, userId={}, distance={}m", 
+      log.info("🚺 참가자 포기 처리: sessionId={}, userId={}, distance={}m",
           sessionId, userId, userData.getTotalDistance());
     } catch (JsonProcessingException e) {
       log.error("❌ JSON 처리 실패: sessionId={}, userId={}", sessionId, userId, e);
@@ -520,6 +524,7 @@ public class BattleRedisService {
 
   /**
    * ❌ 참가자 제거 (사용하지 않음 - 포기자도 결과 저장 필요)
+   *
    * @deprecated setUserGiveUp 사용 권장
    */
   @Deprecated

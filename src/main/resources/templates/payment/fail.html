@@ -99,6 +99,7 @@
     <p class="countdown" id="countdown">3초 후 자동으로 돌아갑니다...</p>
 </div>
 
+<script src="/js/api-common.js" th:src="@{/js/api-common.js}"></script>
 <script>
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
@@ -133,5 +134,6 @@
         }
     }, 1000);
 </script>
+
 </body>
 </html>

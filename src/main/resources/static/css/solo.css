@@ -57,7 +57,7 @@ body {
   position: relative;
   width: 100%;
   min-height: calc(100vh - 160px);
-  padding-bottom: 100px; /* ?�단 버튼�?겹치지 ?�도�??�백 */
+  padding-bottom: 120px; /* 코스 상세 정보 추가 시 여유 공간 확보 */ /* ?�단 버튼�?겹치지 ?�도�??�백 */
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -697,7 +697,7 @@ body {
   }
 
   .page {
-    padding-bottom: 100px;
+    padding-bottom: 120px; /* 코스 상세 정보 추가 시 여유 공간 확보 */
   }
 
   .header {
@@ -716,6 +716,23 @@ body {
   .info-box {
     padding: 10px;
     margin: 12px 0;
+  }
+
+  /* 코스 상세 정보 모바일 조정 */
+  .course-detail-section {
+    margin: 16px 0;
+  }
+
+  .course-detail-card {
+    padding: 16px;
+  }
+
+  .course-detail-title {
+    font-size: 16px;
+  }
+
+  .map-container {
+    height: 200px; /* 모바일에서 지도 높이 조정 */
   }
 
   .distance-chip {
@@ -752,7 +769,7 @@ body {
 
 @media (max-width: 920px) and (max-height: 520px) {
   .page {
-    padding-bottom: 90px;
+    padding-bottom: 110px; /* 코스 상세 정보 추가 시 여유 공간 확보 */
   }
 
   .header {
@@ -782,6 +799,14 @@ body {
   .manual-input-unit {
     font-size: 12px;
     right: 8px;
+  }
+
+  .map-container {
+    height: 180px; /* 작은 화면에서 지도 높이 조정 */
+  }
+
+  .course-detail-card {
+    padding: 14px;
   }
 
   .start-button {
@@ -845,8 +870,9 @@ body {
 
 /* 코스 상세 정보 카드 */
 .course-detail-section {
-  padding: 0 20px 20px;
-  margin-top: 20px;
+  padding: 0; /* container 패딩과 중복 제거 */
+  margin: 20px 0;
+  width: 100%;
 }
 
 .course-detail-card {

@@ -21,7 +21,18 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     if (response.isCommitted()) {
       return; // :흰색_확인_표시: 이미 커밋됐으면 아무 것도 쓰지 않음
     }
-// 401 Unauthorized 상태 코드와 JSON 메시지 직접 작성
+
+    // HTML 페이지 요청인지 확인 (Accept 헤더 또는 Content-Type 확인)
+    String acceptHeader = request.getHeader("Accept");
+    boolean isHtmlRequest = acceptHeader != null && acceptHeader.contains("text/html");
+    
+    // HTML 요청이면 login으로 리다이렉트
+    if (isHtmlRequest && !request.getRequestURI().startsWith("/api")) {
+      response.sendRedirect("/login");
+      return;
+    }
+
+    // API 요청이면 JSON 응답
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType("application/json;charset=UTF-8");
     response.getWriter().write("{\"error\": \"인증되지 않은 사용자입니다. 로그인 후 다시 시도해 주세요.\"}");

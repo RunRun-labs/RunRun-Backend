@@ -13,7 +13,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
       rel="stylesheet"
   />
-  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="/js/api-common.js" th:src="@{/js/api-common.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
   <script src="/js/running-tracker.js" th:src="@{/js/running-tracker.js}"></script>
   <script src="/js/tts-manager.js" th:src="@{/js/tts-manager.js}"></script>
@@ -40,16 +41,6 @@
         </div>
       </div>
       <div class="header-right">
-        <button class="header-icon-btn" type="button" aria-label="참여자 목록" id="participant-list-btn">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
-               xmlns="http://www.w3.org/2000/svg">
-            <path
-                d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z"
-                fill="white"/>
-            <path d="M10 12C5.58172 12 2 13.7909 2 16V20H18V16C18 13.7909 14.4183 12 10 12Z"
-                  fill="white"/>
-          </svg>
-        </button>
         <button class="header-icon-btn hidden" type="button" aria-label="러닝 페이지"
                 id="go-running-page-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -329,6 +320,7 @@
 <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
   <script src="/js/ad-common.js" th:src="@{/js/ad-common.js}"></script>
   <script src="/js/chat1.js" th:src="@{/js/chat1.js}"></script>
+
 </body>
 </html>
 

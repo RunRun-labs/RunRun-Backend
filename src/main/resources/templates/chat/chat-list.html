@@ -13,7 +13,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
       rel="stylesheet"
   />
-  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="/js/api-common.js" th:src="@{/js/api-common.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
   <link rel="stylesheet" href="/css/chat-list.css" th:href="@{/css/chat-list.css}">
   <link rel="stylesheet" href="/css/notification-toast.css"
@@ -44,31 +45,31 @@
     </div>
     
     <!-- 필터 버튼 -->
-    <div class="filter-container">
+    <div class="filter-container" style="display: none;">
       <button class="filter-btn active" data-filter="all">
         <span>전체</span>
-        <span class="filter-count">8</span>
+        <span class="filter-count">0</span>
       </button>
       <button class="filter-btn" data-filter="offline">
         <span>오프라인</span>
-        <span class="filter-count">5</span>
+        <span class="filter-count">0</span>
       </button>
       <button class="filter-btn" data-filter="crew">
         <span>크루</span>
-        <span class="filter-count">1</span>
+        <span class="filter-count">0</span>
       </button>
     </div>
   </header>
 
   <!-- 다음 러닝까지 카드 -->
-  <div class="next-running-card">
+  <div class="next-running-card" style="display: none;">
     <div class="next-running-content">
       <p class="next-running-label">다음 러닝까지</p>
-      <h2 class="next-running-time">2시간 30분</h2>
-      <p class="next-running-info">한강 러닝 크루 · 여의도</p>
+      <h2 class="next-running-time">-</h2>
+      <p class="next-running-info">-</p>
     </div>
     <div class="next-running-right">
-      <div class="next-running-distance">5km</div>
+      <div class="next-running-distance">-</div>
     </div>
   </div>
 
@@ -86,6 +87,7 @@
 
 <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/chat-list.js" th:src="@{/js/chat-list.js}"></script>
+
 </body>
 </html>
 
