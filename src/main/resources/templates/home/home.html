@@ -237,6 +237,8 @@
         th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<!-- 공통 인증 체크 스크립트 (모든 페이지 로드 전에 먼저 실행) -->
+<script src="/js/api-common.js" th:src="@{/js/api-common.js}"></script>
 <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/ad-common.js" th:src="@{/js/ad-common.js}"></script>
 <script src="/js/home.js" th:src="@{/js/home.js}"></script>

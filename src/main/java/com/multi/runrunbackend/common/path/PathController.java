@@ -1,5 +1,7 @@
 package com.multi.runrunbackend.common.path;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +11,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 public class PathController {
 
     /* ===================== AUTH / HOME ===================== */
+
+    @GetMapping("/")
+    public String rootView() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // 인증되지 않았거나 anonymousUser인 경우
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal().toString())) {
+            return "redirect:/login";
+        }
+        return "redirect:/home";
+    }
 
     @GetMapping("/login")
     public String loginView() {
