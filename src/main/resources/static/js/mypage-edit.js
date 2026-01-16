@@ -140,6 +140,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         editForm.addEventListener("submit", async (event) => {
             event.preventDefault();
+            
+            const submitBtn = editForm.querySelector('button[type="submit"]');
+            
+            // 이미 처리 중이면 무시
+            if (submitBtn?.hasAttribute("disabled")) {
+                return;
+            }
+            
             const formData = new FormData(editForm);
             const values = collectFormValues(formData);
             const {valid, message} = validateAllFields(values);
@@ -166,8 +174,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const submitBtn = editForm.querySelector('button[type="submit"]');
+            // 유효성 검사 통과 후 버튼 비활성화 및 로딩 표시
             submitBtn?.setAttribute("disabled", "true");
+            const originalText = submitBtn?.textContent;
+            if (submitBtn) {
+                submitBtn.textContent = "저장 중...";
+                submitBtn.style.opacity = "0.6";
+                submitBtn.style.cursor = "not-allowed";
+            }
             setMessage("내 정보를 저장 중입니다...");
 
             try {
@@ -212,8 +226,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 }, 800);
             } catch (error) {
                 setMessage(error.message || "내 정보를 수정하는 중 오류가 발생했습니다.");
-            } finally {
+                // 에러 발생 시 버튼 다시 활성화
                 submitBtn?.removeAttribute("disabled");
+                if (submitBtn && originalText) {
+                    submitBtn.textContent = originalText;
+                    submitBtn.style.opacity = "1";
+                    submitBtn.style.cursor = "pointer";
+                }
+            } finally {
+                // 성공 시에는 페이지 이동하므로 finally에서 처리 불필요
+                // 하지만 안전을 위해 남겨둠 (에러 발생 시에만 활성화)
             }
         });
     }
