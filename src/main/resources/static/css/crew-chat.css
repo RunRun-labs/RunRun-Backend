@@ -26,6 +26,9 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
+  /* 모바일 환경에서 fixed 요소 지원 */
+  position: fixed;
+  width: 100%;
 }
 
 body {
@@ -42,6 +45,7 @@ body {
   width: min(390px, 100vw);
   margin: 0 auto;
   height: 100vh;
+  height: 100dvh; /* 동적 뷰포트 높이 */
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -130,6 +134,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: auto; /* 높이 자동 조정 */
 }
 
 .info-card-left {
@@ -156,9 +161,13 @@ body {
   font-size: 13.5px;
   color: white;
   font-weight: 400;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 2줄까지 표시 */
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .info-card-right {
@@ -336,13 +345,17 @@ body {
 .message-input-area {
   background: var(--bg-white);
   border-top: 1px solid var(--stroke);
-  padding: 13px 16px 12px;
+  padding: 13px 16px;
+  padding-bottom: max(13px, env(safe-area-inset-bottom)); /* iOS Safe Area */
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  position: relative;
-  z-index: 5;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  /* 모바일 키보드를 위한 고정 */
+  width: 100%;
 }
 
 .attach-button {
@@ -429,6 +442,11 @@ body {
   .chat-container {
     padding-bottom: 8px;
   }
+  
+  /* 모바일 키보드 대응 */
+  .message-input-area {
+    padding-bottom: max(13px, env(safe-area-inset-bottom));
+  }
 }
 
 /* 모바일 가로 */
@@ -504,7 +522,9 @@ body {
   width: 320px;
   max-width: 85vw;
   height: 100vh;
-  max-height: 844px;
+  height: 100dvh; /* 동적 뷰포트 높이 */
+  max-height: 100vh;
+  max-height: 100dvh;
   background: var(--bg-white);
   border-radius: 20px 0 0 20px;
   box-shadow: -10px 0px 30px 0px rgba(0, 0, 0, 0.15);
@@ -567,8 +587,10 @@ body {
 .participant-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px 0;
   min-height: 0;
+  -webkit-overflow-scrolling: touch; /* iOS 스크롤 개선 */
 }
 
 .participant-item {

@@ -205,7 +205,7 @@ function renderBanner(data) {
   
   // ✅ 타임아웃 판단: targetDistance는 km, totalDistance는 m
   const targetMeters = data.targetDistance * 1000;  // ✅ km → m 변환
-  const isTimeout = data.totalDistance < (targetMeters * 0.9);
+  const isTimeout = data.totalDistance < targetMeters;
   
   // ✅ 순위 표시
   if (data.myRank === 0 || isTimeout) {
@@ -271,7 +271,7 @@ function renderMyRecord(data) {
   
   // ✅ 타임아웃 판단: targetDistance는 km, totalDistance는 m
   const targetMeters = data.targetDistance * 1000;
-  const isTimeout = data.totalDistance < (targetMeters * 0.9);
+  const isTimeout = data.totalDistance < targetMeters;
   
   // ✅ 완주 실패 vs 완주 성공
   if (data.myRank === 0 || isTimeout) {
@@ -331,15 +331,17 @@ function createRankingItem(participant, isMe) {
   
   // ✅ 타임아웃 판단: targetDistance는 km, totalDistance는 m
   const targetMeters = resultData.targetDistance * 1000;  // ✅ km → m 변환
-  const isTimeout = participant.totalDistance < (targetMeters * 0.9);
+  const isTimeout = participant.totalDistance < targetMeters;
   
   // ✅ 순위 배지
   const badge = document.createElement('div');
-  if (participant.rank === 0 || isTimeout) {
+  if (participant.rank === 0) {
+    // 포기자만 ❌ 표시
     badge.className = 'rank-badge rank-failed-badge';
     badge.textContent = '❌';
     badge.style.cssText = 'background: rgba(255, 68, 68, 0.2); color: #ff4444;';
   } else {
+    // 완주자와 타임아웃자 모두 숫자 순위 표시
     badge.className = `rank-badge rank-${participant.rank}-badge`;
     badge.textContent = participant.rank;
   }
