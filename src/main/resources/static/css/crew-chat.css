@@ -134,6 +134,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: auto; /* 높이 자동 조정 */
 }
 
 .info-card-left {
@@ -160,9 +161,13 @@ body {
   font-size: 13.5px;
   color: white;
   font-weight: 400;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 2줄까지 표시 */
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .info-card-right {
@@ -517,7 +522,9 @@ body {
   width: 320px;
   max-width: 85vw;
   height: 100vh;
-  max-height: 844px;
+  height: 100dvh; /* 동적 뷰포트 높이 */
+  max-height: 100vh;
+  max-height: 100dvh;
   background: var(--bg-white);
   border-radius: 20px 0 0 20px;
   box-shadow: -10px 0px 30px 0px rgba(0, 0, 0, 0.15);
@@ -580,8 +587,10 @@ body {
 .participant-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px 0;
   min-height: 0;
+  -webkit-overflow-scrolling: touch; /* iOS 스크롤 개선 */
 }
 
 .participant-item {
