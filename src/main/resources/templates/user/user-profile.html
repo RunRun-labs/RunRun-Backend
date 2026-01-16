@@ -251,12 +251,14 @@
     th:replace="~{common/bottom-nav :: bottomNav}"
 ></div>
 
+<script src="/js/api-common.js" th:src="@{/js/api-common.js}"></script>
 <script>
   // Thymeleaf에서 전달된 userId를 전역 변수로 설정
   window.userProfileUserId = /*[[${userId}]]*/ null;
 </script>
 <script src="/js/notification-common.js" th:src="@{/js/notification-common.js}"></script>
 <script src="/js/user-profile.js" th:src="@{/js/user-profile.js}"></script>
+
 </body>
 </html>
 

@@ -1,174 +1,120 @@
 <!doctype html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
-    <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, maximum-scale=1"
-    />
-    <title>RUNRUN | Login</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
-            rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/css/login.css" th:href="@{/css/login.css}">
+  <meta charset="UTF-8"/>
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>RUNRUN | Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fugaz+One&display=swap"
+      rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/login.css" th:href="@{/css/login.css}">
 </head>
 <body>
 <main class="page">
-    <button class="back-button" type="button" aria-label="뒤로가기">
+  <button class="back-button" type="button" aria-label="뒤로가기">
+    <img
+        th:src="@{/img/icons/back.svg}"
+        src="/img/icons/back.svg"
+        alt="뒤로가기 아이콘"
+    />
+  </button>
+
+  <div class="brand">
+    <span class="brand-text">RUNRUN</span>
+  </div>
+
+  <div class="shield">
+    <img
+        th:src="@{/img/shield.svg}"
+        src="/img/shield.svg"
+        alt="보안 아이콘"
+    />
+  </div>
+
+  <section class="headline">
+    <h1>로그인</h1>
+    <p>이메일과 비밀번호를 입력하여 로그인하세요</p>
+  </section>
+
+  <form
+      class="login-form"
+      th:action="@{/auth/login}"
+      action="/auth/login"
+      method="post"
+      novalidate
+      data-form="login"
+  >
+    <div class="field">
+      <input
+          type="text"
+          name="loginId"
+          placeholder="아이디를 입력하세요"
+          required
+      />
+    </div>
+    <div class="field password-field">
+      <input
+          type="password"
+          name="loginPw"
+          placeholder="비밀번호를 입력하세요"
+          required
+      />
+      <button
+          class="toggle-password"
+          type="button"
+          aria-label="비밀번호 표시 전환"
+      >
         <img
-                th:src="@{/img/icons/back.svg}"
-                src="/img/icons/back.svg"
-                alt="뒤로가기 아이콘"
+            th:src="@{/img/eye-closed.svg}"
+            src="/img/eye-closed.svg"
+            alt="비밀번호 감춤 아이콘"
+            class="eye-icon"
         />
+      </button>
+    </div>
+
+    <button class="primary-button" type="submit">로그인</button>
+    <p class="form-message" data-role="login-message" aria-live="polite"></p>
+  </form>
+
+  <div class="divider"></div>
+
+  <div class="social-buttons">
+    <button class="social-btn" type="button" aria-label="Google 로그인">
+      <img
+          th:src="@{/img/google-icon.svg}"
+          src="/img/google-icon.svg"
+          alt="Google 로고"
+      />
     </button>
+    <button class="social-btn" type="button" aria-label="Kakao 로그인">
+      <img
+          th:src="@{/img/kakao-icon.svg}"
+          src="/img/kakao-icon.svg"
+          alt="Kakao 심볼"
+      />
+    </button>
+    <button class="social-btn" type="button" aria-label="GitHub 로그인">
+      <img
+          th:src="@{/img/github-icon.svg}"
+          src="/img/github-icon.svg"
+          alt="GitHub 로고"
+      />
+    </button>
+  </div>
 
-    <div class="brand">
-        <span class="brand-text">RUNRUN</span>
-    </div>
-
-    <div class="shield">
-        <img
-                th:src="@{/img/shield.svg}"
-                src="/img/shield.svg"
-                alt="보안 아이콘"
-        />
-    </div>
-
-    <section class="headline">
-        <h1>Login</h1>
-        <p>이메일과 비밀번호를 입력하여 로그인하세요</p>
-    </section>
-
-    <form
-            class="login-form"
-            th:action="@{/auth/login}"
-            action="/auth/login"
-            method="post"
-            novalidate
-            data-form="login"
-    >
-        <div class="field">
-            <input
-                    type="text"
-                    name="loginId"
-                    placeholder="아이디를 입력하세요"
-                    required
-            />
-        </div>
-        <div class="field password-field">
-            <input
-                    type="password"
-                    name="loginPw"
-                    placeholder="비밀번호를 입력하세요"
-                    required
-            />
-            <button
-                    class="toggle-password"
-                    type="button"
-                    aria-label="비밀번호 표시 전환"
-            >
-                <img
-                        th:src="@{/img/eye-closed.svg}"
-                        src="/img/eye-closed.svg"
-                        alt="비밀번호 감춤 아이콘"
-                        class="eye-icon"
-                />
-            </button>
-        </div>
-
-        <button class="primary-button" type="submit">Log In</button>
-        <p class="form-message" data-role="login-message" aria-live="polite"></p>
-    </form>
-
-    <div class="divider"></div>
-
-    <div class="social-buttons">
-        <button class="social-btn" type="button" aria-label="Google 로그인">
-            <img
-                    th:src="@{/img/google-icon.svg}"
-                    src="/img/google-icon.svg"
-                    alt="Google 로고"
-            />
-        </button>
-        <button class="social-btn" type="button" aria-label="Kakao 로그인">
-            <img
-                    th:src="@{/img/kakao-icon.svg}"
-                    src="/img/kakao-icon.svg"
-                    alt="Kakao 심볼"
-            />
-        </button>
-        <button class="social-btn" type="button" aria-label="GitHub 로그인">
-            <img
-                    th:src="@{/img/github-icon.svg}"
-                    src="/img/github-icon.svg"
-                    alt="GitHub 로고"
-            />
-        </button>
-    </div>
-
-    <div class="signup">
-        <span>계정이 없으신가요?</span>
-        <a th:href="@{/signup}" href="/signup">회원가입</a>
-    </div>
+  <div class="signup">
+    <span>계정이 없으신가요?</span>
+    <a th:href="@{/signup}" href="/signup">회원가입</a>
+  </div>
 </main>
 
-<template id="bottomNavTemplate">
-    <nav class="bottom-nav" aria-label="하단 메뉴">
-        <a class="nav-item" th:href="@{/chat}" href="/chat">
-            <img
-                    th:src="@{/img/nav-chat.svg}"
-                    src="/img/nav-chat.svg"
-                    alt="채팅"
-                    aria-hidden="true"
-            />
-            <span>chat</span>
-        </a>
-        <a class="nav-item" th:href="@{/feed}" href="/feed">
-            <img
-                    th:src="@{/img/nav-feed.svg}"
-                    src="/img/nav-feed.svg"
-                    alt="피드"
-                    aria-hidden="true"
-            />
-            <span>feed</span>
-        </a>
-        <a class="nav-item" th:href="@{/home}" href="/home">
-            <img
-                    th:src="@{/img/nav-home.svg}"
-                    src="/img/nav-home.svg"
-                    alt="홈"
-                    aria-hidden="true"
-            />
-            <span>home</span>
-        </a>
-        <a class="nav-item" th:href="@{/match/select}" href="/match/select">
-            <img
-                    th:src="@{/img/nav-match.svg}"
-                    src="/img/nav-match.svg"
-                    alt="매치"
-                    aria-hidden="true"
-            />
-            <span>match</span>
-        </a>
-        <a class="nav-item" th:href="@{/myPage}" href="/myPage">
-            <img
-                    th:src="@{/img/nav-my.svg}"
-                    src="/img/nav-my.svg"
-                    alt="마이페이지"
-                    aria-hidden="true"
-            />
-            <span>my</span>
-        </a>
-    </nav>
-</template>
-
-<div
-        id="bottomNavMount"
-        th:replace="~{common/bottom-nav :: bottomNav}"
-></div>
 
 <script src="/js/login.js" th:src="@{/js/login.js}"></script>
 </body>

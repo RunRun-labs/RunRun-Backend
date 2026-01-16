@@ -241,7 +241,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: 14px;
   color: var(--text-muted);
   margin-top: 12px;
 }
@@ -250,6 +250,7 @@ body {
   color: var(--info);
   font-weight: 600;
   text-decoration: none;
+  font-size: 14px;
 }
 
 .bottom-nav {
