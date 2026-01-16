@@ -140,8 +140,8 @@ body {
   display: flex;
   flex-direction: row;
   gap: 16px;
-  margin-top: 20px;
-  padding: 20px 0;
+  margin-top: 0; /* 작성일자 바로 아래 */
+  padding: 16px 0;
   border-top: 1px solid var(--stroke);
   align-items: center;
 }
@@ -401,7 +401,7 @@ body {
 /* Main Content */
 .course-content {
   flex: 1;
-  padding: 20px 16px 120px;
+  padding: 20px 16px 200px; /* bottom-nav + 버튼들 충분히 여유있게 */
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -754,7 +754,7 @@ body {
   }
 
   .course-content {
-    padding: 16px 16px 100px;
+    padding: 16px 16px 200px; /* 모바일 bottom-nav + 버튼들 충분히 여유있게 */
     gap: 18px;
   }
 
@@ -782,7 +782,7 @@ body {
   }
 
   .course-content {
-    padding: 14px 16px 90px;
+    padding: 14px 16px 180px; /* 가로 모드 bottom-nav + 버튼 충분히 여유있게 */
     gap: 16px;
   }
 
