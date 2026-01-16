@@ -149,27 +149,60 @@ async function fetchWithAuth(url, options = {}, requireAuth = true) {
  * Authorization 헤더가 있는 요청만 감지하여 401 시 자동으로 refresh 후 재시도
  */
 window.fetch = async function (url, options = {}) {
+  // ✅ Request 객체 처리
+  let actualUrl = url;
+  let actualOptions = options;
+  let requestHeaders = null;
+
+  if (url instanceof Request) {
+    // Request 객체인 경우 URL과 옵션 추출
+    actualUrl = url.url;
+    actualOptions = {
+      method: url.method,
+      headers: url.headers,
+      body: url.body,
+      mode: url.mode,
+      credentials: url.credentials,
+      cache: url.cache,
+      redirect: url.redirect,
+      referrer: url.referrer,
+      integrity: url.integrity,
+      ...options, // options가 있으면 덮어쓰기
+    };
+    requestHeaders = url.headers;
+  }
+
   // ✅ /auth/refresh 요청은 원본 fetch 사용 (무한 루프 방지)
-  const urlString = typeof url === "string" ? url : url.toString();
+  const urlString =
+    typeof actualUrl === "string" ? actualUrl : String(actualUrl);
   const isRefreshRequest = urlString.includes("/auth/refresh");
 
   if (isRefreshRequest) {
     return originalFetch(url, options);
   }
 
-  // ✅ Authorization 헤더 확인
+  // ✅ Authorization 헤더 확인 (Request 객체의 headers 또는 options.headers)
   let hasAuthHeader = false;
   let authValue = null;
 
-  if (options.headers) {
-    if (options.headers instanceof Headers) {
-      authValue = options.headers.get("Authorization");
+  // Request 객체의 headers 확인
+  if (requestHeaders) {
+    if (requestHeaders instanceof Headers) {
+      authValue = requestHeaders.get("Authorization");
       hasAuthHeader = !!authValue;
-    } else if (typeof options.headers === "object") {
+    }
+  }
+
+  // options.headers 확인 (Request 객체가 아니거나 Request에 헤더가 없는 경우)
+  if (!hasAuthHeader && actualOptions.headers) {
+    if (actualOptions.headers instanceof Headers) {
+      authValue = actualOptions.headers.get("Authorization");
+      hasAuthHeader = !!authValue;
+    } else if (typeof actualOptions.headers === "object") {
       authValue =
-        options.headers.Authorization ||
-        options.headers.authorization ||
-        options.headers["Authorization"];
+        actualOptions.headers.Authorization ||
+        actualOptions.headers.authorization ||
+        actualOptions.headers["Authorization"];
       hasAuthHeader = !!authValue;
     }
   }
@@ -195,22 +228,49 @@ window.fetch = async function (url, options = {}) {
       const newAccessToken = await refreshAccessToken();
 
       // ✅ 재발급된 accessToken으로 원래 요청 재시도
-      const newOptions = { ...options };
-      if (newOptions.headers instanceof Headers) {
-        newOptions.headers.set("Authorization", `Bearer ${newAccessToken}`);
-      } else if (typeof newOptions.headers === "object") {
-        newOptions.headers = {
-          ...newOptions.headers,
-          Authorization: `Bearer ${newAccessToken}`,
-        };
-      } else {
-        newOptions.headers = {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${newAccessToken}`,
-        };
-      }
+      let newOptions;
 
-      response = await originalFetch(url, newOptions);
+      if (url instanceof Request) {
+        // Request 객체인 경우 새로운 Request 생성
+        newOptions = { ...actualOptions };
+        if (newOptions.headers instanceof Headers) {
+          const newHeaders = new Headers(newOptions.headers);
+          newHeaders.set("Authorization", `Bearer ${newAccessToken}`);
+          newOptions.headers = newHeaders;
+        } else if (typeof newOptions.headers === "object") {
+          newOptions.headers = {
+            ...newOptions.headers,
+            Authorization: `Bearer ${newAccessToken}`,
+          };
+        } else {
+          newOptions.headers = {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${newAccessToken}`,
+          };
+        }
+        // Request 객체를 새로 생성하여 전달
+        const newRequest = new Request(actualUrl, newOptions);
+        response = await originalFetch(newRequest);
+      } else {
+        // 일반적인 경우
+        newOptions = { ...actualOptions };
+        if (newOptions.headers instanceof Headers) {
+          const newHeaders = new Headers(newOptions.headers);
+          newHeaders.set("Authorization", `Bearer ${newAccessToken}`);
+          newOptions.headers = newHeaders;
+        } else if (typeof newOptions.headers === "object") {
+          newOptions.headers = {
+            ...newOptions.headers,
+            Authorization: `Bearer ${newAccessToken}`,
+          };
+        } else {
+          newOptions.headers = {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${newAccessToken}`,
+          };
+        }
+        response = await originalFetch(actualUrl, newOptions);
+      }
 
       // ✅ 재시도 후에도 401이면 refreshToken도 만료
       if (response.status === 401) {
