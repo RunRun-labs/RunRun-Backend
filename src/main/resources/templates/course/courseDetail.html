@@ -166,61 +166,6 @@
           </button>
         </div>
 
-        <!-- Siren Modal -->
-        <div class="modal-overlay" id="sirenModal" style="display: none">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h2 class="modal-title">코스 신고하기</h2>
-              <button
-                class="modal-close"
-                type="button"
-                id="closeSirenModal"
-                aria-label="닫기"
-              >
-                ×
-              </button>
-            </div>
-            <div class="modal-body">
-              <p class="modal-description">
-                부적절한 내용이 있다면 신고해주세요. 신고 사유를 자세히
-                입력해주시면 더 빠르게 처리할 수 있습니다.
-              </p>
-              <div class="form-field">
-                <label class="field-label" for="sirenDescription"
-                  >신고 사유</label
-                >
-                <textarea
-                  class="field-textarea"
-                  id="sirenDescription"
-                  placeholder="신고 사유를 입력해주세요 (10자 이상 500자 이하)"
-                  rows="5"
-                ></textarea>
-                <p
-                  class="field-error"
-                  id="sirenDescriptionError"
-                  style="display: none"
-                ></p>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button
-                class="modal-button cancel-button"
-                type="button"
-                id="cancelSirenBtn"
-              >
-                취소
-              </button>
-              <button
-                class="modal-button submit-button"
-                type="button"
-                id="submitSirenBtn"
-              >
-                신고하기
-              </button>
-            </div>
-          </div>
-        </div>
-
         <!-- Action Buttons (Edit/Delete) -->
         <div class="course-actions" id="courseActions" style="display: none">
           <button class="edit-button" type="button" id="editBtn">
@@ -231,6 +176,61 @@
           </button>
         </div>
       </main>
+
+      <!-- Siren Modal -->
+      <div class="modal-overlay" id="sirenModal" style="display: none">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title">코스 신고하기</h2>
+            <button
+              class="modal-close"
+              type="button"
+              id="closeSirenModal"
+              aria-label="닫기"
+            >
+              ×
+            </button>
+          </div>
+          <div class="modal-body">
+            <p class="modal-description">
+              부적절한 내용이 있다면 신고해주세요. 신고 사유를 자세히
+              입력해주시면 더 빠르게 처리할 수 있습니다.
+            </p>
+            <div class="form-field">
+              <label class="field-label" for="sirenDescription"
+                >신고 사유</label
+              >
+              <textarea
+                class="field-textarea"
+                id="sirenDescription"
+                placeholder="신고 사유를 입력해주세요 (10자 이상 500자 이하)"
+                rows="5"
+              ></textarea>
+              <p
+                class="field-error"
+                id="sirenDescriptionError"
+                style="display: none"
+              ></p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="modal-button cancel-button"
+              type="button"
+              id="cancelSirenBtn"
+            >
+              취소
+            </button>
+            <button
+              class="modal-button submit-button"
+              type="button"
+              id="submitSirenBtn"
+            >
+              신고하기
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Select Confirm Bar (모집글에서 코스 선택 모드로 들어온 경우만 표시) -->
       <div

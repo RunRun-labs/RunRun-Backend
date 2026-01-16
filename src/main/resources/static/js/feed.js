@@ -339,12 +339,12 @@ function createFeedCard(feed) {
 
     const profileImg = document.createElement("img");
     profileImg.className = "feed-profile-image";
-    profileImg.src = feed.profileImageUrl || '';
+    profileImg.src = feed.profileImageUrl || '/img/default-profile.svg';
     profileImg.alt = feed.userLoginId;
     profileImg.style.cursor = "pointer";
     profileImg.onerror = function () {
-        // 기본 이미지로 교체하지 않고 숨김 처리(404/무한 요청 방지)
-        this.style.display = 'none';
+        // 기본 이미지로 교체
+        this.src = '/img/default-profile.svg';
     };
     // 프로필 이미지 클릭 시 프로필 페이지로 이동
     profileImg.addEventListener("click", () => {
@@ -798,11 +798,12 @@ function createCommentItem(comment, feedId) {
 
     const profileImg = document.createElement("img");
     profileImg.className = "feed-comment-profile";
-    profileImg.src = comment.profileImageUrl || '';
+    profileImg.src = comment.profileImageUrl || '/img/default-profile.svg';
     profileImg.alt = comment.userLoginId;
     profileImg.style.cursor = "pointer";
     profileImg.onerror = function () {
-        this.style.display = 'none';
+        // 기본 이미지로 교체
+        this.src = '/img/default-profile.svg';
     };
     // 프로필 이미지 클릭 시 프로필 페이지로 이동
     profileImg.addEventListener("click", () => {

@@ -128,6 +128,7 @@ let totalDistance = 0; // 미터 단위
 let startTime = null;
 let elapsedSeconds = 0;
 let isFinished = false; // 내가 완주했는지 여부
+let isFinishRequested = false; // 완주 처리 요청 플래그 (중복 방지)
 let isGPSStarted = false; // GPS 추적 시작 여부
 
 // 속도 제한(경고용)
@@ -769,7 +770,8 @@ function sendGpsData(lat, lng, speed) {
   // 목표 거리 도달 체크 (아직 완주 안 했을 때만)
   // targetDistance는 km, totalDistance는 m이므로 변환 필요
   const targetDistanceInMeters = sessionData.targetDistance * 1000;
-  if (!isFinished && totalDistance >= targetDistanceInMeters) {
+  if (!isFinished && !isFinishRequested && totalDistance >= targetDistanceInMeters) {
+    isFinishRequested = true; // 즉시 플래그 설정 (중복 방지)
     handleFinish();
   }
 }
@@ -907,8 +909,13 @@ function createRankingItem(participant, isMe, allRankings) {
 
   const rankNumber = document.createElement("div");
   rankNumber.className = "rank-number";
-  // ✅ rank가 0이면 "포기" 표시
-  rankNumber.textContent = participant.rank === 0 ? "포기" : participant.rank;
+  // ✅ rank가 0이면 X 배지 표시
+  if (participant.rank === 0) {
+    rankNumber.innerHTML = '<span style="font-size: 24px; color: #ef4444;">❌</span>';
+    rankNumber.style.cssText = 'display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(239, 68, 68, 0.1); border-radius: 50%;';
+  } else {
+    rankNumber.textContent = participant.rank;
+  }
 
   const avatar = document.createElement("div");
   avatar.className = "participant-avatar";
