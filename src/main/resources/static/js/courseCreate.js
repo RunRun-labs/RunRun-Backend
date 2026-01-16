@@ -596,6 +596,13 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
+    // ✅ 버튼을 로딩 상태로 변경
+    const submitBtn = document.getElementById("stickyCreateBtn");
+    if (submitBtn) {
+      submitBtn.classList.add("loading");
+      submitBtn.disabled = true;
+    }
+
     // Use XMLHttpRequest instead of fetch to ensure proper Content-Type handling
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/courses", true);
@@ -608,6 +615,12 @@ form.addEventListener("submit", async (e) => {
     // xhr.setRequestHeader("Content-Type", "multipart/form-data"); // ❌ Don't do this
 
     xhr.onload = function () {
+      // ✅ 버튼 로딩 상태 해제
+      if (submitBtn) {
+        submitBtn.classList.remove("loading");
+        submitBtn.disabled = false;
+      }
+
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const result = JSON.parse(xhr.responseText);
@@ -643,12 +656,23 @@ form.addEventListener("submit", async (e) => {
     };
 
     xhr.onerror = function () {
+      // ✅ 버튼 로딩 상태 해제
+      if (submitBtn) {
+        submitBtn.classList.remove("loading");
+        submitBtn.disabled = false;
+      }
       console.error("Network error");
       alert("코스 생성 중 네트워크 오류가 발생했습니다");
     };
 
     xhr.send(formData);
   } catch (error) {
+    // ✅ 버튼 로딩 상태 해제
+    const submitBtn = document.getElementById("stickyCreateBtn");
+    if (submitBtn) {
+      submitBtn.classList.remove("loading");
+      submitBtn.disabled = false;
+    }
     console.error("Course create error:", error);
     alert("코스 생성 중 오류가 발생했습니다: " + error.message);
   }

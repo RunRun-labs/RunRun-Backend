@@ -170,6 +170,12 @@ function updateFilterCounts(chatRooms) {
       }
     }
   });
+
+  // ✅ 필터 컨테이너 보이기
+  const filterContainer = document.querySelector('.filter-container');
+  if (filterContainer) {
+    filterContainer.style.display = 'flex';
+  }
 }
 
 // 채팅방 리스트 렌더링 (오프라인 + 크루 통합)

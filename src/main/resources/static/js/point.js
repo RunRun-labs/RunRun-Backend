@@ -52,19 +52,31 @@ async function loadPointMain() {
         document.getElementById('availablePoints').textContent =
             data.availablePoints.toLocaleString() + ' P';
 
+        // ✅ '친구 추천' 항목 제외
+        const filteredMethods = data.earnMethods.filter(method => 
+            method.methodName !== '친구 초대' && 
+            method.methodName !== '친구 추천'
+        );
+
         // 적립 방법 표시
-        const earnMethodsHtml = data.earnMethods.map(method => `
-            <div class="earn-method-item">
-                <div class="earn-method-info">
-                    <div class="earn-method-icon">${getMethodIcon(method.methodName)}</div>
-                    <div class="earn-method-text">
-                        <h3>${method.methodName}</h3>
-                        <p>${method.description}</p>
+        const earnMethodsHtml = filteredMethods.map(method => {
+            // ✅ '챌린지 성공'이면 포인트 숫자 숨기기
+            const isChallenge = method.methodName === '챌린지 성공' || method.methodName === '챌린지 달성';
+            const pointText = isChallenge ? '' : `+${method.earnAmount} P`;
+            
+            return `
+                <div class="earn-method-item">
+                    <div class="earn-method-info">
+                        <div class="earn-method-icon">${getMethodIcon(method.methodName)}</div>
+                        <div class="earn-method-text">
+                            <h3>${method.methodName}</h3>
+                            <p>${method.description}</p>
+                        </div>
                     </div>
+                    <div class="earn-method-point">${pointText}</div>
                 </div>
-                <div class="earn-method-point">+${method.earnAmount} P</div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         document.getElementById('earnMethods').innerHTML = earnMethodsHtml;
 

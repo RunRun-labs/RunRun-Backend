@@ -125,19 +125,20 @@
         </form>
       </main>
 
-      <!-- 작성 완료 버튼 (하단 고정) -->
-      <button
-        class="submit-button"
-        type="submit"
-        id="stickyCreateBtn"
-        form="courseForm"
-      >
-        작성 완료
-      </button>
-
       <!-- Bottom Navigation -->
       <div th:replace="~{common/bottom-nav :: bottomNav}"></div>
     </div>
+
+    <!-- 작성 완료 버튼 (하단 고정) -->
+    <button
+      class="submit-button"
+      type="submit"
+      id="stickyCreateBtn"
+      form="courseForm"
+    >
+      <span class="button-text">작성 완료</span>
+      <span class="button-spinner"></span>
+    </button>
 
     <script src="/js/courseCreate.js" th:src="@{/js/courseCreate.js}"></script>
   <script src="/js/api-common.js" th:src="@{/js/api-common.js}"></script>

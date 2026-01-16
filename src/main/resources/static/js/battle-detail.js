@@ -157,8 +157,8 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
-  // 배틀 상세 결과 로드
-  async function loadBattleDetail() {
+  // 배틀 상세 결과 로드 (재시도 로직 포함)
+  async function loadBattleDetail(retryCount = 0) {
     if (!sessionId) {
       rankingList.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">세션 ID가 없습니다.</div>';
       return;
@@ -180,6 +180,21 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!response.ok) {
+        // ✅ 404 에러이고 재시도 횟수가 3회 미만이면 재시도
+        if (response.status === 404 && retryCount < 3) {
+          const delay = (retryCount + 1) * 2000; // 2초, 4초, 6초
+          console.log(`⚠️ BattleResult가 아직 저장되지 않음. ${delay/1000}초 후 재시도... (${retryCount + 1}/3)`);
+          
+          // 로딩 메시지 표시
+          if (retryCount === 0) {
+            rankingList.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">결과를 불러오는 중...</div>';
+          }
+          
+          setTimeout(() => {
+            loadBattleDetail(retryCount + 1);
+          }, delay);
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -210,7 +225,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (error) {
       console.error("배틀 상세 결과 로드 실패:", error);
-      rankingList.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-secondary);">데이터를 불러오는데 실패했습니다.<br>${error.message}</div>`;
+      // ✅ 404 에러면 재시도
+      if (retryCount < 3 && error.message.includes('404')) {
+        const delay = (retryCount + 1) * 2000;
+        console.log(`⚠️ 재시도 중... ${delay/1000}초 후 (${retryCount + 1}/3)`);
+        setTimeout(() => {
+          loadBattleDetail(retryCount + 1);
+        }, delay);
+      } else {
+        rankingList.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-secondary);">데이터를 불러오는데 실패했습니다.<br>${error.message}</div>`;
+      }
     }
   }
 
@@ -249,12 +273,12 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <div class="user-cell">
           <div class="user-info">
-            <span class="user-name">${participant.loginId || 'Unknown'}</span>
+            <span class="user-name">${participant.name || participant.loginId || 'Unknown'}</span>
             ${isMyRecord ? '<span class="my-record-badge">나</span>' : ''}
           </div>
         </div>
-        <div class="record-cell">
-          <div class="record-time">${time}</div>
+        <div class="pace-cell">
+          <span class="pace-value">${pace}</span>
         </div>
         <div class="chevron-cell">
           <button class="chevron-button" type="button" aria-label="상세 정보 열기" onclick="event.stopPropagation(); toggleRow('${rowId}');">
@@ -267,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="ranking-row-expand">
         <div class="expand-content">
           <div class="expand-user-info">
-            <span class="expand-user-name">${participant.loginId || 'Unknown'}</span>
+            <span class="expand-user-name">${participant.name || participant.loginId || 'Unknown'}</span>
             <a href="/profile/${participant.userId}" class="profile-button" onclick="event.stopPropagation();">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -276,10 +300,6 @@ document.addEventListener("DOMContentLoaded", () => {
             </a>
           </div>
           <div class="expand-stats">
-            <span class="stat-chip">
-              <span class="stat-label">기록</span>
-              <span class="stat-value">${time}</span>
-            </span>
             <span class="stat-chip">
               <span class="stat-label">페이스</span>
               <span class="stat-value">${pace}</span>
