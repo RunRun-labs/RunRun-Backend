@@ -1351,6 +1351,7 @@ function displayMessage(message, isPrevious = false) {
       // 아바타
       const avatar = document.createElement("div");
       avatar.className = "message-avatar";
+      avatar.style.cursor = "pointer"; // 클릭 가능하도록 커서 변경
       
       // ✅ participantsList에서 프로필 이미지 찾기
       const participant = participantsList.find(p => p.userId == message.senderId);
@@ -1372,6 +1373,14 @@ function displayMessage(message, isPrevious = false) {
         avatar.innerHTML =
           '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
       }
+      
+      // 유저 프로필 페이지로 이동하는 클릭 이벤트 추가
+      avatar.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // 피드와 동일한 경로 사용
+        window.location.href = `/profile/${message.senderId}`;
+      });
       
       messageItem.appendChild(avatar);
     }
@@ -1856,11 +1865,20 @@ function renderParticipantList() {
     // ✅ 프로필 이미지가 있으면 표시, 없으면 기본 SVG 아이콘
     if (participant.profileImage) {
       avatar.innerHTML = `<img src="${participant.profileImage}" alt="${participant.name}" 
-                               style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
+                               style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; cursor: pointer;" 
                                onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                           <svg class="participant-avatar-icon" width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
                             <path d="M11 0C4.925 0 0 4.925 0 11C0 17.075 4.925 22 11 22C17.075 22 22 17.075 22 11C22 4.925 17.075 0 11 0Z" fill="#E5E7EB"/>
                           </svg>`;
+      // 프로필 이미지 클릭 시 유저 프로필로 이동
+      const img = avatar.querySelector('img');
+      if (img) {
+        img.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.location.href = `/profile/${participant.userId}`;
+        });
+      }
     } else {
       avatar.innerHTML =
         '<svg class="participant-avatar-icon" width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 0C4.925 0 0 4.925 0 11C0 17.075 4.925 22 11 22C17.075 22 22 17.075 22 11C22 4.925 17.075 0 11 0Z" fill="#E5E7EB"/></svg>';

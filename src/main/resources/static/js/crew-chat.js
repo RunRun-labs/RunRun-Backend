@@ -501,6 +501,7 @@ function displayMessage(message, isPrevious = false) {
       // 아바타
       const avatar = document.createElement('div');
       avatar.className = 'message-avatar';
+      avatar.style.cursor = 'pointer'; // 클릭 가능하도록 커서 변경
       
       // ✅ participantsList에서 프로필 이미지 찾기
       const participant = participantsList.find(p => p.userId == message.senderId);
@@ -517,6 +518,14 @@ function displayMessage(message, isPrevious = false) {
       };
       
       avatar.appendChild(img);
+      
+      // 유저 프로필 페이지로 이동하는 클릭 이벤트 추가
+      avatar.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // 피드와 동일한 경로 사용
+        window.location.href = `/profile/${message.senderId}`;
+      });
       
       messageItem.appendChild(avatar);
     }
@@ -702,10 +711,16 @@ function renderParticipantList() {
     const img = document.createElement('img');
     img.src = participant.profileImage || '/img/default-profile.svg';
     img.alt = participant.name;
-    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%; cursor: pointer;';
     img.onerror = function() {
       this.src = '/img/default-profile.svg';
     };
+    // 프로필 이미지 클릭 시 유저 프로필로 이동
+    img.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.location.href = `/profile/${participant.userId}`;
+    });
     avatar.appendChild(img);
 
     avatarWrapper.appendChild(avatar);
