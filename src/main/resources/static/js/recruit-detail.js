@@ -340,7 +340,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         deleteButton.onclick = () => {
           if (confirm("정말로 이 모집글을 삭제하시겠습니까?")) {
-            deleteRecruit();
+            deleteRecruit(deleteButton);
           }
         };
         return;
@@ -366,7 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
           // 매칭 확인 버튼 표시 (3시간 전부터)
           startRunningButton.style.display = "block";
           startRunningButton.onclick = () => {
-            confirmMatch();
+            confirmMatch(startRunningButton);
           };
         } else {
           // 3시간 전이 아니면 나가기 버튼만 표시
@@ -374,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
           actionButton.style.display = "block";
           actionButton.onclick = () => {
             if (confirm("정말로 모집글에서 나가시겠습니까? 다른 참가자에게 방장이 위임됩니다.")) {
-              leaveRecruit();
+              leaveRecruit(actionButton);
             }
           };
         }
@@ -393,7 +393,7 @@ document.addEventListener("DOMContentLoaded", () => {
       actionButton.textContent = "참가 취소";
       actionButton.style.display = "block";
       actionButton.onclick = () => {
-        leaveRecruit();
+        leaveRecruit(actionButton);
       };
       return;
     }
@@ -419,6 +419,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // 클릭 이벤트 - 조건 검사 후 토스트 표시
       actionButton.onclick = async () => {
+        // 이미 처리 중이면 무시
+        if (actionButton.disabled) {
+          return;
+        }
+
         // Step 1: 프론트엔드 유효성 검사
         const ageMin = actionButton.getAttribute("data-age-min");
         const ageMax = actionButton.getAttribute("data-age-max");
@@ -455,6 +460,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
         }
+
+        // 유효성 검사 통과 후 버튼 비활성화 및 로딩 표시
+        actionButton.disabled = true;
+        const originalText = actionButton.textContent;
+        actionButton.textContent = "참가 중...";
+        actionButton.style.opacity = "0.6";
+        actionButton.style.cursor = "not-allowed";
 
         // Step 2: API 호출
         try {
@@ -496,10 +508,20 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             showToast(errorMessage, "error");
+            // 에러 발생 시 버튼 다시 활성화
+            actionButton.disabled = false;
+            actionButton.textContent = originalText;
+            actionButton.style.opacity = "1";
+            actionButton.style.cursor = "pointer";
           }
         } catch (error) {
           console.error("참여 처리 중 오류:", error);
           showToast("참여 처리 중 오류가 발생했습니다.", "error");
+          // 에러 발생 시 버튼 다시 활성화
+          actionButton.disabled = false;
+          actionButton.textContent = originalText;
+          actionButton.style.opacity = "1";
+          actionButton.style.cursor = "pointer";
         }
       };
       return;
@@ -507,7 +529,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 참여 취소 함수
-  async function leaveRecruit() {
+  async function leaveRecruit(actionButton) {
+    // 이미 처리 중이면 무시
+    if (actionButton.disabled) {
+      return;
+    }
+
+    // 버튼 비활성화 및 로딩 표시
+    actionButton.disabled = true;
+    const originalText = actionButton.textContent;
+    actionButton.textContent = "나가는 중...";
+    actionButton.style.opacity = "0.6";
+    actionButton.style.cursor = "not-allowed";
+
     try {
       const token = localStorage.getItem("accessToken") || getCookie(
           "accessToken");
@@ -516,6 +550,11 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
           window.location.href = "/login";
         }, 1500);
+        // 에러 발생 시 버튼 다시 활성화
+        actionButton.disabled = false;
+        actionButton.textContent = originalText;
+        actionButton.style.opacity = "1";
+        actionButton.style.cursor = "pointer";
         return;
       }
 
@@ -538,15 +577,37 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 1500);
       } else {
         showToast(result.message || "참여 취소 처리 중 오류가 발생했습니다.", "error");
+        // 에러 발생 시 버튼 다시 활성화
+        actionButton.disabled = false;
+        actionButton.textContent = originalText;
+        actionButton.style.opacity = "1";
+        actionButton.style.cursor = "pointer";
       }
     } catch (error) {
       console.error("참여 취소 처리 중 오류:", error);
       showToast("참여 취소 처리 중 오류가 발생했습니다.", "error");
+      // 에러 발생 시 버튼 다시 활성화
+      actionButton.disabled = false;
+      actionButton.textContent = originalText;
+      actionButton.style.opacity = "1";
+      actionButton.style.cursor = "pointer";
     }
   }
 
   // 모집글 삭제
-  async function deleteRecruit() {
+  async function deleteRecruit(deleteButton) {
+    // 이미 처리 중이면 무시
+    if (deleteButton.disabled) {
+      return;
+    }
+
+    // 버튼 비활성화 및 로딩 표시
+    deleteButton.disabled = true;
+    const originalText = deleteButton.textContent;
+    deleteButton.textContent = "삭제 중...";
+    deleteButton.style.opacity = "0.6";
+    deleteButton.style.cursor = "not-allowed";
+
     try {
       const token = localStorage.getItem("accessToken") || getCookie(
           "accessToken");
@@ -555,6 +616,11 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
           window.location.href = "/login";
         }, 1500);
+        // 에러 발생 시 버튼 다시 활성화
+        deleteButton.disabled = false;
+        deleteButton.textContent = originalText;
+        deleteButton.style.opacity = "1";
+        deleteButton.style.cursor = "pointer";
         return;
       }
 
@@ -577,15 +643,37 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 1500);
       } else {
         showToast(result.message || "모집글 삭제 중 오류가 발생했습니다.", "error");
+        // 에러 발생 시 버튼 다시 활성화
+        deleteButton.disabled = false;
+        deleteButton.textContent = originalText;
+        deleteButton.style.opacity = "1";
+        deleteButton.style.cursor = "pointer";
       }
     } catch (error) {
       console.error("모집글 삭제 중 오류:", error);
       showToast("모집글 삭제 중 오류가 발생했습니다.", "error");
+      // 에러 발생 시 버튼 다시 활성화
+      deleteButton.disabled = false;
+      deleteButton.textContent = originalText;
+      deleteButton.style.opacity = "1";
+      deleteButton.style.cursor = "pointer";
     }
   }
 
   // 매칭 확정 (러닝 시작하기)
-  async function confirmMatch() {
+  async function confirmMatch(startRunningButton) {
+    // 이미 처리 중이면 무시
+    if (startRunningButton.disabled) {
+      return;
+    }
+
+    // 버튼 비활성화 및 로딩 표시
+    startRunningButton.disabled = true;
+    const originalText = startRunningButton.textContent;
+    startRunningButton.textContent = "확정 중...";
+    startRunningButton.style.opacity = "0.6";
+    startRunningButton.style.cursor = "not-allowed";
+
     try {
       const token = localStorage.getItem("accessToken") || getCookie(
           "accessToken");
@@ -594,6 +682,11 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
           window.location.href = "/login";
         }, 1500);
+        // 에러 발생 시 버튼 다시 활성화
+        startRunningButton.disabled = false;
+        startRunningButton.textContent = originalText;
+        startRunningButton.style.opacity = "1";
+        startRunningButton.style.cursor = "pointer";
         return;
       }
 
@@ -629,10 +722,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } else {
         showToast(result.message || "매칭 확정 처리 중 오류가 발생했습니다.", "error");
+        // 에러 발생 시 버튼 다시 활성화
+        startRunningButton.disabled = false;
+        startRunningButton.textContent = originalText;
+        startRunningButton.style.opacity = "1";
+        startRunningButton.style.cursor = "pointer";
       }
     } catch (error) {
       console.error("매칭 확정 처리 중 오류:", error);
       showToast("매칭 확정 처리 중 오류가 발생했습니다.", "error");
+      // 에러 발생 시 버튼 다시 활성화
+      startRunningButton.disabled = false;
+      startRunningButton.textContent = originalText;
+      startRunningButton.style.opacity = "1";
+      startRunningButton.style.cursor = "pointer";
     }
   }
 
