@@ -158,7 +158,7 @@ function renderCanceledMembershipCard(cardElement, membership) {
             <span class="membership-icon">⭐</span>
             <h1 class="membership-title">프리미엄</h1>
         </div>
-        <p class="membership-period">${endDate}까지 사용 가능</p>
+        <p class="membership-period">${displayDate}까지 사용 가능</p>
         <div class="button-group">
         <button class="btn btn-resubscribe" onclick="reactivateMembership()">해지 취소</button>
             <button class="btn btn-detail" onclick="showMembershipDetail()">멤버십 내역</button>
