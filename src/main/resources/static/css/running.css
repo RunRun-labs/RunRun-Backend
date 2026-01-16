@@ -257,7 +257,7 @@ body {
 /* 통계 정보 오버레이 */
 .stats-overlay {
   position: absolute;
-  bottom: 200px;
+  bottom: 240px; /* 시작 위치 검색창과 겹치지 않도록 */
   left: 30px;
   right: 30px;
   display: flex;
@@ -770,10 +770,28 @@ body {
   color: #252525;
 }
 
+/* 수동 코스 등록 - 지도 위 검색창 너비 조정 */
+/* 지도 내부의 모든 텍스트 입력창 너비 제한 - 제거 */
+
+/* 수동 코스 등록 - 거리 표시를 아래로 이동 */
+/* 지도 오른쪽 상단의 모든 absolute 요소를 아래로 */
+.map-container > div[style*="position: absolute"][style*="right"][style*="top"],
+.map > div[style*="position: absolute"][style*="right"][style*="top"],
+#map > div[style*="position: absolute"][style*="right"][style*="top"] {
+  top: 120px !important;
+}
+
+/* 노란색 배경을 가진 요소 (거리 표시) */
+.map-container > div[style*="background"],
+.map > div[style*="background"],
+#map > div[style*="background"] {
+  top: 120px !important;
+}
+
 /* 반응형 */
 @media (max-width: 480px) {
   .stats-overlay {
-    bottom: 180px;
+    bottom: 220px; /* 모바일에서 검색창과 겹치지 않도록 */
     left: 20px;
     right: 20px;
     gap: 12px;
