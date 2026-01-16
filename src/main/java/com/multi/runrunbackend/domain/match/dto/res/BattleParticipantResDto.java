@@ -21,6 +21,7 @@ public class BattleParticipantResDto {
 
   private Long userId;
   private String loginId;
+  private String name;
 
   private Integer ranking;
 
@@ -38,6 +39,7 @@ public class BattleParticipantResDto {
     return new BattleParticipantResDto(
         br.getUser().getId(),
         br.getUser().getLoginId(),
+        br.getUser().getName(),
         br.getRanking(),
         br.getRunningResult().getTotalTime(),
         br.getRunningResult().getAvgPace(),

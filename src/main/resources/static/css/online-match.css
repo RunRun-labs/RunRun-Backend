@@ -205,16 +205,16 @@ body {
 
 /* 거리 선택 후 인원 선택이 중앙에 위치하도록 */
 .match-content.has-distance-selected {
-  justify-content: center;
+  justify-content: flex-start; /* center에서 flex-start로 변경 - 위쪽이 잘리지 않도록 */
   align-items: center;
-  padding-top: 20px;
+  padding-top: 0; /* padding-top 제거 */
 }
 
 /* 선택 완료 시에도 거리 선택 후 상태 유지 - 레이아웃 변경 최소화 */
 .match-content.selection-complete {
-  justify-content: center;
+  justify-content: flex-start; /* center에서 flex-start로 변경 - 위쪽이 잘리지 않도록 */
   align-items: center;
-  padding-top: 20px; /* has-distance-selected와 동일 */
+  padding-top: 0; /* padding-top 제거 */
 }
 
 /* 인원 필드가 위로 올라가는 것 제거 - 자연스럽게 유지 */
@@ -977,21 +977,24 @@ body {
     padding: 16px 20px calc(68px + env(safe-area-inset-bottom) + 80px);
     gap: 16px;
     min-height: calc(100vh - 180px);
-    justify-content: center;
+    justify-content: flex-start; /* center에서 flex-start로 변경 - 위쪽이 잘리지 않도록 */
     align-items: center;
   }
 
   .match-content.has-distance-selected {
-    padding-top: 30px;
+    padding-top: 0; /* padding-top 제거 */
+    justify-content: flex-start; /* center에서 flex-start로 변경 */
   }
 
   .match-content.has-distance-selected .setting-group[data-type="distance"] {
-    margin-top: -50px;
+    margin-top: 0; /* -50px 제거 - 위로 올라가지 않도록 */
     margin-bottom: 16px;
   }
 
   .match-content.selection-complete {
     min-height: auto;
+    justify-content: flex-start; /* center에서 flex-start로 변경 */
+    padding-top: 0;
   }
 
   .match-settings {
@@ -1141,21 +1144,24 @@ body {
     padding: 14px 16px calc(68px + env(safe-area-inset-bottom) + 80px);
     gap: 14px;
     min-height: calc(100vh - 160px);
-    justify-content: center;
+    justify-content: flex-start; /* center에서 flex-start로 변경 - 위쪽이 잘리지 않도록 */
     align-items: center;
   }
 
   .match-content.has-distance-selected {
-    padding-top: 20px;
+    padding-top: 0; /* padding-top 제거 */
+    justify-content: flex-start; /* center에서 flex-start로 변경 */
   }
 
   .match-content.has-distance-selected .setting-group[data-type="distance"] {
-    margin-top: -40px;
+    margin-top: 0; /* -40px 제거 - 위로 올라가지 않도록 */
     margin-bottom: 12px;
   }
 
   .match-content.selection-complete {
     min-height: auto;
+    justify-content: flex-start; /* center에서 flex-start로 변경 */
+    padding-top: 0;
   }
 
   .match-settings {

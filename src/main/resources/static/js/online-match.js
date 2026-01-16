@@ -11,6 +11,9 @@ let fallbackCheckInterval = null; // 주기적 폴백 체크 interval (SSE 연�
 let sseCheckInterval = null; // SSE 연결 상태 확인 interval
 let matchStartTime = null; // 매칭 시작 시간 (오래된 알림 필터링용)
 let matchFoundHandled = false;
+let fallbackTimeoutId = null; // 폴백 폴링 setTimeout ID
+let fallbackChecking = false; // 폴백 체크 중복 방지 락
+let fallbackStartTime = null; // 폴백 시작 시각
 
 // DOM 요소 참조 (나중에 초기화)
 let statusTitle = null;
@@ -22,6 +25,19 @@ let connectionLines = null;
 let cancelButton = null;
 let matchingOverlay = null;
 let startButton = null;
+
+// ✅ clearAllFallbackTimers 함수 선언문 (호이스팅 안전)
+function clearAllFallbackTimers() {
+  if (fallbackCheckInterval) {
+    clearInterval(fallbackCheckInterval);
+    fallbackCheckInterval = null;
+  }
+  if (fallbackTimeoutId) {
+    clearTimeout(fallbackTimeoutId);
+    fallbackTimeoutId = null;
+  }
+  fallbackStartTime = null;
+}
 
 // SSE 알림 수신 리스너 등록 (DOMContentLoaded 전에 등록)
 window.addEventListener('notification-received', async (event) => {
@@ -47,19 +63,32 @@ window.addEventListener('notification-received', async (event) => {
   if (isMatchFound) {
     const sessionId = notification.relatedId;
 
-    if (matchFoundHandled) {
-      console.log('[online-match] MATCH_FOUND already handled - skip');
+    // ✅ MATCH_FOUND 들어가자마자 matchFoundHandled = true
+    matchFoundHandled = true;
+
+    // ✅ 폴백 타이머 정리
+    clearAllFallbackTimers();
+
+    // ✅ sseCheckInterval 정리
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
+    }
+
+    // matchFoundHandled 체크 개선: 세션 ID별로 체크
+    const handledKey = `matchFound_${sessionId}`;
+    if (sessionStorage.getItem(handledKey)) {
+      console.log('[online-match] MATCH_FOUND already handled for sessionId:',
+          sessionId);
       return;
     }
-    // matchFoundHandled = true;
+    sessionStorage.setItem(handledKey, 'true');
+    // 30초 후 자동 삭제 (메모리 정리)
+    setTimeout(() => sessionStorage.removeItem(handledKey), 30000);
 
     if (fallbackCheckInterval) {
       clearInterval(fallbackCheckInterval);
       fallbackCheckInterval = null;
-    }
-    if (sseCheckInterval) {
-      clearInterval(sseCheckInterval);
-      sseCheckInterval = null;
     }
 
     console.log('[online-match] ✅ MATCH_FOUND 알림 처리 시작 - sessionId:',
@@ -108,7 +137,7 @@ window.addEventListener('notification-received', async (event) => {
       }
 
       await showMatchFound(sessionId);
-      matchFoundHandled = true;
+      // matchFoundHandled는 이미 위에서 true로 설정됨
 
       console.log('[online-match] ✅ MATCH_FOUND 알림 처리 완료');
 
@@ -118,7 +147,9 @@ window.addEventListener('notification-received', async (event) => {
       }
     } catch (error) {
       console.error('[online-match] ❌ 매칭 완료 처리 오류:', error);
-      matchFoundHandled = false;
+      matchFoundHandled = false; // ✅ 에러 시 false로 되돌림
+      // 에러 시 handledKey도 삭제하여 재시도 가능하게
+      sessionStorage.removeItem(handledKey);
       if (matchingOverlay) {
         hideMatchingOverlay();
       }
@@ -142,15 +173,12 @@ window.addEventListener('pageshow', async (e) => {
   matchStartTime = null;
   matchFoundHandled = false;
 
-  if (fallbackCheckInterval) {
-    clearInterval(fallbackCheckInterval);
-  }
+  // ✅ pageshow에서도 타이머 정리
   if (sseCheckInterval) {
     clearInterval(sseCheckInterval);
+    sseCheckInterval = null;
   }
-
-  fallbackCheckInterval = null;
-  sseCheckInterval = null;
+  clearAllFallbackTimers();
 
   try {
     resetMatchUI();
@@ -234,18 +262,24 @@ async function handleCancel() {
     isMatching = false;
     matchStartTime = null;
 
-    if (fallbackCheckInterval) {
-      clearInterval(fallbackCheckInterval);
-    }
+    // ✅ cancel 시에도 타이머 정리
     if (sseCheckInterval) {
       clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
     }
+    clearAllFallbackTimers();
 
     hideMatchingOverlay();
     window.location.href = "/match/online";
   } catch (error) {
     console.error("매칭 취소 오류:", error);
     isMatching = false;
+    // ✅ 에러 시에도 타이머 정리
+    if (sseCheckInterval) {
+      clearInterval(sseCheckInterval);
+      sseCheckInterval = null;
+    }
+    clearAllFallbackTimers();
     hideMatchingOverlay();
     window.location.href = "/match/online";
   }
@@ -334,9 +368,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (pGroup) {
           setTimeout(() => {
             pGroup.classList.add("show");
-            setTimeout(() => {
-              pGroup.scrollIntoView({behavior: 'smooth', block: 'center'});
-            }, 400);
+            // scrollIntoView 제거 - 위쪽이 잘리지 않도록
+            // setTimeout(() => {
+            //   pGroup.scrollIntoView({behavior: 'smooth', block: 'center'});
+            // }, 400);
           }, 100);
         }
       } else if (type === "participant") {
@@ -404,10 +439,16 @@ async function loadUserProfile() {
 }
 
 async function handleMatchStart() {
+  // ✅ 시작 시 기존 타이머 정리
+  clearAllFallbackTimers();
+
   matchFoundHandled = false;
   fallbackCheckDone = false;
   matchStartTime = Date.now();
   isMatching = true;
+  fallbackChecking = false;
+  fallbackStartTime = null;
+
   if (startButton) {
     startButton.disabled = true;
   }
@@ -468,36 +509,91 @@ async function handleMatchStart() {
     }
     resetMatchUI();
 
+    // ✅ 폴백 체크 함수 (락 추가)
     const performFallbackCheck = async () => {
-      if (!isMatching || fallbackCheckDone) {
+      if (!isMatching || fallbackCheckDone || matchFoundHandled) {
         return;
       }
+      if (fallbackChecking) {
+        return; // ✅ 중복 실행 방지
+      }
+
+      fallbackChecking = true;
       try {
         const statusResponse = await fetch("/api/match/online/status",
             {method: "GET", headers});
         if (statusResponse.ok) {
           const sResult = await statusResponse.json();
-          if (sResult?.success && sResult?.data?.status === "MATCHED") {
+          if (sResult?.success && sResult?.data?.status === "MATCHED"
+              && sResult?.data?.sessionId) {
             fallbackCheckDone = true;
             isMatching = false;
+            // ✅ 폴백 성공 시 sseCheckInterval도 정리
+            if (sseCheckInterval) {
+              clearInterval(sseCheckInterval);
+              sseCheckInterval = null;
+            }
+            clearAllFallbackTimers();
             await showMatchFound(sResult.data.sessionId);
           }
         }
       } catch (e) {
+        console.debug('[online-match] 폴백 체크 에러:', e);
+      } finally {
+        fallbackChecking = false; // ✅ 락 해제
       }
     };
 
+    // SSE 연결 상태 확인 (SSE 끊김 감지용, 폴백 시작은 별도)
     sseCheckInterval = setInterval(() => {
       const isConnected = typeof window.isSseConnected === 'function'
           && window.isSseConnected();
-      if (!isConnected && !fallbackCheckInterval) {
-        performFallbackCheck();
-        fallbackCheckInterval = setInterval(performFallbackCheck, 5000);
-      } else if (isConnected && fallbackCheckInterval) {
-        clearInterval(fallbackCheckInterval);
-        fallbackCheckInterval = null;
+      if (!isConnected) {
+        console.debug('[online-match] SSE 연결 끊김 감지');
       }
     }, 1000);
+
+    // ✅ scheduleNextFallback 함수 (null 체크 및 60초 종료 시 정리)
+    const scheduleNextFallback = () => {
+      if (!isMatching || fallbackCheckDone || matchFoundHandled) {
+        return;
+      }
+      if (!fallbackStartTime) {
+        fallbackStartTime = Date.now(); // ✅ 안전장치
+      }
+
+      const elapsed = Date.now() - fallbackStartTime;
+
+      // ✅ 60초 넘으면 중지 및 타이머 정리
+      if (elapsed >= 60000) {
+        console.log('[online-match] 폴백 폴링 60초 경과 - 중지');
+        // ✅ 60초 종료 시 sseCheckInterval도 정리
+        if (sseCheckInterval) {
+          clearInterval(sseCheckInterval);
+          sseCheckInterval = null;
+        }
+        clearAllFallbackTimers();
+        return;
+      }
+
+      // ✅ 주기 결정
+      const nextInterval = elapsed < 20000 ? 3000 : 10000;
+
+      // ✅ 다음 폴백 체크 스케줄
+      fallbackTimeoutId = setTimeout(async () => {
+        await performFallbackCheck();
+        scheduleNextFallback();
+      }, nextInterval);
+    };
+
+    // ✅ 7초 후 첫 폴백 체크 시작 (fallbackStartTime은 여기서 세팅)
+    fallbackTimeoutId = setTimeout(() => {
+      if (isMatching && !fallbackCheckDone && !matchFoundHandled) {
+        fallbackStartTime = Date.now(); // ✅ 폴백 시작 시각에 세팅
+        performFallbackCheck();
+        scheduleNextFallback();
+      }
+    }, 7000);
 
   } catch (error) {
     alert(error.message);
@@ -506,6 +602,7 @@ async function handleMatchStart() {
   }
 }
 
+// ✅ resetMatchUI()에서 타이머 정리 제거 (UI만 담당)
 function resetMatchUI() {
   if (statusTitle) {
     statusTitle.textContent = "SEARCHING FOR PLAYERS...";
@@ -529,20 +626,9 @@ function resetMatchUI() {
     cancelButton.style.display = "block";
   }
 
-  if (matchFoundTimeout) {
-    clearTimeout(matchFoundTimeout);
-  }
-  if (countdownInterval) {
-    clearInterval(countdownInterval);
-  }
-  if (fallbackCheckInterval) {
-    clearInterval(fallbackCheckInterval);
-    fallbackCheckInterval = null;
-  }
-  if (sseCheckInterval) {
-    clearInterval(sseCheckInterval);
-    sseCheckInterval = null;
-  }
+  // ✅ 타이머 정리는 여기서 하지 않음 (UI만 담당)
+  fallbackStartTime = null;
+  fallbackChecking = false;
 }
 
 async function fetchMatchInfo(sessionId) {
@@ -572,10 +658,11 @@ async function showMatchFound(sessionId) {
 
   const finalSessionId = matchData?.sessionId || sessionId;
   currentSessionId = finalSessionId;
-  
+
   // ✅ 매칭 잡히면 바로 TTS batch 준비
   if (window.TtsManager) {
-    window.TtsManager.ensureLoaded({ sessionId: finalSessionId, mode: "ONLINE" }).catch(() => {
+    window.TtsManager.ensureLoaded(
+        {sessionId: finalSessionId, mode: "ONLINE"}).catch(() => {
       console.warn("온라인 런 TTS 로드 실패 (무시)");
     });
   }
@@ -697,6 +784,12 @@ function hideMatchingOverlay() {
   }
   isMatching = false;
   matchStartTime = null;
+  // ✅ hideMatchingOverlay에서도 타이머 정리
+  if (sseCheckInterval) {
+    clearInterval(sseCheckInterval);
+    sseCheckInterval = null;
+  }
+  clearAllFallbackTimers();
   resetMatchUI();
 }
 
