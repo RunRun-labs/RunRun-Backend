@@ -1264,6 +1264,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.getElementById("submitBtn").addEventListener("click", async () => {
+    const submitBtn = document.getElementById("submitBtn");
+    
+    // 이미 제출 중이면 무시
+    if (submitBtn.disabled) {
+      return;
+    }
+
     clearErrors();
 
     // 데이터 수집 (전역 변수 및 DOM 요소에서)
@@ -1367,6 +1374,13 @@ document.addEventListener("DOMContentLoaded", () => {
       requestData.courseId = selectedCourseId;
     }
 
+    // 유효성 검사 통과 후 버튼 비활성화 및 로딩 표시
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "수정 중...";
+    submitBtn.style.opacity = "0.6";
+    submitBtn.style.cursor = "not-allowed";
+
     try {
       const token = localStorage.getItem("accessToken") || getCookie(
           "accessToken");
@@ -1404,10 +1418,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         showToast(errorMessage, "error");
         console.error("Error:", result);
+        
+        // 에러 발생 시 버튼 다시 활성화
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        submitBtn.style.opacity = "1";
+        submitBtn.style.cursor = "pointer";
       }
     } catch (error) {
       console.error("모집글 수정 중 오류 발생:", error);
       showToast("모집글 수정 중 오류가 발생했습니다.", "error");
+      
+      // 에러 발생 시 버튼 다시 활성화
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      submitBtn.style.opacity = "1";
+      submitBtn.style.cursor = "pointer";
     }
   });
 
