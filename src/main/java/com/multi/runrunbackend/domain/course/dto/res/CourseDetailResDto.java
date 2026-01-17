@@ -63,7 +63,7 @@ public class CourseDetailResDto {
             .likeCount(course.getLikeCount())
             .favoriteCount(course.getFavoriteCount())
             .isOwner(isOwner)
-            .userName(user.getName())
+            .userName(course.getUser().getName())
             .createdAt(course.getCreatedAt())
             .isLiked(isLiked)
             .isFavorited(isFavorited)

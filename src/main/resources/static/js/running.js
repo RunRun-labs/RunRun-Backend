@@ -318,26 +318,26 @@ function startPreviewOnlyTracking() {
       // watchPosition 시작
       if (previewWatchId != null) return;
 
-      previewWatchId = navigator.geolocation.watchPosition(
-        (position) => {
-          if (!position || !position.coords) return;
-          latestPosition = position;
-          lastGpsAccuracyM = position.coords.accuracy;
-          updateGpsAccuracyBadge(lastGpsAccuracyM);
-          // ✅ heading 전달 (미리보기에서는 heading이 없을 수 있음)
-          const heading =
-            position.coords.heading != null ? position.coords.heading : null;
+  previewWatchId = navigator.geolocation.watchPosition(
+    (position) => {
+      if (!position || !position.coords) return;
+      latestPosition = position;
+      lastGpsAccuracyM = position.coords.accuracy;
+      updateGpsAccuracyBadge(lastGpsAccuracyM);
+      // ✅ heading 전달 (미리보기에서는 heading이 없을 수 있음)
+      const heading =
+        position.coords.heading != null ? position.coords.heading : null;
           // ✅ map이 준비되었는지 확인 후 마커 표시
           if (map) {
-            updateUserPosition(
-              position.coords.latitude,
-              position.coords.longitude,
-              heading
-            );
+      updateUserPosition(
+        position.coords.latitude,
+        position.coords.longitude,
+        heading
+      );
           }
-        },
-        (err) => {
-          console.warn("미리보기 GPS 에러:", err?.message || err);
+    },
+    (err) => {
+      console.warn("미리보기 GPS 에러:", err?.message || err);
         },
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
       );
@@ -977,6 +977,20 @@ function adjustSoloRunLayout(isInProgress) {
 // Initialize
 // ==========================
 document.addEventListener("DOMContentLoaded", async () => {
+  // ✅ 데이터 로딩 전까지 UI 요소 숨김 (플래시 방지)
+  if (pageTitleEl) {
+    pageTitleEl.style.display = "none";
+  }
+  if (chatButton) {
+    chatButton.style.display = "none";
+  }
+  if (backButton) {
+    backButton.style.display = "none";
+  }
+  if (startRunningButton) {
+    startRunningButton.style.display = "none";
+  }
+
   sessionId = getSessionIdFromUrl();
   userId = getUserId();
   chatRoomUrl = `/chat/chat1?sessionId=${sessionId}`;
@@ -998,12 +1012,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const lastSessionId = localStorage.getItem("running:lastSessionId");
     if (lastSessionId && lastSessionId !== String(sessionId)) {
       // 이전 세션의 데이터 삭제
-      const keys = Object.keys(localStorage);
-      keys.forEach((key) => {
+    const keys = Object.keys(localStorage);
+    keys.forEach((key) => {
         if (key.startsWith(`running:${lastSessionId}:`)) {
-          localStorage.removeItem(key);
-        }
-      });
+        localStorage.removeItem(key);
+      }
+    });
       console.log(
         "✅ 이전 세션 localStorage 데이터 초기화 완료: sessionId=" +
           lastSessionId
@@ -1160,6 +1174,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     sessionCourseId = sessionData?.courseId ?? null;
     isSoloRun = sessionData?.type === "SOLO"; // ✅ 솔로런 여부 확인
 
+    // ✅ 데이터 로딩 완료 후 UI 표시
+    if (pageTitleEl) {
+      pageTitleEl.style.display = ""; // 표시
+    }
+
     // ✅ 솔로런일 때 UI 조정
     if (isSoloRun) {
       // 솔로런은 항상 호스트
@@ -1168,6 +1187,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       // 페이지 타이틀 변경
       if (pageTitleEl) {
         pageTitleEl.textContent = "솔로런";
+      }
+
+      // ✅ 뒤로가기 버튼 숨기기 (솔로런)
+      if (backButton) {
+        backButton.style.display = "none";
       }
 
       // 채팅방 버튼 완전히 숨김
@@ -1198,6 +1222,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (pageTitleEl) {
         pageTitleEl.textContent = "오프라인";
       }
+
+      // ✅ 뒤로가기 버튼 숨기기 (오프라인 - 채팅방 버튼이 있으므로)
+      if (backButton) {
+        backButton.style.display = "none";
+      }
+
       if (chatButton) {
         chatButton.style.display = "flex";
         chatButton.classList.remove("solo-hidden");
@@ -1310,7 +1340,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (sessionStatus !== "IN_PROGRESS") {
       // 지도가 초기화된 후에만 GPS 시작
       if (map) {
-        startPreviewOnlyTracking();
+      startPreviewOnlyTracking();
       }
       // 솔로런이 아니면 여기서 종료 (채팅방에서 시작해야 함)
       if (!isSoloRun) {
@@ -1916,7 +1946,7 @@ async function loadCoursePath(sessionId) {
   // remainingPath가 없으면 전체 코스(coursePath) 표시
   // ✅ map이 준비되었는지 확인 후 코스 표시
   if (map) {
-    drawCoursePath();
+  drawCoursePath();
   } else {
     // map이 아직 준비되지 않았으면 잠시 후 재시도
     setTimeout(() => {
@@ -2392,7 +2422,7 @@ function initKakaoMap() {
       // ✅ Geocoder는 services가 로드된 후에 초기화
       try {
         if (kakao.maps.services && kakao.maps.services.Geocoder) {
-          geocoder = new kakao.maps.services.Geocoder();
+      geocoder = new kakao.maps.services.Geocoder();
         } else {
           // services가 아직 로드되지 않았으면 지연 초기화
           setTimeout(() => {
@@ -2966,7 +2996,7 @@ function handleRunningStats(stats) {
 
       // ✅ 시작 직후(stats.totalDistance가 0일 때)는 거리 TTS 재생하지 않음
       if (stats.totalDistance > 0) {
-        window.TtsManager.onDistance(stats.totalDistance, remainingDistance);
+      window.TtsManager.onDistance(stats.totalDistance, remainingDistance);
       }
     }
     // ✅ 방장/참여자 모두: 서버가 브로드캐스트하는 hostMatchedDistM(코스 위 진행도) 기준으로 트리밍
