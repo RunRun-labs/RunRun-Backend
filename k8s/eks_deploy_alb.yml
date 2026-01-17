@@ -43,11 +43,20 @@ spec:
           imagePullPolicy: Always
 
           # ✅ Health Check 추가 (readiness/liveness 분리)
+          # ✅ Startup Probe 추가 (애플리케이션 시작 시간 동안 liveness가 컨테이너를 죽이지 않도록)
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30 # 최대 5분 (30 * 10초) 동안 유예
+
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: 8080
-            initialDelaySeconds: 30
+            initialDelaySeconds: 120 # 애플리케이션 시작 시간(92초) + 여유 30초
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
@@ -57,7 +66,7 @@ spec:
             httpGet:
               path: /actuator/health/liveness
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 150 # readiness보다 여유 있게 설정
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
