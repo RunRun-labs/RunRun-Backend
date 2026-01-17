@@ -1189,30 +1189,7 @@ function handleFinish() {
   console.log("🏁 완주!");
   isFinished = true;
 
-  // ✅ 1. 내가 완주한 '직후' 순위 TTS 먼저 재생 (localStorage로 개인별 체크)
-  const rankTtsKey = `battle_rank_tts_${SESSION_ID}_${myUserId}`;
-  if (ttsReady && window.TtsManager && !localStorage.getItem(rankTtsKey)) {
-    const myData = currentRankings.find((r) => r.userId === myUserId);
-    if (myData && myData.rank > 0) {
-      const totalParticipants = currentRankings.filter(
-        (r) => r.rank > 0
-      ).length;
-
-      if (myData.rank === 1) {
-        window.TtsManager.speak("WIN", { priority: 2 });
-      } else if (myData.rank === 2) {
-        window.TtsManager.speak("RANK_2", { priority: 2 });
-      } else if (myData.rank === 3) {
-        window.TtsManager.speak("RANK_3", { priority: 2 });
-      } else if (myData.rank === totalParticipants) {
-        window.TtsManager.speak("RANK_LAST", { priority: 2 });
-      }
-
-      // 이미 들었다고 표시 (나중에 showFinishMessage에서 다시 안 나오게)
-      localStorage.setItem(rankTtsKey, "1");
-      ttsRankTtsSpoken = true;
-    }
-  }
+  // ✅ 순위 축하 TTS는 결과 페이지(`/match/result`)에서 재생 (이동 중 끊김 방지)
 
   // 서버에 완주 알림
   const token = localStorage.getItem("accessToken");
@@ -1262,7 +1239,7 @@ function handleFinish() {
  * 완주 메시지 표시
  */
 function showFinishMessage() {
-  // ✅ 종료 이벤트 처리: TTS 즉시 중단, 큐 비우기, 순위 멘트 재생 (END_RUN은 완주한 사람만)
+  // ✅ 종료 이벤트 처리: TTS 즉시 중단, 큐 비우기 (순위 멘트는 결과 페이지에서 재생)
   if (ttsReady && window.TtsManager && !completedHandled) {
     // 1. 현재 재생 중인 TTS 즉시 중단
     if (typeof window.TtsManager.stopAll === "function") {
@@ -1278,30 +1255,7 @@ function showFinishMessage() {
       window.TtsManager.clear();
     }
 
-    // 3. 순위별 TTS 재생 (localStorage로 개인별 체크 - 타임아웃/포기한 사람도 들을 수 있게)
-    const rankTtsKey = `battle_rank_tts_${SESSION_ID}_${myUserId}`;
-    if (!localStorage.getItem(rankTtsKey)) {
-      const myData = currentRankings.find((r) => r.userId === myUserId);
-      if (myData && myData.rank > 0) {
-        const totalParticipants = currentRankings.filter(
-          (r) => r.rank > 0
-        ).length;
-        if (myData.rank === 1) {
-          window.TtsManager.speak("WIN", { priority: 2 });
-        } else if (myData.rank === 2) {
-          window.TtsManager.speak("RANK_2", { priority: 2 });
-        } else if (myData.rank === 3) {
-          window.TtsManager.speak("RANK_3", { priority: 2 });
-        } else if (myData.rank === totalParticipants) {
-          window.TtsManager.speak("RANK_LAST", { priority: 2 });
-        }
-        // 이미 들었다고 표시
-        localStorage.setItem(rankTtsKey, "1");
-        ttsRankTtsSpoken = true;
-      }
-    }
-
-    // 4. ✅ 완주한 사람만 END_RUN 재생 (타임아웃된 사람은 결과 페이지에서 재생)
+    // ✅ 완주한 사람만 END_RUN 재생 (타임아웃된 사람은 결과 페이지에서 재생)
     if (isFinished) {
       const endRunPromise = window.TtsManager.speak("END_RUN", {
         priority: 2,
