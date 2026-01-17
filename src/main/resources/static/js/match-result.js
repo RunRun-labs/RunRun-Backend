@@ -6,6 +6,7 @@
 let SESSION_ID = null;
 let myUserId = null;
 let resultData = null;
+let ttsReady = false;
 
 // localStorage에서 userId 가져오기
 const storedUserId = localStorage.getItem('userId');
@@ -49,6 +50,7 @@ async function initTtsForTimeout() {
     try {
       // TTS batch 로드 (mode는 ONLINE으로 설정)
       await window.TtsManager.ensureLoaded({ sessionId: SESSION_ID, mode: "ONLINE" });
+      ttsReady = true;
       console.log('[match-result] TTS batch loaded');
       
       // ✅ 타임아웃된 사람은 결과 페이지에서 END_RUN 재생
@@ -62,6 +64,46 @@ async function initTtsForTimeout() {
       console.warn('[match-result] TTS 초기화 실패 (무시):', e?.message || e);
     }
   }
+}
+
+/**
+ * ✅ 결과 페이지에서 순위 축하 TTS 1회 재생 (배틀 화면 이동 중 끊김 방지)
+ */
+function maybeSpeakRankOnResult(data) {
+  if (!ttsReady || !window.TtsManager) return;
+  if (!SESSION_ID || !myUserId) return;
+  if (!data) return;
+
+  // 이미 들었으면 스킵 (세션/유저 단위)
+  const rankTtsKey = `battle_rank_tts_${SESSION_ID}_${myUserId}`;
+  if (localStorage.getItem(rankTtsKey)) return;
+
+  const targetMeters = (Number(data.targetDistance) || 0) * 1000;
+  const totalMeters = Number(data.totalDistance) || 0;
+  const isTimeout = targetMeters > 0 && totalMeters < targetMeters;
+  const myRank = Number(data.myRank) || 0;
+
+  // 완주 실패/타임아웃/순위 없음이면 순위 축하 TTS는 재생하지 않음
+  if (myRank <= 0 || isTimeout) return;
+
+  const totalParticipants = Array.isArray(data.rankings)
+    ? data.rankings.filter((r) => Number(r?.rank) > 0).length
+    : 0;
+
+  if (myRank === 1) {
+    window.TtsManager.speak("WIN", { priority: 2, cooldownMs: 0 });
+  } else if (myRank === 2) {
+    window.TtsManager.speak("RANK_2", { priority: 2, cooldownMs: 0 });
+  } else if (myRank === 3) {
+    window.TtsManager.speak("RANK_3", { priority: 2, cooldownMs: 0 });
+  } else if (totalParticipants > 0 && myRank === totalParticipants) {
+    window.TtsManager.speak("RANK_LAST", { priority: 2, cooldownMs: 0 });
+  } else {
+    // 그 외 순위는 기존 정책(상위 3/꼴지만 축하) 유지
+    return;
+  }
+
+  localStorage.setItem(rankTtsKey, "1");
 }
 
 /**
@@ -100,6 +142,11 @@ function loadResultData() {
     console.log('📋 결과 데이터 파싱 완료:', resultData);
     
     renderResult(resultData);
+
+    // ✅ 결과 페이지에서 순위 축하 TTS 재생 (이동 끊김 방지)
+    // TTS 초기화가 아직이면 잠깐 기다렸다가 재시도
+    setTimeout(() => maybeSpeakRankOnResult(resultData), 250);
+    setTimeout(() => maybeSpeakRankOnResult(resultData), 1000);
     
     // ✅ 러닝 결과 로드 후 광고 팝업 표시 (큰 사이즈 함수 사용)
     setTimeout(async () => {

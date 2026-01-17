@@ -16,7 +16,12 @@ body {
 
 .page {
   width: 100vw;
-  height: 100vh;
+  /* ✅ 모바일 브라우저(주소창/상단바)에서 100vh가 실제 화면(visual viewport)과 어긋나
+     지도 상/하단이 잘려 보이는 이슈 방지:
+     - JS에서 --vh(= window.innerHeight * 0.01px)를 세팅
+     - 지원 안 되면 1vh fallback */
+  height: calc(var(--vh, 1vh) * 100);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
