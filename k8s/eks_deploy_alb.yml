@@ -45,11 +45,13 @@ spec:
           # ✅ Health Check 추가
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
+              path: /actuator/health
               port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
             failureThreshold: 3
+            successThreshold: 1
 
           # ✅ Graceful Shutdown 추가
           lifecycle:
@@ -59,10 +61,10 @@ spec:
 
           resources:
             limits:
-              memory: "512Mi"
+              memory: "1Gi"
               cpu: "500m"
             requests:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "250m"
 
       # ✅ 종료 시간 설정
