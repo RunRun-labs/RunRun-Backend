@@ -525,10 +525,10 @@
           <button class="round-btn" id="pointModeBtn" data-tooltip="점 찍기">
             📍
           </button>
-          <button class="round-btn" id="undoPointBtn" data-tooltip="한 점 되돌리기">
+          <button class="round-btn" id="undoPointBtn" data-tooltip="한 선 되돌리기">
             ↩️
           </button>
-          <button class="round-btn" id="undoLineBtn" data-tooltip="한 선 되돌리기">
+          <button class="round-btn" id="undoLineBtn" data-tooltip="한 점 되돌리기">
             ⤴️
           </button>
           <button class="round-btn" id="roundTripBtn" data-tooltip="왕복 모드">
@@ -893,21 +893,25 @@
         }
       });
 
-      // 한 점 되돌리기
+      // 한 점 되돌리기 (선 그리기 모드에서 마지막 점 하나 제거)
       undoPointBtn.addEventListener("click", () => {
         if (points.length === 0) return;
         
+        // ✅ points에서 마지막 점 제거
         points.pop();
         
-        // 현재 선분에서도 제거
+        // ✅ lineSegments에서도 마지막 선분의 마지막 점 제거
         if (lineSegments.length > 0) {
-          const currentSegment = lineSegments[lineSegments.length - 1];
-          if (currentSegment.length > 0) {
-            currentSegment.pop();
+          const lastSegment = lineSegments[lineSegments.length - 1];
+          if (lastSegment.length > 0) {
+            lastSegment.pop();
             // 선분이 비었으면 제거
-            if (currentSegment.length === 0) {
+            if (lastSegment.length === 0) {
               lineSegments.pop();
             }
+          } else {
+            // 마지막 선분이 비어있으면 제거
+            lineSegments.pop();
           }
         }
         
@@ -941,53 +945,17 @@
         checkIfCanGenerate();
       });
 
-      // 한 선 되돌리기
+      // 한 선 되돌리기 (점 찍기 모드에서 마지막 POI 마커 하나 제거)
       undoLineBtn.addEventListener("click", () => {
-        if (lineSegments.length === 0) {
-          console.log("선분이 없습니다.");
+        if (poiMarkers.length === 0) {
+          console.log("POI 마커가 없습니다.");
           return;
         }
         
-        console.log("Before undo - Points:", points.length, "LineSegments:", lineSegments.map(s => s.length));
+        // ✅ poiMarkers에서 마지막 마커 제거
+        const lastMarker = poiMarkers.pop();
+        lastMarker.setMap(null); // 지도에서 마커 제거
         
-        // 마지막 선분 제거
-        const lastSegment = lineSegments.pop();
-        console.log("Removing segment with", lastSegment.length, "points");
-        
-        // points에서도 해당 선분의 점들 제거
-        for (let i = 0; i < lastSegment.length; i++) {
-          points.pop();
-        }
-        
-        console.log("After undo - Points:", points.length, "LineSegments:", lineSegments.map(s => s.length));
-        
-        if (points.length === 0) {
-          if (startMarker) {
-            startMarker.setMap(null);
-            startMarker = null;
-          }
-          startAddress = "";
-          if (polyline) {
-            polyline.setMap(null);
-            polyline = null;
-          }
-          lineSegments = [];
-        } else {
-          // 지도 중심 이동 없이 선만 다시 그리기
-          if (polyline) {
-            polyline.setMap(null);
-          }
-          const path = points.map((p) => new kakao.maps.LatLng(p.lat, p.lng));
-          polyline = new kakao.maps.Polyline({
-            path: path,
-            strokeWeight: 6,
-            strokeColor: "#ff3d00",
-            strokeOpacity: 0.8,
-          });
-          polyline.setMap(map);
-        }
-        
-        updateDistanceDisplay();
         checkIfCanGenerate();
       });
 
