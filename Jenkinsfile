@@ -143,13 +143,40 @@ command -v envsubst >/dev/null 2>&1 || {
   exit 1
 }
 
-envsubst < k8s/eks_deploy_alb.yml | kubectl apply -f -
+		# Ensure runrun-env Secret has the latest MONGO_URI (without overwriting other keys)
+		if [ -f ".env.prod" ]; then
+		  MONGO_URI_LINE="$(grep -E '^MONGO_URI=' .env.prod | head -n 1 || true)"
+		  if [ -n "${MONGO_URI_LINE}" ]; then
+		    MONGO_URI_VALUE="${MONGO_URI_LINE#MONGO_URI=}"
+		    MONGO_URI_B64="$(printf %s "${MONGO_URI_VALUE}" | base64 | tr -d '\n')"
 
-kubectl rollout status deployment/runrun -n default --timeout=300s
-kubectl get pods -o wide
-kubectl get svc -o wide
-kubectl get ingress -o wide || true
-'''
+		    if kubectl -n default get secret runrun-env >/dev/null 2>&1; then
+		      kubectl -n default patch secret runrun-env --type='json' \
+		        -p="[{\"op\":\"add\",\"path\":\"/data/MONGO_URI\",\"value\":\"${MONGO_URI_B64}\"}]"
+		    else
+		      kubectl -n default create secret generic runrun-env --from-literal="MONGO_URI=${MONGO_URI_VALUE}"
+		    fi
+		  else
+		    echo "[warn] MONGO_URI not found in .env.prod; skipping runrun-env secret update"
+		  fi
+		else
+		  echo "[warn] .env.prod not found; skipping runrun-env secret update"
+		fi
+
+	envsubst < k8s/eks_deploy_alb.yml | kubectl apply -f -
+
+		if ! kubectl rollout status deployment/runrun -n default --timeout=600s; then
+		  echo "[error] Rollout did not complete; dumping diagnostics..."
+		  kubectl get pods -n default -l app=runrun -o wide || true
+		  kubectl describe pods -n default -l app=runrun || true
+		  kubectl logs -n default -l app=runrun --all-containers=true --tail=200 || true
+		  exit 1
+		fi
+
+		kubectl get pods -o wide
+		kubectl get svc -o wide
+		kubectl get ingress -o wide || true
+	'''
         }
       }
     }
