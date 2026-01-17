@@ -399,17 +399,14 @@
       if (remainingDistanceKm != null) {
         const remainingDistM = remainingDistanceKm * 1000;
 
-        // 이미 지나간 남은 거리 알림은 스킵
-        // 현재 남은 거리가 100m라면, 500m, 300m는 이미 지나갔으므로 스킵
-        if (remainingDistM <= 100) {
-          // 100m 이하 남았으면 500m, 300m는 이미 지나감
-          this._remainingSpoken.add("remain:500");
-          this._remainingSpoken.add("remain:300");
-        } else if (remainingDistM <= 300) {
-          // 300m 이하 남았으면 500m는 이미 지나감
-          this._remainingSpoken.add("remain:500");
+        // ✅ "처음 진입했을 때 이미 남은 거리가 임계값보다 작다면" 그 임계값 멘트는 재생하면 안 됨
+        // 예: 목표 0.2km(200m)인 러닝에 들어오면 300m 안내가 나오면 안 되므로 300/500은 스킵 처리
+        const thresholdsM = [500, 300, 100];
+        for (const t of thresholdsM) {
+          if (remainingDistM <= t) {
+            this._remainingSpoken.add(`remain:${t}`);
+          }
         }
-        // 500m보다 많이 남았으면 아직 아무것도 지나가지 않음
       }
 
       this._saveRunState();

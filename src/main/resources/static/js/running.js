@@ -58,6 +58,63 @@ const freeRunCourseImageInput = document.getElementById(
 );
 
 // ==========================
+// Mobile viewport fix (100vh issue) + Kakao map relayout
+// ==========================
+let mapRelayoutRafId = null;
+
+function setViewportHeightVar() {
+  // visual viewport 기반으로 1vh를 px로 계산
+  const h = window.innerHeight || document.documentElement.clientHeight || 0;
+  const vh = h * 0.01;
+  document.documentElement.style.setProperty("--vh", `${vh}px`);
+}
+
+function scheduleMapRelayout() {
+  if (!map) return;
+  if (mapRelayoutRafId != null) return;
+  mapRelayoutRafId = requestAnimationFrame(() => {
+    mapRelayoutRafId = null;
+    try {
+      map.relayout();
+    } catch (e) {
+      // ignore
+    }
+  });
+}
+
+// 초기 1회 세팅 (DOM 초기 렌더/주소창 상태 반영)
+setViewportHeightVar();
+window.addEventListener(
+  "resize",
+  () => {
+    setViewportHeightVar();
+    scheduleMapRelayout();
+  },
+  { passive: true }
+);
+
+// 모바일에서 주소창 show/hide 등으로 visualViewport가 변할 때 대응
+if (window.visualViewport) {
+  window.visualViewport.addEventListener(
+    "resize",
+    () => {
+      setViewportHeightVar();
+      scheduleMapRelayout();
+    },
+    { passive: true }
+  );
+  window.visualViewport.addEventListener(
+    "scroll",
+    () => {
+      // 주소창 애니메이션 중에도 innerHeight가 변하는 경우가 있어 보정
+      setViewportHeightVar();
+      scheduleMapRelayout();
+    },
+    { passive: true }
+  );
+}
+
+// ==========================
 // WebSocket
 // ==========================
 let stompClient = null;
@@ -401,6 +458,85 @@ async function convertStartAddressAsync(lat, lng) {
   }
 }
 
+/**
+ * 자유러닝(코스 없음) 저장 모달에서 사용할 주소를 최대한 안정적으로 확보한다.
+ * - 모달은 이 함수가 끝난 뒤(성공/타임아웃/좌표 fallback) 표시된다.
+ * - 요구사항: 주소는 자동 입력 + readOnly
+ */
+async function resolveFreeRunAddressWithRetry(preview, { timeoutMs = 5000 } = {}) {
+  // 오프라인 자유러닝: meetingPlace가 있으면 우선 사용
+  if (sessionDataCache?.meetingPlace) return sessionDataCache.meetingPlace;
+
+  // 이미 변환된 시작 주소가 있으면 즉시 사용
+  if (resolvedStartAddress) return resolvedStartAddress;
+
+  // 좌표 후보 (preview 우선, 없으면 latestPosition)
+  let targetLat = preview?.startLat ?? latestPosition?.coords?.latitude ?? null;
+  let targetLng = preview?.startLng ?? latestPosition?.coords?.longitude ?? null;
+
+  // 1) 기존 로직(geocoder 대기 포함)로 한번 채워보기
+  if (targetLat != null && targetLng != null) {
+    try {
+      await convertStartAddressAsync(targetLat, targetLng);
+    } catch (e) {
+      // ignore
+    }
+    if (resolvedStartAddress) return resolvedStartAddress;
+  }
+
+  // 2) 직접 재시도 (geocoder/services가 늦게 붙는 케이스 대응)
+  const deadline = Date.now() + Number(timeoutMs || 0);
+  while (Date.now() < deadline) {
+    // 최신 좌표 재확인
+    targetLat = preview?.startLat ?? latestPosition?.coords?.latitude ?? null;
+    targetLng = preview?.startLng ?? latestPosition?.coords?.longitude ?? null;
+
+    if (!geocoder) {
+      await new Promise((r) => setTimeout(r, 100));
+      continue;
+    }
+
+    if (targetLat != null && targetLng != null) {
+      const addr = await new Promise((resolve) => {
+        try {
+          geocoder.coord2Address(targetLng, targetLat, (result, status) => {
+            if (status === kakao.maps.services.Status.OK && result?.[0]) {
+              resolve(
+                result[0].road_address?.address_name ??
+                  result[0].address?.address_name ??
+                  ""
+              );
+            } else {
+              resolve("");
+            }
+          });
+        } catch (e) {
+          resolve("");
+        }
+      });
+
+      if (addr) {
+        resolvedStartAddress = addr;
+        return addr;
+      }
+    }
+
+    await new Promise((r) => setTimeout(r, 150));
+  }
+
+  // 3) 끝까지 안 되면 "빈 값"으로 두면 저장 자체가 막히므로 좌표로 fallback
+  if (targetLat != null && targetLng != null) {
+    const fallback = `위치정보(위도:${Number(targetLat).toFixed(
+      5
+    )}, 경도:${Number(targetLng).toFixed(5)})`;
+    showToast("주소 변환에 실패했습니다. 좌표로 저장됩니다.", "warn", 3500);
+    return fallback;
+  }
+
+  showToast("주소 변환에 실패했습니다. 잠시 후 다시 시도해주세요.", "warn", 3500);
+  return "";
+}
+
 function stopPreviewOnlyTracking() {
   try {
     if (previewWatchId != null && navigator.geolocation) {
@@ -505,94 +641,22 @@ async function openFreeRunCourseModal(preview) {
 
   // ✅ 주소 자동 입력: resolvedStartAddress 우선 사용 (첫 GPS 주소 변환 결과)
   let resolvedAddress = "";
-  if (freeRunCourseAddressInput && sessionDataCache?.meetingPlace) {
-    // ✅ meetingPlace가 있으면 그것을 사용 (오프라인 자유러닝)
-    resolvedAddress = sessionDataCache.meetingPlace;
-  } else if (freeRunCourseAddressInput) {
-    // ✅ 무조건 resolvedStartAddress 우선 사용 (첫 GPS 주소 변환 결과)
-    if (resolvedStartAddress) {
-      resolvedAddress = resolvedStartAddress;
-      console.log("✅ 미리 변환된 시작 주소 사용:", resolvedAddress);
-    } else {
-      // ✅ resolvedStartAddress가 없으면 preview.startLat/startLng로 역지오코딩 (fallback)
-      let targetLat = preview?.startLat;
-      let targetLng = preview?.startLng;
-
-      // ✅ preview 좌표도 없으면 latestPosition 사용
-      if (targetLat == null || targetLng == null) {
-        if (latestPosition?.coords) {
-          targetLat = latestPosition.coords.latitude;
-          targetLng = latestPosition.coords.longitude;
-          console.log("✅ preview 좌표 없음, latestPosition 사용:", {
-            lat: targetLat,
-            lng: targetLng,
-          });
-        }
-      }
-
-      if (targetLat != null && targetLng != null) {
-        try {
-          // geocoder가 없으면 대기
-          if (!geocoder) {
-            // 최대 3000ms 대기 (100ms 간격으로 30번 체크)
-            for (let i = 0; i < 30; i++) {
-              await new Promise((resolve) => setTimeout(resolve, 100));
-              if (geocoder) break;
-            }
-          }
-
-          if (geocoder) {
-            console.log("✅ 주소 변환 시도:", {
-              lat: targetLat,
-              lng: targetLng,
-            });
-            resolvedAddress = await new Promise((resolve) => {
-              geocoder.coord2Address(targetLng, targetLat, (result, status) => {
-                if (status === kakao.maps.services.Status.OK && result?.[0]) {
-                  const address =
-                    result[0].road_address?.address_name ??
-                    result[0].address?.address_name ??
-                    "";
-                  console.log("✅ 주소 변환 성공:", address);
-                  resolve(address);
-                } else {
-                  console.warn(
-                    "❌ 주소 변환 실패 - status:",
-                    status,
-                    "result:",
-                    result
-                  );
-                  resolve("");
-                }
-              });
-            });
-          } else {
-            console.warn("❌ geocoder가 초기화되지 않음");
-          }
-        } catch (e) {
-          console.warn("❌ 주소 변환 예외:", e);
-          resolvedAddress = "";
-        }
-      } else {
-        console.warn(
-          "❌ 주소 변환할 좌표가 없음 (resolvedStartAddress, preview, latestPosition 모두 없음)"
-        );
-      }
+  if (freeRunCourseAddressInput) {
+    // ✅ 주소가 들어올 때까지 재시도 후 모달 표시 (최대 5초)
+    resolvedAddress = await resolveFreeRunAddressWithRetry(preview, {
+      timeoutMs: 5000,
+    });
+    if (resolvedAddress && resolvedStartAddress == null) {
+      resolvedStartAddress = resolvedAddress;
     }
   }
 
-  // 주소 설정 (값이 있을 때만 readonly 설정)
+  // ✅ 주소 설정 (요구사항: 무조건 readOnly)
   if (freeRunCourseAddressInput) {
     freeRunCourseAddressInput.value = resolvedAddress || "";
-    if (resolvedAddress) {
-      freeRunCourseAddressInput.readOnly = true;
-      freeRunCourseAddressInput.style.backgroundColor = "#f3f4f6";
-      freeRunCourseAddressInput.style.cursor = "not-allowed";
-    } else {
-      freeRunCourseAddressInput.readOnly = false;
-      freeRunCourseAddressInput.style.backgroundColor = "";
-      freeRunCourseAddressInput.style.cursor = "";
-    }
+    freeRunCourseAddressInput.readOnly = true;
+    freeRunCourseAddressInput.style.backgroundColor = "#f3f4f6";
+    freeRunCourseAddressInput.style.cursor = "not-allowed";
   }
 
   // 지도에 프리뷰 경로 표시 (수정 불가)
@@ -621,7 +685,7 @@ async function openFreeRunCourseModal(preview) {
   }
 
   if (freeRunCourseSaveBtn) freeRunCourseSaveBtn.disabled = false;
-  // ✅ 주소 변환이 완료된 후에만 모달 표시
+  // ✅ 주소 확보(또는 timeout/fallback) 이후에만 모달 표시
   freeRunCourseModalEl.classList.add("show");
 
   // ✅ 코스 제목/설명 validation 초기화
@@ -1290,17 +1354,23 @@ document.addEventListener("DOMContentLoaded", async () => {
           typeof window.TtsManager.resetDistanceState === "function"
         ) {
           let remainingDistance = latestStats.remainingDistance;
+          const targetDistance = sessionDataCache?.targetDistance; // km
+          const totalDistance = latestStats.totalDistance; // km
 
           // ✅ 솔로런 코스 없이 뛸 때: remainingDistance가 없으면 targetDistance와 totalDistance로 계산
           if (remainingDistance == null || remainingDistance === undefined) {
-            const targetDistance = sessionDataCache?.targetDistance; // km
-            const totalDistance = latestStats.totalDistance; // km
             if (
               Number.isFinite(targetDistance) &&
               Number.isFinite(totalDistance)
             ) {
               remainingDistance = Math.max(0, targetDistance - totalDistance);
             }
+          }
+          
+          // ✅ 목표 거리를 초과하는 남은 거리는 목표 거리로 제한
+          if (Number.isFinite(targetDistance) && Number.isFinite(totalDistance) && remainingDistance != null) {
+            const maxRemainingDistance = Math.max(0, targetDistance - totalDistance);
+            remainingDistance = Math.min(remainingDistance, maxRemainingDistance);
           }
 
           if (remainingDistance != null) {
@@ -2418,6 +2488,8 @@ function initKakaoMap() {
       };
 
       map = new kakao.maps.Map(mapContainer, mapOption);
+      // ✅ 초기 렌더 직후 레이아웃 보정 (지도 상단/타일 잘림 방지)
+      scheduleMapRelayout();
 
       // ✅ Geocoder는 services가 로드된 후에 초기화
       try {
@@ -2665,17 +2737,23 @@ function connectWebSocket() {
       ) {
         // ✅ 재진입 시 현재 남은 거리를 전달하여 이미 지나간 거리 TTS만 스킵
         let remainingDistance = latestStatsCache.remainingDistance;
+        const targetDistance = sessionDataCache?.targetDistance; // km
+        const totalDistance = latestStatsCache.totalDistance; // km
 
         // ✅ 솔로런 코스 없이 뛸 때: remainingDistance가 없으면 targetDistance와 totalDistance로 계산
         if (remainingDistance == null || remainingDistance === undefined) {
-          const targetDistance = sessionDataCache?.targetDistance; // km
-          const totalDistance = latestStatsCache.totalDistance; // km
           if (
             Number.isFinite(targetDistance) &&
             Number.isFinite(totalDistance)
           ) {
             remainingDistance = Math.max(0, targetDistance - totalDistance);
           }
+        }
+        
+        // ✅ 목표 거리를 초과하는 남은 거리는 목표 거리로 제한
+        if (Number.isFinite(targetDistance) && Number.isFinite(totalDistance) && remainingDistance != null) {
+          const maxRemainingDistance = Math.max(0, targetDistance - totalDistance);
+          remainingDistance = Math.min(remainingDistance, maxRemainingDistance);
         }
 
         if (remainingDistance != null) {
@@ -2864,15 +2942,13 @@ function subscribeToChatMessages() {
             showRunningResultModalWithRetry("러닝 결과 저장중입니다…");
           }
         } else {
-          // ✅ 방장도 자유러닝 시 코스 저장 완료 후 시스템 메시지 수신 시 결과 모달 표시
-          if (sessionCourseId == null) {
-            setGlobalLoading(false);
-            if (
-              !runningResultModal ||
-              !runningResultModal.classList.contains("show")
-            ) {
-              showRunningResultModalWithRetry("러닝 결과 저장중입니다…");
-            }
+          // ✅ 방장: 자유러닝(코스 없음) 또는 코스 러닝 모두 시스템 메시지 수신 시 결과 모달 표시
+          setGlobalLoading(false);
+          if (
+            !runningResultModal ||
+            !runningResultModal.classList.contains("show")
+          ) {
+            showRunningResultModalWithRetry("러닝 결과 저장중입니다…");
           }
         }
       }
@@ -2943,13 +3019,21 @@ function handleRunningStats(stats) {
     // ✅ 솔로런(코스 없음)도 오프라인과 동일하게 TTS 작동: remainingDistance가 없으면 targetDistance로 계산
     if (ttsReady && window.TtsManager && !completedHandled) {
       let remainingDistance = stats.remainingDistance;
+      const targetDistance = sessionDataCache?.targetDistance; // km
+      const totalDistance = stats.totalDistance; // km
+      
       // remainingDistance가 없으면 세션의 targetDistance로 계산
       if (remainingDistance == null || remainingDistance === undefined) {
-        const targetDistance = sessionDataCache?.targetDistance; // km
-        const totalDistance = stats.totalDistance; // km
         if (Number.isFinite(targetDistance) && Number.isFinite(totalDistance)) {
           remainingDistance = Math.max(0, targetDistance - totalDistance);
         }
+      }
+      
+      // ✅ 목표 거리를 초과하는 남은 거리 TTS는 재생하지 않음
+      // 예: 목표 0.2km인데 코스의 remainingDistance가 0.3km면, 목표 기준으로 0.2km만 사용
+      if (Number.isFinite(targetDistance) && Number.isFinite(totalDistance) && remainingDistance != null) {
+        const maxRemainingDistance = Math.max(0, targetDistance - totalDistance);
+        remainingDistance = Math.min(remainingDistance, maxRemainingDistance);
       }
 
       // ✅ 재진입/재연결 시 첫 stats 수신 시 resetDistanceState 호출하여 이미 지나간 거리 TTS 방지
@@ -2969,22 +3053,30 @@ function handleRunningStats(stats) {
         ) {
           if (typeof window.TtsManager.resetDistanceState === "function") {
             let resetRemainingDistance = remainingDistance;
+            const resetTargetDistance = sessionDataCache?.targetDistance;
+            const resetTotalDistance = stats.totalDistance;
+            
             if (
               resetRemainingDistance == null ||
               resetRemainingDistance === undefined
             ) {
-              const targetDistance = sessionDataCache?.targetDistance;
-              const totalDistance = stats.totalDistance;
               if (
-                Number.isFinite(targetDistance) &&
-                Number.isFinite(totalDistance)
+                Number.isFinite(resetTargetDistance) &&
+                Number.isFinite(resetTotalDistance)
               ) {
                 resetRemainingDistance = Math.max(
                   0,
-                  targetDistance - totalDistance
+                  resetTargetDistance - resetTotalDistance
                 );
               }
             }
+            
+            // ✅ 목표 거리를 초과하는 남은 거리는 목표 거리로 제한
+            if (Number.isFinite(resetTargetDistance) && Number.isFinite(resetTotalDistance) && resetRemainingDistance != null) {
+              const maxResetRemainingDistance = Math.max(0, resetTargetDistance - resetTotalDistance);
+              resetRemainingDistance = Math.min(resetRemainingDistance, maxResetRemainingDistance);
+            }
+            
             if (resetRemainingDistance != null) {
               window.TtsManager.resetDistanceState(resetRemainingDistance);
             } else {
@@ -3216,20 +3308,14 @@ async function handleCompletedOnce(stats) {
     await requestFinishOnce(null);
   }
 
-  // ✅ 참여자의 경우: 로딩 해제 후 결과 모달 표시
-  // (시스템 메시지를 기다리지 않고 즉시 결과 모달 표시)
-  if (!isHost) {
-    setGlobalLoading(false);
-    showRunningResultModalWithRetry("러닝 결과 저장중입니다…");
-    return; // 참여자는 더 이상 처리할 필요 없음
-  }
-
-  // ✅ 오프라인 코스 러닝 방장: 시스템 메시지 수신 시 결과 모달 표시
-  // (자유러닝 방장도 시스템 메시지 수신 시 표시)
-  if (isHost && !isSoloRun) {
+  // ✅ 오프라인 (코스 있음/없음 모두): 방장/참여자 모두 시스템 메시지 수신 시 결과 모달 표시
+  // - 코스 없을 때: 방장이 코스 생성 후 finish 호출할 때까지 기다려야 함
+  // - 코스 있을 때: 방장이 finish 호출 후 결과가 저장될 때까지 기다려야 함
+  if (!isSoloRun) {
     // 시스템 메시지를 기다림 (subscribeToChatMessages에서 처리)
     setGlobalLoading(false);
-    // 결과 모달은 시스템 메시지 수신 시 표시됨 (2377, 2387줄)
+    // 결과 모달은 시스템 메시지 수신 시 표시됨 (subscribeToChatMessages에서 처리)
+    return;
   }
 
   // ✅ 솔로런 코스 러닝 방장: finish 완료 후 바로 결과 모달 표시
