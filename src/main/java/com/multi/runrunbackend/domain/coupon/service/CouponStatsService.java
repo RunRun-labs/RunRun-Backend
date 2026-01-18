@@ -10,11 +10,14 @@ import com.multi.runrunbackend.domain.coupon.entity.Coupon;
 import com.multi.runrunbackend.domain.coupon.respository.CouponIssueRepository;
 import com.multi.runrunbackend.domain.coupon.respository.CouponRepository;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CouponStatsService {
@@ -42,12 +45,45 @@ public class CouponStatsService {
         LocalDate from = r.fromDate();
         LocalDate to = r.toDate();
         
+        log.info("========== 쿠폰 통계 조회 ==========");
+        log.info("couponId: {}", couponId);
+        log.info("기간: {} ~ {}", from, to);
+        
         // 기간별 총합
         Object[] totalsRaw = couponIssueRepository.sumTotalsByCouponId(couponId, from, to);
-        long totalIssued = totalsRaw != null && totalsRaw.length > 0 ? toLong(totalsRaw[0]) : 0L;
-        long totalUsed = totalsRaw != null && totalsRaw.length > 1 ? toLong(totalsRaw[1]) : 0L;
-        long totalExpired = totalsRaw != null && totalsRaw.length > 2 ? toLong(totalsRaw[2]) : 0L;
-        long totalAvailable = totalsRaw != null && totalsRaw.length > 3 ? toLong(totalsRaw[3]) : 0L;
+        log.info("sumTotalsByCouponId 원본 결과: {}", 
+            totalsRaw != null ? Arrays.toString(totalsRaw) : "null");
+        
+        // JPA가 배열의 배열로 반환하는 경우 처리
+        Object[] totals;
+        if (totalsRaw != null && totalsRaw.length > 0 
+            && totalsRaw[0] != null && totalsRaw[0].getClass().isArray()) {
+            // 배열의 배열인 경우: 첫 번째 요소가 실제 데이터
+            totals = (Object[]) totalsRaw[0];
+            log.info("  ⚠️ 배열의 배열이 감지되어 첫 번째 요소를 사용합니다.");
+        } else {
+            // 일반 배열인 경우
+            totals = totalsRaw;
+        }
+        
+        log.info("sumTotalsByCouponId 처리된 결과: {}", 
+            totals != null ? Arrays.toString(totals) : "null");
+        if (totals != null) {
+            log.info("  배열 길이: {}, [0]={}, [1]={}, [2]={}, [3]={}", 
+                totals.length, 
+                totals.length > 0 ? totals[0] : "없음",
+                totals.length > 1 ? totals[1] : "없음",
+                totals.length > 2 ? totals[2] : "없음",
+                totals.length > 3 ? totals[3] : "없음");
+        }
+        
+        long totalIssued = totals != null && totals.length > 0 ? toLong(totals[0]) : 0L;
+        long totalUsed = totals != null && totals.length > 1 ? toLong(totals[1]) : 0L;
+        long totalExpired = totals != null && totals.length > 2 ? toLong(totals[2]) : 0L;
+        long totalAvailable = totals != null && totals.length > 3 ? toLong(totals[3]) : 0L;
+        
+        log.info("계산된 값 - totalIssued: {}, totalUsed: {}, totalExpired: {}, totalAvailable: {}", 
+            totalIssued, totalUsed, totalExpired, totalAvailable);
         
         // 날짜별 추이
         List<Object[]> trendRaw = couponIssueRepository.sumDailyTrendByCouponId(couponId, from, to);
@@ -62,11 +98,32 @@ public class CouponStatsService {
         
         // 상태별 분포 (전체 기간)
         Object[] statusRaw = couponIssueRepository.sumStatusBreakdownByCouponId(couponId);
+        log.info("sumStatusBreakdownByCouponId 원본 결과: {}", 
+            statusRaw != null ? Arrays.toString(statusRaw) : "null");
+        
+        // JPA가 배열의 배열로 반환하는 경우 처리
+        Object[] status;
+        if (statusRaw != null && statusRaw.length > 0 
+            && statusRaw[0] != null && statusRaw[0].getClass().isArray()) {
+            // 배열의 배열인 경우: 첫 번째 요소가 실제 데이터
+            status = (Object[]) statusRaw[0];
+            log.info("  ⚠️ 배열의 배열이 감지되어 첫 번째 요소를 사용합니다.");
+        } else {
+            // 일반 배열인 경우
+            status = statusRaw;
+        }
+        
+        log.info("sumStatusBreakdownByCouponId 처리된 결과: {}", 
+            status != null ? Arrays.toString(status) : "null");
+        
         CouponStatusBreakdownResDto statusBreakdown = CouponStatusBreakdownResDto.of(
-            statusRaw != null && statusRaw.length > 0 ? toLong(statusRaw[0]) : 0L,
-            statusRaw != null && statusRaw.length > 1 ? toLong(statusRaw[1]) : 0L,
-            statusRaw != null && statusRaw.length > 2 ? toLong(statusRaw[2]) : 0L
+            status != null && status.length > 0 ? toLong(status[0]) : 0L,
+            status != null && status.length > 1 ? toLong(status[1]) : 0L,
+            status != null && status.length > 2 ? toLong(status[2]) : 0L
         );
+        
+        log.info("상태별 분포 - available: {}, used: {}, expired: {}", 
+            statusBreakdown.getAvailable(), statusBreakdown.getUsed(), statusBreakdown.getExpired());
         
         return CouponStatsResDto.of(
             coupon.getId(),
