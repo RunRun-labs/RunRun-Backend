@@ -74,13 +74,18 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       })
       .then((result) => {
+        console.log("통계 응답:", result);  // 디버깅용
+        
         if (result.success && result.data) {
           const stats = result.data;
           
-          // 통계 요약
-          document.getElementById("totalIssued").textContent = stats.totalIssued || 0;
-          document.getElementById("totalUsed").textContent = stats.totalUsed || 0;
-          document.getElementById("usageRate").textContent = (stats.usageRate || 0).toFixed(2) + "%";
+          console.log("통계 데이터:", stats);  // 디버깅용
+          
+          // 통계 요약 (0도 유효한 값이므로 ?? 사용)
+          document.getElementById("totalIssued").textContent = stats.totalIssued ?? 0;
+          document.getElementById("totalUsed").textContent = stats.totalUsed ?? 0;
+          document.getElementById("usageRate").textContent = 
+            (stats.usageRate ?? 0).toFixed(2) + "%";  // 백엔드에서 이미 퍼센트로 계산됨
 
           // 날짜별 추이 차트
           updateDailyTrendChart(stats.dailyTrend || []);
@@ -93,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch((error) => {
         console.error("Error:", error);
-        alert("통계 데이터를 불러오는 중 오류가 발생했습니다.");
+        alert("통계 데이터를 불러오는 중 오류가 발생했습니다: " + error.message);
       });
   }
 
