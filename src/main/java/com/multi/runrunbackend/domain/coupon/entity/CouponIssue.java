@@ -8,7 +8,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
@@ -29,7 +28,6 @@ import java.time.LocalDateTime;
                         "user_id"})
         }
 )
-@SQLRestriction("status = 'AVAILABLE'")
 public class CouponIssue extends BaseCreatedEntity {
 
     @Id
