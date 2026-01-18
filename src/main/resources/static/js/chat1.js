@@ -320,17 +320,29 @@ function updateChatRoomUI() {
 
   // 그룹명 (제목 표시, 없으면 세션 ID)
   const title = currentSession.title || `세션 #${currentSession.id}`;
-  document.getElementById("group-name").textContent = title;
+  const groupNameEl = document.getElementById("group-name");
+  if (groupNameEl) {
+    groupNameEl.textContent = title;
+    groupNameEl.style.display = "block"; // 로딩 후 표시
+  }
 
   // 세션 타입
-  document.getElementById(
-    "session-type-badge"
-  ).textContent = `🏃 ${currentSession.type}`;
+  const sessionTypeBadgeEl = document.getElementById("session-type-badge");
+  if (sessionTypeBadgeEl) {
+    sessionTypeBadgeEl.textContent = `🏃 ${currentSession.type}`;
+  }
 
   // 거리
-  document.getElementById(
-    "session-distance"
-  ).textContent = `${currentSession.distance}km`;
+  const sessionDistanceEl = document.getElementById("session-distance");
+  if (sessionDistanceEl) {
+    sessionDistanceEl.textContent = `${currentSession.distance}km`;
+  }
+
+  // 러닝 정보 카드 표시
+  const runningInfoCardEl = document.getElementById("running-info-card");
+  if (runningInfoCardEl) {
+    runningInfoCardEl.style.display = "block";
+  }
 
   // 만남 시간
   const meetingTimeEl = document.getElementById("meeting-time");
@@ -352,8 +364,10 @@ function updateChatRoomUI() {
   }
 
   // 만남 장소
-  document.getElementById("meeting-place").textContent =
-    currentSession.meetingPlace || "장소 미정";
+  const meetingPlaceEl = document.getElementById("meeting-place");
+  if (meetingPlaceEl) {
+    meetingPlaceEl.textContent = currentSession.meetingPlace || "장소 미정";
+  }
 
   // 참여자 수 업데이트
   loadParticipants(currentSession.id);
@@ -497,28 +511,49 @@ function updateControlBar() {
       goRunningBtn.classList.remove("hidden");
     }
   } else if (currentSession.status === "IN_PROGRESS") {
-    // 진행 중일 때: "러닝 페이지로 가기" 버튼을 확실히 노출
-    if (hostSection) {
-      hostSection.classList.remove("hidden");
-    }
-    if (userSection) {
-      userSection.classList.add("hidden");
-    }
-    if (readySection) {
-      readySection.classList.add("hidden");
-    }
+    // ✅ 진행 중일 때: 방장과 참여자 모두 "러닝 페이지로 가기" 버튼 표시
+    if (isHost) {
+      // 방장: hostSection에 버튼 표시
+      if (hostSection) {
+        hostSection.classList.remove("hidden");
+      }
+      if (userSection) {
+        userSection.classList.add("hidden");
+      }
+      if (readySection) {
+        readySection.classList.add("hidden");
+      }
 
-    if (startBtn) {
-      startBtn.disabled = false;
-      startBtn.style.opacity = "1";
-      startBtn.textContent = "🏃 러닝 페이지로 가기";
-    }
+      if (startBtn) {
+        startBtn.disabled = false;
+        startBtn.style.opacity = "1";
+        startBtn.textContent = "🏃 러닝 페이지로 가기";
+      }
 
-    // 방장 문구가 비방장에게 보이는 문제 방지
-    if (hostLabel) {
-      hostLabel.textContent = isHost
-        ? "👑 방장입니다"
-        : "🏃 러닝이 진행중입니다";
+      if (hostLabel) {
+        hostLabel.textContent = "👑 방장입니다";
+      }
+    } else {
+      // ✅ 참여자: hostSection에 버튼 표시 (방장과 동일한 버튼 사용)
+      if (hostSection) {
+        hostSection.classList.remove("hidden");
+      }
+      if (userSection) {
+        userSection.classList.add("hidden");
+      }
+      if (readySection) {
+        readySection.classList.add("hidden");
+      }
+
+      if (startBtn) {
+        startBtn.disabled = false;
+        startBtn.style.opacity = "1";
+        startBtn.textContent = "🏃 러닝 페이지로 가기";
+      }
+
+      if (hostLabel) {
+        hostLabel.textContent = "🏃 러닝이 진행중입니다";
+      }
     }
 
     // 상단 아이콘 버튼도 함께 노출
@@ -903,19 +938,17 @@ function setupEventListeners() {
     });
   }
 
-  // 하단(방장 영역) 버튼: 대기 중이면 시작, 진행 중이면 러닝 페이지로 이동
+  // 하단(방장 영역) 버튼: 오프라인은 러닝 페이지로 바로 이동 (시작은 러닝 페이지에서)
   const startBtn = document.getElementById("start-running-btn");
   if (startBtn) {
     startBtn.addEventListener("click", () => {
-      if (currentSession?.status === "IN_PROGRESS") {
+      if (!currentSession?.id) return;
+      
+      // 오프라인은 STANDBY/IN_PROGRESS/COMPLETED 모두 러닝 페이지로 이동
+      if (currentSession?.status === "STANDBY" || currentSession?.status === "IN_PROGRESS" || currentSession?.status === "COMPLETED") {
         window.location.href = `/running/${currentSession.id}`;
         return;
       }
-      if (currentSession?.status === "COMPLETED") {
-        window.location.href = `/running/${currentSession.id}`;
-        return;
-      }
-      startRunning();
     });
   }
 
@@ -1068,10 +1101,14 @@ function connectWebSocket() {
             return;
           }
           displayMessage(message);
-          if (
+          
+          const isRunningStartSystemMessage =
             message.messageType === "SYSTEM" &&
-            message.content &&
-            message.content.includes("런닝이 시작되었습니다")
+            typeof message.content === "string" &&
+            /러닝|런닝/.test(message.content) &&
+            message.content.includes("시작");
+          if (
+            isRunningStartSystemMessage
           ) {
             console.log("🏃 런닝 시작 감지 - 통계 구독 + 모달 표시");
 
@@ -1096,12 +1133,23 @@ function connectWebSocket() {
               }
             });
 
-            // ✅ 시작 시각 공유(러닝페이지/채팅방 시간 동기화)
-            ensureStartedAtMsInStorage(Date.now());
+            // ✅ 시간 동기화:
+            // 참여자에게 "메시지 수신 시각"을 startedAtMs로 고정하면 방장과 어긋날 수 있음.
+            // 러닝 페이지/모달은 stats.totalRunningTime을 받는 순간 seedTimer로 맞춘다.
 
             // 세션 상태 업데이트
             currentSession.status = "IN_PROGRESS";
             updateControlBar();
+            
+            // ✅ 참여자: 러닝 시작 시 자동으로 러닝 페이지로 이동 (TTS 재생 전에 이동)
+            if (!isHost && currentSession?.id) {
+              console.log("✅ 참여자 러닝 시작: 러닝 페이지로 자동 이동");
+              // 즉시 러닝 페이지로 이동 (TTS는 러닝 페이지에서 재생)
+              window.location.href = `/running/${currentSession.id}`;
+              return; // 아래 코드는 실행하지 않음
+            }
+            
+            // 방장은 아래 코드 계속 실행
             startHostGpsAfterStatus();
 
             // 러닝 통계 모달 즉시 표시 (한 번만)
@@ -1150,10 +1198,7 @@ function connectWebSocket() {
           }
 
           // 런닝 시작 메시지면 상태 업데이트
-          if (
-            message.messageType === "SYSTEM" &&
-            message.content.includes("런닝이 시작되었습니다")
-          ) {
+          if (isRunningStartSystemMessage) {
             currentSession.status = "IN_PROGRESS";
             updateControlBar();
           }
@@ -1357,22 +1402,23 @@ function displayMessage(message, isPrevious = false) {
       const participant = participantsList.find(p => p.userId == message.senderId);
       const profileImage = participant?.profileImage;
       
-      if (profileImage) {
-        const img = document.createElement('img');
-        img.src = profileImage;
-        img.alt = message.senderName;
-        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
-        
-        // 이미지 로드 실패 시 기본 아이콘으로 대체
-        img.onerror = function() {
-          avatar.innerHTML = '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
-        };
-        
-        avatar.appendChild(img);
-      } else {
-        avatar.innerHTML =
-          '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
+      // 프로필 이미지가 있으면 표시, 없으면 default-profile.svg 사용
+      const img = document.createElement('img');
+      img.decoding = "async";
+      img.loading = "lazy"; // 채팅 프로필은 lazy 로딩
+      if (img.fetchPriority !== undefined) {
+        img.fetchPriority = "low"; // 채팅 이미지는 낮은 우선순위
       }
+      img.src = profileImage || "/img/default-profile.svg";
+      img.alt = message.senderName;
+      img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+      
+      // 이미지 로드 실패 시 기본 아이콘으로 대체
+      img.onerror = function() {
+        avatar.innerHTML = '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
+      };
+      
+      avatar.appendChild(img);
       
       // 유저 프로필 페이지로 이동하는 클릭 이벤트 추가
       avatar.addEventListener('click', function(e) {
@@ -1554,8 +1600,9 @@ function checkAllReadyAndUpdateButton() {
 
         if (startBtn) {
           if (allReady) {
+            // ✅ 모두 레디했을 때: 러닝 페이지로 이동 버튼 표시
             startBtn.disabled = false;
-            startBtn.textContent = "🏃 런닝 시작";
+            startBtn.textContent = "러닝 페이지로 이동";
             startBtn.style.opacity = "1";
           } else {
             startBtn.disabled = true;
@@ -1703,17 +1750,7 @@ async function startRunning() {
     currentSession.status = "IN_PROGRESS";
     updateControlBar();
 
-    // ✅ 시작 시각 공유(러닝페이지/채팅방 시간 동기화)
-    ensureStartedAtMsInStorage(Date.now());
-
-    // 런닝 시작 시스템 메시지 전송 (pub/sub 기반 안내)
-    safeStompSend("/pub/chat/message", {
-      sessionId: currentSession.id,
-      senderId: null,
-      senderName: "SYSTEM",
-      content: "🏃 런닝이 시작되었습니다! 모두 화이팅!",
-      messageType: "SYSTEM",
-    });
+    // ✅ 시작 SYSTEM 메시지는 백엔드(start API)에서 1회만 발행한다.
 
     // 방장은 러닝 페이지로 이동 (참여자는 채팅에서 모달로 안내)
     window.location.href = `/running/${currentSession.id}`;
@@ -1862,26 +1899,23 @@ function renderParticipantList() {
     }
 
     // 아바타 아이콘
-    // ✅ 프로필 이미지가 있으면 표시, 없으면 기본 SVG 아이콘
-    if (participant.profileImage) {
-      avatar.innerHTML = `<img src="${participant.profileImage}" alt="${participant.name}" 
-                               style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; cursor: pointer;" 
-                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+    // ✅ 프로필 이미지가 있으면 표시, 없으면 default-profile.svg 사용
+    avatar.innerHTML = `<img src="${participant.profileImage || "/img/default-profile.svg"}" alt="${participant.name}" 
+                             loading="lazy" decoding="async"
+                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; cursor: pointer;" 
+                             onerror="this.src='/img/default-profile.svg'; this.nextElementSibling.style.display='block';">
                           <svg class="participant-avatar-icon" width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
                             <path d="M11 0C4.925 0 0 4.925 0 11C0 17.075 4.925 22 11 22C17.075 22 22 17.075 22 11C22 4.925 17.075 0 11 0Z" fill="#E5E7EB"/>
                           </svg>`;
-      // 프로필 이미지 클릭 시 유저 프로필로 이동
-      const img = avatar.querySelector('img');
-      if (img) {
-        img.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          window.location.href = `/profile/${participant.userId}`;
-        });
-      }
-    } else {
-      avatar.innerHTML =
-        '<svg class="participant-avatar-icon" width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 0C4.925 0 0 4.925 0 11C0 17.075 4.925 22 11 22C17.075 22 22 17.075 22 11C22 4.925 17.075 0 11 0Z" fill="#E5E7EB"/></svg>';
+    
+    // 프로필 이미지 클릭 시 유저 프로필로 이동
+    const img = avatar.querySelector('img');
+    if (img) {
+      img.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = `/profile/${participant.userId}`;
+      });
     }
 
     // 준비 상태 배지 (러닝 시작 전에만 표시)

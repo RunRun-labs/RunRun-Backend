@@ -15,17 +15,29 @@ body {
 }
 
 .page {
+  --bottom-nav-h: 80px;
+  --action-gap: 16px;
+  --action-bottom: calc(
+    var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--action-gap)
+  );
+  --stats-extra: 120px;
   width: 100vw;
   /* ✅ 모바일 브라우저(주소창/상단바)에서 100vh가 실제 화면(visual viewport)과 어긋나
      지도 상/하단이 잘려 보이는 이슈 방지:
      - JS에서 --vh(= window.innerHeight * 0.01px)를 세팅
      - 지원 안 되면 1vh fallback */
   height: calc(var(--vh, 1vh) * 100);
-  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
+  max-height: calc(var(--vh, 1vh) * 100); /* ✅ max-height도 --vh 사용하여 일관성 유지 */
   display: flex;
   flex-direction: column;
-  position: relative;
+  position: fixed; /* ✅ fixed로 변경하여 스크롤 방지 및 높이 고정 */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: white;
+  overflow: hidden; /* ✅ 페이지 레벨에서 overflow 방지 */
 }
 
 /* 상단 네비게이션 */
@@ -72,9 +84,13 @@ body {
   position: relative;
   width: 100%;
   overflow: hidden;
+  min-height: 0; /* ✅ flex 아이템이 축소될 수 있도록 설정하여 지도가 잘리지 않게 */
+  max-height: 100%; /* ✅ 최대 높이 제한 */
 }
 
 .map {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
 }
@@ -145,8 +161,7 @@ body {
 .locate-button {
   position: absolute;
   right: 16px;
-  /* 상단 네비게이션 아래에 위치 */
-  top: calc(60px + 12px);
+  top: 12px;
   width: 44px;
   height: 44px;
   border-radius: 22px;
@@ -262,7 +277,7 @@ body {
 /* 통계 정보 오버레이 */
 .stats-overlay {
   position: absolute;
-  bottom: 240px; /* 시작 위치 검색창과 겹치지 않도록 */
+  bottom: calc(var(--action-bottom) + var(--stats-extra));
   left: 30px;
   right: 30px;
   display: flex;
@@ -306,7 +321,7 @@ body {
 /* 채팅방 버튼 */
 .chat-button {
   position: absolute;
-  bottom: 120px;
+  bottom: var(--action-bottom);
   left: 30px;
   right: 30px;
   height: 52px;
@@ -344,7 +359,7 @@ body {
 /* 시작 버튼 (솔로런용) */
 .start-running-button {
   position: absolute;
-  bottom: 120px;
+  bottom: var(--action-bottom);
   left: 30px;
   right: 30px;
   height: 52px;
@@ -738,18 +753,15 @@ body {
 
 /* 하단 네비게이션 */
 .bottom-nav {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
+  position: relative;
+  height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
   background-color: white;
   border-top: 1px solid #baff29;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 40px;
-  padding: 16px 0;
+  padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
   z-index: 10;
 }
 
@@ -778,25 +790,14 @@ body {
 /* 수동 코스 등록 - 지도 위 검색창 너비 조정 */
 /* 지도 내부의 모든 텍스트 입력창 너비 제한 - 제거 */
 
-/* 수동 코스 등록 - 거리 표시를 아래로 이동 */
-/* 지도 오른쪽 상단의 모든 absolute 요소를 아래로 */
-.map-container > div[style*="position: absolute"][style*="right"][style*="top"],
-.map > div[style*="position: absolute"][style*="right"][style*="top"],
-#map > div[style*="position: absolute"][style*="right"][style*="top"] {
-  top: 120px !important;
-}
-
-/* 노란색 배경을 가진 요소 (거리 표시) */
-.map-container > div[style*="background"],
-.map > div[style*="background"],
-#map > div[style*="background"] {
-  top: 120px !important;
-}
-
 /* 반응형 */
 @media (max-width: 480px) {
+  .page {
+    --stats-extra: 100px;
+    --action-gap: 12px;
+  }
   .stats-overlay {
-    bottom: 220px; /* 모바일에서 검색창과 겹치지 않도록 */
+    bottom: calc(var(--action-bottom) + var(--stats-extra));
     left: 20px;
     right: 20px;
     gap: 12px;
@@ -840,4 +841,3 @@ body {
     right: 20px;
   }
 }
-

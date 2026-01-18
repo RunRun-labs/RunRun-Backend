@@ -491,7 +491,7 @@ body {
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  padding-bottom: 140px; /* 하단 버튼과 겹치지 않도록 여백 추가 */
+  padding-bottom: 180px; /* 하단 버튼과 겹치지 않도록 여백 추가 */
 }
 
 .empty-state {
@@ -910,7 +910,7 @@ body {
   }
 
   .records-list {
-    padding-bottom: 140px; /* 하단 버튼과 겹치지 않도록 여백 추가 */
+    padding-bottom: 180px; /* 하단 버튼과 겹치지 않도록 여백 추가 */
   }
 
   .header {
@@ -1034,7 +1034,7 @@ body {
   }
 
   .records-list {
-    padding-bottom: 130px; /* 하단 버튼과 겹치지 않도록 여백 추가 */
+    padding-bottom: 170px; /* 하단 버튼과 겹치지 않도록 여백 추가 */
   }
 
   .header {

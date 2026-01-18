@@ -121,38 +121,59 @@ function renderProfileImage(user) {
     const url = user?.profileImageUrl;
 
     if (!url) {
-        imgEl.removeAttribute("src");
-        imgEl.hidden = true;
+        // ✅ 프로필 이미지가 없으면 default-profile.svg 표시
+        imgEl.src = "/img/default-profile.svg";
+        imgEl.alt = "기본 프로필 이미지";
+        imgEl.decoding = "async";
+        imgEl.loading = "lazy";
+        imgEl.hidden = false;
 
         if (initialEl) {
-            const name = user?.name || "";
-            initialEl.textContent = name.charAt(0).toUpperCase() || "";
-            initialEl.hidden = false;
+            initialEl.textContent = "";
+            initialEl.hidden = true;
         }
         return;
     }
 
-    imgEl.src = url;
-    imgEl.alt = "프로필 이미지";
+    // ✅ 이미지 최적화: 직접 src 설정 (중복 로딩 방지) + fetchpriority
     imgEl.decoding = "async";
-    imgEl.loading = "lazy";
-    imgEl.hidden = false;
-
-    if (initialEl) {
-        initialEl.textContent = "";
-        initialEl.hidden = true;
+    imgEl.loading = "eager"; // 프로필 이미지는 즉시 로드
+    if (imgEl.fetchPriority !== undefined) {
+        imgEl.fetchPriority = "high"; // 중요한 이미지 우선순위 설정
     }
-
-    imgEl.addEventListener("error", () => {
-        imgEl.removeAttribute("src");
-        imgEl.hidden = true;
+    
+    // 로딩 중 placeholder 표시
+    imgEl.style.opacity = "0.5";
+    imgEl.style.transition = "opacity 0.3s ease";
+    
+    imgEl.onload = () => {
+        imgEl.alt = "프로필 이미지";
+        imgEl.style.opacity = "1";
+        imgEl.hidden = false;
 
         if (initialEl) {
-            const name = user?.name || "";
-            initialEl.textContent = name.charAt(0).toUpperCase() || "";
-            initialEl.hidden = false;
+            initialEl.textContent = "";
+            initialEl.hidden = true;
         }
-    }, {once: true});
+    };
+
+    imgEl.onerror = () => {
+        // ✅ 이미지 로드 실패 시 default-profile.svg 표시
+        imgEl.src = "/img/default-profile.svg";
+        imgEl.alt = "기본 프로필 이미지";
+        imgEl.decoding = "async";
+        imgEl.loading = "lazy";
+        imgEl.style.opacity = "1";
+        imgEl.hidden = false;
+
+        if (initialEl) {
+            initialEl.textContent = "";
+            initialEl.hidden = true;
+        }
+    };
+
+    // 이미지 직접 로드 시작
+    imgEl.src = url;
 }
 
 function attachBackButtonHandler() {
@@ -1208,9 +1229,9 @@ function createRunCard(record) {
     // 러닝 타입 레이블
     const runningTypeLabel = getRunningTypeLabel(record.runningType);
 
-    // 이미지가 있을 때만 img 태그 추가
+    // ✅ 이미지가 있을 때만 img 태그 추가 (이미지 최적화 적용)
     const thumbContent = imageUrl
-        ? `<img src="${imageUrl}" alt="${courseTitle}" onerror="this.style.display='none'" />`
+        ? `<img src="${imageUrl}" alt="${courseTitle}" loading="lazy" decoding="async" onerror="this.style.display='none'" style="width: 100%; height: 100%; object-fit: cover;" />`
         : '';
 
     article.innerHTML = `

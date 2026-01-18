@@ -48,19 +48,19 @@
         <h1 class="page-title">코스 상세보기</h1>
       </header>
 
-      <!-- Course Image Hero (크루 상세보기처럼) -->
-      <section class="course-hero">
-        <div
-          class="course-hero__image-wrapper"
-          id="courseImageContainer"
-          style="display: none"
-        >
-          <img id="courseImage" alt="코스 이미지" class="course-hero__image" />
-        </div>
-      </section>
-
       <!-- Main Content -->
       <main class="course-content" id="courseContent">
+        <!-- Course Image -->
+        <div class="form-field">
+          <label class="field-label">출발지 이미지</label>
+          <div
+            class="course-hero__image-wrapper"
+            id="courseImageContainer"
+          >
+            <img id="courseImage" alt="출발지 이미지" class="course-hero__image" loading="lazy" decoding="async" />
+          </div>
+        </div>
+
         <!-- Course Map -->
         <div class="form-field">
           <label class="field-label">코스</label>
