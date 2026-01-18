@@ -205,9 +205,9 @@ function createRunCard(record) {
 
     const courseTitle = record.courseTitle || '러닝';
 
-    // 이미지가 있을 때만 img 태그 추가
+    // ✅ 이미지가 있을 때만 img 태그 추가 (이미지 최적화 적용)
     const thumbContent = imageUrl
-        ? `<img src="${imageUrl}" alt="${courseTitle}" style="display: block;" onerror="this.style.display='none'" />`
+        ? `<img src="${imageUrl}" alt="${courseTitle}" loading="lazy" decoding="async" style="display: block; width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'" />`
         : '';
 
     // 주소 정보

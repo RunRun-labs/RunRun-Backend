@@ -107,16 +107,16 @@ body {
 .profile-row {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: clamp(12px, 3vw, 20px); /* 반응형 간격 */
     background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
     border-radius: 20px;
-    padding: 24px;
+    padding: clamp(16px, 4vw, 24px); /* 반응형 패딩 */
     box-shadow: 0 2px 8px var(--shadow);
 }
 
 .profile-avatar {
-    width: 90px;
-    height: 90px;
+    width: clamp(70px, 18vw, 90px); /* 반응형 크기 */
+    height: clamp(70px, 18vw, 90px);
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
     border: 4px solid white;
@@ -139,7 +139,11 @@ body {
     object-fit: cover;
     display: block;
     opacity: 1;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease;
+    /* ✅ 이미지 최적화: 로딩 성능 개선 */
+    aspect-ratio: 1 / 1; /* 정사각형 비율 유지로 CLS 방지 */
+    will-change: opacity; /* 브라우저 최적화 힌트 */
+    content-visibility: auto; /* 레이아웃 계산 최적화 */
 }
 
 .avatar-img[hidden] {
@@ -153,7 +157,7 @@ body {
 
 .avatar-initial {
     font-family: "Poppins", "Inter", sans-serif;
-    font-size: 36px;
+    font-size: clamp(28px, 7vw, 36px); /* 반응형 폰트 */
     font-weight: 700;
     color: white;
 }
@@ -167,6 +171,7 @@ body {
     flex-direction: column;
     gap: 8px;
     flex: 1;
+    min-width: 0; /* flex 아이템이 축소될 수 있도록 */
 }
 
 .profile-center {
@@ -184,22 +189,31 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: clamp(11px, 3vw, 13px); /* 반응형 폰트 */
     line-height: 1.4;
+    min-width: 0; /* 텍스트 잘림 방지 */
 }
 
 .profile-stat-icon {
-    font-size: 16px;
+    font-size: clamp(14px, 3.5vw, 16px); /* 반응형 아이콘 */
+    flex-shrink: 0;
 }
 
 .profile-stat-text {
     color: var(--text-gray);
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; /* 긴 텍스트는 생략 */
+    flex: 1;
+    min-width: 0;
 }
 
 .profile-stat-value {
     color: var(--text-dark);
     font-weight: 700;
+    white-space: nowrap; /* 값은 줄바꿈 안 함 */
+    flex-shrink: 0;
 }
 
 .profile-actions-right {
@@ -210,17 +224,17 @@ body {
 }
 
 .action-button {
-    padding: 10px 18px;
+    padding: clamp(8px, 2vw, 10px) clamp(14px, 3.5vw, 18px); /* 반응형 패딩 */
     border-radius: 12px;
     border: 2px solid var(--border);
     background: white;
     color: var(--text-dark);
-    font-size: 13px;
+    font-size: clamp(11px, 2.8vw, 13px); /* 반응형 폰트 */
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     white-space: nowrap;
-    min-width: 90px;
+    min-width: clamp(75px, 20vw, 90px); /* 반응형 최소 너비 */
 }
 
 .friend-button {
@@ -745,6 +759,29 @@ body {
     height: 28px;
 }
 
+/* 이미지 최적화 */
+img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: optimizeQuality;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+    /* ✅ 이미지 최적화 */
+    image-rendering: -webkit-optimize-contrast;
+    -webkit-backface-visibility: hidden;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     .page {
@@ -774,6 +811,23 @@ body {
     .modal-content {
         width: calc(100% - 32px);
         margin: 16px;
+    }
+}
+
+/* 작은 화면에서 추가 조정 */
+@media (max-width: 360px) {
+    .profile-row {
+        flex-wrap: wrap; /* 매우 작은 화면에서는 세로 배치 */
+    }
+    
+    .profile-actions-right {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    
+    .action-button {
+        flex: 1;
     }
 }
 

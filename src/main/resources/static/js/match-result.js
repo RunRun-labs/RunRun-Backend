@@ -397,8 +397,13 @@ function createRankingItem(participant, isMe) {
   const avatar = document.createElement('div');
   avatar.className = 'participant-avatar';
   
-  // ✅ 프로필 이미지 표시 (기본 이미지 포함)
+  // ✅ 프로필 이미지 표시 (기본 이미지 포함, 이미지 최적화)
   const avatarImg = document.createElement('img');
+  avatarImg.decoding = "async";
+  avatarImg.loading = "lazy";
+  if (avatarImg.fetchPriority !== undefined) {
+    avatarImg.fetchPriority = "low";
+  }
   avatarImg.src = participant.profileImage || '/img/default-profile.svg';
   avatarImg.alt = participant.username;
   avatarImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
@@ -467,9 +472,14 @@ function renderComparison(data) {
     return;
   }
   
-  // ✅ 내 아바타 업데이트
+  // ✅ 내 아바타 업데이트 (이미지 최적화)
   const myAvatar = document.querySelector('.user-me');
   const myImg = document.createElement('img');
+  myImg.decoding = "async";
+  myImg.loading = "lazy";
+  if (myImg.fetchPriority !== undefined) {
+    myImg.fetchPriority = "low";
+  }
   myImg.src = myData.profileImage || '/img/default-profile.svg';
   myImg.alt = '나';
   myImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
@@ -479,9 +489,14 @@ function renderComparison(data) {
   myAvatar.innerHTML = '';
   myAvatar.appendChild(myImg);
   
-  // ✅ 1위 아바타 업데이트
+  // ✅ 1위 아바타 업데이트 (이미지 최적화)
   const winnerAvatar = document.querySelector('.user-winner');
   const winnerImg = document.createElement('img');
+  winnerImg.decoding = "async";
+  winnerImg.loading = "lazy";
+  if (winnerImg.fetchPriority !== undefined) {
+    winnerImg.fetchPriority = "low";
+  }
   winnerImg.src = firstPlace.profileImage || '/img/default-profile.svg';
   winnerImg.alt = firstPlace.username;
   winnerImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';

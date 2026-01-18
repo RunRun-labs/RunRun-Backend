@@ -920,8 +920,13 @@ function createRankingItem(participant, isMe, allRankings) {
   const avatar = document.createElement("div");
   avatar.className = "participant-avatar";
 
-  // ✅ 프로필 이미지 표시 (기본 이미지 포함)
+  // ✅ 프로필 이미지 표시 (기본 이미지 포함, 이미지 최적화)
   const avatarImg = document.createElement("img");
+  avatarImg.decoding = "async";
+  avatarImg.loading = "lazy"; // 배틀 중 프로필 이미지는 lazy
+  if (avatarImg.fetchPriority !== undefined) {
+    avatarImg.fetchPriority = "low";
+  }
   avatarImg.src = participant.profileImage || "/img/default-profile.svg";
   avatarImg.alt = participant.username;
   avatarImg.style.cssText =
@@ -1116,10 +1121,11 @@ function createPaceCard(data) {
   const card = document.createElement("div");
   card.className = `pace-card ${data.className}`;
 
-  // ✅ 프로필 이미지 HTML 생성
+  // ✅ 프로필 이미지 HTML 생성 (이미지 최적화)
   let avatarHtml = `
     <img src="${data.profileImage || "/img/default-profile.svg"}" 
          alt="${data.name}" 
+         loading="lazy" decoding="async"
          style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
          onerror="this.src='/img/default-profile.svg'">
   `;

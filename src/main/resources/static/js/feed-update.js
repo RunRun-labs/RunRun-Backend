@@ -142,10 +142,12 @@ function renderFeedData(feed) {
         paceText.textContent = `평균 페이스: ${paceStr}`;
     }
 
-    // 이미지
+    // ✅ 이미지 최적화
     const previewImage = document.getElementById("previewImage");
     const imagePlaceholder = document.getElementById("imagePlaceholder");
     if (feed.imageUrl) {
+        previewImage.decoding = "async";
+        previewImage.loading = "lazy";
         previewImage.src = feed.imageUrl;
         previewImage.removeAttribute("hidden");
         if (imagePlaceholder) {

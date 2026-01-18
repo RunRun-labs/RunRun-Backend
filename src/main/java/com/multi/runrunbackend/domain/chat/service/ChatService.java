@@ -264,6 +264,9 @@ public class ChatService {
         if (!user.getId().equals(hostId)) {
             throw new ForbiddenException(ErrorCode.NOT_SESSION_HOST);
         }
+        if (session.getStatus() == SessionStatus.IN_PROGRESS) {
+            throw new BadRequestException(ErrorCode.ALREADY_IN_PROGRESS);
+        }
         if (session.getType() == SessionType.OFFLINE) {
             Map<String, Object> readyStatus = checkAllReady(sessionId);
             if (!(Boolean) readyStatus.get("allReady")) {
@@ -298,6 +301,14 @@ public class ChatService {
 
         // 상태 변경
         matchSessionRepository.updateStatus(sessionId, SessionStatus.IN_PROGRESS);
+
+        // ✅ 시작 시스템 메시지 1회 발행 (프론트 중복 발행 방지용)
+        sendMessage(ChatMessageDto.builder()
+            .sessionId(sessionId)
+            .senderName("SYSTEM")
+            .content("🏃 러닝이 시작되었습니다! 모두 화이팅!")
+            .messageType("SYSTEM")
+            .build());
 
         log.info("런닝 시작: sessionId={}, hostId={}", sessionId, user.getId());
     }
