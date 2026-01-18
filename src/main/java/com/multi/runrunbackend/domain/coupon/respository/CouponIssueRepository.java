@@ -1,6 +1,7 @@
 package com.multi.runrunbackend.domain.coupon.respository;
 
 import com.multi.runrunbackend.domain.coupon.constant.CouponTriggerEvent;
+import com.multi.runrunbackend.domain.coupon.constant.CouponIssueStatus;
 import com.multi.runrunbackend.domain.coupon.entity.Coupon;
 import com.multi.runrunbackend.domain.coupon.entity.CouponIssue;
 import com.multi.runrunbackend.domain.user.entity.User;
@@ -23,6 +24,8 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long>,
     boolean existsByCouponIdAndUserId(Long couponId, Long userId);
 
     long countByUserId(Long userId);
+
+    long countByUserIdAndStatus(Long userId, CouponIssueStatus status);
 
     Optional<CouponIssue> findByCouponAndUser(Coupon coupon, User user);
 
@@ -172,4 +175,3 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long>,
         @Param("year") int year
     );
 }
-
