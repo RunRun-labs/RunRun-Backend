@@ -1126,10 +1126,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // 시작 버튼 (솔로런용)
+  // 시작 버튼 (솔로런/오프라인용)
   if (startRunningButton) {
     startRunningButton.addEventListener("click", async () => {
-      await startSoloRunning();
+      if (isSoloRun) {
+        await startSoloRunning();
+      } else if (!isSoloRun && isHost && sessionStatus === "STANDBY") {
+        // 오프라인 러닝 시작 (채팅방의 startRunning과 동일한 로직)
+        await startOfflineRunning();
+      }
     });
   }
   if (locateButton) {
@@ -1296,8 +1301,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         chatButton.style.display = "flex";
         chatButton.classList.remove("solo-hidden");
       }
+      // ✅ 오프라인 STANDBY 상태일 때는 시작 버튼 표시 (러닝 페이지에서 시작)
       if (startRunningButton) {
-        startRunningButton.style.display = "none";
+        if (sessionStatus === "STANDBY" && isHost) {
+          startRunningButton.style.display = "block";
+          startRunningButton.textContent = "시작";
+          adjustSoloRunLayout(false);
+        } else {
+          startRunningButton.style.display = "none";
+        }
       }
     }
 
@@ -1412,7 +1424,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (map) {
       startPreviewOnlyTracking();
       }
-      // 솔로런이 아니면 여기서 종료 (채팅방에서 시작해야 함)
+      // ✅ 오프라인 STANDBY 상태에서도 러닝 페이지로 직접 올 수 있음
+      // (시작은 러닝 페이지에서 방장이 시작 버튼으로 시작)
+      if (!isSoloRun && sessionStatus === "STANDBY") {
+        // 오프라인 STANDBY: 시작 버튼 표시하지 않고, 채팅방으로 돌아갈 수 있도록
+        // 러닝은 러닝 페이지에서 시작하도록 변경
+        return;
+      }
+      // 솔로런이 아니면 여기서 종료
       if (!isSoloRun) {
         return;
       }
@@ -3361,6 +3380,234 @@ async function requestFinishOnce(courseIdOrNull) {
 }
 
 // ==========================
+// Start Offline Running
+// ==========================
+async function startOfflineRunning() {
+  if (isSoloRun || !isHost) {
+    return;
+  }
+
+  if (sessionStatus === "IN_PROGRESS") {
+    showToast("이미 러닝이 시작되었습니다.", "info", 3000);
+    return;
+  }
+
+  try {
+    // ✅ 출발점 게이트: 출발점 20m 이내 + GPS 정확도(<=30m) 충족 시에만 시작 가능
+    // (코스가 있는 경우만)
+    const START_GATE_RADIUS_M = 20;
+    const START_GATE_MAX_ACCURACY_M = 30;
+
+    const haversineMeters = (lat1, lng1, lat2, lng2) => {
+      const R = 6371000;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLng = ((lng2 - lng1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLng / 2) *
+          Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+
+    const getCurrentPositionOnce = (options = {}) =>
+      new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("이 브라우저에서 위치 기능을 지원하지 않습니다."));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
+      });
+
+    let startLat = null;
+    let startLng = null;
+
+    // 코스가 있으면 출발점 정보 조회
+    if (sessionCourseId) {
+      try {
+        const token = getAccessToken();
+        const headers = {
+          "Content-Type": "application/json",
+        };
+        if (token) {
+          headers["Authorization"] = token;
+        }
+
+        const spRes = await fetch(
+          `/api/running/sessions/${sessionId}/course-path`,
+          { method: "GET", headers }
+        );
+        const spBody = await spRes.json().catch(() => null);
+        if (spRes.ok && spBody?.success) {
+          if (
+            spBody?.data?.startLat != null &&
+            spBody?.data?.startLng != null
+          ) {
+            startLat = Number(spBody.data.startLat);
+            startLng = Number(spBody.data.startLng);
+          }
+        } else {
+          throw new Error(
+            spBody?.message || "출발점 정보를 불러올 수 없습니다."
+          );
+        }
+      } catch (e) {
+        throw new Error(e?.message || "출발점 정보를 불러올 수 없습니다.");
+      }
+    }
+
+    // 코스가 있는 세션이면 반드시 출발점 게이트 적용
+    let pos = null;
+    let payload = null;
+    if (startLat != null && startLng != null) {
+      pos = await getCurrentPositionOnce({
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 0,
+      });
+
+      const acc = pos?.coords?.accuracy;
+      if (
+        acc == null ||
+        !Number.isFinite(acc) ||
+        acc > START_GATE_MAX_ACCURACY_M
+      ) {
+        showToast(
+          `GPS 정확도가 낮습니다(약 ${
+            acc != null ? Math.round(acc) : "?"
+          }m). 출발점 근처에서 잠시 대기 후 다시 시도해주세요.`,
+          "warn",
+          5000
+        );
+        return;
+      }
+
+      const distM = haversineMeters(
+        pos.coords.latitude,
+        pos.coords.longitude,
+        startLat,
+        startLng
+      );
+      if (distM > START_GATE_RADIUS_M) {
+        showToast(
+          `출발점 ${START_GATE_RADIUS_M}m 이내에서만 시작할 수 있습니다. 현재 출발점까지 약 ${Math.round(
+            distM
+          )}m 입니다.`,
+          "warn",
+          5000
+        );
+        return;
+      }
+
+      // ✅ 백엔드에서도 검증할 수 있도록 위치/정확도 전달
+      payload = {
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracyM: acc,
+      };
+    }
+
+    if (!confirm("런닝을 시작하시겠습니까?")) {
+      return;
+    }
+
+    // ✅ 시작 상태를 서버에 반영 (IN_PROGRESS)
+    const token = getAccessToken();
+    if (!token) {
+      throw new Error("로그인이 필요합니다.");
+    }
+
+    const response = await fetch(`/api/chat/sessions/${sessionId}/start`, {
+      method: "POST",
+      headers: {
+        Authorization: token,
+        "Content-Type": "application/json",
+      },
+      body: payload ? JSON.stringify(payload) : null,
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "런닝 시작에 실패했습니다.");
+    }
+
+    console.log("✅ 오프라인 러닝 시작 API 호출 완료");
+
+    // 세션 상태 업데이트
+    sessionStatus = "IN_PROGRESS";
+
+    // ✅ 시작 시간 저장 (TTS용)
+    const nowMs = Date.now();
+    localStorage.setItem(storageKey("startedAtMs"), String(nowMs));
+    // TTS 시작 말하기 플래그 리셋
+    localStorage.removeItem(storageKey("ttsStartSpoken"));
+
+    // ✅ 시작 버튼 즉시 숨김
+    if (startRunningButton) {
+      startRunningButton.style.display = "none";
+    }
+
+    // ✅ IN_PROGRESS일 때 UI 레이아웃 조정
+    if (!isSoloRun) {
+      adjustSoloRunLayout(true);
+    }
+
+    // ✅ 웹소켓 연결 및 러닝 시작 (페이지 새로고침 없이)
+    if (typeof Stomp !== "undefined") {
+      connectWebSocket();
+    }
+
+    // ✅ TTS 준비 및 "러닝을 시작합니다" 재생
+    await ensureTtsOnce();
+    startMotivationSchedule();
+    maybeSpeakStartOnce();
+
+    // ✅ 오프라인 러닝 시작 시 TTS 로드 완료 후 즉시 재생
+    if (ttsReady && window.TtsManager && sessionStatus === "IN_PROGRESS") {
+      const key = storageKey("ttsStartSpoken");
+      if (localStorage.getItem(key) !== "1") {
+        window.TtsManager.speak("START_RUN", { priority: 2, cooldownMs: 0 });
+        localStorage.setItem(key, "1");
+      }
+    }
+
+    // ✅ GPS 추적 시작 (오프라인 러닝은 직접 호출)
+    if (isHost && sessionStatus === "IN_PROGRESS") {
+      // 미리보기 추적 중지
+      stopPreviewOnlyTracking();
+
+      // 웹소켓 연결 대기 후 GPS 추적 시작
+      setTimeout(() => {
+        if (stompClient && stompClient.connected) {
+          startRunning();
+        } else {
+          // 웹소켓 연결 대기
+          const checkConnection = setInterval(() => {
+            if (stompClient && stompClient.connected) {
+              clearInterval(checkConnection);
+              startRunning();
+            }
+          }, 100);
+
+          // 5초 후 타임아웃
+          setTimeout(() => {
+            clearInterval(checkConnection);
+          }, 5000);
+        }
+      }, 500);
+    }
+
+    showToast("러닝이 시작되었습니다!", "success", 3000);
+  } catch (e) {
+    console.error("오프라인 러닝 시작 실패:", e);
+    showToast(e?.message || "러닝 시작에 실패했습니다.", "warn", 5000);
+  }
+}
+
+// ==========================
 // Start Solo Running
 // ==========================
 async function startSoloRunning() {
@@ -3603,13 +3850,17 @@ async function startSoloRunning() {
 // Start Running
 // ==========================
 function startRunning() {
-  // ✅ 솔로런도 IN_PROGRESS 상태면 GPS 추적 시작 가능
-  if (isSoloRun && sessionStatus !== "IN_PROGRESS") {
+  // ✅ 솔로런/오프라인 러닝 모두 IN_PROGRESS 상태면 GPS 추적 시작 가능
+  if ((isSoloRun || !isSoloRun) && sessionStatus !== "IN_PROGRESS") {
     return;
   }
-  // ✅ 러닝 시작은 채팅방에서만: IN_PROGRESS가 아니면 서버 전송/추적 시작 금지
+  // ✅ 러닝 시작은 러닝 페이지에서: IN_PROGRESS가 아니면 서버 전송/추적 시작 금지
   if (sessionStatus !== "IN_PROGRESS") {
-    showToast("러닝 시작은 채팅방에서만 가능합니다.", "warn", 3500);
+    if (isSoloRun) {
+      showToast("러닝을 시작해주세요.", "warn", 3500);
+    } else {
+      showToast("러닝을 시작해주세요.", "warn", 3500);
+    }
     return;
   }
   // ✅ 방장만 GPS 전송: 참가자는 GPS 추적을 시작하지 않음
