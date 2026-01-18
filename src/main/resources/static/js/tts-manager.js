@@ -399,11 +399,14 @@
       if (remainingDistanceKm != null) {
         const remainingDistM = remainingDistanceKm * 1000;
 
-        // ✅ "처음 진입했을 때 이미 남은 거리가 임계값보다 작다면" 그 임계값 멘트는 재생하면 안 됨
+        // ✅ "처음 진입했을 때 이미 남은 거리가 임계값보다 작거나 같다면" 그 임계값 멘트는 재생하면 안 됨
         // 예: 목표 0.2km(200m)인 러닝에 들어오면 300m 안내가 나오면 안 되므로 300/500은 스킵 처리
+        // ✅ 중요: 100m에 도달했을 때는 재생해야 하므로, 정확히 그 임계값보다 작을 때만 스킵
+        // 예: 150m 남았으면 100m는 아직 재생하지 않음, 100m 남았으면 재생해야 함
         const thresholdsM = [500, 300, 100];
         for (const t of thresholdsM) {
-          if (remainingDistM <= t) {
+          // ✅ 현재 남은 거리가 임계값보다 작으면 (같지 않고 작으면) 이미 지나간 것으로 간주
+          if (remainingDistM < t) {
             this._remainingSpoken.add(`remain:${t}`);
           }
         }
