@@ -243,7 +243,7 @@ body {
 /* 설명 섹션 - 텍스트 영역 스타일 */
 .description-section {
   padding: 10px 34px;
-  margin-bottom: 24px;
+  margin-bottom: 160px;
   background: var(--bg);
 }
 
@@ -409,7 +409,7 @@ body {
 /* 메인 콘텐츠 스크롤 영역 */
 .page {
   overflow-y: auto;
-  padding-bottom: 140px;
+  padding-bottom: 180px;
   -webkit-overflow-scrolling: touch;
 }
 
