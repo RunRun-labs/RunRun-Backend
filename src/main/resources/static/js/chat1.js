@@ -903,19 +903,17 @@ function setupEventListeners() {
     });
   }
 
-  // 하단(방장 영역) 버튼: 대기 중이면 시작, 진행 중이면 러닝 페이지로 이동
+  // 하단(방장 영역) 버튼: 오프라인은 러닝 페이지로 바로 이동 (시작은 러닝 페이지에서)
   const startBtn = document.getElementById("start-running-btn");
   if (startBtn) {
     startBtn.addEventListener("click", () => {
-      if (currentSession?.status === "IN_PROGRESS") {
+      if (!currentSession?.id) return;
+      
+      // 오프라인은 STANDBY/IN_PROGRESS/COMPLETED 모두 러닝 페이지로 이동
+      if (currentSession?.status === "STANDBY" || currentSession?.status === "IN_PROGRESS" || currentSession?.status === "COMPLETED") {
         window.location.href = `/running/${currentSession.id}`;
         return;
       }
-      if (currentSession?.status === "COMPLETED") {
-        window.location.href = `/running/${currentSession.id}`;
-        return;
-      }
-      startRunning();
     });
   }
 
