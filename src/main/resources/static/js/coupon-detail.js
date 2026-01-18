@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
           document.getElementById("totalIssued").textContent = stats.totalIssued ?? 0;
           document.getElementById("totalUsed").textContent = stats.totalUsed ?? 0;
           document.getElementById("usageRate").textContent = 
-            ((stats.usageRate ?? 0) * 100).toFixed(2) + "%";
+            (stats.usageRate ?? 0).toFixed(2) + "%";  // 백엔드에서 이미 퍼센트로 계산됨
 
           // 날짜별 추이 차트
           updateDailyTrendChart(stats.dailyTrend || []);
