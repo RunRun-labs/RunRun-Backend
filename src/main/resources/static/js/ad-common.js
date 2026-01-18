@@ -96,6 +96,11 @@ function createAdBanner(adData, className = '') {
   });
 
   const img = document.createElement('img');
+  img.decoding = "async";
+  img.loading = "lazy"; // 광고는 lazy 로딩
+  if (img.fetchPriority !== undefined) {
+    img.fetchPriority = "low"; // 광고는 낮은 우선순위
+  }
   img.src = adData.imageUrl;
   img.alt = adData.name || '광고';
   img.style.cssText = `
@@ -192,6 +197,11 @@ function createAdPopup(adData) {
   });
 
   const img = document.createElement('img');
+  img.decoding = "async";
+  img.loading = "lazy";
+  if (img.fetchPriority !== undefined) {
+    img.fetchPriority = "low";
+  }
   img.src = adData.imageUrl;
   img.alt = adData.name || '광고';
   img.style.cssText = `
@@ -341,6 +351,11 @@ function createAdPopupForRunningResult(adData) {
   });
 
   const img = document.createElement('img');
+  img.decoding = "async";
+  img.loading = "lazy";
+  if (img.fetchPriority !== undefined) {
+    img.fetchPriority = "low";
+  }
   img.src = adData.imageUrl;
   img.alt = adData.name || '광고';
   img.style.cssText = `

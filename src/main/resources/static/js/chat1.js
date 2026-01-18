@@ -320,17 +320,29 @@ function updateChatRoomUI() {
 
   // 그룹명 (제목 표시, 없으면 세션 ID)
   const title = currentSession.title || `세션 #${currentSession.id}`;
-  document.getElementById("group-name").textContent = title;
+  const groupNameEl = document.getElementById("group-name");
+  if (groupNameEl) {
+    groupNameEl.textContent = title;
+    groupNameEl.style.display = "block"; // 로딩 후 표시
+  }
 
   // 세션 타입
-  document.getElementById(
-    "session-type-badge"
-  ).textContent = `🏃 ${currentSession.type}`;
+  const sessionTypeBadgeEl = document.getElementById("session-type-badge");
+  if (sessionTypeBadgeEl) {
+    sessionTypeBadgeEl.textContent = `🏃 ${currentSession.type}`;
+  }
 
   // 거리
-  document.getElementById(
-    "session-distance"
-  ).textContent = `${currentSession.distance}km`;
+  const sessionDistanceEl = document.getElementById("session-distance");
+  if (sessionDistanceEl) {
+    sessionDistanceEl.textContent = `${currentSession.distance}km`;
+  }
+
+  // 러닝 정보 카드 표시
+  const runningInfoCardEl = document.getElementById("running-info-card");
+  if (runningInfoCardEl) {
+    runningInfoCardEl.style.display = "block";
+  }
 
   // 만남 시간
   const meetingTimeEl = document.getElementById("meeting-time");
@@ -352,8 +364,10 @@ function updateChatRoomUI() {
   }
 
   // 만남 장소
-  document.getElementById("meeting-place").textContent =
-    currentSession.meetingPlace || "장소 미정";
+  const meetingPlaceEl = document.getElementById("meeting-place");
+  if (meetingPlaceEl) {
+    meetingPlaceEl.textContent = currentSession.meetingPlace || "장소 미정";
+  }
 
   // 참여자 수 업데이트
   loadParticipants(currentSession.id);
@@ -1355,19 +1369,23 @@ function displayMessage(message, isPrevious = false) {
       const participant = participantsList.find(p => p.userId == message.senderId);
       const profileImage = participant?.profileImage;
       
-      if (profileImage) {
-        const img = document.createElement('img');
-        img.src = profileImage;
-        img.alt = message.senderName;
-        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
-        
-        // 이미지 로드 실패 시 기본 아이콘으로 대체
-        img.onerror = function() {
-          avatar.innerHTML = '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
-        };
-        
-        avatar.appendChild(img);
-      } else {
+      // 프로필 이미지가 있으면 표시, 없으면 default-profile.svg 사용
+      const img = document.createElement('img');
+      img.decoding = "async";
+      img.loading = "lazy"; // 채팅 프로필은 lazy 로딩
+      if (img.fetchPriority !== undefined) {
+        img.fetchPriority = "low"; // 채팅 이미지는 낮은 우선순위
+      }
+      img.src = profileImage || "/img/default-profile.svg";
+      img.alt = message.senderName;
+      img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
+      
+      // 이미지 로드 실패 시 기본 아이콘으로 대체
+      img.onerror = function() {
+        avatar.innerHTML = '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
+      };
+      
+      avatar.appendChild(img); else {
         avatar.innerHTML =
           '<svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0Z" fill="#E5E7EB"/></svg>';
       }
@@ -1860,11 +1878,11 @@ function renderParticipantList() {
     }
 
     // 아바타 아이콘
-    // ✅ 프로필 이미지가 있으면 표시, 없으면 기본 SVG 아이콘
-    if (participant.profileImage) {
-      avatar.innerHTML = `<img src="${participant.profileImage}" alt="${participant.name}" 
-                               style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; cursor: pointer;" 
-                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+    // ✅ 프로필 이미지가 있으면 표시, 없으면 default-profile.svg 사용
+    avatar.innerHTML = `<img src="${participant.profileImage || "/img/default-profile.svg"}" alt="${participant.name}" 
+                             loading="lazy" decoding="async"
+                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; cursor: pointer;" 
+                             onerror="this.src='/img/default-profile.svg'; this.nextElementSibling.style.display='block';">
                           <svg class="participant-avatar-icon" width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
                             <path d="M11 0C4.925 0 0 4.925 0 11C0 17.075 4.925 22 11 22C17.075 22 22 17.075 22 11C22 4.925 17.075 0 11 0Z" fill="#E5E7EB"/>
                           </svg>`;

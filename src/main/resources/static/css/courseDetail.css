@@ -426,6 +426,7 @@ body {
   justify-content: center;
   margin: 0;
   padding: 0;
+  border-radius: 12px; /* 다른 필드와 일관성 유지 */
 }
 
 .course-hero__image-wrapper::after {

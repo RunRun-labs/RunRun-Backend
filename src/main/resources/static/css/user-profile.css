@@ -139,7 +139,11 @@ body {
     object-fit: cover;
     display: block;
     opacity: 1;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease;
+    /* ✅ 이미지 최적화: 로딩 성능 개선 */
+    aspect-ratio: 1 / 1; /* 정사각형 비율 유지로 CLS 방지 */
+    will-change: opacity; /* 브라우저 최적화 힌트 */
+    content-visibility: auto; /* 레이아웃 계산 최적화 */
 }
 
 .avatar-img[hidden] {

@@ -121,29 +121,34 @@ function renderProfileImage(user) {
     const url = user?.profileImageUrl;
 
     if (!url) {
-        imgEl.removeAttribute("src");
-        imgEl.hidden = true;
+        // ✅ 프로필 이미지가 없으면 default-profile.svg 표시
+        imgEl.src = "/img/default-profile.svg";
+        imgEl.alt = "기본 프로필 이미지";
+        imgEl.decoding = "async";
+        imgEl.loading = "lazy";
+        imgEl.hidden = false;
 
         if (initialEl) {
-            const name = user?.name || "";
-            initialEl.textContent = name.charAt(0).toUpperCase() || "";
-            initialEl.hidden = false;
+            initialEl.textContent = "";
+            initialEl.hidden = true;
         }
         return;
     }
 
-    // ✅ 이미지 최적화: preload + fetchpriority
-    const img = new Image();
-    img.decoding = "async";
-    if (img.fetchPriority !== undefined) {
-        img.fetchPriority = "high"; // 중요한 이미지 우선순위 설정
+    // ✅ 이미지 최적화: 직접 src 설정 (중복 로딩 방지) + fetchpriority
+    imgEl.decoding = "async";
+    imgEl.loading = "eager"; // 프로필 이미지는 즉시 로드
+    if (imgEl.fetchPriority !== undefined) {
+        imgEl.fetchPriority = "high"; // 중요한 이미지 우선순위 설정
     }
     
-    img.onload = () => {
-        imgEl.src = url;
+    // 로딩 중 placeholder 표시
+    imgEl.style.opacity = "0.5";
+    imgEl.style.transition = "opacity 0.3s ease";
+    
+    imgEl.onload = () => {
         imgEl.alt = "프로필 이미지";
-        imgEl.decoding = "async";
-        imgEl.loading = "eager"; // 프로필 이미지는 즉시 로드
+        imgEl.style.opacity = "1";
         imgEl.hidden = false;
 
         if (initialEl) {
@@ -152,19 +157,23 @@ function renderProfileImage(user) {
         }
     };
 
-    img.onerror = () => {
-        imgEl.removeAttribute("src");
-        imgEl.hidden = true;
+    imgEl.onerror = () => {
+        // ✅ 이미지 로드 실패 시 default-profile.svg 표시
+        imgEl.src = "/img/default-profile.svg";
+        imgEl.alt = "기본 프로필 이미지";
+        imgEl.decoding = "async";
+        imgEl.loading = "lazy";
+        imgEl.style.opacity = "1";
+        imgEl.hidden = false;
 
         if (initialEl) {
-            const name = user?.name || "";
-            initialEl.textContent = name.charAt(0).toUpperCase() || "";
-            initialEl.hidden = false;
+            initialEl.textContent = "";
+            initialEl.hidden = true;
         }
     };
 
-    // 이미지 미리 로드 시작
-    img.src = url;
+    // 이미지 직접 로드 시작
+    imgEl.src = url;
 }
 
 function attachBackButtonHandler() {

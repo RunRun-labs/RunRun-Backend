@@ -546,12 +546,41 @@ function fillCourseData(course) {
   const courseImageContainer = document.getElementById("courseImageContainer");
   const courseImage = document.getElementById("courseImage");
 
-  if (course.imageUrl) {
-    if (courseImage) {
+  if (courseImage && courseImageContainer) {
+    if (course.imageUrl) {
+      // ✅ 이미지 최적화: 직접 src 설정 (중복 로딩 방지) + fetchpriority
+      courseImage.decoding = "async";
+      courseImage.loading = "lazy";
+      if (courseImage.fetchPriority !== undefined) {
+        courseImage.fetchPriority = "high"; // 중요한 이미지 우선순위 설정
+      }
+      
+      // 컨테이너는 항상 표시 (이미지가 없어도 placeholder 표시)
+      courseImageContainer.style.display = "flex";
+      
+      // 로딩 중 placeholder 표시
+      courseImage.style.opacity = "0.5";
+      courseImage.style.transition = "opacity 0.3s ease";
+      
+      courseImage.onload = () => {
+        courseImage.alt = "출발지 이미지";
+        courseImage.style.opacity = "1";
+        courseImage.style.display = "block";
+      };
+      
+      courseImage.onerror = () => {
+        // 이미지 로드 실패 시 placeholder 유지
+        console.warn("이미지 로드 실패:", course.imageUrl);
+        courseImage.style.display = "none";
+        courseImageContainer.style.background = "#f3f4f6";
+      };
+      
+      // 이미지 직접 로드 시작
       courseImage.src = course.imageUrl;
-    }
-    if (courseImageContainer) {
-      courseImageContainer.style.display = "block";
+    } else {
+      // 이미지가 없는 경우 placeholder만 표시
+      courseImageContainer.style.display = "flex";
+      courseImage.style.display = "none";
     }
   }
 }
@@ -669,43 +698,19 @@ function displayCourseOnMap(course) {
   // Draw route
   drawRoute(pathCoords);
 
-  // Fit bounds to show entire route (setBounds 대신 setCenter 사용)
-  const latLngs = pathCoords.map(
-    ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
-  );
-  const bounds = new kakao.maps.LatLngBounds();
-  latLngs.forEach((p) => bounds.extend(p));
-
-  // ⭐ setBounds는 드래그/줌을 비활성화할 수 있으므로, 대신 center와 level 계산
-  const sw = bounds.getSouthWest();
-  const ne = bounds.getNorthEast();
-  const centerLat = (sw.getLat() + ne.getLat()) / 2;
-  const centerLng = (sw.getLng() + ne.getLng()) / 2;
-
-  // 거리에 따라 적절한 level 계산
-  const latDiff = ne.getLat() - sw.getLat();
-  const lngDiff = ne.getLng() - sw.getLng();
-  const maxDiff = Math.max(latDiff, lngDiff);
-
-  let level = 5; // 기본값
-  if (maxDiff > 0.1) {
-    level = 4;
-  } else if (maxDiff > 0.05) {
-    level = 5;
-  } else if (maxDiff > 0.02) {
-    level = 6;
-  } else if (maxDiff > 0.01) {
-    level = 7;
-  } else {
-    level = 8;
-  }
-
-  // center와 level 설정 (setBounds 대신)
-  console.log("[DISPLAY COURSE] Setting map center and level...");
-  map.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
-  map.setLevel(level);
-  console.log("[DISPLAY COURSE] Map center set to:", centerLat, centerLng);
-  console.log("[DISPLAY COURSE] Map level set to:", level);
+  // ✅ 출발지로 줌인 (전체 경로가 아닌 출발지 중심으로)
+  console.log("[DISPLAY COURSE] Setting map center to start location...");
+  
+  // 출발지 좌표로 중심 설정
+  const startLatLng = new kakao.maps.LatLng(displayStartLat, displayStartLng);
+  
+  // 출발지 중심으로 줌 레벨 설정 (상세하게 보이도록)
+  const zoomLevel = 3; // 줌인 레벨 (1-14, 숫자가 작을수록 더 줌인)
+  
+  map.setCenter(startLatLng);
+  map.setLevel(zoomLevel);
+  console.log("[DISPLAY COURSE] Map center set to:", displayStartLat, displayStartLng);
+  console.log("[DISPLAY COURSE] Map level set to:", zoomLevel);
 
   // setLevel 호출 직후 드래그/줌 재활성화 (setLevel이 드래그/줌을 비활성화할 수 있음)
   setTimeout(() => {

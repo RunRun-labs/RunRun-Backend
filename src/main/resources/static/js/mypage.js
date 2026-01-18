@@ -249,13 +249,12 @@ function renderProfileImage(user) {
 
     const url = user?.profileImageUrl;
 
-    // 프로필 이미지가 없으면 default-profile.svg 사용 (이미 설정되어 있음)
+    // ✅ 프로필 이미지가 없으면 default-profile.svg 사용
     if (!url) {
-        // 기본 이미지가 이미 설정되어 있으므로 src를 변경할 필요 없음
-        if (!imgEl.src.includes('default-profile.svg')) {
-            imgEl.src = "/img/default-profile.svg";
-        }
+        imgEl.src = "/img/default-profile.svg";
         imgEl.alt = "기본 프로필 이미지";
+        imgEl.decoding = "async";
+        imgEl.loading = "lazy";
         imgEl.removeAttribute('hidden');
 
         if (initialEl) {
@@ -265,21 +264,44 @@ function renderProfileImage(user) {
         return;
     }
 
-    // 프로필 이미지가 있으면 해당 URL 사용
-    imgEl.src = url;
-    imgEl.alt = "프로필 이미지";
-    imgEl.removeAttribute('hidden');
-
-    if (initialEl) {
-        initialEl.textContent = "";
-        initialEl.setAttribute('hidden', 'hidden');
+    // ✅ 이미지 최적화: 직접 src 설정 (중복 로딩 방지) + fetchpriority
+    imgEl.decoding = "async";
+    imgEl.loading = "eager"; // 프로필 이미지는 즉시 로드
+    if (imgEl.fetchPriority !== undefined) {
+        imgEl.fetchPriority = "high"; // 중요한 이미지 우선순위 설정
     }
+    
+    // 로딩 중 placeholder 표시
+    imgEl.style.opacity = "0.5";
+    imgEl.style.transition = "opacity 0.3s ease";
+    
+    imgEl.onload = () => {
+        imgEl.alt = "프로필 이미지";
+        imgEl.style.opacity = "1";
+        imgEl.removeAttribute('hidden');
 
-    // 이미지 로드 실패 시 default-profile.svg로 대체
-    imgEl.addEventListener("error", () => {
+        if (initialEl) {
+            initialEl.textContent = "";
+            initialEl.setAttribute('hidden', 'hidden');
+        }
+    };
+
+    imgEl.onerror = () => {
         imgEl.src = "/img/default-profile.svg";
         imgEl.alt = "기본 프로필 이미지";
-    }, {once: true});
+        imgEl.decoding = "async";
+        imgEl.loading = "lazy";
+        imgEl.style.opacity = "1";
+        imgEl.removeAttribute('hidden');
+
+        if (initialEl) {
+            initialEl.textContent = "";
+            initialEl.setAttribute('hidden', 'hidden');
+        }
+    };
+
+    // 이미지 직접 로드 시작
+    imgEl.src = url;
 }
 
 function attachMyCoursesHandler() {
@@ -644,9 +666,9 @@ function createRunCard(record) {
     const isCompleted = runStatus === 'COMPLETED';
     const canShare = isCompleted; // COMPLETED 상태만 공유 가능
 
-    // 이미지가 있을 때만 img 태그 추가
+    // ✅ 이미지가 있을 때만 img 태그 추가 (이미지 최적화 적용)
     const thumbContent = imageUrl
-        ? `<img src="${imageUrl}" alt="${courseTitle}" style="display: block; cursor: pointer;" onerror="this.style.display='none'" data-image-url="${imageUrl}" />`
+        ? `<img src="${imageUrl}" alt="${courseTitle}" loading="lazy" decoding="async" style="display: block; cursor: pointer; width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'" data-image-url="${imageUrl}" />`
         : '';
 
     article.innerHTML = `
