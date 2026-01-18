@@ -612,28 +612,34 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      // 경로 전체가 보이도록 지도 범위 조정
-      const bounds = new kakao.maps.LatLngBounds();
-      latLngs.forEach((p) => bounds.extend(p));
+      // ✅ 출발지로 줌인 (전체 경로가 아닌 출발지 중심으로)
+      if (latLngs.length > 0) {
+        const startPosition = latLngs[0];
+        
+        // 출발지 중심으로 지도 설정
+        map.setCenter(startPosition);
+        map.setLevel(3); // 줌인 레벨 (1-14, 숫자가 작을수록 더 줌인)
 
-      // ✅ 맵이 display:none에서 보이게 된 직후에는 relayout 후 setBounds 해야 정상 작동
-      map.relayout();
-      map.setBounds(bounds);
+        // ✅ 맵이 display:none에서 보이게 된 직후에는 relayout 필요
+        map.relayout();
 
-      // ✅ 추가 relayout 및 setBounds (DOM 렌더링 완료 후)
-      setTimeout(() => {
-        if (map) {
-          map.relayout();
-          map.setBounds(bounds);
-        }
-      }, 100);
+        // ✅ 추가 relayout (DOM 렌더링 완료 후)
+        setTimeout(() => {
+          if (map) {
+            map.relayout();
+            map.setCenter(startPosition);
+            map.setLevel(3);
+          }
+        }, 100);
 
-      setTimeout(() => {
-        if (map) {
-          map.relayout();
-          map.setBounds(bounds);
-        }
-      }, 300);
+        setTimeout(() => {
+          if (map) {
+            map.relayout();
+            map.setCenter(startPosition);
+            map.setLevel(3);
+          }
+        }, 300);
+      }
     } catch (error) {
       console.error("코스 경로 로드 중 오류:", error);
     }
