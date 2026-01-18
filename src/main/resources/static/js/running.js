@@ -181,6 +181,29 @@ let isFollowing = false; // 사용자가 지도 움직이면 false, 버튼 눌�
 let finishRequested = false;
 let chatRoomUrl = null;
 
+// ==========================
+// Result modal polling (avoid duplicates)
+// ==========================
+let resultPollingPromise = null;
+
+function startResultModalPolling(loadingText) {
+  const defaultLoadingText =
+    sessionCourseId == null ? "코스 저장중입니다…" : "러닝 결과 저장중입니다…";
+
+  // If modal is already opened/polling, do not start another polling loop.
+  if (resultPollingPromise) {
+    setResultLoadingText(loadingText || defaultLoadingText);
+    openRunningResultModal();
+    if (resultLoadingEl) resultLoadingEl.classList.add("show");
+    return resultPollingPromise;
+  }
+
+  resultPollingPromise = showRunningResultModalWithRetry(
+    loadingText || defaultLoadingText
+  ).catch(() => null);
+  return resultPollingPromise;
+}
+
 // start marker overlay (custom) - deprecated, use startMarker instead
 let startMarkerOverlay = null;
 
@@ -208,6 +231,7 @@ let lastAcceptedHostLng = null;
 // 타이머(시간은 seed 후 계속 흐르게)
 let timerStartMs = null;
 let timerIntervalId = null;
+let timerIsProvisional = false; // ✅ stats 시드 전 임시 타이머 여부(첫 stats에서 보정 가능)
 let completedHandled = false;
 let sessionCourseId = null; // null이면 자유러닝(코스 없음)
 let freeRunPreview = null; // { path, distanceM, startLat, startLng }
@@ -327,14 +351,7 @@ function startPreviewOnlyTracking() {
   }
   console.log("📍 GPS 권한 요청 시작");
 
-  // ✅ 솔로런일 때는 미리보기 메시지 표시하지 않음
-  if (!isSoloRun) {
-    showToast(
-      "미리보기 모드입니다. 러닝 시작은 채팅방에서만 가능합니다.",
-      "info",
-      3500
-    );
-  }
+  // ✅ 미리보기 메시지 제거
 
   // ✅ GPS 권한 요청을 위해 getCurrentPosition을 먼저 호출
   navigator.geolocation.getCurrentPosition(
@@ -1131,9 +1148,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     startRunningButton.addEventListener("click", async () => {
       if (isSoloRun) {
         await startSoloRunning();
-      } else if (!isSoloRun && isHost && sessionStatus === "STANDBY") {
-        // 오프라인 러닝 시작 (채팅방의 startRunning과 동일한 로직)
-        await startOfflineRunning();
+      } else if (!isSoloRun && sessionStatus === "STANDBY") {
+        // ✅ STANDBY 상태일 때: 시작하기 버튼 클릭 시 실제 러닝 시작
+        if (isHost) {
+          await startOfflineRunning();
+        } else {
+          // 참여자는 러닝을 시작할 수 없음
+          showToast("방장만 러닝을 시작할 수 있습니다.", "warn", 3000);
+        }
       }
     });
   }
@@ -1297,17 +1319,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         backButton.style.display = "none";
       }
 
-      if (chatButton) {
-        chatButton.style.display = "flex";
-        chatButton.classList.remove("solo-hidden");
-      }
-      // ✅ 오프라인 STANDBY 상태일 때는 시작 버튼 표시 (러닝 페이지에서 시작)
-      if (startRunningButton) {
-        if (sessionStatus === "STANDBY" && isHost) {
-          startRunningButton.style.display = "block";
-          startRunningButton.textContent = "시작";
+      // ✅ STANDBY 상태일 때: 채팅방 버튼 숨기고 시작하기 버튼만 표시
+      if (sessionStatus === "STANDBY") {
+        if (chatButton) {
+          chatButton.style.display = "none";
+        }
+        if (startRunningButton) {
+          startRunningButton.style.display = "flex";
+          startRunningButton.textContent = "시작하기";
           adjustSoloRunLayout(false);
-        } else {
+        }
+      } else {
+        // ✅ STANDBY가 아닐 때: 채팅방 버튼 표시
+        if (chatButton) {
+          chatButton.style.display = "flex";
+          chatButton.classList.remove("solo-hidden");
+        }
+        if (startRunningButton) {
           startRunningButton.style.display = "none";
         }
       }
@@ -1464,6 +1492,8 @@ function closeRunningResultModal() {
   if (resultLoadingEl) {
     resultLoadingEl.classList.remove("show");
   }
+  // Allow polling to be restarted if user re-opens the modal later.
+  resultPollingPromise = null;
 }
 
 function openRunningResultModal() {
@@ -1574,9 +1604,19 @@ function renderRunningResult(data) {
 
 async function showRunningResultModalWithRetry(loadingText) {
   openRunningResultModal();
-  setResultLoadingText(loadingText || "러닝 결과 처리중입니다…");
+  // ✅ 로딩 텍스트 설정 (코스 없이 뛸 때는 "코스 저장중", 코스 있이 뛸 때는 "러닝 결과 저장중")
+  const defaultLoadingText = sessionCourseId == null 
+    ? "코스 저장중입니다…" 
+    : "러닝 결과 저장중입니다…";
+  setResultLoadingText(loadingText || defaultLoadingText);
   if (resultLoadingEl) resultLoadingEl.classList.add("show");
   if (resultSegmentsEl) resultSegmentsEl.innerHTML = "";
+  
+  // ✅ 결과 요약 영역도 로딩 중에는 숨김
+  const resultSummaryEl = document.querySelector(".result-summary");
+  const resultSegmentsTitleEl = document.querySelector(".result-segments");
+  if (resultSummaryEl) resultSummaryEl.style.display = "none";
+  if (resultSegmentsTitleEl) resultSegmentsTitleEl.style.display = "none";
 
   // ✅ 광고 미리 로드 시작 (비동기, 결과 로드와 병렬 진행)
   let adLoadPromise = Promise.resolve(null);
@@ -1589,34 +1629,69 @@ async function showRunningResultModalWithRetry(loadingText) {
 
   let lastErr = null;
   let resultData = null;
-  for (let i = 0; i < 8; i++) {
+  // ✅ 재시도(폴링): 코스 없는 오프라인은 방장 코스 저장까지 시간이 길 수 있어 더 오래 기다린다.
+  // - 모달을 닫으면 즉시 중단한다.
+  const maxRetries = sessionCourseId == null ? 600 : 120; // ~20min / ~3min
+  const retryDelay = sessionCourseId == null ? 1500 : 800;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    // 사용자가 모달을 닫으면 더 이상 폴링하지 않는다.
+    if (
+      runningResultModal &&
+      !runningResultModal.classList.contains("show")
+    ) {
+      return;
+    }
     try {
       resultData = await fetchRunningResult();
-      renderRunningResult(resultData);
-      if (resultLoadingEl) resultLoadingEl.classList.remove("show");
+      
+      // ✅ 결과 데이터가 있는 경우에만 렌더링 및 로딩 숨김
+      if (resultData) {
+        renderRunningResult(resultData);
+        
+        // ✅ 결과 영역 표시 (결과 요약과 구간 페이스)
+        if (resultSummaryEl) resultSummaryEl.style.display = "grid"; // CSS에서 grid로 정의됨
+        if (resultSegmentsTitleEl) resultSegmentsTitleEl.style.display = "flex"; // CSS에서 flex로 정의됨
+        
+        // ✅ 로딩 숨김 (결과가 로드된 후에만)
+        if (resultLoadingEl) resultLoadingEl.classList.remove("show");
+        
+        // ✅ 참여자: global-loading 해제 (결과 모달이 표시되면 로딩 완료)
+        if (!isHost) {
+          console.log("✅ 참여자 결과 로드 완료: global-loading 해제");
+          setGlobalLoading(false);
+        }
 
-      // ✅ 결과 로드 완료 후 광고 표시 (이미 로드된 광고가 있으면 즉시 표시)
-      const adData = await adLoadPromise;
-      if (adData) {
-        const adPopup = createAdPopup(adData);
-        document.body.appendChild(adPopup);
+        // ✅ 결과 로드 완료 후 광고 표시 (이미 로드된 광고가 있으면 즉시 표시)
+        const adData = await adLoadPromise;
+        if (adData) {
+          const adPopup = createAdPopup(adData);
+          document.body.appendChild(adPopup);
+        }
+
+        return;
+      } else {
+        // 결과가 없으면 계속 시도 (로딩은 계속 표시)
+        console.log(`[${i + 1}/${maxRetries}] 러닝 결과 대기 중...`);
+        await new Promise((r) => setTimeout(r, retryDelay));
       }
-
-      return;
     } catch (e) {
       lastErr = e;
-      await new Promise((r) => setTimeout(r, 1200));
+      // ✅ 404 에러(결과가 아직 없음)도 계속 재시도
+      if (e?.message?.includes("404") || e?.message?.includes("불러올 수 없습니다")) {
+        console.log(`[${i + 1}/${maxRetries}] 러닝 결과 대기 중... (404)`);
+        await new Promise((r) => setTimeout(r, retryDelay));
+      } else {
+        // 다른 에러는 짧은 지연 후 재시도
+        await new Promise((r) => setTimeout(r, retryDelay));
+      }
     }
   }
 
-  // ✅ 결과 로드 실패해도 광고는 표시 시도
+  // ✅ 최종 실패 시에도 로딩은 계속 표시하고, 사용자에게 메시지 표시
   console.warn("러닝 결과 조회 실패:", lastErr?.message || lastErr);
-  if (resultLoadingEl) resultLoadingEl.classList.remove("show");
-  if (resultSegmentsEl) {
-    resultSegmentsEl.innerHTML =
-      '<div style="text-align:center;color:#ef4444;padding:16px;font-size:12px;font-weight:900;">러닝 결과를 불러올 수 없습니다.</div>';
-  }
-
+  setResultLoadingText("러닝 결과를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.");
+  
   // 결과 로드 실패해도 광고 표시
   const adData = await adLoadPromise;
   if (adData) {
@@ -1818,26 +1893,48 @@ function getLastStatsAtMs() {
 }
 
 function seedTimerOnce(seedRunningTimeSec) {
-  if (timerIntervalId) return;
-
   // 우선 localStorage에 시작시각이 있으면 그걸 사용 (재진입에도 동일)
   const stored = localStorage.getItem(storageKey("startedAtMs"));
   if (stored) {
     const v = Number(stored);
     if (Number.isFinite(v) && v > 0) {
       timerStartMs = v;
-      startTimerTick();
+      timerIsProvisional = false;
+      if (!timerIntervalId) startTimerTick();
       return;
     }
   }
 
   // 없으면 stats 시간으로 seed (그 뒤로는 계속 흐르게)
   const seed = Number(seedRunningTimeSec);
-  if (Number.isFinite(seed) && seed > 0) {
-    timerStartMs = Date.now() - seed * 1000;
-    localStorage.setItem(storageKey("startedAtMs"), String(timerStartMs));
-    startTimerTick();
-    return;
+  if (Number.isFinite(seed) && seed >= 0) {
+    const candidateStartMs = Date.now() - seed * 1000;
+    // 이미 임시 타이머가 돌아가고 있으면(참여자 즉시 진입 등) 첫 stats에서 보정한다.
+    if (timerIntervalId) {
+      // seed가 0이면(아직 첫 GPS/통계 전파 전) 보정하지 않고 임시 상태를 유지한다.
+      if (timerIsProvisional && seed > 0 && timerStartMs !== candidateStartMs) {
+        timerStartMs = candidateStartMs;
+        timerIsProvisional = false;
+        try {
+          localStorage.setItem(storageKey("startedAtMs"), String(timerStartMs));
+        } catch (e) {
+          // ignore
+        }
+      }
+      return;
+    }
+
+    if (seed > 0) {
+      timerStartMs = candidateStartMs;
+      timerIsProvisional = false;
+      try {
+        localStorage.setItem(storageKey("startedAtMs"), String(timerStartMs));
+      } catch (e) {
+        // ignore
+      }
+      startTimerTick();
+      return;
+    }
   }
 }
 
@@ -1851,17 +1948,17 @@ function ensureTimerRunningForInProgress() {
     const v = Number(stored);
     if (Number.isFinite(v) && v > 0) {
       timerStartMs = v;
+      timerIsProvisional = false;
       startTimerTick();
       return;
     }
   }
 
+  // ✅ startedAtMs를 모르는데(참여자 즉시 진입 등) 바로 localStorage에 박아버리면
+  // 방장 시간과 어긋난 값이 고정될 수 있다.
+  // -> 우선 임시로만 돌리고, 첫 stats(totalRunningTime)가 오면 seedTimerOnce에서 보정한다.
   timerStartMs = Date.now();
-  try {
-    localStorage.setItem(storageKey("startedAtMs"), String(timerStartMs));
-  } catch (e) {
-    // ignore
-  }
+  timerIsProvisional = true;
   startTimerTick();
 }
 
@@ -2507,8 +2604,59 @@ function initKakaoMap() {
       };
 
       map = new kakao.maps.Map(mapContainer, mapOption);
-      // ✅ 초기 렌더 직후 레이아웃 보정 (지도 상단/타일 잘림 방지)
+      
+      // ✅ 뷰포트 높이 재계산 및 지도 relayout (카카오맵 잘림 방지)
+      const relayoutMap = () => {
+        setViewportHeightVar();
+        if (map) {
+          try {
+            // ✅ 지도 컨테이너 크기 확인
+            const container = mapContainer;
+            if (container) {
+              const height = container.offsetHeight;
+              const width = container.offsetWidth;
+              // ✅ 지도 크기가 0이면 재시도 스케줄링
+              if (height === 0 || width === 0) {
+                console.warn("지도 컨테이너 크기가 0입니다. 재시도합니다.");
+                return;
+              }
+            }
+            map.relayout();
+          } catch (e) {
+            console.warn("지도 relayout 실패:", e);
+          }
+        }
+      };
+      
+      // ✅ 즉시 relayout
+      relayoutMap();
       scheduleMapRelayout();
+      
+      // ✅ 지도 초기화 후 여러 번 relayout 호출 (카카오맵 잘림 방지)
+      setTimeout(relayoutMap, 100);
+      setTimeout(relayoutMap, 300);
+      setTimeout(relayoutMap, 600);
+      setTimeout(relayoutMap, 1000);
+      setTimeout(relayoutMap, 1500);
+      
+      // ✅ resize 이벤트 핸들러에 추가 relayout (이미 있는 핸들러와 중복되지만 안전장치)
+      const existingRelayout = () => {
+        setViewportHeightVar();
+        scheduleMapRelayout();
+      };
+      
+      // ✅ 기존 핸들러가 있어도 추가로 relayoutMap 호출
+      window.addEventListener('resize', () => {
+        existingRelayout();
+        relayoutMap();
+      }, { passive: true });
+      
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+          existingRelayout();
+          relayoutMap();
+        }, { passive: true });
+      }
 
       // ✅ Geocoder는 services가 로드된 후에 초기화
       try {
@@ -2950,26 +3098,18 @@ function subscribeToChatMessages() {
           completedHandled = true;
         }
 
-        // ✅ 참여자는 로딩 해제 후 결과 모달 표시 (중복 방지)
-        if (!isHost) {
-          setGlobalLoading(false);
-          // ✅ 이미 결과 모달이 표시되지 않았다면 표시
-          if (
-            !runningResultModal ||
-            !runningResultModal.classList.contains("show")
-          ) {
-            showRunningResultModalWithRetry("러닝 결과 저장중입니다…");
-          }
-        } else {
-          // ✅ 방장: 자유러닝(코스 없음) 또는 코스 러닝 모두 시스템 메시지 수신 시 결과 모달 표시
-          setGlobalLoading(false);
-          if (
-            !runningResultModal ||
-            !runningResultModal.classList.contains("show")
-          ) {
-            showRunningResultModalWithRetry("러닝 결과 저장중입니다…");
-          }
+        // ✅ 오프라인 종료 시 결과 모달 정책:
+        // - 코스 있음: 방장/참여자 모두 즉시 결과 모달(로딩→결과)
+        // - 코스 없음: 참여자는 즉시 결과 모달(계속 대기), 방장은 코스 저장 후 결과 모달
+        const loadingText =
+          sessionCourseId == null ? "코스 저장중입니다…" : "러닝 결과 저장중입니다…";
+
+        // 방장 + 코스 없음은 코스 저장 플로우가 우선이므로 여기서는 모달을 띄우지 않는다.
+        if (isHost && sessionCourseId == null) {
+          return;
         }
+
+        startResultModalPolling(loadingText);
       }
     } catch (e) {
       console.warn("채팅 메시지 파싱 실패:", e);
@@ -3106,8 +3246,45 @@ function handleRunningStats(stats) {
       }
 
       // ✅ 시작 직후(stats.totalDistance가 0일 때)는 거리 TTS 재생하지 않음
+      // ✅ 시작 시점에 resetDistanceState 호출하여 목표 거리 초과 TTS 방지
+      if (stats.totalDistance === 0 && remainingDistance != null) {
+        // 시작 시점에 목표 거리를 초과하는 남은 거리가 있으면 resetDistanceState 호출
+        const targetDistance = sessionDataCache?.targetDistance;
+        if (Number.isFinite(targetDistance)) {
+          // 목표 거리로 제한하여 resetDistanceState 호출
+          const limitedRemainingDistance = Math.min(remainingDistance, targetDistance);
+          if (typeof window.TtsManager.resetDistanceState === "function") {
+            window.TtsManager.resetDistanceState(limitedRemainingDistance);
+          }
+        } else {
+          // 목표 거리가 없으면 그대로 resetDistanceState 호출
+          if (typeof window.TtsManager.resetDistanceState === "function") {
+            window.TtsManager.resetDistanceState(remainingDistance);
+          }
+        }
+        // ✅ 시작 시점에는 TTS 재생하지 않음
+        return;
+      }
+      
+      // ✅ 실제로 뛰기 시작한 후에만 거리 TTS 재생
+      // ✅ 목표 거리를 초과하는 남은 거리가 있으면 TTS 재생하지 않음
       if (stats.totalDistance > 0) {
-      window.TtsManager.onDistance(stats.totalDistance, remainingDistance);
+        // 목표 거리 확인
+        const targetDistance = sessionDataCache?.targetDistance;
+        if (Number.isFinite(targetDistance)) {
+          const maxRemainingDistance = Math.max(0, targetDistance - stats.totalDistance);
+          // remainingDistance가 목표 거리를 초과하면 TTS 재생하지 않음
+          if (remainingDistance != null && remainingDistance > maxRemainingDistance) {
+            // 목표 거리로 제한하여 TTS 재생
+            const limitedRemainingDistance = maxRemainingDistance;
+            window.TtsManager.onDistance(stats.totalDistance, limitedRemainingDistance);
+          } else {
+            window.TtsManager.onDistance(stats.totalDistance, remainingDistance);
+          }
+        } else {
+          // 목표 거리가 없으면 그대로 TTS 재생
+          window.TtsManager.onDistance(stats.totalDistance, remainingDistance);
+        }
       }
     }
     // ✅ 방장/참여자 모두: 서버가 브로드캐스트하는 hostMatchedDistM(코스 위 진행도) 기준으로 트리밍
@@ -3298,6 +3475,17 @@ async function handleCompletedOnce(stats) {
     // ignore
   }
   stopTimerAndFreeze(stats?.totalRunningTime);
+
+  // ✅ 오프라인: 러닝이 종료되면 즉시 결과 모달을 띄우고(스피너), 저장 완료되면 자동으로 결과 표시
+  // - 코스 있음: 방장/참여자 모두 대상
+  // - 코스 없음: 참여자만 즉시, 방장은 코스 저장 후 표시
+  if (!isSoloRun) {
+    const loadingText =
+      sessionCourseId == null ? "코스 저장중입니다…" : "러닝 결과 저장중입니다…";
+    if (!isHost || sessionCourseId != null) {
+      startResultModalPolling(loadingText);
+    }
+  }
 
   // ✅ 자유러닝(코스 없음) 방장/솔로런 플로우:
   // 1) 코스 프리뷰 생성중 → 2) 코스 저장(필수 입력, MANUAL 고정) → 3) 결과 저장(finish(courseId))
@@ -3539,15 +3727,19 @@ async function startOfflineRunning() {
     // 세션 상태 업데이트
     sessionStatus = "IN_PROGRESS";
 
-    // ✅ 시작 시간 저장 (TTS용)
-    const nowMs = Date.now();
-    localStorage.setItem(storageKey("startedAtMs"), String(nowMs));
+    // ✅ 시간은 서버 stats(totalRunningTime) 기준으로 보정해서 맞춘다.
+    // -> 우선 즉시 타이머는 임시로 흐르게 하고, 첫 stats가 오면 seedTimerOnce에서 동기화됨
+    ensureTimerRunningForInProgress();
     // TTS 시작 말하기 플래그 리셋
     localStorage.removeItem(storageKey("ttsStartSpoken"));
 
-    // ✅ 시작 버튼 즉시 숨김
+    // ✅ 시작 버튼을 채팅방 버튼으로 변경
     if (startRunningButton) {
       startRunningButton.style.display = "none";
+    }
+    if (chatButton) {
+      chatButton.style.display = "flex";
+      chatButton.classList.remove("solo-hidden");
     }
 
     // ✅ IN_PROGRESS일 때 UI 레이아웃 조정
@@ -3783,9 +3975,9 @@ async function startSoloRunning() {
     // 세션 상태 업데이트
     sessionStatus = "IN_PROGRESS";
 
-    // ✅ 시작 시간 저장 (TTS용)
-    const nowMs = Date.now();
-    localStorage.setItem(storageKey("startedAtMs"), String(nowMs));
+    // ✅ 시간은 서버 stats(totalRunningTime) 기준으로 보정해서 맞춘다.
+    // -> 우선 즉시 타이머는 임시로 흐르게 하고, 첫 stats가 오면 seedTimerOnce에서 동기화됨
+    ensureTimerRunningForInProgress();
     // TTS 시작 말하기 플래그 리셋
     localStorage.removeItem(storageKey("ttsStartSpoken"));
 
