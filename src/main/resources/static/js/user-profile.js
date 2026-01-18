@@ -132,18 +132,27 @@ function renderProfileImage(user) {
         return;
     }
 
-    imgEl.src = url;
-    imgEl.alt = "프로필 이미지";
-    imgEl.decoding = "async";
-    imgEl.loading = "lazy";
-    imgEl.hidden = false;
-
-    if (initialEl) {
-        initialEl.textContent = "";
-        initialEl.hidden = true;
+    // ✅ 이미지 최적화: preload + fetchpriority
+    const img = new Image();
+    img.decoding = "async";
+    if (img.fetchPriority !== undefined) {
+        img.fetchPriority = "high"; // 중요한 이미지 우선순위 설정
     }
+    
+    img.onload = () => {
+        imgEl.src = url;
+        imgEl.alt = "프로필 이미지";
+        imgEl.decoding = "async";
+        imgEl.loading = "eager"; // 프로필 이미지는 즉시 로드
+        imgEl.hidden = false;
 
-    imgEl.addEventListener("error", () => {
+        if (initialEl) {
+            initialEl.textContent = "";
+            initialEl.hidden = true;
+        }
+    };
+
+    img.onerror = () => {
         imgEl.removeAttribute("src");
         imgEl.hidden = true;
 
@@ -152,7 +161,10 @@ function renderProfileImage(user) {
             initialEl.textContent = name.charAt(0).toUpperCase() || "";
             initialEl.hidden = false;
         }
-    }, {once: true});
+    };
+
+    // 이미지 미리 로드 시작
+    img.src = url;
 }
 
 function attachBackButtonHandler() {
@@ -1208,9 +1220,9 @@ function createRunCard(record) {
     // 러닝 타입 레이블
     const runningTypeLabel = getRunningTypeLabel(record.runningType);
 
-    // 이미지가 있을 때만 img 태그 추가
+    // ✅ 이미지가 있을 때만 img 태그 추가 (이미지 최적화 적용)
     const thumbContent = imageUrl
-        ? `<img src="${imageUrl}" alt="${courseTitle}" onerror="this.style.display='none'" />`
+        ? `<img src="${imageUrl}" alt="${courseTitle}" loading="lazy" decoding="async" onerror="this.style.display='none'" style="width: 100%; height: 100%; object-fit: cover;" />`
         : '';
 
     article.innerHTML = `
