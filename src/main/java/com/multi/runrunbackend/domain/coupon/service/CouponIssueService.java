@@ -59,7 +59,8 @@ public class CouponIssueService {
     @Transactional(readOnly = true)
     public long getCouponCount(CustomUser principal) {
         User user = getUserOrThrow(principal);
-        return couponIssueRepository.countByUserId(user.getId());
+        return couponIssueRepository.countByUserIdAndStatus(user.getId(),
+            CouponIssueStatus.AVAILABLE);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
