@@ -94,7 +94,13 @@ async function loadResults() {
     myResult = {
       totalDistance: myTotalDistance,
       totalTime: myTotalTime,
-      avgPace: myTotalTime / myTotalDistance, // 초/km
+      // ✅ ghostRecord.avgPace(분/km)와 단위를 맞춘다.
+      // - myTotalTime: 초
+      // - myTotalDistance: km
+      avgPace:
+        myTotalDistance > 0
+          ? myTotalTime / 60 / myTotalDistance // 분/km
+          : 0,
       timeDiff: myTimeDiff,
       status: myStatus
     };
@@ -202,12 +208,13 @@ function formatTime(seconds) {
 }
 
 /**
- * 페이스 포맷 (초/km → M:SS/km)
+ * 페이스 포맷 (분/km → M:SS/km)
  */
-function formatPace(pace) {
-  const mins = Math.floor(pace / 60);
-  const secs = Math.floor(pace % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}/km`;
+function formatPace(paceMinutes) {
+  if (!paceMinutes) return "0:00/km";
+  const minutes = Math.floor(paceMinutes);
+  const seconds = Math.round((paceMinutes - minutes) * 60);
+  return `${minutes}:${seconds.toString().padStart(2, "0")}/km`;
 }
 
 /**
