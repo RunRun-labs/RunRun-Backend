@@ -12,8 +12,20 @@ import com.multi.runrunbackend.domain.notification.constant.NotificationType;
 import com.multi.runrunbackend.domain.notification.constant.RelatedType;
 import com.multi.runrunbackend.domain.notification.service.NotificationService;
 import com.multi.runrunbackend.domain.point.constant.PointPolicy;
-import com.multi.runrunbackend.domain.point.dto.req.*;
-import com.multi.runrunbackend.domain.point.dto.res.*;
+import com.multi.runrunbackend.domain.point.dto.req.CursorPage;
+import com.multi.runrunbackend.domain.point.dto.req.PointEarnReqDto;
+import com.multi.runrunbackend.domain.point.dto.req.PointHistoryListReqDto;
+import com.multi.runrunbackend.domain.point.dto.req.PointProductCreateReqDto;
+import com.multi.runrunbackend.domain.point.dto.req.PointProductUpdateReqDto;
+import com.multi.runrunbackend.domain.point.dto.req.PointUseReqDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointHistoryListResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointMainResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointProductCreateResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointProductListItemResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointProductPageResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointProductUpdateResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointShopDetailResDto;
+import com.multi.runrunbackend.domain.point.dto.res.PointShopListResDto;
 import com.multi.runrunbackend.domain.point.entity.PointExpiration;
 import com.multi.runrunbackend.domain.point.entity.PointHistory;
 import com.multi.runrunbackend.domain.point.entity.PointProduct;
@@ -24,6 +36,12 @@ import com.multi.runrunbackend.domain.point.repository.PointProductRepository;
 import com.multi.runrunbackend.domain.point.repository.UserPointRepository;
 import com.multi.runrunbackend.domain.user.entity.User;
 import com.multi.runrunbackend.domain.user.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,13 +50,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author : BoKyung
@@ -68,83 +79,85 @@ public class PointService {
      */
     public PointMainResDto getPointMain(Long userId) {
         UserPoint userPoint = userPointRepository.findByUserId(userId)
-                .orElseGet(() -> UserPoint.toEntity(getUserById(userId)));
+            .orElseGet(() -> UserPoint.toEntity(getUserById(userId)));
 
         // 포인트 적립 방법 - 안내용
         List<PointMainResDto.PointEarnMethod> earnMethods = List.of(
-                PointMainResDto.PointEarnMethod.builder()
-                        .methodName("경기 참여")
-                        .description("100m 당 1P + 1P")
-                        .earnAmount(1)
-                        .build(),
-                PointMainResDto.PointEarnMethod.builder()
-                        .methodName("출석 체크")
-                        .description("매일 출석 시")
-                        .earnAmount(50)
-                        .build(),
-                PointMainResDto.PointEarnMethod.builder()
-                        .methodName("챌린지 달성")
-                        .description("챌린지 성공 시")
-                        .earnAmount(100)
-                        .build(),
-                PointMainResDto.PointEarnMethod.builder()
-                        .methodName("친구 추천")
-                        .description("친구 초대 성공 시")
-                        .earnAmount(2000)
-                        .build()
+            PointMainResDto.PointEarnMethod.builder()
+                .methodName("경기 참여")
+                .description("100m 당 1P")
+                .earnAmount(1)
+                .build(),
+            PointMainResDto.PointEarnMethod.builder()
+                .methodName("출석 체크")
+                .description("매일 출석 시")
+                .earnAmount(50)
+                .build(),
+            PointMainResDto.PointEarnMethod.builder()
+                .methodName("챌린지 달성")
+                .description("챌린지 성공 시")
+                .earnAmount(100)
+                .build(),
+            PointMainResDto.PointEarnMethod.builder()
+                .methodName("친구 추천")
+                .description("친구 초대 성공 시")
+                .earnAmount(2000)
+                .build()
         );
 
         // 소멸 예정 포인트  - 이번 달 기준
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0)
+            .withNano(0);
         LocalDateTime endOfMonth = now.withDayOfMonth(now.toLocalDate().lengthOfMonth())
-                .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
 
         List<PointExpiration> expiringThisMonth = pointExpirationRepository
-                .findExpiringThisMonth(userId, startOfMonth, endOfMonth);
+            .findExpiringThisMonth(userId, startOfMonth, endOfMonth);
 
         PointMainResDto.UpcomingExpiryInfo expiryInfo;
         if (!expiringThisMonth.isEmpty()) {
             // 이번 달 소멸 포인트의 총합 계산
             int totalExpiringPoints = expiringThisMonth.stream()
-                    .mapToInt(PointExpiration::getRemainingPoint)
-                    .sum();
+                .mapToInt(PointExpiration::getRemainingPoint)
+                .sum();
 
             PointExpiration earliest = expiringThisMonth.get(0);
             expiryInfo = PointMainResDto.UpcomingExpiryInfo.builder()
-                    .expiryDate(earliest.getExpiresAt()
-                            .format(DateTimeFormatter.ofPattern("yyyy년 M월 d일")))
-                    .expiringPoints(totalExpiringPoints)
-                    .build();
+                .expiryDate(earliest.getExpiresAt()
+                    .format(DateTimeFormatter.ofPattern("yyyy년 M월 d일")))
+                .expiringPoints(totalExpiringPoints)
+                .build();
         } else {
             // 포인트 없을 때 기본값
             expiryInfo = PointMainResDto.UpcomingExpiryInfo.builder()
-                    .expiryDate("-")
-                    .expiringPoints(0)
-                    .build();
+                .expiryDate("-")
+                .expiringPoints(0)
+                .build();
         }
 
         Integer earnedTotal = pointHistoryRepository.getTotalPointsByType(userId, "EARN");
         Integer usedTotal = pointHistoryRepository.getTotalPointsByType(userId, "USE");
 
         PointMainResDto.PointSummary summary = PointMainResDto.PointSummary.builder()
-                .earnedPoints(earnedTotal)
-                .usedPoints(usedTotal)
-                .totalAccumulated(earnedTotal)
-                .build();
+            .earnedPoints(earnedTotal)
+            .usedPoints(usedTotal)
+            .totalAccumulated(earnedTotal)
+            .build();
 
         return PointMainResDto.builder()
-                .availablePoints(userPoint.getTotalPoint())
-                .earnMethods(earnMethods)
-                .upcomingExpiry(expiryInfo)
-                .summary(summary)
-                .build();
+            .availablePoints(userPoint.getTotalPoint())
+            .earnMethods(earnMethods)
+            .upcomingExpiry(expiryInfo)
+            .summary(summary)
+            .build();
     }
 
     /**
      * 포인트 내역 조회 (커서 기반 페이징)
      */
-    public CursorPage<PointHistoryListResDto> getPointHistoryList(Long userId, PointHistoryListReqDto reqDto) {
+    public CursorPage<PointHistoryListResDto> getPointHistoryList(Long userId,
+        PointHistoryListReqDto reqDto) {
         return pointHistoryRepository.searchPointHistory(reqDto, userId);
     }
 
@@ -164,8 +177,8 @@ public class PointService {
 
         // 유효한 reason인지 검증
         List<String> validReasons = List.of(
-                "RUNNING_COMPLETE", "ATTENDANCE", "INVITE", "WEEKLY_MISSION",
-                "MONTHLY_MISSION", "LUCKY_BOX", "STREET_POINT", "EVENT"
+            "RUNNING_COMPLETE", "ATTENDANCE", "INVITE", "WEEKLY_MISSION",
+            "MONTHLY_MISSION", "LUCKY_BOX", "STREET_POINT", "EVENT"
         );
 
         if (!validReasons.contains(requestDto.getReason())) {
@@ -174,9 +187,9 @@ public class PointService {
 
         // 하루 적립 제한 제외 대상
         List<String> unlimitedReasons = List.of(
-                "INVITE",           // 친구 초대 2000P
-                "MONTHLY_MISSION",  // 월간 미션 1000P
-                "EVENT"             // 이벤트 포인트
+            "INVITE",           // 친구 초대 2000P
+            "MONTHLY_MISSION",  // 월간 미션 1000P
+            "EVENT"             // 이벤트 포인트
         );
 
         // 하루 적립 제한 체크
@@ -184,7 +197,7 @@ public class PointService {
             LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
             Integer todayEarned = pointHistoryRepository.getTodayEarnedPoints(
-                    userId, startOfDay, endOfDay
+                userId, startOfDay, endOfDay
             );
 
             if (todayEarned == null) {
@@ -207,16 +220,16 @@ public class PointService {
 
         // UserPoint 적립
         UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
-                .orElseGet(() -> {
-                    UserPoint newPoint = UserPoint.toEntity(user);
-                    return userPointRepository.save(newPoint);
-                });
+            .orElseGet(() -> {
+                UserPoint newPoint = UserPoint.toEntity(user);
+                return userPointRepository.save(newPoint);
+            });
 
         userPoint.addPoint(finalAmount);
 
         // PointHistory 저장
         PointHistory history = PointHistory.toEntity(
-                user, null, "EARN", finalAmount, requestDto.getReason()
+            user, null, "EARN", finalAmount, requestDto.getReason()
         );
         pointHistoryRepository.save(history);
 
@@ -241,8 +254,8 @@ public class PointService {
 
         // 유효한 reason인지 검증
         List<String> validReasons = List.of(
-                "CREW_JOIN", "PRODUCT_EXCHANGE",
-                "MEMBERSHIP_TRIAL", "LUCKY_BOX"
+            "CREW_JOIN", "PRODUCT_EXCHANGE",
+            "MEMBERSHIP_TRIAL", "LUCKY_BOX"
         );
 
         if (!validReasons.contains(requestDto.getReason())) {
@@ -253,7 +266,7 @@ public class PointService {
 
         // 동시성 제어 - 비관적 락
         UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
 
         // 잔액 확인
         if (userPoint.getTotalPoint() < requestDto.getAmount()) {
@@ -263,10 +276,12 @@ public class PointService {
         // FIFO 순서로 포인트 차감
         int remainingAmount = requestDto.getAmount();
         List<PointExpiration> activePoints = pointExpirationRepository
-                .findActivePointsByUserIdOrderByEarnedAt(userId);
+            .findActivePointsByUserIdOrderByEarnedAt(userId);
 
         for (PointExpiration expiration : activePoints) {
-            if (remainingAmount <= 0) break;
+            if (remainingAmount <= 0) {
+                break;
+            }
 
             int deductAmount = Math.min(remainingAmount, expiration.getRemainingPoint());
             expiration.usePoint(deductAmount);
@@ -288,7 +303,7 @@ public class PointService {
         }
 
         PointHistory history = PointHistory.toEntity(
-                user, pointProduct, "USE", requestDto.getAmount(), requestDto.getReason()
+            user, pointProduct, "USE", requestDto.getAmount(), requestDto.getReason()
         );
         pointHistoryRepository.save(history);
     }
@@ -305,7 +320,7 @@ public class PointService {
         User user = getUserById(userId);
 
         UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
 
         if (userPoint.getTotalPoint() < amount) {
             throw new BusinessException(ErrorCode.INSUFFICIENT_POINT);
@@ -314,10 +329,12 @@ public class PointService {
         // FIFO 차감
         int remainingAmount = amount;
         List<PointExpiration> activePoints = pointExpirationRepository
-                .findActivePointsByUserIdOrderByEarnedAt(userId);
+            .findActivePointsByUserIdOrderByEarnedAt(userId);
 
         for (PointExpiration expiration : activePoints) {
-            if (remainingAmount <= 0) break;
+            if (remainingAmount <= 0) {
+                break;
+            }
 
             int deductAmount = Math.min(remainingAmount, expiration.getRemainingPoint());
             expiration.usePoint(deductAmount);
@@ -327,7 +344,7 @@ public class PointService {
         userPoint.subtractPoint(amount);
 
         PointHistory history = PointHistory.toEntity(
-                user, null, "USE", amount, reason
+            user, null, "USE", amount, reason
         );
         pointHistoryRepository.save(history);
     }
@@ -338,33 +355,33 @@ public class PointService {
     public PointShopListResDto getPointShop(Long userId) {
 
         final int myPoints = java.util.Optional
-                .ofNullable(userPointRepository.getTotalPointByUserId(userId))
-                .orElse(0);
+            .ofNullable(userPointRepository.getTotalPointByUserId(userId))
+            .orElse(0);
 
         // 상품 목록 조회
         List<PointProduct> products = pointProductRepository
-                .findByIsDeletedFalseAndIsAvailableTrue();
+            .findByIsDeletedFalseAndIsAvailableTrue();
 
         // DTO 변환
         List<PointShopListResDto.ShopItemDto> productDtos = products.stream()
-                .map(product -> {
-                    // S3 key면 변환, 외부 URL이면 그대로
-                    String imageUrl = resolveImageUrl(product.getProductImageUrl());
+            .map(product -> {
+                // S3 key면 변환, 외부 URL이면 그대로
+                String imageUrl = resolveImageUrl(product.getProductImageUrl());
 
-                    return PointShopListResDto.ShopItemDto.builder()
-                            .productId(product.getId())
-                            .productName(product.getProductName())
-                            .requiredPoint(product.getRequiredPoint())
-                            .productImageUrl(imageUrl)
-                            .canPurchase(myPoints >= product.getRequiredPoint())
-                            .build();
-                })
-                .collect(Collectors.toList());
+                return PointShopListResDto.ShopItemDto.builder()
+                    .productId(product.getId())
+                    .productName(product.getProductName())
+                    .requiredPoint(product.getRequiredPoint())
+                    .productImageUrl(imageUrl)
+                    .canPurchase(myPoints >= product.getRequiredPoint())
+                    .build();
+            })
+            .collect(Collectors.toList());
 
         return PointShopListResDto.builder()
-                .myPoints(myPoints)
-                .products(productDtos)
-                .build();
+            .myPoints(myPoints)
+            .products(productDtos)
+            .build();
     }
 
     /**
@@ -375,22 +392,22 @@ public class PointService {
         PointProduct product = findProductById(productId);
 
         final int myPoints = java.util.Optional
-                .ofNullable(userPointRepository.getTotalPointByUserId(userId))
-                .orElse(0);
+            .ofNullable(userPointRepository.getTotalPointByUserId(userId))
+            .orElse(0);
 
         // S3 URL 변환
         String imageUrl = resolveImageUrl(product.getProductImageUrl());
 
         return PointShopDetailResDto.builder()
-                .productId(product.getId())
-                .productName(product.getProductName())
-                .productDescription(product.getProductDescription())
-                .requiredPoint(product.getRequiredPoint())
-                .productImageUrl(imageUrl)
-                .isAvailable(product.getIsAvailable())
-                .myPoints(myPoints)
-                .canPurchase(myPoints >= product.getRequiredPoint() && product.getIsAvailable())
-                .build();
+            .productId(product.getId())
+            .productName(product.getProductName())
+            .productDescription(product.getProductDescription())
+            .requiredPoint(product.getRequiredPoint())
+            .productImageUrl(imageUrl)
+            .isAvailable(product.getIsAvailable())
+            .myPoints(myPoints)
+            .canPurchase(myPoints >= product.getRequiredPoint() && product.getIsAvailable())
+            .build();
     }
 
     // ========================================
@@ -402,25 +419,25 @@ public class PointService {
      */
     @Transactional(readOnly = true)
     public PointProductPageResDto getProductList(
-            Boolean isAvailable,
-            String keyword,
-            Pageable pageable
+        Boolean isAvailable,
+        String keyword,
+        Pageable pageable
     ) {
         String safeKeyword =
-                (keyword == null || keyword.isBlank()) ? null : keyword.trim().toLowerCase();
+            (keyword == null || keyword.isBlank()) ? null : keyword.trim().toLowerCase();
 
         Specification<PointProduct> spec = (root, query, cb) ->
-                cb.equal(root.get("isDeleted"), false);
+            cb.equal(root.get("isDeleted"), false);
 
         if (isAvailable != null) {
             spec = spec.and((root, query, cb) ->
-                    cb.equal(root.get("isAvailable"), isAvailable));
+                cb.equal(root.get("isAvailable"), isAvailable));
         }
 
         if (safeKeyword != null) {
             spec = spec.and((root, query, cb) -> cb.or(
-                    cb.like(cb.lower(root.get("productName")), "%" + safeKeyword + "%"),
-                    cb.like(cb.lower(root.get("productDescription")), "%" + safeKeyword + "%")
+                cb.like(cb.lower(root.get("productName")), "%" + safeKeyword + "%"),
+                cb.like(cb.lower(root.get("productDescription")), "%" + safeKeyword + "%")
             ));
         }
 
@@ -428,20 +445,20 @@ public class PointService {
 
         // HTTPS URL로 변환
         List<PointProductListItemResDto> items = page.getContent().stream()
-                .map(p -> PointProductListItemResDto.from(
-                        p,
-                        resolveImageUrl(p.getProductImageUrl())
-                ))
-                .collect(Collectors.toList());
+            .map(p -> PointProductListItemResDto.from(
+                p,
+                resolveImageUrl(p.getProductImageUrl())
+            ))
+            .collect(Collectors.toList());
 
         return new PointProductPageResDto(
-                items,
-                page.getNumber(),
-                page.getSize(),
-                page.getTotalElements(),
-                page.getTotalPages(),
-                page.hasNext(),
-                page.hasPrevious()
+            items,
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements(),
+            page.getTotalPages(),
+            page.hasNext(),
+            page.hasPrevious()
         );
     }
 
@@ -451,12 +468,12 @@ public class PointService {
     @Transactional
     public PointProductCreateResDto createProduct(PointProductCreateReqDto req) {
         PointProduct product = PointProduct.builder()
-                .productName(req.getProductName())
-                .productDescription(req.getProductDescription())
-                .requiredPoint(req.getRequiredPoint())
-                .productImageUrl(req.getProductImageUrl())
-                .isAvailable(req.getIsAvailable())
-                .build();
+            .productName(req.getProductName())
+            .productDescription(req.getProductDescription())
+            .requiredPoint(req.getRequiredPoint())
+            .productImageUrl(req.getProductImageUrl())
+            .isAvailable(req.getIsAvailable())
+            .build();
 
         PointProduct saved = pointProductRepository.save(product);
         return PointProductCreateResDto.of(saved.getId());
@@ -527,8 +544,9 @@ public class PointService {
 
         for (PointExpiration expiration : expiredPoints) {
             if (expiration.getRemainingPoint() > 0) {
-                UserPoint userPoint = userPointRepository.findByUserIdWithLock(expiration.getUser().getId())
-                        .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
+                UserPoint userPoint = userPointRepository.findByUserIdWithLock(
+                        expiration.getUser().getId())
+                    .orElseThrow(() -> new NotFoundException(ErrorCode.POINT_NOT_FOUND));
 
                 userPoint.subtractPoint(expiration.getRemainingPoint());
                 expiration.expire();
@@ -549,7 +567,7 @@ public class PointService {
 
         // 만료일이 하루 후인 활성 포인트 조회
         List<PointExpiration> expiringPoints = pointExpirationRepository
-                .findPointsExpiringTomorrow(tomorrowStart, tomorrowEnd);
+            .findPointsExpiringTomorrow(tomorrowStart, tomorrowEnd);
 
         log.info("만료 전 알림 대상 포인트: {}건", expiringPoints.size());
 
@@ -558,7 +576,7 @@ public class PointService {
         for (PointExpiration expiration : expiringPoints) {
             Long userId = expiration.getUser().getId();
             userPointMap.put(userId,
-                    userPointMap.getOrDefault(userId, 0) + expiration.getRemainingPoint());
+                userPointMap.getOrDefault(userId, 0) + expiration.getRemainingPoint());
         }
 
         int sentCount = 0;
@@ -570,19 +588,19 @@ public class PointService {
                 Integer expiringAmount = entry.getValue();
 
                 notificationService.create(
-                        user,
-                        "포인트 소멸 안내",
-                        expiringAmount + "P가 내일 소멸됩니다.",
-                        NotificationType.POINT,
-                        RelatedType.POINT_BALANCE,
-                        entry.getKey()  // userId
+                    user,
+                    "포인트 소멸 안내",
+                    expiringAmount + "P가 내일 소멸됩니다.",
+                    NotificationType.POINT,
+                    RelatedType.POINT_BALANCE,
+                    entry.getKey()  // userId
                 );
                 sentCount++;
                 log.debug("포인트 만료 전 알림 발송 완료 - userId: {}, expiringAmount: {}P",
-                        entry.getKey(), expiringAmount);
+                    entry.getKey(), expiringAmount);
             } catch (Exception e) {
                 log.error("포인트 만료 전 알림 발송 실패 - userId: {}",
-                        entry.getKey(), e);
+                    entry.getKey(), e);
             }
         }
 
@@ -598,7 +616,7 @@ public class PointService {
      */
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
     }
 
     /**
@@ -610,21 +628,21 @@ public class PointService {
 
         // user로 Membership 조회
         return membershipRepository.findByUser(user)
-                .map(membership -> {
-                    // ACTIVE이거나, CANCELED이지만 아직 종료 전인 경우
-                    if (membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
-                        return true;
-                    }
+            .map(membership -> {
+                // ACTIVE이거나, CANCELED이지만 아직 종료 전인 경우
+                if (membership.getMembershipStatus() == MembershipStatus.ACTIVE) {
+                    return true;
+                }
 
-                    if (membership.getMembershipStatus() == MembershipStatus.CANCELED
-                            && membership.getEndDate() != null
-                            && membership.getEndDate().isAfter(LocalDateTime.now())) {
-                        return true;
-                    }
+                if (membership.getMembershipStatus() == MembershipStatus.CANCELED
+                    && membership.getEndDate() != null
+                    && membership.getEndDate().isAfter(LocalDateTime.now())) {
+                    return true;
+                }
 
-                    return false;
-                })
-                .orElse(false);
+                return false;
+            })
+            .orElse(false);
     }
 
     /**
@@ -632,7 +650,7 @@ public class PointService {
      */
     private PointProduct findProductById(Long productId) {
         return pointProductRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
     }
 
     /**
@@ -666,10 +684,10 @@ public class PointService {
 
         // UserPoint 적립 (비관적 락)
         UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
-                .orElseGet(() -> {
-                    UserPoint newPoint = UserPoint.toEntity(user);
-                    return userPointRepository.save(newPoint);
-                });
+            .orElseGet(() -> {
+                UserPoint newPoint = UserPoint.toEntity(user);
+                return userPointRepository.save(newPoint);
+            });
 
         // 프리미엄 멤버십 확인: 100m당 1P + 1P (기본과 동일한 추가 적립)
         boolean isPremium = checkPremiumMembership(userId);
@@ -679,7 +697,7 @@ public class PointService {
 
         // PointHistory 저장
         PointHistory history = PointHistory.toEntity(
-                user, null, "EARN", finalAmount, "RUNNING_COMPLETE"
+            user, null, "EARN", finalAmount, "RUNNING_COMPLETE"
         );
         pointHistoryRepository.save(history);
 
@@ -688,7 +706,7 @@ public class PointService {
         pointExpirationRepository.save(expiration);
 
         log.info("러닝 완주 포인트 적립: userId={}, distance={}m, points={}P (프리미엄: {})",
-                userId, distanceMeters, finalAmount, isPremium);
+            userId, distanceMeters, finalAmount, isPremium);
     }
 
     /**
@@ -702,10 +720,10 @@ public class PointService {
 
         // UserPoint 적립 (비관적 락)
         UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
-                .orElseGet(() -> {
-                    UserPoint newPoint = UserPoint.toEntity(user);
-                    return userPointRepository.save(newPoint);
-                });
+            .orElseGet(() -> {
+                UserPoint newPoint = UserPoint.toEntity(user);
+                return userPointRepository.save(newPoint);
+            });
 
         // 프리미엄 멤버십 확인 및 1.5배 적용
         boolean isPremium = checkPremiumMembership(userId);
@@ -715,7 +733,7 @@ public class PointService {
 
         // PointHistory 저장
         PointHistory history = PointHistory.toEntity(
-                user, null, "EARN", finalAmount, "ATTENDANCE"
+            user, null, "EARN", finalAmount, "ATTENDANCE"
         );
         pointHistoryRepository.save(history);
 
@@ -724,7 +742,7 @@ public class PointService {
         pointExpirationRepository.save(expiration);
 
         log.info("출석 체크 포인트 적립: userId={}, points={}P (프리미엄: {})",
-                userId, finalAmount, isPremium);
+            userId, finalAmount, isPremium);
     }
 
     /**
@@ -738,10 +756,10 @@ public class PointService {
 
         // UserPoint 적립 (비관적 락)
         UserPoint userPoint = userPointRepository.findByUserIdWithLock(userId)
-                .orElseGet(() -> {
-                    UserPoint newPoint = UserPoint.toEntity(user);
-                    return userPointRepository.save(newPoint);
-                });
+            .orElseGet(() -> {
+                UserPoint newPoint = UserPoint.toEntity(user);
+                return userPointRepository.save(newPoint);
+            });
 
         // 프리미엄 멤버십 확인 및 1.5배 적용
         boolean isPremium = checkPremiumMembership(userId);
@@ -751,7 +769,7 @@ public class PointService {
 
         // PointHistory 저장
         PointHistory history = PointHistory.toEntity(
-                user, null, "EARN", finalAmount, "WEEKLY_MISSION"
+            user, null, "EARN", finalAmount, "WEEKLY_MISSION"
         );
         pointHistoryRepository.save(history);
 
@@ -760,7 +778,7 @@ public class PointService {
         pointExpirationRepository.save(expiration);
 
         log.info("챌린지 완료 포인트 적립: userId={}, points={}P (프리미엄: {})",
-                userId, finalAmount, isPremium);
+            userId, finalAmount, isPremium);
     }
 
     /**
