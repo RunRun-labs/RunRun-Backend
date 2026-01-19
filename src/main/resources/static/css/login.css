@@ -22,13 +22,12 @@ body {
 }
 
 body {
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: "Inter",
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  sans-serif;
   background: var(--bg);
   color: var(--text-strong);
   display: flex;
@@ -79,8 +78,8 @@ body {
 }
 
 .shield img {
-  width: 34px;
-  height: 34px;
+  width: 210px;
+  height: 140px;
   object-fit: contain;
 }
 
