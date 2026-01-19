@@ -74,8 +74,8 @@ public class PointService {
         List<PointMainResDto.PointEarnMethod> earnMethods = List.of(
                 PointMainResDto.PointEarnMethod.builder()
                         .methodName("경기 참여")
-                        .description("km 당 50P")
-                        .earnAmount(50)
+                        .description("100m 당 1P + 1P")
+                        .earnAmount(1)
                         .build(),
                 PointMainResDto.PointEarnMethod.builder()
                         .methodName("출석 체크")
@@ -650,14 +650,14 @@ public class PointService {
     }
 
     /**
-     * 러닝 완주 시 포인트 적립 (100m당 1P)
+     * 러닝 완주 시 포인트 적립 (100m당 1P + 1P)
      */
     @Transactional
     public void earnPointsForRunningComplete(Long userId, double distanceMeters) {
         // 100m당 1P 계산
-        int points = (int) (distanceMeters / 100.0);
+        int basePoints = (int) (distanceMeters / 100.0);
 
-        if (points <= 0) {
+        if (basePoints <= 0) {
             log.warn("[포인트 0 - 적립 안 함] userId={}, distanceMeters={}", userId, distanceMeters);
             return;
         }
@@ -671,9 +671,9 @@ public class PointService {
                     return userPointRepository.save(newPoint);
                 });
 
-        // 프리미엄 멤버십 확인 및 1.5배 적용
+        // 프리미엄 멤버십 확인: 100m당 1P + 1P (기본과 동일한 추가 적립)
         boolean isPremium = checkPremiumMembership(userId);
-        int finalAmount = isPremium ? (int) (points * PREMIUM_MULTIPLIER) : points;
+        int finalAmount = isPremium ? (basePoints + basePoints) : basePoints;
 
         userPoint.addPoint(finalAmount);
 
