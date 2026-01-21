@@ -99,7 +99,8 @@ public class JwtConfig {
                     "/api/admin/coupons/public/**",
                     "/admin/**",
                     "/api/ads/**",
-                    "/attendance-event"
+                    "/attendance-event",
+                    "/ws-test"
                 ).permitAll()
                 .requestMatchers(
                     PathRequest.toStaticResources().atCommonLocations()
