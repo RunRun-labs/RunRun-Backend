@@ -12,6 +12,11 @@ pipeline {
       defaultValue: false,
       description: 'Install/upgrade kube-prometheus-stack + RunRun monitoring manifests (assumes alertmanager-slack Secret already exists).'
     )
+    booleanParam(
+      name: 'WS_TEST_ENABLED',
+      defaultValue: false,
+      description: 'Enable /ws-test pure WebSocket endpoint for load testing (prod-safe toggle).'
+    )
   }
 
   triggers {
@@ -144,26 +149,41 @@ command -v envsubst >/dev/null 2>&1 || {
 }
 
 		# Ensure runrun-env Secret has the latest MONGO_URI (without overwriting other keys)
-		if [ -f ".env.prod" ]; then
-		  MONGO_URI_LINE="$(grep -E '^MONGO_URI=' .env.prod | head -n 1 || true)"
-		  if [ -n "${MONGO_URI_LINE}" ]; then
-		    MONGO_URI_VALUE="${MONGO_URI_LINE#MONGO_URI=}"
-		    MONGO_URI_B64="$(printf %s "${MONGO_URI_VALUE}" | base64 | tr -d '\n')"
+    if [ -f ".env.prod" ]; then
+      MONGO_URI_LINE="$(grep -E '^MONGO_URI=' .env.prod | head -n 1 || true)"
+      if [ -n "${MONGO_URI_LINE}" ]; then
+        MONGO_URI_VALUE="${MONGO_URI_LINE#MONGO_URI=}"
+        MONGO_URI_B64="$(printf %s "${MONGO_URI_VALUE}" | base64 | tr -d '\n')"
 
-		    if kubectl -n default get secret runrun-env >/dev/null 2>&1; then
-		      kubectl -n default patch secret runrun-env --type='json' \
-		        -p="[{\"op\":\"add\",\"path\":\"/data/MONGO_URI\",\"value\":\"${MONGO_URI_B64}\"}]"
-		    else
-		      kubectl -n default create secret generic runrun-env --from-literal="MONGO_URI=${MONGO_URI_VALUE}"
-		    fi
-		  else
-		    echo "[warn] MONGO_URI not found in .env.prod; skipping runrun-env secret update"
-		  fi
-		else
-		  echo "[warn] .env.prod not found; skipping runrun-env secret update"
-		fi
+        if kubectl -n default get secret runrun-env >/dev/null 2>&1; then
+          kubectl -n default patch secret runrun-env --type='json' \
+            -p="[{\"op\":\"add\",\"path\":\"/data/MONGO_URI\",\"value\":\"${MONGO_URI_B64}\"}]"
+        else
+          kubectl -n default create secret generic runrun-env --from-literal="MONGO_URI=${MONGO_URI_VALUE}"
+        fi
+      else
+        echo "[warn] MONGO_URI not found in .env.prod; skipping runrun-env secret update"
+      fi
+    else
+      echo "[warn] .env.prod not found; skipping runrun-env secret update"
+    fi
 
-	envsubst < k8s/eks_deploy_alb.yml | kubectl apply -f -
+    # Ensure runrun-env Secret has WS_TEST_ENABLED (without overwriting other keys)
+    WS_TEST_ENABLED_VALUE="${WS_TEST_ENABLED:-false}"
+    WS_TEST_ENABLED_B64="$(printf %s "${WS_TEST_ENABLED_VALUE}" | base64 | tr -d '\n')"
+
+    if kubectl -n default get secret runrun-env >/dev/null 2>&1; then
+      kubectl -n default patch secret runrun-env --type='merge' \
+        -p "{\"data\":{\"WS_TEST_ENABLED\":\"${WS_TEST_ENABLED_B64}\"}}"
+    else
+      kubectl -n default create secret generic runrun-env --from-literal="WS_TEST_ENABLED=${WS_TEST_ENABLED_VALUE}"
+    fi
+
+    echo "[info] WS_TEST_ENABLED=${WS_TEST_ENABLED_VALUE} applied to runrun-env secret"
+
+    envsubst < k8s/eks_deploy_alb.yml | kubectl apply -f -
+
+    kubectl rollout restart deployment/runrun -n default
 
 		if ! kubectl rollout status deployment/runrun -n default --timeout=600s; then
 		  echo "[error] Rollout did not complete; dumping diagnostics..."
