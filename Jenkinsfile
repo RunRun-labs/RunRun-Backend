@@ -148,54 +148,55 @@ command -v envsubst >/dev/null 2>&1 || {
   exit 1
 }
 
-		# Ensure runrun-env Secret has the latest MONGO_URI (without overwriting other keys)
-    if [ -f ".env.prod" ]; then
-      MONGO_URI_LINE="$(grep -E '^MONGO_URI=' .env.prod | head -n 1 || true)"
-      if [ -n "${MONGO_URI_LINE}" ]; then
-        MONGO_URI_VALUE="${MONGO_URI_LINE#MONGO_URI=}"
-        MONGO_URI_B64="$(printf %s "${MONGO_URI_VALUE}" | base64 | tr -d '\n')"
-
-        if kubectl -n default get secret runrun-env >/dev/null 2>&1; then
-          kubectl -n default patch secret runrun-env --type='json' \
-            -p="[{\"op\":\"add\",\"path\":\"/data/MONGO_URI\",\"value\":\"${MONGO_URI_B64}\"}]"
-        else
-          kubectl -n default create secret generic runrun-env --from-literal="MONGO_URI=${MONGO_URI_VALUE}"
-        fi
-      else
-        echo "[warn] MONGO_URI not found in .env.prod; skipping runrun-env secret update"
-      fi
-    else
-      echo "[warn] .env.prod not found; skipping runrun-env secret update"
-    fi
-
-    # Ensure runrun-env Secret has WS_TEST_ENABLED (without overwriting other keys)
-    WS_TEST_ENABLED_VALUE="${WS_TEST_ENABLED:-false}"
-    WS_TEST_ENABLED_B64="$(printf %s "${WS_TEST_ENABLED_VALUE}" | base64 | tr -d '\n')"
+# Ensure runrun-env Secret has the latest MONGO_URI (without overwriting other keys)
+if [ -f ".env.prod" ]; then
+  MONGO_URI_LINE="$(grep -E '^MONGO_URI=' .env.prod | head -n 1 || true)"
+  if [ -n "${MONGO_URI_LINE}" ]; then
+    MONGO_URI_VALUE="${MONGO_URI_LINE#MONGO_URI=}"
+    MONGO_URI_B64="$(printf %s "${MONGO_URI_VALUE}" | base64 | tr -d '\n')"
 
     if kubectl -n default get secret runrun-env >/dev/null 2>&1; then
-      kubectl -n default patch secret runrun-env --type='merge' \
-        -p "{\"data\":{\"WS_TEST_ENABLED\":\"${WS_TEST_ENABLED_B64}\"}}"
+      kubectl -n default patch secret runrun-env --type='json' \
+        -p="[{\"op\":\"add\",\"path\":\"/data/MONGO_URI\",\"value\":\"${MONGO_URI_B64}\"}]"
     else
-      kubectl -n default create secret generic runrun-env --from-literal="WS_TEST_ENABLED=${WS_TEST_ENABLED_VALUE}"
+      kubectl -n default create secret generic runrun-env --from-literal="MONGO_URI=${MONGO_URI_VALUE}"
     fi
+  else
+    echo "[warn] MONGO_URI not found in .env.prod; skipping runrun-env secret update"
+  fi
+else
+  echo "[warn] .env.prod not found; skipping runrun-env secret update"
+fi
 
-    echo "[info] WS_TEST_ENABLED=${WS_TEST_ENABLED_VALUE} applied to runrun-env secret"
+# Ensure runrun-env Secret has WS_TEST_ENABLED (without overwriting other keys)
+WS_TEST_ENABLED_VALUE="${WS_TEST_ENABLED:-false}"
+WS_TEST_ENABLED_B64="$(printf %s "${WS_TEST_ENABLED_VALUE}" | base64 | tr -d '\n')"
+PATCH_JSON="$(printf '{"data":{"WS_TEST_ENABLED":"%s"}}' "${WS_TEST_ENABLED_B64}")"
 
-    envsubst < k8s/eks_deploy_alb.yml | kubectl apply -f -
+if kubectl -n default get secret runrun-env >/dev/null 2>&1; then
+  kubectl -n default patch secret runrun-env --type=merge -p "${PATCH_JSON}"
+else
+  kubectl -n default create secret generic runrun-env --from-literal="WS_TEST_ENABLED=${WS_TEST_ENABLED_VALUE}"
+fi
 
-    kubectl rollout restart deployment/runrun -n default
+echo "[info] WS_TEST_ENABLED=${WS_TEST_ENABLED_VALUE} applied to runrun-env secret"
 
-		if ! kubectl rollout status deployment/runrun -n default --timeout=600s; then
-		  echo "[error] Rollout did not complete; dumping diagnostics..."
-		  kubectl get pods -n default -l app=runrun -o wide || true
-		  kubectl describe pods -n default -l app=runrun || true
-		  kubectl logs -n default -l app=runrun --all-containers=true --tail=200 || true
-		  exit 1
-		fi
+envsubst < k8s/eks_deploy_alb.yml | kubectl apply -f -
 
-		kubectl get pods -o wide
-		kubectl get svc -o wide
-		kubectl get ingress -o wide || true
+# Apply secret/env changes to pods (always restart to be safe)
+kubectl rollout restart deployment/runrun -n default
+
+if ! kubectl rollout status deployment/runrun -n default --timeout=600s; then
+  echo "[error] Rollout did not complete; dumping diagnostics..."
+  kubectl get pods -n default -l app=runrun -o wide || true
+  kubectl describe pods -n default -l app=runrun || true
+  kubectl logs -n default -l app=runrun --all-containers=true --tail=200 || true
+  exit 1
+fi
+
+kubectl get pods -o wide
+kubectl get svc -o wide
+kubectl get ingress -o wide || true
 	'''
         }
       }
